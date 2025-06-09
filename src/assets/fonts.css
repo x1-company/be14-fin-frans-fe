@@ -1,0 +1,9 @@
+@font-face {
+  font-family: "NanumSquareOTF";
+  src: url("/fonts/NanumSquareOTF/NanumSquareOTF_acB.otf") format("opentype");
+  font-weight: bold;
+  font-style: normal;
+}
+body {
+  font-family: "NanumSquareOTF", sans-serif;
+}
