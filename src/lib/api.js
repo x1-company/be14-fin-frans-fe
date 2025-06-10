@@ -32,14 +32,11 @@ api.interceptors.response.use(
       const authStore = useAuthStore()
 
       try {
-        console.log("accessToken 만료로 재발급 시도")
         const res = await axios.post(
           'http://localhost:8080/api/auth/reissue',
           null, // refreshToken은 HttpOnly 쿠키에 있으므로 body 필요 없음
           { withCredentials: true }
         )
-
-        console.log(res);
 
         const newAccessToken = res.headers['authorization']
         authStore.setAccessToken(newAccessToken.replace('Bearer ', ''))
