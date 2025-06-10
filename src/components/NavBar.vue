@@ -3,12 +3,12 @@
     <div class="navbar__logo">FRANS</div>
     <div class="navbar__right">
       <ul class="navbar__menu">
-        <li>대시보드</li>
-        <li>가맹점관리</li>
-        <li>공급처관리</li>
-        <li>구매관리</li>
-        <li>창고관리</li>
-        <li>결재관리</li>
+        <li @click="selectMenuItem('대시보드')">대시보드</li>
+        <li @click="selectMenuItem('가맹점관리')">가맹점관리</li>
+        <li @click="selectMenuItem('공급처관리')">공급처관리</li>
+        <li @click="selectMenuItem('구매관리')">구매관리</li>
+        <li @click="selectMenuItem('창고관리')">창고관리</li>
+        <li @click="selectMenuItem('결재관리')">결재관리</li>
       </ul>
       <img
         src="@/assets/notification.png"
@@ -22,7 +22,11 @@
 </template>
 
 <script setup>
-// 추후 필요시 스크립트 추가
+const emit = defineEmits(["update-breadcrumb"]);
+
+const selectMenuItem = (itemText) => {
+  emit("update-breadcrumb", ["HOME", itemText]);
+};
 </script>
 
 <style scoped>

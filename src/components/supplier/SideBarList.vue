@@ -5,6 +5,7 @@
       :key="item.id || idx"
       class="sidebar__card"
       :class="{ selected: idx === selectedIndex }"
+      @click="$emit('select', idx)"
     >
       <div class="sidebar__card-header">
         <img :src="item.icon" class="sidebar__card-icon" />
@@ -12,9 +13,11 @@
         <span class="sidebar__card-badge">공급처</span>
       </div>
       <div class="sidebar__card-info">
-        <span>📞 {{ item.phone }}</span>
+        <img src="@/assets/phone.png" class="sidebar__info-icon" />
+        <span>{{ item.phone }}</span>
       </div>
       <div class="sidebar__card-info">
+        <img src="@/assets/user.png" class="sidebar__info-icon" />
         <span>{{ item.manager }}</span>
       </div>
     </div>
@@ -40,6 +43,8 @@ const props = defineProps({
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex: 1;
+  overflow-y: auto;
 }
 .sidebar__card {
   background: #f8faff;
@@ -86,5 +91,12 @@ const props = defineProps({
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.sidebar__info-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+  vertical-align: middle;
+  opacity: 0.6;
 }
 </style>
