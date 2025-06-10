@@ -16,39 +16,63 @@
       </div>
     </div>
     <div class="sidebar__count"
-      >전체 <span class="sidebar__count-num">100</span></div
+      >전체
+      <span class="sidebar__count-num">{{ supplierList.length }}</span></div
     >
     <div class="sidebar__search">
       <input type="text" placeholder="공급처 검색" />
     </div>
-    <SideBarList :list="supplierList" :selectedIndex="0" />
+    <SupplierSideBarList
+      :list="supplierList"
+      :selectedIndex="selectedIndex"
+      @select="handleSelect"
+    />
   </aside>
 </template>
 
 <script setup>
-import SideBarList from "./SideBarList.vue";
-import menuSupplierIcon from "@/assets/menu-supplier.png";
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import SupplierSideBarList from "./SupplierSideBarList.vue";
+import menuSupplierIcon from "@/assets/menu-supplier-2.png";
 
-const supplierList = [
-  {
-    icon: "/src/assets/menu-supplier.png",
-    name: "(주)하림",
-    phone: "010-1234-5678",
-    manager: "박지원",
-  },
-  {
-    icon: "/src/assets/menu-supplier.png",
-    name: "(주)영우에프비",
-    phone: "010-1234-5678",
-    manager: "이예원",
-  },
-  {
-    icon: "/src/assets/menu-supplier.png",
-    name: "CJ 제일제당",
-    phone: "010-1234-5678",
-    manager: "이예원",
-  },
-];
+const supplierList = ref([]);
+const selectedIndex = ref(0);
+
+// emit 정의 추가
+const emit = defineEmits(["selectSupplier"]);
+
+onMounted(async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/supplier/list");
+    supplierList.value = res.data.map((item) => ({
+      icon: menuSupplierIcon,
+      name: item.name,
+      phone: item.companyPhone,
+      manager: item.ceoName,
+      id: item.id, // API 응답에서 id 필드도 포함시키기
+    }));
+    // 초기 로딩 시 첫 번째 공급처의 상세 정보를 가져오도록 호출
+    if (supplierList.value.length > 0) {
+      handleSelect(0);
+    }
+  } catch (e) {
+    console.error("공급처 리스트 불러오기 실패", e);
+  }
+});
+
+function handleSelect(idx) {
+  selectedIndex.value = idx;
+  // 선택된 공급처의 id를 App.vue로 emit
+  if (supplierList.value[idx] && supplierList.value[idx].id !== undefined) {
+    emit("selectSupplier", supplierList.value[idx].id);
+  } else {
+    console.warn(
+      "선택된 공급처의 ID가 유효하지 않습니다:",
+      supplierList.value[idx]
+    );
+  }
+}
 </script>
 
 <style scoped>
@@ -56,9 +80,9 @@ const supplierList = [
   width: 260px;
   min-width: 200px;
   background: #fff;
-  /* border-right: 2px solid #e6eaff; */
-  /* border-left: 2px solid #e6eaff; */
-  /* border-bottom: 2.5px solid #e6eaff; */
+  border-right: 2px solid #e6eaff;
+  border-left: 2px solid #e6eaff;
+  border-bottom: 2.5px solid #e6eaff;
   height: 100%;
   padding: 18px 8px 0 8px;
   box-sizing: border-box;
@@ -69,7 +93,7 @@ const supplierList = [
 .sidebar__top {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
 }
 .sidebar__favorites {
   display: flex;
@@ -115,7 +139,7 @@ const supplierList = [
   margin: 6px 0 0 0;
 }
 .sidebar__search input {
-  /* width: 100%; */
+  width: 90%;
   padding: 7px 10px;
   border: 1px solid #e6eaff;
   border-radius: 7px;
