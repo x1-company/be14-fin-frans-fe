@@ -60,8 +60,8 @@ import { ref, watch, onMounted } from "vue";
 import axios from "axios";
 
 // 아이콘 이미지 임포트
-import basicInfoIcon from "@/assets/phone1.png";
-import contactInfoIcon from "@/assets/phone.png";
+import basicInfoIcon from "@/assets/Info.png";
+import contactInfoIcon from "@/assets/phone1.png";
 import phoneIcon from "@/assets/phone.png";
 import userIcon from "@/assets/user.png";
 import calendarIcon from "@/assets/calendar.png";
@@ -159,7 +159,7 @@ async function fetchSupplierDetail(id) {
   }
   try {
     const res = await axios.get(
-      `http://localhost:8080/api/supplier/detail/${id}`
+      `http://localhost:8080/api/hq/suppliers/detail/${id}`
     );
     supplierDetail.value = res.data;
   } catch (e) {

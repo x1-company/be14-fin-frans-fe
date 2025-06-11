@@ -1,149 +1,217 @@
+<script setup>
+import { ref, computed, onMounted } from "vue";
+import api from "@/lib/api"; // axios instance가 여기 있다고 가정
+
+const emit = defineEmits(["select-company"]);
+
+const searchQuery = ref("");
+const totalCount = ref(0);
+const companies = ref([]);
+const selectedCompany = ref(null);
+
+onMounted(async () => {
+  try {
+    const { data } = await api.get("/api/hq/suppliers/list");
+    companies.value = data;
+    totalCount.value = data.length;
+  } catch (error) {
+    console.error("공급처 목록 불러오기 실패", error);
+  }
+});
+
+const filteredCompanies = computed(() => {
+  if (!searchQuery.value) return companies.value;
+  return companies.value.filter((company) =>
+    company.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
+
+const handleCompanyClick = (company) => {
+  selectedCompany.value = company;
+  emit("select-company", company);
+};
+</script>
+
 <template>
-  <aside class="sidebar">
-    <div class="sidebar__top">
-      <div class="sidebar__favorites">
-        <span class="star">★</span>
-        즐겨찾기
-        <span class="plus">+</span>
+  <div class="sidebar">
+    <!-- Fixed Header -->
+    <div class="sidebar-header">
+      <div class="header-item">
+        <span class="star-icon">★</span>
+        <span>즐겨찾기</span>
+        <button class="add-btn">+</button>
       </div>
-      <div class="sidebar__menu">
+
+      <div class="header-item">
         <img
           src="@/assets/menu-supplier.png"
           alt="공급처 관리"
           class="sidebar__icon"
+          style="width: 20px; height: 20px"
+        />공급처 관리
+      </div>
+
+      <div class="count-info">
+        <span>전체 {{ totalCount }}</span>
+      </div>
+
+      <div class="search-container">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="공급처 검색"
+          class="search-input"
         />
-        공급처 관리
+        <span class="search-icon">🔍</span>
       </div>
     </div>
-    <div class="sidebar__count"
-      >전체
-      <span class="sidebar__count-num">{{ supplierList.length }}</span></div
-    >
-    <div class="sidebar__search">
-      <input type="text" placeholder="공급처 검색" />
+
+    <!-- Scrollable Content -->
+    <div class="sidebar-content">
+      <div
+        v-for="company in filteredCompanies"
+        :key="company.id"
+        class="company-item"
+        :class="{ active: selectedCompany?.id === company.id }"
+        @click="handleCompanyClick(company)"
+      >
+        <div class="company-header">
+          <img src="@/assets/menu-supplier-2.png" class="sidebar__info-icon" />
+          <span class="company-name">{{ company.name }}</span>
+          <span class="company-category">공급처</span>
+        </div>
+        <div class="company-details">
+          <div class="detail-row">
+            <img src="@/assets/phone.png" class="sidebar__info-icon" />
+            <span>{{ company.companyPhone }}</span>
+          </div>
+          <div class="detail-row">
+            <img src="@/assets/user.png" class="sidebar__info-icon" />
+            <span>{{ company.ceoName }}</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <SideBarList
-      :list="supplierList"
-      :selectedIndex="selectedIndex"
-      @select="handleSelect"
-    />
-  </aside>
+  </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from "vue";
-import axios from "axios";
-import SideBarList from "./SideBarList.vue";
-import menuSupplierIcon from "@/assets/menu-supplier-2.png";
-
-const supplierList = ref([]);
-const selectedIndex = ref(0);
-
-// emit 정의 추가
-const emit = defineEmits(["selectSupplier"]);
-
-onMounted(async () => {
-  try {
-    const res = await axios.get("http://localhost:8080/api/supplier/list");
-    supplierList.value = res.data.map((item) => ({
-      icon: menuSupplierIcon,
-      name: item.name,
-      phone: item.companyPhone,
-      manager: item.ceoName,
-      id: item.id, // API 응답에서 id 필드도 포함시키기
-    }));
-    // 초기 로딩 시 첫 번째 공급처의 상세 정보를 가져오도록 호출
-    if (supplierList.value.length > 0) {
-      handleSelect(0);
-    }
-  } catch (e) {
-    console.error("공급처 리스트 불러오기 실패", e);
-  }
-});
-
-function handleSelect(idx) {
-  selectedIndex.value = idx;
-  // 선택된 공급처의 id를 App.vue로 emit
-  if (supplierList.value[idx] && supplierList.value[idx].id !== undefined) {
-    emit("selectSupplier", supplierList.value[idx].id);
-  } else {
-    console.warn(
-      "선택된 공급처의 ID가 유효하지 않습니다:",
-      supplierList.value[idx]
-    );
-  }
-}
-</script>
 
 <style scoped>
 .sidebar {
-  width: 260px;
-  min-width: 200px;
-  background: #fff;
-  border-right: 2px solid #e6eaff;
-  border-left: 2px solid #e6eaff;
-  border-bottom: 2.5px solid #e6eaff;
+  width: 300px;
+  background: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  padding: 18px 8px 0 8px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
-.sidebar__top {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+  background: white;
 }
-.sidebar__favorites {
-  display: flex;
-  align-items: center;
-  font-size: 1rem;
-  font-weight: bold;
-  gap: 6px;
-  color: #222;
-}
-.sidebar__favorites .star {
-  color: #ffd600;
-  font-size: 1.1rem;
-}
-.sidebar__favorites .plus {
-  margin-left: auto;
-  font-size: 1.1rem;
-  color: #888;
-  cursor: pointer;
-}
-.sidebar__menu {
+
+.header-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #222;
+  margin-bottom: 16px;
+  font-size: 14px;
 }
-.sidebar__icon {
-  width: 20px;
-  height: 20px;
+
+.add-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #6c757d;
 }
-.sidebar__count {
-  margin: 10px 0 0 0;
-  font-size: 0.95rem;
-  color: #888;
+
+.count-info {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 16px;
 }
-.sidebar__count-num {
-  color: #4066fa;
-  font-weight: bold;
-  margin-left: 4px;
+
+.search-container {
+  position: relative;
 }
-.sidebar__search {
-  margin: 6px 0 0 0;
+
+.search-input {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 14px;
 }
-.sidebar__search input {
-  width: 90%;
-  padding: 7px 10px;
-  border: 1px solid #e6eaff;
-  border-radius: 7px;
-  font-size: 0.98rem;
-  outline: none;
+
+.search-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.company-item {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.company-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.company-item.active {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.company-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.company-name {
+  font-weight: 600;
+  color: #212529;
+}
+
+.company-category {
+  background: #667eea;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.company-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6c757d;
 }
 </style>
