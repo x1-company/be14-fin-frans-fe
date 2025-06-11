@@ -3,11 +3,14 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+const emit = defineEmits(['account-locked'])
+
 const authStore = useAuthStore()
 const router = useRouter()
 const userCode = ref('')
 const password = ref('')
 const showPassword = ref(false)
+const errorMessage = ref('')
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
@@ -31,26 +34,27 @@ const handleLogin = async () => {
     const result = await response.json()
 
     if (response.ok) {
-
-        const accessToken = response.headers.get('Authorization')
-
-        if (accessToken) {
-            authStore.setAccessToken(accessToken.replace('Bearer ', ''))
-        }
+      const accessToken = response.headers.get('Authorization')
+      if (accessToken) {
+        authStore.setAccessToken(accessToken.replace('Bearer ', ''))
+      }
 
       if (result.needChangePassword) {
-        
-        router.push("/password-change")
+        router.push('/password-change')
       } else {
-        
+
         // 메인 페이지로 이동
       }
     } else {
-      alert(`로그인 실패: ${result.message || '알 수 없는 오류'}`)
+      errorMessage.value = result.message || '로그인에 실패했습니다.'
+
+      if (result.errorCode === 'ACCOUNT_LOCKED') {
+        emit('account-locked', userCode.value)
+      }
     }
 
   } catch (error) {
-    console.error('에러 발생:', error)
+    errorMessage.value = '서버와의 연결에 문제가 발생했습니다.'
   }
 }
 </script>
@@ -88,6 +92,7 @@ const handleLogin = async () => {
             </button>
           </div>
         </div>
+        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
         <button type="submit" class="login-button">로그인</button>
       </form>
     </div>
@@ -168,5 +173,12 @@ input {
 
 .login-button:hover {
   background-color: #3a5ecc;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+  font-size: 14px;
+  text-align: center;
 }
 </style>
