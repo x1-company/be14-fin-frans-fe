@@ -6,4 +6,4 @@
 
 <script></script>
 
-<style scoped></style>t
+<style scoped></style>

@@ -10,7 +10,7 @@ import PasswordChangeForm from '@/components/auth/PasswordChangeForm.vue'
   </div>
 </template>
 
-<style>
+<style scoped>
 * {
   margin: 0;
   padding: 0;

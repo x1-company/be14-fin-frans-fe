@@ -44,6 +44,13 @@ const handleLogin = async () => {
       } else {
 
         // 메인 페이지로 이동
+        if (result.userType === 'HQ') {
+          router.push('/test')
+        } else if (result.userType === 'FRANCHISE') {
+          router.push('/test')
+        } else if (result.userType === 'SUPPLIER') {
+          router.push('/test')
+        }
       }
     } else {
       errorMessage.value = result.message || '로그인에 실패했습니다.'
@@ -112,21 +119,21 @@ const handleLogin = async () => {
 .login-box {
   background-color: white;
   border-radius: 5px;
-  padding: 30px;
+  padding: 50px 30px;
   width: 100%;
-  max-width: 400px;
+  max-width: 600px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
   text-align: center;
-  margin-bottom: 30px;
-  font-size: 24px;
+  margin-bottom: 40px;
+  font-size: 28px;
   color: #333;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 label {
@@ -138,10 +145,10 @@ label {
 
 input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .password-input {
@@ -157,16 +164,17 @@ input {
   border: none;
   cursor: pointer;
   color: #777;
+  font-size: 18px;
 }
 
 .login-button {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background-color: #4169e1;
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
   margin-top: 10px;
 }
