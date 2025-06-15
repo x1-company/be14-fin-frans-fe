@@ -12,9 +12,9 @@
 
 <script setup>
 import { ref } from "vue";
-import NavBar from "@/components/NavBar.vue";
-import SideBar from "@/components/supplier/SideBar.vue";
-import Info from "@/components/supplier/Info.vue";
+import NavBar from "@/components/hq/common/NavBar.vue";
+import SideBar from "@/components/hq/supplier/SideBar.vue";
+import Info from "@/components/hq/supplier/Info.vue";
 
 // ✅ 선택된 회사 상태 추가
 const selectedCompany = ref(null);

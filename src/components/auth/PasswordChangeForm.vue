@@ -175,6 +175,7 @@ input {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 16px;
+  box-sizing: border-box;
 }
 
 .password-input {
