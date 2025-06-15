@@ -15,13 +15,25 @@
         alt="알림"
         class="notification-icon"
       />
-      <span class="navbar__username">황수민 대리</span>
-      <span class="navbar__user"></span>
+      <span class="navbar__username">
+        {{ auth.userName }} {{ auth.positionName }}
+      </span>
+      <span class="navbar__user">
+        <img
+          v-if="auth.userProfileUrl"
+          :src="auth.userProfileUrl"
+          alt="user profile"
+          class="navbar__profile-img"
+        />
+      </span>
     </div>
   </nav>
 </template>
 
 <script setup>
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
 const emit = defineEmits(["update-breadcrumb"]);
 
 const selectMenuItem = (itemText) => {
@@ -89,5 +101,12 @@ const selectMenuItem = (itemText) => {
   background: #e6f0ff;
   border-radius: 50%;
   display: inline-block;
+}
+.navbar__profile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 </style>

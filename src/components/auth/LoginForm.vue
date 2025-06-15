@@ -45,11 +45,11 @@ const handleLogin = async () => {
 
         // 메인 페이지로 이동
         if (result.userType === 'HQ') {
-          router.push('/test')
+          router.push('/supplier')
         } else if (result.userType === 'FRANCHISE') {
-          router.push('/test')
+          router.push('/supplier')
         } else if (result.userType === 'SUPPLIER') {
-          router.push('/test')
+          router.push('/supplier')
         }
       }
     } else {
