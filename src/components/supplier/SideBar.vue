@@ -144,6 +144,7 @@ const handleCompanyClick = (company) => {
   border: 1px solid #dee2e6;
   border-radius: 6px;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .search-icon {
