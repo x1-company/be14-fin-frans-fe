@@ -2,9 +2,9 @@
 import { ref, onMounted, computed } from "vue";
 import api from "@/lib/api";
 
-import Breadcrumb from "@/components/Breadcrumb.vue";
-import InfoHeader from "@/components/supplier/InfoHeader.vue";
-import InfoForm from "@/components/supplier/InfoForm.vue";
+import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
+import InfoHeader from "@/components/hq/supplier/InfoHeader.vue";
+import InfoForm from "@/components/hq/supplier/InfoForm.vue";
 
 const props = defineProps({
   company: Object,

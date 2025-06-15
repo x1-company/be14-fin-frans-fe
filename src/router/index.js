@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import LoginView from "@/views/auth/Login.vue";
-import SupplierInfoView from "@/views/supplier/InfoView.vue";
+import SupplierInfoView from "@/views/hq/supplier/InfoView.vue";
 import PasswordChange from "@/views/auth/PasswordChange.vue";
 
 const router = createRouter({
