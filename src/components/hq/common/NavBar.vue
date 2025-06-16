@@ -15,23 +15,19 @@
         alt="알림"
         class="notification-icon"
       />
-      <span class="navbar__username">
-        {{ auth.userName }} {{ auth.positionName }}
-      </span>
-      <span class="navbar__user">
-        <img
-          v-if="auth.userProfileUrl"
-          :src="auth.userProfileUrl"
-          alt="user profile"
-          class="navbar__profile-img"
-        />
-      </span>
+      <UserInfo 
+        :userName="auth.userName"
+        :positionName="auth.positionName"
+        :userProfileUrl="auth.userProfileUrl"
+        :userSignUrl="auth.userSignUrl"
+      />
     </div>
   </nav>
 </template>
 
 <script setup>
 import { useAuthStore } from '@/stores/auth'
+import UserInfo from './UserInfo.vue';
 
 const auth = useAuthStore()
 const emit = defineEmits(["update-breadcrumb"]);
@@ -89,24 +85,5 @@ const selectMenuItem = (itemText) => {
   width: 23px;
   height: 20px;
   object-fit: contain;
-}
-.navbar__username {
-  font-size: 1rem;
-  color: #fff;
-  font-weight: 400;
-}
-.navbar__user {
-  width: 32px;
-  height: 32px;
-  background: #e6f0ff;
-  border-radius: 50%;
-  display: inline-block;
-}
-.navbar__profile-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  display: block;
 }
 </style>
