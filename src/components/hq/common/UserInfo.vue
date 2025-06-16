@@ -97,13 +97,37 @@ const closeSignatureModal = () => {
 
 const saveSignature = async (signatureData) => {
   try {
-    // 여기서 실제 API 호출로 서명을 저장
-    // 예시: await api.updateUserSignature(signatureData)
-    
-    // auth store 업데이트
-    auth.userSignUrl = signatureData
-    
-    console.log('서명이 저장되었습니다:', signatureData)
+
+    console.log('서명 데이터:', signatureData)
+
+    // formData 생성
+    const formData = new FormData()
+    formData.append("files", signatureData, auth.userName + '-signature.png')
+    formData.append("type", "sign")
+
+    // 파일 업로드 요청
+    const uploadRes = await api.post('/api/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
+    // DB에 저장할 url 추출
+    const urls = uploadRes.data
+    const signUrl = urls.find(url => url.startsWith('https://'))
+    if (!signUrl) {
+      throw new Error('유효한 서명 URL을 찾을 수 없습니다.')
+    }
+
+    // signUrl 업데이트 요청
+    const res = await api.patch('/api/hq/user/sign', { signUrl })
+
+    // 응답 헤더에서 새 토큰 받아 저장하기
+    const newAccessToken = res.headers['authorization'] || res.headers['Authorization'];
+    if (newAccessToken) {
+      auth.setAccessToken(newAccessToken.replace('Bearer ', ''));
+    }
+
     alert('서명이 성공적으로 저장되었습니다.')
   } catch (error) {
     console.error('서명 저장 실패:', error)
