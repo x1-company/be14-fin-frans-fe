@@ -20,6 +20,9 @@ export const useAuthStore = defineStore('auth', {
     userProfileUrl() {
       return this.decodedToken?.userProfileUrl || ''
     },
+    userSignUrl() {
+      return this.decodedToken?.userSignUrl || ''
+    },
     departmentId() {
       return this.decodedToken?.departmentId || null
     },
