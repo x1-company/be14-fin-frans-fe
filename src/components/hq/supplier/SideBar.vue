@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import api from "@/lib/api"; // axios instance가 여기 있다고 가정
+import { useAuthStore } from "@/stores/auth";
 
+const authStore = useAuthStore();
 const emit = defineEmits(["select-company"]);
 
 const searchQuery = ref("");
@@ -10,6 +12,8 @@ const companies = ref([]);
 const selectedCompany = ref(null);
 
 onMounted(async () => {
+  if (!authStore.accessToken) return; // 토큰 없을 경우 일단 막기
+
   try {
     const { data } = await api.get("/api/hq/suppliers/list");
     companies.value = data;
