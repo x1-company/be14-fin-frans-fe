@@ -45,11 +45,19 @@ const handleLogin = async () => {
 
         // 메인 페이지로 이동
         if (result.userType === 'HQ') {
-          router.push('/supplier')
+          if (authStore.departmentName.includes('영업')) {
+            // 가맹점 메인 페이지로
+          } else if (authStore.departmentName.includes('물류')) {
+            // 창고 관리 페이지로
+          } else if (authStore.departmentName.includes('인사')) {
+            // 인사 관리 페이지로
+            router.push("/hrm")
+          }
+          // router.push('/supplier')
         } else if (result.userType === 'FRANCHISE') {
-          router.push('/supplier')
+          // 가맹점주 메인 페이지로
         } else if (result.userType === 'SUPPLIER') {
-          router.push('/supplier')
+          // 공급처 메인 페이지로
         }
       }
     } else {

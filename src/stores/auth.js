@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { jwtDecode } from "jwt-decode";
-import { departmentMap, dutyMap, positionMap } from "@/enums/hqEnums";
+import { getDepartmentNameById, dutyMap, positionMap } from "@/enums/hqEnums";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -27,7 +27,7 @@ export const useAuthStore = defineStore("auth", {
       return this.decodedToken?.departmentId || null;
     },
     departmentName() {
-      return departmentMap[this.departmentId] || "";
+      return getDepartmentNameById(this.departmentId);
     },
     dutyId() {
       return this.decodedToken?.dutyId || null;
@@ -45,11 +45,13 @@ export const useAuthStore = defineStore("auth", {
   actions: {
     setAccessToken(token) {
       this.accessToken = token;
-      // localStorage.setItem("accessToken", token); // ✅ 저장
+      // 개발 편의를 위한 로컬 스토리지 저장
+      localStorage.setItem("accessToken", token); // ✅ 저장
     },
     clearAccessToken() {
       this.accessToken = "";
-      // localStorage.removeItem("accessToken"); // ✅ 삭제
+      // 개발 편의를 위한 로컬 스토리지 저장
+      localStorage.removeItem("accessToken"); // ✅ 삭제
     },
   },
 });
