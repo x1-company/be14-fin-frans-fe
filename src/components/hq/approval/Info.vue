@@ -5,31 +5,36 @@ import api from "@/lib/api";
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
 import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
-
-const props = defineProps({
-  company: Object,
-});
+import ApprovalCard from "@/components/hq/approval/ApprovalCard.vue";
 
 const supplier = ref(null);
-const breadcrumbItems = ref(["HOME", "공급처관리", "공급처정보"]);
-const selectedSupplierId = computed(() => props.company?.id);
+const breadcrumbItems = ref();
+const selectedApprovalId = ref(null);
+const props = defineProps({
+  approvalList: Array,
+});
+// const selectedSupplierId = computed(() => props.company?.id);
 const updateBreadcrumb = (newItems) => {
   breadcrumbItems.value = newItems;
 };
+const tabs = ["전체", "임시저장", "결재중", "결재완료", "결재반려"];
+const activeTab = ref("전체");
+function selectTab(tab) {
+  activeTab.value = tab;
+  // 탭에 따라 데이터 필터링 등 추가 로직 작성 가능
+}
+// const tabs = ["전자결재", "납품관리", "발주관리"];
+// const activeTab = ref("전자결재");
 
-onMounted(async () => {
-  if (!props.company?.id) return;
-  const { data } = await api.get(
-    `/api/hq/suppliers/detail/${props.company.id}`
-  );
-  supplier.value = data;
-});
+// const selectTab = (tab) => {
+//   activeTab.value = tab;
+// };
 </script>
 
 <template>
   <div class="info-container">
     <div class="breadcrumb-container">
-      <Breadcrumb :items="breadcrumbItems" />
+      <Breadcrumb :items="breadcrumbItems || []" />
     </div>
 
     <!-- Scrollable Content -->
@@ -37,14 +42,14 @@ onMounted(async () => {
       <div class="header-banner">
         <div class="info-group">
           <InfoHeader
-            title="공급처 정보"
-            desc="공급처의 기본 정보와 계약 현황을 확인하고 관리할 수 있습니다."
-            :tabs="['공급처 정보', '납품관리', '발주관리']"
+            title="전자 결재"
+            desc="결재 정보를 확인하고 관리할 수 있습니다."
+            :tabs="['전자결재', '납품관리', '발주관리']"
             :activeTab="0"
             @update-breadcrumb="updateBreadcrumb"
           />
           <!-- InfoForm에 supplierId만 넘겨주면 됨 -->
-          <InfoForm :supplierId="selectedSupplierId" />
+          <InfoForm :approvalId="selectedApprovalId" />
         </div>
       </div>
       <!-- 본문 시작 -->
@@ -55,76 +60,18 @@ onMounted(async () => {
       <div v-if="supplier" class="info-sections">
         <!-- 기본 정보 -->
         <section class="info-section">
-          <h3 class="section-title">📋 기본 정보</h3>
-          <div class="info-grid">
-            <div class="info-row">
-              <div class="info-item">
-                <label>공급처코드</label>
-                <span>{{ supplier.code }}</span>
-              </div>
-              <div class="info-item">
-                <label>사업자번호</label>
-                <span>{{ supplier.businessNumber }}</span>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-item">
-                <label>거래처명</label>
-                <span>{{ supplier.name }}</span>
-              </div>
-              <div class="info-item">
-                <label>계약일자</label>
-                <span>📅 {{ supplier.signedAt.split("T")[0] }}</span>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-item full-width">
-                <label>주소</label>
-                <div>
-                  <span>📍 {{ supplier.address }}</span>
-                  <div class="postal-code"
-                    >우편번호: {{ supplier.zipcode }}</div
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="info-row">
-              <div class="info-item">
-                <label>대표자</label>
-                <span>{{ supplier.ceoName }}</span>
-              </div>
-            </div>
+          <!-- 탭 영역 추가 -->
+          <div class="approval-tabs">
+            <ApprovalCard
+              v-for="approval in approvalList"
+              :key="approval.id"
+              :approval="approval"
+            />
           </div>
         </section>
 
         <!-- 연락처 정보 -->
-        <section class="info-section">
-          <h3 class="section-title">📞 연락처 정보</h3>
-          <div class="contact-grid">
-            <div class="contact-item">
-              <label>회사 연락처</label>
-              <div class="contact-details">
-                <span class="contact-label">전화번호</span>
-                <span class="contact-value">{{ supplier.companyPhone }}</span>
-              </div>
-            </div>
-            <div class="contact-item">
-              <label>담당자 연락처</label>
-              <div class="contact-details">
-                <span class="contact-label">담당자 이름</span>
-                <span class="contact-value">{{ supplier.supplierName }}</span>
-              </div>
-              <div class="contact-details">
-                <span class="contact-label">담당자 이메일</span>
-                <span class="contact-value">{{ supplier.supplierEmail }}</span>
-              </div>
-              <div class="contact-details">
-                <span class="contact-label">담당자 연락처</span>
-                <span class="contact-value">{{ supplier.supplierPhone }}</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        <section class="info-section"> </section>
       </div>
     </div>
   </div>

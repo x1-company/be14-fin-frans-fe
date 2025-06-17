@@ -1,9 +1,7 @@
 <template>
   <div class="profile-dropdown" ref="dropdownRef">
     <div class="profile-section">
-      <span class="navbar__username">
-        {{ userName }} {{ positionName }}
-      </span>
+      <span class="navbar__username"> {{ userName }} {{ positionName }} </span>
       <div class="navbar__user" @click="toggleDropdown">
         <img
           v-if="userProfileUrl"
@@ -38,67 +36,66 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import SignatureModal from './SignatureModal.vue'
-import { useAuthStore } from '@/stores/auth'
+import { ref, onMounted, onUnmounted } from "vue";
+import SignatureModal from "./SignatureModal.vue";
+import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
-import { useRouter } from 'vue-router'
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 
 const props = defineProps({
   userName: {
     type: String,
-    required: true
+    required: true,
   },
   positionName: {
     type: String,
-    required: true
+    required: true,
   },
   userProfileUrl: {
     type: String,
-    default: ''
+    default: "",
   },
   userSignUrl: {
     type: String,
-    default: ''
-  }
-})
+    default: "",
+  },
+});
 
-const auth = useAuthStore()
-const isDropdownOpen = ref(false)
-const dropdownRef = ref(null)
-const isSignatureModalVisible = ref(false)
+const auth = useAuthStore();
+const isDropdownOpen = ref(false);
+const dropdownRef = ref(null);
+const isSignatureModalVisible = ref(false);
 
 const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
 
 const handleMenuClick = (menuItem) => {
-  isDropdownOpen.value = false
-  
-  switch(menuItem) {
-    case '마이 페이지':
+  isDropdownOpen.value = false;
+  console.log("accessToken", auth.accessToken);
+
+  switch (menuItem) {
+    case "마이 페이지":
       // 마이 페이지로 이동
-      break
-    case '서명 관리':
-      isSignatureModalVisible.value = true
-      break
-    case '로그아웃':
+      break;
+    case "서명 관리":
+      isSignatureModalVisible.value = true;
+      break;
+    case "로그아웃":
       // 로그아웃 처리
-      handleLogout()
-      break
+      handleLogout();
+      break;
   }
-}
+};
 
 const closeSignatureModal = () => {
-  isSignatureModalVisible.value = false
-}
+  isSignatureModalVisible.value = false;
+};
 
 const saveSignature = async (signatureData) => {
   try {
-
-    console.log('서명 데이터:', signatureData)
 
     // formData 생성
     const formData = new FormData()
@@ -130,36 +127,36 @@ const saveSignature = async (signatureData) => {
 
     alert('서명이 성공적으로 저장되었습니다.')
   } catch (error) {
-    console.error('서명 저장 실패:', error)
-    alert('서명 저장에 실패했습니다.')
+    console.error("서명 저장 실패:", error);
+    alert("서명 저장에 실패했습니다.");
   }
-}
+};
 
 const handleLogout = async () => {
-  if (confirm('로그아웃 하시겠습니까?')) {
+  if (confirm("로그아웃 하시겠습니까?")) {
     // 로그아웃 로직
-    await api.post('/api/auth/logout')
-    auth.clearAccessToken()
+    await api.post("/api/auth/logout");
+    auth.clearAccessToken();
 
     // 로그인 페이지로 리다이렉트
-    router.push('/login')
+    router.push("/login");
   }
-}
+};
 
 // 외부 클릭 시 드롭다운 닫기
 const handleClickOutside = (event) => {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
-    isDropdownOpen.value = false
+    isDropdownOpen.value = false;
   }
-}
+};
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+  document.addEventListener("click", handleClickOutside);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <style scoped>
