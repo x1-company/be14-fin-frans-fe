@@ -3,6 +3,7 @@ import LoginView from "@/views/auth/Login.vue";
 import SupplierInfoView from "@/views/hq/supplier/InfoView.vue";
 import PasswordChange from "@/views/auth/PasswordChange.vue";
 import ApprovalListView from "@/views/hq/approval/InfoView.vue";
+import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
 import HRMView from "@/views/hq/user/InfoView.vue"
 
 const router = createRouter({
@@ -31,6 +32,11 @@ const router = createRouter({
       path: "/approval",
       name: "approval",
       component: ApprovalListView,
+    },
+    {
+      path: "/orders",
+      name: "orders",
+      component: OrderInfoView,
     },
     {
       path: "/hrm",
