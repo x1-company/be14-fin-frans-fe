@@ -16,6 +16,30 @@
     </div>
 
     <div class="test-section">
+      <h2>실시간 알림 테스트</h2>
+      <div class="realtime-test">
+        <div class="status-info">
+          <p>실시간 알림 상태: 
+            <span :class="{ 'enabled': showRealtimeNotifications, 'disabled': !showRealtimeNotifications }">
+              {{ showRealtimeNotifications ? '활성화' : '비활성화' }}
+            </span>
+          </p>
+        </div>
+        <div class="action-buttons">
+          <button @click="toggleRealtimeNotifications" class="btn btn-primary">
+            {{ showRealtimeNotifications ? '실시간 알림 끄기' : '실시간 알림 켜기' }}
+          </button>
+          <button @click="addTestNotification" class="btn btn-success">
+            테스트 알림 추가
+          </button>
+          <button @click="simulateSSENotification" class="btn btn-warning">
+            SSE 시뮬레이션
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-section">
       <h2>알림 관리</h2>
       <div class="action-buttons">
         <button @click="refreshNotifications" class="btn btn-primary">
@@ -89,6 +113,7 @@ const unreadCount = computed(() => notificationStore.unreadCount);
 const hasUnreadNotifications = computed(() => notificationStore.hasUnreadNotifications);
 const sortedNotifications = computed(() => notificationStore.sortedNotifications);
 const isConnected = computed(() => notificationStore.isConnected);
+const showRealtimeNotifications = computed(() => notificationStore.showRealtimeNotifications);
 
 const hasReadNotifications = computed(() => {
   return notifications.value.some(n => n.readAt);
@@ -141,6 +166,36 @@ const reconnectSSE = async () => {
   } catch (error) {
     console.error('SSE 재연결 실패:', error);
   }
+};
+
+const toggleRealtimeNotifications = () => {
+  notificationStore.toggleRealtimeNotifications();
+};
+
+const addTestNotification = () => {
+  const testNotification = {
+    id: Date.now().toString(),
+    content: `테스트 알림 ${new Date().toLocaleTimeString()}`,
+    type: 'ORDER_RESPONSE',
+    createdAt: new Date().toISOString(),
+    readAt: null
+  };
+  
+  notificationStore.addNotification(testNotification);
+};
+
+const simulateSSENotification = () => {
+  // SSE로 받은 것처럼 시뮬레이션
+  const testNotification = {
+    id: `sse-${Date.now()}`,
+    content: `SSE 시뮬레이션 알림 ${new Date().toLocaleTimeString()}`,
+    type: 'ORDER_RESPONSE',
+    createdAt: new Date().toISOString(),
+    readAt: null
+  };
+  
+  console.log('SSE 시뮬레이션 알림 생성:', testNotification);
+  notificationStore.addNotification(testNotification);
 };
 
 const getNotificationTypeText = (type) => {
@@ -202,6 +257,16 @@ const formatTime = (dateString) => {
 }
 
 .status-info .disconnected {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.status-info .enabled {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.status-info .disabled {
   color: #dc3545;
   font-weight: bold;
 }
@@ -328,6 +393,10 @@ const formatTime = (dateString) => {
 .notification-actions {
   display: flex;
   gap: 8px;
+}
+
+.realtime-test {
+  margin-bottom: 16px;
 }
 
 @media (max-width: 768px) {

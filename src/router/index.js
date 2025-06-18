@@ -6,6 +6,12 @@ import ApprovalListView from "@/views/hq/approval/InfoView.vue";
 import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
 import HRMView from "@/views/hq/user/InfoView.vue"
 
+// 개발 환경에서만 테스트 페이지 import
+let TestNotificationView = null;
+if (import.meta.env.DEV) {
+  TestNotificationView = () => import("@/views/TestNotification.vue");
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL || "/"),
   routes: [
@@ -42,7 +48,13 @@ const router = createRouter({
       path: "/hrm",
       name: "hrm",
       component: HRMView,
-    }
+    },
+    // 개발 환경에서만 테스트 페이지 라우트 추가
+    ...(import.meta.env.DEV ? [{
+      path: "/test-notification",
+      name: "test-notification",
+      component: TestNotificationView,
+    }] : [])
   ],
 });
 

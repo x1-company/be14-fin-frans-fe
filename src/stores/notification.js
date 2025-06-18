@@ -7,6 +7,7 @@ export const useNotificationStore = defineStore("notification", () => {
   const unreadCount = ref(0);
   const isConnected = ref(false);
   const eventSource = ref(null);
+  const showRealtimeNotifications = ref(true); // 실시간 알림 표시 여부
 
   // 게터
   const hasUnreadNotifications = computed(() => unreadCount.value > 0);
@@ -93,11 +94,20 @@ export const useNotificationStore = defineStore("notification", () => {
     eventSource.value = source;
   };
 
+  const toggleRealtimeNotifications = () => {
+    showRealtimeNotifications.value = !showRealtimeNotifications.value;
+  };
+
+  const setRealtimeNotificationsEnabled = (enabled) => {
+    showRealtimeNotifications.value = enabled;
+  };
+
   const reset = () => {
     notifications.value = [];
     unreadCount.value = 0;
     isConnected.value = false;
     eventSource.value = null;
+    showRealtimeNotifications.value = true;
   };
 
   return {
@@ -106,6 +116,7 @@ export const useNotificationStore = defineStore("notification", () => {
     unreadCount,
     isConnected,
     eventSource,
+    showRealtimeNotifications,
     
     // 게터
     hasUnreadNotifications,
@@ -121,6 +132,8 @@ export const useNotificationStore = defineStore("notification", () => {
     clearReadNotifications,
     setConnectionStatus,
     setEventSource,
+    toggleRealtimeNotifications,
+    setRealtimeNotificationsEnabled,
     reset
   };
 }); 

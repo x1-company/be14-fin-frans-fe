@@ -8,6 +8,14 @@
           <h3>알림</h3>
           <div class="header-actions">
             <button 
+              @click="toggleRealtimeNotifications" 
+              class="action-btn realtime-toggle"
+              :class="{ 'active': showRealtimeNotifications }"
+              :title="showRealtimeNotifications ? '실시간 알림 끄기' : '실시간 알림 켜기'"
+            >
+              {{ showRealtimeNotifications ? '실시간 ON' : '실시간 OFF' }}
+            </button>
+            <button 
               v-if="hasUnreadNotifications"
               @click="markAllAsRead" 
               class="action-btn"
@@ -95,6 +103,7 @@ const unreadCount = computed(() => notificationStore.unreadCount);
 const hasUnreadNotifications = computed(() => notificationStore.hasUnreadNotifications);
 const sortedNotifications = computed(() => notificationStore.sortedNotifications);
 const isConnected = computed(() => notificationStore.isConnected);
+const showRealtimeNotifications = computed(() => notificationStore.showRealtimeNotifications);
 
 const closeDropdown = () => {
   emit('close');
@@ -208,6 +217,11 @@ const formatTime = (dateString) => {
   
   return date.toLocaleDateString();
 };
+
+// 실시간 알림 토글
+const toggleRealtimeNotifications = () => {
+  notificationStore.toggleRealtimeNotifications();
+};
 </script>
 
 <style scoped>
@@ -280,6 +294,23 @@ const formatTime = (dateString) => {
 
 .action-btn:hover {
   background-color: #e6eaff;
+}
+
+.realtime-toggle {
+  background-color: #f8f9fa;
+  border-color: #4066fa;
+  color: #4066fa;
+  font-weight: 600;
+}
+
+.realtime-toggle.active {
+  background-color: #4066fa;
+  color: white;
+}
+
+.realtime-toggle:hover {
+  background-color: #3658d9;
+  color: white;
 }
 
 .notification-list {
