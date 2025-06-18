@@ -48,6 +48,7 @@ export const useAuthStore = defineStore("auth", {
       this.accessToken = token;
 
       // 개발 편의를 위한 로컬 스토리지 저장
+<<<<<<< feature/kyu/notification
       localStorage.setItem("accessToken", token);
       
       // 토큰이 설정되면 SSE 연결 시작
@@ -66,6 +67,10 @@ export const useAuthStore = defineStore("auth", {
           // SSE 연결 실패해도 로그인은 계속 진행
         }
       }
+=======
+
+      localStorage.setItem("accessToken", token); 
+>>>>>>> develop
     },
     async clearAccessToken() {
       // 로그아웃 시 SSE 연결 정리
@@ -77,8 +82,13 @@ export const useAuthStore = defineStore("auth", {
       }
       
       this.accessToken = "";
+
       // 개발 편의를 위한 로컬 스토리지 저장
+<<<<<<< feature/kyu/notification
       localStorage.removeItem("accessToken"); 
+=======
+      localStorage.removeItem("accessToken");
+>>>>>>> develop
     },
   },
 });

@@ -1,34 +1,14 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
-import api from "@/lib/api";
-
+import { ref } from "vue";
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
 import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
-import ApprovalCard from "@/components/hq/approval/ApprovalCard.vue";
 
-const supplier = ref(null);
 const breadcrumbItems = ref();
-const selectedApprovalId = ref(null);
-const props = defineProps({
-  approvalList: Array,
-});
-// const selectedSupplierId = computed(() => props.company?.id);
 const updateBreadcrumb = (newItems) => {
   breadcrumbItems.value = newItems;
 };
-const tabs = ["전체", "임시저장", "결재중", "결재완료", "결재반려"];
-const activeTab = ref("전체");
-function selectTab(tab) {
-  activeTab.value = tab;
-  // 탭에 따라 데이터 필터링 등 추가 로직 작성 가능
-}
-// const tabs = ["전자결재", "납품관리", "발주관리"];
-// const activeTab = ref("전자결재");
-
-// const selectTab = (tab) => {
-//   activeTab.value = tab;
-// };
+const props = defineProps({ approvalList: Array });
 </script>
 
 <template>
@@ -36,42 +16,18 @@ function selectTab(tab) {
     <div class="breadcrumb-container">
       <Breadcrumb :items="breadcrumbItems || []" />
     </div>
-
-    <!-- Scrollable Content -->
     <div class="info-content">
       <div class="header-banner">
         <div class="info-group">
           <InfoHeader
             title="전자 결재"
             desc="결재 정보를 확인하고 관리할 수 있습니다."
-            :tabs="['전자결재', '납품관리', '발주관리']"
-            :activeTab="0"
+            :tabs="['대시보드', '전자결재', '결재템플릿']"
+            :activeTab="1"
             @update-breadcrumb="updateBreadcrumb"
           />
-          <!-- InfoForm에 supplierId만 넘겨주면 됨 -->
-          <InfoForm :approvalId="selectedApprovalId" />
+          <InfoForm :approvalList="approvalList" />
         </div>
-      </div>
-      <!-- 본문 시작 -->
-      <div class="content-header">
-        <button class="edit-btn">✏️ 수정</button>
-      </div>
-
-      <div v-if="supplier" class="info-sections">
-        <!-- 기본 정보 -->
-        <section class="info-section">
-          <!-- 탭 영역 추가 -->
-          <div class="approval-tabs">
-            <ApprovalCard
-              v-for="approval in approvalList"
-              :key="approval.id"
-              :approval="approval"
-            />
-          </div>
-        </section>
-
-        <!-- 연락처 정보 -->
-        <section class="info-section"> </section>
       </div>
     </div>
   </div>
