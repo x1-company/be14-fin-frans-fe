@@ -682,7 +682,7 @@ const selectMenu = (menu) => {
   emit("select-menu", menu);
 };
 const props = defineProps({
-  activeTab: String, // 받기
+  // activeTab: [String, Number], // 받기
   counts: Object,
 });
 

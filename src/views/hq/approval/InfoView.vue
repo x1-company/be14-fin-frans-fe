@@ -4,20 +4,30 @@
     <div class="main-container">
       <!-- ✅ 이벤트 수신 연결 -->
 
-      <!-- 전자결재 탭 -->
+      <!-- 일반 사이드바 (대시보드, 전자결재 탭) -->
       <SideBar
-        :activeTab="activeTab"
+        v-if="currentTabIndex !== 2"
+        :activeTab="activeTab.toString()"
         :counts="approvalCounts"
         @select-menu="handleSelectMenu"
         @tab-change="handleTabChange"
       />
 
+      <!-- 템플릿 사이드바 (결재템플릿 탭) -->
+      <TemplateSideBar
+        v-if="currentTabIndex === 2"
+        :selectedTemplate="selectedTemplate"
+        @select-template="handleTemplateSelect"
+      />
+
       <!-- Info 컴포넌트에 selectedTemplate 전달 -->
       <Info
         :approvalList="approvalList"
-        :activeTab="activeTab"
+        :activeTab="activeTab.toString()"
+        :selectedTemplate="selectedTemplate"
         @tab-change="handleTabChange"
         @update:activeTab="handleTabChange"
+        @active-tab-change="handleActiveTabChange"
       />
     </div>
   </div>
@@ -25,22 +35,17 @@
 
 <script setup>
 import { ref, watch, nextTick, onMounted } from "vue";
-import { useAuthStore } from "@/stores/auth";
 import NavBar from "@/components/hq/common/NavBar.vue";
 import SideBar from "@/components/hq/approval/SideBar.vue";
+import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
 import Info from "@/components/hq/approval/Info.vue";
 import api from "@/lib/api";
 
 const approvalList = ref([]);
-
-// SideBar에서 emit할 때 처리할 함수
-const handleApprovalSelect = (approval) => {
-  activeMenu.value = approval;
-  console.log("선택된 결재목록:", approval);
-};
-
 const activeMenu = ref("전체");
 const activeTab = ref("전체");
+const currentTabIndex = ref(0);
+const selectedTemplate = ref(null);
 
 const handleSelectMenu = (menuValue) => {
   activeMenu.value = menuValue;
@@ -49,6 +54,14 @@ const handleSelectMenu = (menuValue) => {
 
 const handleTabChange = (tabValue) => {
   activeTab.value = tabValue;
+};
+
+const handleActiveTabChange = (tabIndex) => {
+  currentTabIndex.value = tabIndex;
+};
+
+const handleTemplateSelect = (template) => {
+  selectedTemplate.value = template;
 };
 
 const approvalCounts = ref({
