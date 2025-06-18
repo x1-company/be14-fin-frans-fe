@@ -45,11 +45,11 @@ export const useAuthStore = defineStore("auth", {
   actions: {
     setAccessToken(token) {
       this.accessToken = token;
-      // localStorage.setItem("accessToken", token); // ✅ 저장
+      localStorage.setItem("accessToken", token); // ✅ 저장
     },
     clearAccessToken() {
       this.accessToken = "";
-      // localStorage.removeItem("accessToken"); // ✅ 삭제
+      localStorage.removeItem("accessToken"); // ✅ 삭제
     },
   },
 });
