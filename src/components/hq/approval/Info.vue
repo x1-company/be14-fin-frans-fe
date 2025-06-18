@@ -1,14 +1,36 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
 import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
+import ApprovalTemplate from "./ApprovalTemplate.vue";
 
-const breadcrumbItems = ref();
+const breadcrumbItems = ref(["HOME", "결재관리", "대시보드"]);
 const updateBreadcrumb = (newItems) => {
   breadcrumbItems.value = newItems;
 };
-const props = defineProps({ approvalList: Array });
+
+const tabInfo = ref([
+    { title: "대시보드", desc: "대시보드입니다." },
+    { title: "전자결재", desc: "전자 결재를 관리할 수 있습니다." },
+    { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." }
+])
+
+const activeTab = ref(0); // 기본값 0 (대시보드 탭)
+
+const title = computed(() => tabInfo.value[activeTab.value].title);
+const desc = computed(() => tabInfo.value[activeTab.value].desc);
+
+const emit = defineEmits(["update:activeTab"]);
+
+const updateTab = (newTabIndex) => {
+  activeTab.value = newTabIndex;
+  updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
+  emit("update:activeTab", newTabIndex);
+};
+
+const props = defineProps({ approvalList: Array, selectedTemplate: Object });
+
 </script>
 
 <template>
@@ -20,13 +42,22 @@ const props = defineProps({ approvalList: Array });
       <div class="header-banner">
         <div class="info-group">
           <InfoHeader
-            title="전자 결재"
-            desc="결재 정보를 확인하고 관리할 수 있습니다."
+            :title="title"
+            :desc="desc"
             :tabs="['대시보드', '전자결재', '결재템플릿']"
-            :activeTab="1"
+            :activeTab="activeTab"
+            @select-tab="updateTab"
             @update-breadcrumb="updateBreadcrumb"
           />
-          <InfoForm :approvalList="approvalList" />
+          <div v-if="activeTab == 0">
+            대시보드
+          </div>
+          <div v-if="activeTab == 1">
+            <InfoForm :approvalList="approvalList" />
+          </div>
+          <div v-if="activeTab == 2">
+            <ApprovalTemplate :selectedTemplate="selectedTemplate" />
+          </div>
         </div>
       </div>
     </div>
