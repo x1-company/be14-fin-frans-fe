@@ -9,6 +9,9 @@ class NotificationService {
     this.reconnectDelay = 1000; // 1초
     this.maxReconnectDelay = 30000; // 30초
     this.abortController = null;
+    this.isConnecting = false;
+    this.isConnected = false;
+    this.reconnectTimeout = null;
   }
 
   // SSE 연결 시작
@@ -21,7 +24,15 @@ class NotificationService {
       return;
     }
 
+    // 이미 연결 중이거나 연결된 상태라면 중복 연결 방지
+    if (this.isConnecting || this.isConnected) {
+      console.log('이미 SSE 연결이 진행 중이거나 연결된 상태입니다.');
+      return;
+    }
+
     try {
+      this.isConnecting = true;
+      
       // 기존 연결이 있다면 정리
       this.disconnect();
 
@@ -51,6 +62,8 @@ class NotificationService {
       }
 
       console.log('SSE 연결이 성공적으로 열렸습니다.');
+      this.isConnected = true;
+      this.isConnecting = false;
       notificationStore.setConnectionStatus(true);
       this.reconnectAttempts = 0;
 
@@ -62,6 +75,8 @@ class NotificationService {
       this.processStream(reader, decoder, notificationStore);
 
     } catch (error) {
+      this.isConnecting = false;
+      
       if (error.name === 'AbortError') {
         console.log('SSE 연결이 중단되었습니다.');
         return;
@@ -70,8 +85,10 @@ class NotificationService {
       console.error('SSE 연결 생성 실패:', error);
       notificationStore.setConnectionStatus(false);
       
-      // 자동 재연결 시도
-      this.handleReconnect();
+      // 자동 재연결 시도 (로그인 시에는 재연결하지 않음)
+      if (this.reconnectAttempts > 0) {
+        this.handleReconnect();
+      }
     }
   }
 
@@ -83,6 +100,7 @@ class NotificationService {
         
         if (done) {
           console.log('SSE 스트림이 종료되었습니다.');
+          this.isConnected = false;
           break;
         }
 
@@ -113,9 +131,21 @@ class NotificationService {
         }
       }
     } catch (error) {
-      console.error('스트림 처리 오류:', error);
+      this.isConnected = false;
       notificationStore.setConnectionStatus(false);
-      this.handleReconnect();
+      
+      // AbortError는 정상적인 연결 해제이므로 오류로 처리하지 않음
+      if (error.name === 'AbortError') {
+        console.log('SSE 스트림이 정상적으로 중단되었습니다.');
+        return;
+      }
+      
+      console.error('스트림 처리 오류:', error);
+      
+      // AbortError가 아닌 경우에만 재연결 시도
+      if (error.name !== 'AbortError') {
+        this.handleReconnect();
+      }
     }
   }
 
@@ -126,12 +156,17 @@ class NotificationService {
       return;
     }
 
+    // 이미 재연결 타이머가 있다면 취소
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
+
     this.reconnectAttempts++;
     const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), this.maxReconnectDelay);
 
     console.log(`${delay}ms 후 재연결을 시도합니다. (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
 
-    setTimeout(() => {
+    this.reconnectTimeout = setTimeout(() => {
       this.connect();
     }, delay);
   }
@@ -140,11 +175,19 @@ class NotificationService {
   disconnect() {
     const notificationStore = useNotificationStore();
     
+    // 재연결 타이머가 있다면 취소
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
     }
     
+    this.isConnected = false;
+    this.isConnecting = false;
     notificationStore.setConnectionStatus(false);
     console.log('SSE 연결이 해제되었습니다.');
   }
@@ -155,6 +198,11 @@ class NotificationService {
       await api.delete('/api/notification/disconnect');
       console.log('서버에서 SSE 연결이 해제되었습니다.');
     } catch (error) {
+      // 401 오류는 토큰이 이미 만료되었거나 로그아웃된 상태이므로 무시
+      if (error.response && error.response.status === 401) {
+        console.log('토큰이 만료되어 서버 연결 해제를 건너뜁니다.');
+        return;
+      }
       console.error('서버 연결 해제 실패:', error);
     }
   }
