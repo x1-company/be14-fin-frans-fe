@@ -21,7 +21,7 @@
       <div 
         v-for="template in filteredTemplates" 
         :key="template.id"
-        :class="['template-card', { 'selected': selectedTemplate?.id === template.id }]"
+        :class="['template-card', { 'selected': selectedTemplateId === template.id }]"
         @click="selectTemplate(template)"
       >
         <div class="template-header">
@@ -59,18 +59,30 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import api from '@/lib/api'
+
+// props로 외부에서 선택된 템플릿 받기
+const props = defineProps({
+  selectedTemplate: Object
+})
 
 // 반응형 데이터
 const templates = ref([])
-const selectedTemplate = ref(null)
+const selectedTemplateId = ref(null)
 const searchQuery = ref('')
 const loading = ref(false)
 const error = ref('')
 
 // 이벤트 정의
 const emit = defineEmits(['select-template'])
+
+// 외부에서 선택된 템플릿이 변경될 때 내부 상태 업데이트
+watch(() => props.selectedTemplate, (newTemplate) => {
+  if (newTemplate?.id) {
+    selectedTemplateId.value = newTemplate.id
+  }
+}, { immediate: true })
 
 // 계산된 속성 - 검색 필터링
 const filteredTemplates = computed(() => {
@@ -81,7 +93,7 @@ const filteredTemplates = computed(() => {
   const query = searchQuery.value.toLowerCase().trim()
   return templates.value.filter(template => 
     template.name.toLowerCase().includes(query) ||
-    template.description.toLowerCase().includes(query)
+    template.description?.toLowerCase().includes(query)
   )
 })
 
@@ -94,9 +106,18 @@ const fetchTemplates = async () => {
     const { data } = await api.get('/api/hq/approvals/templates')
     templates.value = data
     
-    // 첫 번째 템플릿을 기본 선택
-    if (data.length > 0) {
+    // 첫 번째 템플릿을 기본 선택 (이미 선택된 템플릿이 없을 경우에만)
+    if (data.length > 0 && !selectedTemplateId.value) {
       selectTemplate(data[0])
+    } else if (selectedTemplateId.value) {
+      // 이미 선택된 템플릿이 있으면 해당 템플릿 다시 선택
+      const selectedTemplate = data.find(t => t.id === selectedTemplateId.value)
+      if (selectedTemplate) {
+        emit('select-template', selectedTemplate)
+      } else if (data.length > 0) {
+        // 선택된 템플릿이 목록에 없으면 첫 번째 템플릿 선택
+        selectTemplate(data[0])
+      }
     }
   } catch (err) {
     console.error('템플릿 목록 조회 실패:', err)
@@ -108,13 +129,18 @@ const fetchTemplates = async () => {
 
 // 템플릿 선택
 const selectTemplate = (template) => {
-  selectedTemplate.value = template
-  emit('select-template', template) // 이 부분이 중요! 부모 컴포넌트로 이벤트 전달
+  selectedTemplateId.value = template.id
+  emit('select-template', template)
 }
 
 // 컴포넌트 마운트 시 데이터 로드
 onMounted(() => {
   fetchTemplates()
+})
+
+// 활성 탭이 변경될 때 템플릿 목록 다시 로드하기 위한 함수 노출
+defineExpose({
+  refreshTemplates: fetchTemplates
 })
 </script>
 
@@ -194,9 +220,7 @@ onMounted(() => {
 }
 
 .template-card.selected {
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
   border-color: #667eea;
-  /* color: white; */
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
@@ -212,20 +236,6 @@ onMounted(() => {
   font-weight: 600;
   margin: 0;
   color: inherit;
-}
-
-.template-type {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.template-card.selected .template-type {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
 }
 
 .template-description {
@@ -245,16 +255,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.user-count {
-  font-size: 12px;
-  color: #6c757d;
-  font-weight: 500;
-}
-
-.template-card.selected .user-count {
-  color: rgba(255, 255, 255, 0.8);
 }
 
 .loading-container,
