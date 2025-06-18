@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div class="approval-card" :style="cardStyle">
     <div class="card-header">
       <span class="card-title">{{ approval.title }}</span>
@@ -110,4 +110,4 @@ function formatDate(dateStr) {
 .card-actions button:hover {
   background: #1d4ed8;
 }
-</style>
+</style> -->

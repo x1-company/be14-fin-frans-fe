@@ -6,7 +6,7 @@
         <button
           v-for="tab in tabs"
           :key="tab.value"
-          :class="['tab-button', { active: activeTab === tab.value }]"
+          :class="['tab-button', { active: activeTab.value === tab.value }]"
           @click="selectTab(tab.value)"
         >
           {{ tab.label }}
@@ -142,23 +142,24 @@
 
 <script setup>
 import { ref, computed } from "vue";
-
-const props = defineProps({
-  approvalList: {
-    type: Array,
-    required: true,
-  },
-});
-
 const emit = defineEmits([
+  "tab-change",
   "document-click",
   "document-view",
   "document-approve",
   "document-edit",
 ]);
 
+const props = defineProps({
+  approvalList: {
+    type: Array,
+    required: true,
+  },
+  activeTab: { type: String, required: true },
+});
+
 // 반응형 데이터
-const activeTab = ref("전체");
+const activeTab = computed(() => props.activeTab);
 const searchQuery = ref("");
 
 // 탭 설정
@@ -239,7 +240,8 @@ const groupedDocuments = computed(() => {
 
 // 메서드
 const selectTab = (tabValue) => {
-  activeTab.value = tabValue;
+  // activeTab.value = tabValue;
+  emit("tab-change", tabValue);
 };
 
 const handleSearch = () => {
@@ -354,6 +356,7 @@ const getEmptyMessage = () => {
 .tab-list {
   display: flex;
   padding: 0 24px;
+  border-bottom: 1.5px solid #e0e0e0;
 }
 
 .tab-button {
@@ -375,7 +378,8 @@ const getEmptyMessage = () => {
 .tab-button.active {
   color: #4066fa;
   border-bottom-color: #4066fa;
-  background: white;
+  border-bottom: 2.5px solid #1976d2;
+  background: none;
 }
 
 /* 검색 영역 */

@@ -2,13 +2,22 @@
   <div class="app">
     <NavBar />
     <div class="main-container">
+      <!-- ✅ 이벤트 수신 연결 -->
+      
       <!-- 대시보드 탭 -->
       <div v-if="activeTab === 0">
         대시보드
       </div>
       
       <!-- 전자결재 탭 -->
-      <SideBar v-if="activeTab === 1" @select-menu="handleApprovalSelect" />
+      <SideBar
+        :activeTab="activeTab"
+        :counts="approvalCounts"
+        @select-menu="handleSelectMenu"
+        @tab-change="handleTabChange"
+        v-if="activeTab === 1"
+      />
+      
       
       <!-- 결재템플릿 탭 -->
       <TemplateSideBar 
@@ -23,6 +32,7 @@
         :approvalList="approvalList"
         :activeTab="activeTab"
         :selectedTemplate="selectedTemplate"
+        @tab-change="handleTabChange"
         @update:activeTab="handleTabChange"
       />
     </div>
@@ -30,7 +40,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import NavBar from "@/components/hq/common/NavBar.vue";
 import SideBar from "@/components/hq/approval/SideBar.vue";
@@ -38,8 +48,6 @@ import Info from "@/components/hq/approval/Info.vue";
 import api from "@/lib/api";
 import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
 
-const authStore = useAuthStore();
-const activeMenu = ref("전체");
 const approvalList = ref([]);
 const activeTab = ref(0); // 기본값 0 (대시보드 탭)
 
@@ -75,23 +83,64 @@ const handleTemplateSelect = (template) => {
   console.log("선택된 템플릿:", template);
 };
 
-watch(
-  activeMenu,
-  async (menu) => {
-    let url = "";
-    console.log("현재 accessToken:", authStore.accessToken);
+const activeMenu = ref("전체");
+const activeTab = ref("전체");
 
-    if (menu === "임시저장") {
+const handleSelectMenu = (menuValue) => {
+  activeMenu.value = menuValue;
+  activeTab.value = menuValue;
+};
+
+const handleTabChange = (tabValue) => {
+  activeTab.value = tabValue;
+};
+
+const approvalCounts = ref({
+  전체: 0,
+  임시저장: 0,
+  결재중: 0,
+  결재완료: 0,
+  결재반려: 0,
+});
+
+const fetchCounts = async () => {
+  const endpoints = {
+    전체: "/api/hq/approvals/list/submitted/all",
+    임시저장: "/api/hq/approvals/list/submitted/draft",
+    결재중: "/api/hq/approvals/list/submitted/in-progress",
+    결재완료: "/api/hq/approvals/list/submitted/approved",
+    결재반려: "/api/hq/approvals/list/submitted/rejected",
+  };
+  for (const key in endpoints) {
+    try {
+      const { data } = await api.get(endpoints[key]);
+      approvalCounts.value[key] = data.length;
+    } catch {
+      approvalCounts.value[key] = 0;
+    }
+  }
+};
+
+onMounted(fetchCounts);
+
+watch(
+  [activeMenu, activeTab],
+  async ([menu, tab]) => {
+    const activeTab = tab || menu;
+    let url = "";
+    console.log(activeTab);
+    if (activeTab === "임시저장") {
       url = "/api/hq/approvals/list/submitted/draft";
-    } else if (menu === "전체") {
+    } else if (activeTab === "전체") {
       url = "/api/hq/approvals/list/submitted/all";
-    } else if (menu === "결재중") {
+    } else if (activeTab === "결재중") {
       url = "/api/hq/approvals/list/submitted/in-progress";
-    } else if (menu === "결재완료") {
+    } else if (activeTab === "결재완료") {
       url = "/api/hq/approvals/list/submitted/approved";
-    } else if (menu === "결재반려") {
+    } else if (activeTab === "결재반려") {
       url = "/api/hq/approvals/list/submitted/rejected";
     }
+
     if (url) {
       try {
         const { data } = await api.get(url);
