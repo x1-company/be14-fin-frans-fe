@@ -31,7 +31,7 @@
         <div class="template-actions">
           <button class="action-btn edit-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"></path>
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6"></path>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
             수정
@@ -48,7 +48,7 @@
 
       <!-- 결재 플로우 다이어그램 -->
       <div class="flow-diagram">
-        <!-- 메인 결재 플로우 -->
+        <!-- 메인 결재 플로우 (기안자 + 결재자 + 협조자 순서대로) -->
         <div class="main-flow">
           <!-- 기안자 -->
           <div class="flow-node-container">
@@ -65,56 +65,20 @@
             <span class="node-type-label">기안</span>
           </div>
 
-          <!-- 화살표 -->
-          <div class="flow-arrow">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="9,18 15,12 9,6"></polyline>
-            </svg>
-          </div>
+          <!-- 결재 라인 (결재자 + 협조자 순서대로) -->
+          <div v-for="(item, index) in approvalFlow" :key="'flow-' + item.seq + '-' + item.type" class="flow-node-container">
 
-          <!-- 결재자들 -->
-          <div v-for="(approver, index) in flowItems" :key="'approver-' + approver.seq" class="flow-node-container">
-            <div class="flow-node approver-node">
+            <div :class="['flow-node', getNodeClass(item.type)]">
               <div class="node-avatar">
-                <span class="node-label">{{ approver.userName.charAt(0) }}</span>
+                <span class="node-label">{{ item.userName.charAt(0) }}</span>
               </div>
               <div class="node-info">
-                <span class="node-title">{{ approver.userName }}</span>
-                <span class="node-subtitle">{{ approver.positionName }}</span>
-                <span class="node-department">{{ approver.departmentName }}</span>
+                <span class="node-title">{{ item.userName }}</span>
+                <span class="node-subtitle">{{ item.positionName }}</span>
+                <span class="node-department">{{ item.departmentName }}</span>
               </div>
             </div>
-            <span class="node-type-label">{{ approver.seq }}차 결재</span>
-            
-            <!-- 마지막이 아니면 화살표 표시 -->
-            <div v-if="!approver.isLast" class="flow-arrow">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9,18 15,12 9,6"></polyline>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- 협조자 섹션 -->
-        <div v-if="groupedApprovers.COOPERATOR.length > 0" class="cooperator-section">
-          <div class="section-divider">
-            <span class="divider-label">협조</span>
-          </div>
-          <div class="cooperator-flow">
-            <div v-for="cooperator in groupedApprovers.COOPERATOR" :key="'cooperator-' + cooperator.seq" 
-                 class="flow-node-container">
-              <div class="flow-node cooperator-node">
-                <div class="node-avatar">
-                  <span class="node-label">{{ cooperator.userName.charAt(0) }}</span>
-                </div>
-                <div class="node-info">
-                  <span class="node-title">{{ cooperator.userName }}</span>
-                  <span class="node-subtitle">{{ cooperator.positionName }}</span>
-                  <span class="node-department">{{ cooperator.departmentName }}</span>
-                </div>
-              </div>
-              <span class="node-type-label">협조</span>
-            </div>
+            <span class="node-type-label">{{ getNodeTypeLabel(item.type) }}</span>
           </div>
         </div>
 
@@ -195,7 +159,7 @@
                 <div class="member-details">{{ approver.positionName }} · {{ approver.departmentName }}</div>
               </div>
               <div class="member-actions">
-                <span class="member-badge approver-badge">{{ approver.seq }}차 결재</span>
+                <span class="member-badge approver-badge">결재</span>
               </div>
             </div>
           </div>
@@ -310,6 +274,22 @@ const templateDetail = ref([])
 const loading = ref(false)
 const error = ref('')
 
+// 템플릿 상세 정보 조회
+const fetchTemplateDetail = async (templateId) => {
+  loading.value = true
+  error.value = ''
+  
+  try {
+    const { data } = await api.get(`/api/hq/approvals/templates/${templateId}`)
+    templateDetail.value = data
+  } catch (err) {
+    console.error('템플릿 상세 조회 실패:', err)
+    error.value = '템플릿 상세 정보를 불러오는데 실패했습니다.'
+  } finally {
+    loading.value = false
+  }
+}
+
 // 템플릿 변경 감지
 watch(
   () => props.selectedTemplate,
@@ -344,28 +324,36 @@ const groupedApprovers = computed(() => {
   return groups
 })
 
-// 플로우 아이템 (결재자만)
-const flowItems = computed(() => {
-  return groupedApprovers.value.APPROVER.map((approver, index) => ({
-    ...approver,
-    isLast: index === groupedApprovers.value.APPROVER.length - 1
-  }))
+// 결재 플로우 (결재자 + 협조자를 seq 순으로 정렬)
+const approvalFlow = computed(() => {
+  const flowItems = [
+    ...groupedApprovers.value.APPROVER,
+    ...groupedApprovers.value.COOPERATOR
+  ]
+  
+  return flowItems.sort((a, b) => a.seq - b.seq)
 })
 
-// 템플릿 상세 정보 조회
-const fetchTemplateDetail = async (templateId) => {
-  loading.value = true
-  error.value = ''
-  
-  try {
-    const { data } = await api.get(`/api/hq/approvals/templates/${templateId}`)
-    templateDetail.value = data
-  } catch (err) {
-    console.error('템플릿 상세 조회 실패:', err)
-    error.value = '템플릿 상세 정보를 불러오는데 실패했습니다.'
-  } finally {
-    loading.value = false
+// 노드 클래스 반환
+const getNodeClass = (type) => {
+  const classes = {
+    APPROVER: 'approver-node',
+    COOPERATOR: 'cooperator-node',
+    REFERENCE: 'reference-node',
+    RECIPIENT: 'recipient-node'
   }
+  return classes[type] || 'approver-node'
+}
+
+// 노드 타입 라벨 반환 (간단하게)
+const getNodeTypeLabel = (type) => {
+  const labels = {
+    APPROVER: '결재',
+    COOPERATOR: '협조',
+    REFERENCE: '참조',
+    RECIPIENT: '수신'
+  }
+  return labels[type] || '결재'
 }
 
 // 타입 라벨 반환
@@ -488,20 +476,21 @@ const getTypeColor = (type) => {
   justify-content: space-between;
   align-items: center;
   padding: 32px 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
 }
 
 .template-info h2 {
   margin: 0 0 8px 0;
   font-size: 24px;
   font-weight: 700;
+  color: #212529;
 }
 
 .template-name {
   margin: 0;
-  opacity: 0.9;
   font-size: 16px;
+  color: #6c757d;
 }
 
 .template-actions {
@@ -514,20 +503,19 @@ const getTypeColor = (type) => {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  border: 1px solid #dee2e6;
+  background: white;
+  color: #495057;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
 }
 
 .action-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: #f8f9fa;
+  border-color: #adb5bd;
 }
 
 .flow-diagram {
@@ -556,12 +544,14 @@ const getTypeColor = (type) => {
   flex-direction: column;
   align-items: center;
   padding: 20px;
-  border-radius: 16px;
-  min-width: 120px;
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
   text-align: center;
   color: white;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  justify-content: center;
 }
 
 .flow-node:hover {
@@ -597,7 +587,7 @@ const getTypeColor = (type) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
@@ -609,7 +599,7 @@ const getTypeColor = (type) => {
 .node-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .node-title {
@@ -630,7 +620,7 @@ const getTypeColor = (type) => {
 .node-type-label {
   font-size: 12px;
   font-weight: 500;
-  color: #495057;
+  color: #495047;
   background: white;
   padding: 4px 12px;
   border-radius: 12px;
@@ -642,7 +632,7 @@ const getTypeColor = (type) => {
   margin: 0 10px;
 }
 
-.cooperator-section, .additional-section {
+.additional-section {
   margin-top: 40px;
 }
 
@@ -663,7 +653,7 @@ const getTypeColor = (type) => {
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.cooperator-flow, .additional-flow {
+.additional-flow {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
@@ -827,7 +817,7 @@ const getTypeColor = (type) => {
     transform: rotate(90deg);
   }
   
-  .cooperator-flow, .additional-flow {
+  .additional-flow {
     flex-direction: column;
     align-items: center;
   }
