@@ -1,14 +1,26 @@
 <script setup>
+///
 import { ref } from "vue";
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
 import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
 
 const breadcrumbItems = ref();
+
 const updateBreadcrumb = (newItems) => {
   breadcrumbItems.value = newItems;
 };
-const props = defineProps({ approvalList: Array });
+const props = defineProps({
+  approvalList: Array,
+  activeTab: String,
+  handleTabChange: Function,
+});
+
+const emit = defineEmits(["tab-change"]);
+
+const handleTabChange = (tabValue) => {
+  emit("tab-change", tabValue); // InfoView.vue 로 전달
+};
 </script>
 
 <template>
@@ -26,7 +38,11 @@ const props = defineProps({ approvalList: Array });
             :activeTab="1"
             @update-breadcrumb="updateBreadcrumb"
           />
-          <InfoForm :approvalList="approvalList" />
+          <InfoForm
+            :approvalList="approvalList"
+            :activeTab="activeTab"
+            @tab-change="handleTabChange"
+          />
         </div>
       </div>
     </div>

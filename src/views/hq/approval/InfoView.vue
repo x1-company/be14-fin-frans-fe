@@ -3,43 +3,89 @@
     <NavBar />
     <div class="main-container">
       <!-- ✅ 이벤트 수신 연결 -->
-      <SideBar @select-menu="handleApprovalSelect" />
-      <!-- <InfoHeader @select-approval="handleApprovalInfoSelect" /> -->
+      <SideBar
+        :activeTab="activeTab"
+        :counts="approvalCounts"
+        @select-menu="handleSelectMenu"
+        @tab-change="handleTabChange"
+      />
       <!-- ✅ company 전달 -->
-      <Info :approvalList="approvalList" />
+      <Info
+        :approvalList="approvalList"
+        :activeTab="activeTab"
+        @tab-change="handleTabChange"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
-import { useAuthStore } from "@/stores/auth";
+import { ref, watch, onMounted } from "vue";
 import NavBar from "@/components/hq/common/NavBar.vue";
 import SideBar from "@/components/hq/approval/SideBar.vue";
-import Info from "@/components/hq/approval/Info.vue"; // 미구현 컴포넌트 임시 추가
+import Info from "@/components/hq/approval/Info.vue";
 import api from "@/lib/api";
 
-const authStore = useAuthStore();
-const activeMenu = ref("전체");
 const approvalList = ref([]);
 
-watch(
-  activeMenu,
-  async (menu) => {
-    let url = "";
-    console.log("현재 accessToken:", authStore.accessToken);
+const activeMenu = ref("전체");
+const activeTab = ref("전체");
 
-    if (menu === "임시저장") {
+const handleSelectMenu = (menuValue) => {
+  activeMenu.value = menuValue;
+  activeTab.value = menuValue;
+};
+
+const handleTabChange = (tabValue) => {
+  activeTab.value = tabValue;
+};
+
+const approvalCounts = ref({
+  전체: 0,
+  임시저장: 0,
+  결재중: 0,
+  결재완료: 0,
+  결재반려: 0,
+});
+
+const fetchCounts = async () => {
+  const endpoints = {
+    전체: "/api/hq/approvals/list/submitted/all",
+    임시저장: "/api/hq/approvals/list/submitted/draft",
+    결재중: "/api/hq/approvals/list/submitted/in-progress",
+    결재완료: "/api/hq/approvals/list/submitted/approved",
+    결재반려: "/api/hq/approvals/list/submitted/rejected",
+  };
+  for (const key in endpoints) {
+    try {
+      const { data } = await api.get(endpoints[key]);
+      approvalCounts.value[key] = data.length;
+    } catch {
+      approvalCounts.value[key] = 0;
+    }
+  }
+};
+
+onMounted(fetchCounts);
+
+watch(
+  [activeMenu, activeTab],
+  async ([menu, tab]) => {
+    const activeTab = tab || menu;
+    let url = "";
+    console.log(activeTab);
+    if (activeTab === "임시저장") {
       url = "/api/hq/approvals/list/submitted/draft";
-    } else if (menu === "전체") {
+    } else if (activeTab === "전체") {
       url = "/api/hq/approvals/list/submitted/all";
-    } else if (menu === "결재중") {
+    } else if (activeTab === "결재중") {
       url = "/api/hq/approvals/list/submitted/in-progress";
-    } else if (menu === "결재완료") {
+    } else if (activeTab === "결재완료") {
       url = "/api/hq/approvals/list/submitted/approved";
-    } else if (menu === "결재반려") {
+    } else if (activeTab === "결재반려") {
       url = "/api/hq/approvals/list/submitted/rejected";
     }
+
     if (url) {
       try {
         const { data } = await api.get(url);
@@ -52,15 +98,6 @@ watch(
   },
   { immediate: true }
 );
-
-// ✅ 선택된 결재목록 상태 추가
-// const selectedApproval = ref(["임시저장", "결재중", "결재완료", "결재반려"]);
-
-// ✅ SideBar에서 emit할 때 처리할 함수
-const handleApprovalSelect = (approval) => {
-  activeMenu.value = approval;
-  console.log("선택된 결재목록:", approval); // 디버깅용
-};
 </script>
 
 <style scoped>

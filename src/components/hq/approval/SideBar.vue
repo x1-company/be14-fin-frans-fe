@@ -31,14 +31,14 @@
     <div class="tab-headers">
       <div class="tab-container">
         <button
-          @click="activeTab = '상신'"
+          @click="changeTab('상신')"
           :class="['tab-button', { active: activeTab === '상신' }]"
         >
           <SendIcon class="tab-icon" />
           <span>상신</span>
         </button>
         <button
-          @click="activeTab = '수신'"
+          @click="changeTab('수신')"
           :class="['tab-button', { active: activeTab === '수신' }]"
         >
           <InboxIcon class="tab-icon" />
@@ -49,6 +49,7 @@
 
     <!-- Tab Content -->
     <div class="tab-content">
+      <!-- 상신 탭 -->
       <div v-if="activeTab === '상신'" class="tab-panel">
         <div
           class="menu-item"
@@ -56,7 +57,7 @@
           @click="selectMenu('전체')"
         >
           <span class="menu-title">전체</span>
-          <span class="count-badge">12</span>
+          <span class="count-badge">{{ props.counts.전체 }}</span>
         </div>
         <div
           class="menu-item"
@@ -64,7 +65,7 @@
           @click="selectMenu('임시저장')"
         >
           <span class="menu-title">임시저장</span>
-          <span class="count-badge">3</span>
+          <span class="count-badge">{{ props.counts.임시저장 }}</span>
         </div>
         <div
           class="menu-item"
@@ -72,7 +73,7 @@
           @click="selectMenu('결재중')"
         >
           <span class="menu-title">결재중</span>
-          <span class="count-badge">5</span>
+          <span class="count-badge">{{ props.counts.결재중 }}</span>
         </div>
         <div
           class="menu-item"
@@ -80,7 +81,7 @@
           @click="selectMenu('결재완료')"
         >
           <span class="menu-title">결재완료</span>
-          <span class="count-badge">6</span>
+          <span class="count-badge">{{ props.counts.결재완료 }}</span>
         </div>
         <div
           class="menu-item"
@@ -88,11 +89,11 @@
           @click="selectMenu('결재반려')"
         >
           <span class="menu-title">결재반려</span>
-          <span class="count-badge">1</span>
+          <span class="count-badge">{{ props.counts.결재반려 }}</span>
         </div>
       </div>
 
-      <!-- 수신 탭 -->
+      <!-- 수신 탭 (기존 구조 유지) -->
       <div v-if="activeTab === '수신'" class="tab-panel">
         <!-- 전체 -->
         <div class="menu-section">
@@ -623,10 +624,18 @@
       </div>
     </div>
   </div>
+  <!-- 생략 -->
 </template>
 
 <script setup>
 import { ref } from "vue";
+// import {
+//   FileText as FileTextIcon,
+//   Send as SendIcon,
+//   Inbox as InboxIcon,
+//   BarChart3 as BarChart3Icon,
+//   Plus as PlusIcon,
+// } from "lucide-vue-next";
 import {
   FileText as FileTextIcon,
   Send as SendIcon,
@@ -646,37 +655,49 @@ import {
   Calendar as CalendarIcon,
   ChevronDown as ChevronDownIcon,
 } from "lucide-vue-next";
-// import { useAuthStore } from "@/stores/auth";
 
-// 상태 관리
-// const authStore = useAuthStore()
+const emit = defineEmits(["select-menu", "tab-change"]);
+const counts = ref({
+  전체: 0,
+  임시저장: 0,
+  결재중: 0,
+  결재완료: 0,
+  결재반려: 0,
+});
 
-const menus = ["전체", "임시저장", "결재중", "결재완료", "결재반려"];
+const activeTab = ref("상신");
+const activeItem = ref("전체");
 
-const activeTab = ref("outgoing");
-const activeItem = ref("전체", "임시저장", "결재중", "결재완료", "결재반려");
 const openAccordions = ref(["approval-docs", "collaboration-docs"]);
 
-const emit = defineEmits(["select-menu"]);
+// 탭 변경
+const changeTab = (tabValue) => {
+  activeTab.value = tabValue;
+  emit("tab-change", tabValue);
+};
 
-// 메뉴 선택 함수
+// 메뉴 선택
 const selectMenu = (menu) => {
   activeItem.value = menu;
   emit("select-menu", menu);
 };
+const props = defineProps({
+  activeTab: String, // 받기
+  counts: Object,
+});
 
 // 메서드
-const setActiveItem = (item) => {
-  activeItem.value = item;
-};
-
 const toggleAccordion = (accordionId) => {
-  const index = openAccordions.value.indexOf(accordionId);
-  if (index > -1) {
-    openAccordions.value.splice(index, 1);
+  if (openAccordions.value.includes(accordionId)) {
+    openAccordions.value = openAccordions.value.filter(
+      (id) => id !== accordionId
+    );
   } else {
     openAccordions.value.push(accordionId);
   }
+};
+const setActiveItem = (item) => {
+  activeItem.value = item;
 };
 </script>
 

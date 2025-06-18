@@ -5,59 +5,29 @@
       :key="item.id"
       :approval="item"
     /> -->
-    <ApprovalList :items="approvalList" />
-    <!-- <div class="approval-list">
-      <div v-if="approvalList.length === 0" class="empty-state">
-        결재 목록이 없습니다.
-      </div>
-      <div v-else class="approval-items">
-        <div
-          v-for="approval in approvalList"
-          :key="approval.id"
-          class="approval-item"
-        >
-          <div class="approval-item__header">
-            <span class="approval-item__title">{{ approval.title }}</span>
-            <span
-              :class="[
-                'approval-item__status',
-                getStatusClass(approval.status),
-              ]"
-            >
-              {{ getStatusText(approval.status) }}
-            </span>
-          </div>
-          <div class="approval-item__content">
-            <div class="approval-item__info">
-              <span class="approval-item__date">{{
-                formatDate(approval.createdAt)
-              }}</span>
-              <span class="approval-item__author">{{
-                approval.authorName
-              }}</span>
-            </div>
-            <div class="approval-item__description">{{
-              approval.description
-            }}</div>
-          </div>
-        </div>
-      </div>
-    </div> -->
+    <ApprovalList
+      :approvalList="approvalList"
+      :activeTab="activeTab"
+      @tab-change="handleTabChange"
+    />
   </div>
 </template>
 
 <script setup>
 import { defineProps } from "vue";
 import ApprovalList from "@/components/hq/approval/ApprovalList.vue";
-// import { ref, onMounted } from "vue";
-// import ApprovalList from "./ApprovalList.vue";
-// // import api from "@/lib/api";
-// const props = defineProps({ approvalList: Array });
+
+const handleTabChange = (tabValue) => {
+  emit("tab-change", tabValue); // Info.vue 로 전달
+};
+const emit = defineEmits(["tab-change"]);
+
 const props = defineProps({
   approvalList: {
     type: Array,
     required: true,
   },
+  activeTab: { type: String, required: true },
 });
 
 const getStatusClass = (status) => {
@@ -98,6 +68,8 @@ const formatDate = (dateString) => {
   border-radius: 0 0 12px 12px;
   box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
   padding: 24px 32px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .approval-list {
@@ -111,6 +83,8 @@ const formatDate = (dateString) => {
   padding: 48px;
   color: #6c757d;
   font-size: 1.1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .approval-items {
