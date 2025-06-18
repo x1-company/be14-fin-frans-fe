@@ -3,7 +3,10 @@ import { ref, computed } from "vue";
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
 import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
-import ApprovalTemplate from "./ApprovalTemplate.vue";
+import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
+import ApprovalTemplate from "@/components/hq/approval/ApprovalTemplate.vue";
+import ApprovalDashBoard from "./ApprovalDashBoard.vue";
+// import ApprovalTemplate from "./ApprovalTemplate.vue";
 
 const handleTabChange = (tabValue) => {
   emit("tab-change", tabValue); // InfoView.vue 로 전달
@@ -20,17 +23,22 @@ const tabInfo = ref([
   { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." },
 ]);
 
-const activeTab = ref(0); // 기본값 0 (대시보드 탭)
+const activeTabSwitch = ref(0); // 기본값 0 (대시보드 탭)
 
-const title = computed(() => tabInfo.value[activeTab.value].title);
-const desc = computed(() => tabInfo.value[activeTab.value].desc);
+const title = computed(() => tabInfo.value[activeTabSwitch.value].title);
+const desc = computed(() => tabInfo.value[activeTabSwitch.value].desc);
 
-const emit = defineEmits(["update:activeTab", "tab-change"]);
+const emit = defineEmits([
+  "update:activeTab",
+  "tab-change",
+  "active-tab-change",
+]);
 
 const updateTab = (newTabIndex) => {
-  activeTab.value = newTabIndex;
+  activeTabSwitch.value = newTabIndex;
   updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
   emit("update:activeTab", newTabIndex);
+  emit("active-tab-change", newTabIndex); // 부모에게 현재 탭 인덱스 전달
 };
 
 const props = defineProps({
@@ -53,21 +61,27 @@ const props = defineProps({
             :title="title"
             :desc="desc"
             :tabs="['대시보드', '전자결재', '결재템플릿']"
-            :activeTab="activeTab"
+            :activeTab="activeTabSwitch"
             @select-tab="updateTab"
             @update-breadcrumb="updateBreadcrumb"
           />
-          <div v-if="activeTab == 0"> 대시보드 </div>
-          <div v-if="activeTab == 1">
-            <InfoForm
-              :approvalList="approvalList"
-              :activeTab="activeTab"
-              @tab-change="handleTabChange"
-            />
-          </div>
-          <div v-if="activeTab == 2">
-            <ApprovalTemplate :selectedTemplate="selectedTemplate" />
-          </div>
+
+          <!-- 대시보드 -->
+          <ApprovalDashBoard v-if="activeTabSwitch == 0" />
+
+          <!-- 전자결재 -->
+          <InfoForm
+            v-if="activeTabSwitch == 1"
+            :approvalList="approvalList"
+            :activeTab="activeTab"
+            @tab-change="handleTabChange"
+          />
+
+          <!-- 결재템플릿 -->
+          <ApprovalTemplate
+            v-if="activeTabSwitch === 2"
+            :selectedTemplate="props.selectedTemplate"
+          />
         </div>
       </div>
     </div>
