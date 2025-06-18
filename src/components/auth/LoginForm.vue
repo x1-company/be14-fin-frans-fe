@@ -69,6 +69,8 @@ const handleLogin = async () => {
         }
       }
     
+      
+    } else {
       errorMessage.value = result.message || '로그인에 실패했습니다.'
 
       if (result.errorCode === 'ACCOUNT_LOCKED') {
