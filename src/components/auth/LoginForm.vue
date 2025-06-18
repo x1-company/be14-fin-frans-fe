@@ -42,25 +42,33 @@ const handleLogin = async () => {
       if (result.needChangePassword) {
         router.push('/password-change')
       } else {
-
         // 메인 페이지로 이동
         if (result.userType === 'HQ') {
-          if (authStore.departmentName.includes('영업')) {
+          if (authStore.departmentName && authStore.departmentName.includes('영업')) {
             // 가맹점 메인 페이지로
-          } else if (authStore.departmentName.includes('물류')) {
+            // TODO: 실제 경로로 변경 필요
+          } else if (authStore.departmentName && authStore.departmentName.includes('물류')) {
             // 창고 관리 페이지로
-          } else if (authStore.departmentName.includes('인사')) {
+            // TODO: 실제 경로로 변경 필요
+          } else if (authStore.departmentName && authStore.departmentName.includes('인사')) {
             // 인사 관리 페이지로
-            router.push("/hrm")
+            router.push('/hrm')
+          } else {
+            // 기본 페이지로 이동
+            // TODO: 기본 경로로 변경 필요
           }
-          // router.push('/supplier')
         } else if (result.userType === 'FRANCHISE') {
           // 가맹점주 메인 페이지로
+          // TODO: 실제 경로로 변경 필요
         } else if (result.userType === 'SUPPLIER') {
           // 공급처 메인 페이지로
+          // TODO: 실제 경로로 변경 필요
+        } else {
+          // 기본 페이지
+          // TODO: 기본 경로로 변경 필요
         }
       }
-    } else {
+    
       errorMessage.value = result.message || '로그인에 실패했습니다.'
 
       if (result.errorCode === 'ACCOUNT_LOCKED') {

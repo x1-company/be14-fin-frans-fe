@@ -51,7 +51,9 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         console.error("재발급 실패 → 로그인 페이지로 이동");
-        authStore.clearAccessToken();
+        // clearAccessToken 호출 대신 직접 토큰 클리어 (무한 루프 방지)
+        authStore.accessToken = "";
+        localStorage.removeItem("accessToken");
         router.push("/login");
         return Promise.reject(refreshError);
       }
