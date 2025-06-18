@@ -9,6 +9,9 @@
           alt="user profile"
           class="navbar__profile-img"
         />
+        <div v-else class="navbar__profile-placeholder">
+          <UserIcon class="w-4 h-4" />
+        </div>
       </div>
     </div>
 
@@ -41,6 +44,7 @@ import SignatureModal from "./SignatureModal.vue";
 import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
 import { useRouter } from "vue-router";
+import { UserIcon } from 'lucide-vue-next'
 
 const router = useRouter();
 
@@ -74,7 +78,6 @@ const toggleDropdown = () => {
 
 const handleMenuClick = (menuItem) => {
   isDropdownOpen.value = false;
-  console.log("accessToken", auth.accessToken);
 
   switch (menuItem) {
     case "마이 페이지":
@@ -96,14 +99,36 @@ const closeSignatureModal = () => {
 
 const saveSignature = async (signatureData) => {
   try {
-    // 여기서 실제 API 호출로 서명을 저장
-    // 예시: await api.updateUserSignature(signatureData)
 
-    // auth store 업데이트
-    auth.userSignUrl = signatureData;
+    // formData 생성
+    const formData = new FormData()
+    formData.append("files", signatureData, auth.userName + '-signature.png')
+    formData.append("type", "sign")
 
-    console.log("서명이 저장되었습니다:", signatureData);
-    alert("서명이 성공적으로 저장되었습니다.");
+    // 파일 업로드 요청
+    const uploadRes = await api.post('/api/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
+    // DB에 저장할 url 추출
+    const urls = uploadRes.data
+    const signUrl = urls.find(url => url.startsWith('https://'))
+    if (!signUrl) {
+      throw new Error('유효한 서명 URL을 찾을 수 없습니다.')
+    }
+
+    // signUrl 업데이트 요청
+    const res = await api.patch('/api/hq/user/sign', { signUrl })
+
+    // 응답 헤더에서 새 토큰 받아 저장하기
+    const newAccessToken = res.headers['authorization'] || res.headers['Authorization'];
+    if (newAccessToken) {
+      auth.setAccessToken(newAccessToken.replace('Bearer ', ''));
+    }
+
+    alert('서명이 성공적으로 저장되었습니다.')
   } catch (error) {
     console.error("서명 저장 실패:", error);
     alert("서명 저장에 실패했습니다.");
@@ -209,5 +234,16 @@ onUnmounted(() => {
 .dropdown-item:last-child {
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
+}
+
+.navbar__profile-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  background: #e6f0ff;
+  border-radius: 50%;
 }
 </style>

@@ -1,81 +1,95 @@
 <script setup>
 import { ref, computed } from "vue";
+
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
-import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
-import InfoForm from "@/components/hq/approval/InfoForm.vue";
-import ApprovalTemplate from "./ApprovalTemplate.vue";
+import InfoHeader from "@/components/hq/user/common/InfoHeader.vue";
+import UserTypeHeader from "@/components/hq/user/common/UserTypeHeader.vue";
+import HqSearch from "@/components/hq/user/search/HqSearch.vue";
+import FranchiseSearch from "@/components/hq/user/search/FranchiseSearch.vue";
+import SupplierSearch from "@/components/hq/user/search/SupplierSearch.vue";
+import FranchiseRegister from "../register/FranchiseRegister.vue";
+import HqRegister from "../register/HqRegister.vue";
+import SupplierRegister from "../register/SupplierRegister.vue";
 
-const updateBreadcrumb = (newItems) => {
-  breadcrumbItems.value = newItems;
-};
+const props = defineProps({
+  company: Object,
+});
 
-const handleTabChange = (tabValue) => {
-  emit("tab-change", tabValue); // InfoView.vue 로 전달
-};
-
-const breadcrumbItems = ref(["HOME", "결재관리", "대시보드"]);
+const breadcrumbItems = ref(["HOME", "인사관리", "계정 정보", "본사"]);
 const updateBreadcrumb = (newItems) => {
   breadcrumbItems.value = newItems;
 };
 
 const tabInfo = ref([
-    { title: "대시보드", desc: "대시보드입니다." },
-    { title: "전자결재", desc: "전자 결재를 관리할 수 있습니다." },
-    { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." }
+    { title: "계정 정보", desc: "계정 정보 확인 및 수정이 가능합니다." },
+    { title: "계정 등록", desc: "새로운 계정 정보를 등록할 수 있습니다." },
 ])
 
-const activeTab = ref(0); // 기본값 0 (대시보드 탭)
+const activeTab = ref(0)
 
 const title = computed(() => tabInfo.value[activeTab.value].title);
 const desc = computed(() => tabInfo.value[activeTab.value].desc);
 
-const emit = defineEmits(["update:activeTab", "tab-change"]);
-
 const updateTab = (newTabIndex) => {
   activeTab.value = newTabIndex;
-  updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
-  emit("update:activeTab", newTabIndex);
+  const currentUserTypeText = ['본사', '가맹점', '공급처'][currentUserTypeTab.value];
+  updateBreadcrumb(["HOME", "인사관리", tabInfo.value[newTabIndex].title, currentUserTypeText]);
 };
 
-const props = defineProps({
-approvalList: Array,
-selectedTemplate: Object,
-activeTab: String,
-handleTabChange: Function,
-});
+const currentUserTypeTab = ref(0);
+
+const handleUserTypeSelect = (index, tabText) => {
+    currentUserTypeTab.value = index;
+
+    const currentTitle = tabInfo.value[activeTab.value].title;
+
+    updateBreadcrumb(["HOME", "인사관리", currentTitle, tabText]);
+}
 
 </script>
 
 <template>
   <div class="info-container">
     <div class="breadcrumb-container">
-      <Breadcrumb :items="breadcrumbItems || []" />
+      <Breadcrumb :items="breadcrumbItems" />
     </div>
+
+    <!-- Scrollable Content -->
     <div class="info-content">
       <div class="header-banner">
         <div class="info-group">
           <InfoHeader
             :title="title"
             :desc="desc"
-            :tabs="['대시보드', '전자결재', '결재템플릿']"
+            :tabs="['계정 정보', '계정 등록']"
             :activeTab="activeTab"
             @select-tab="updateTab"
             @update-breadcrumb="updateBreadcrumb"
           />
-          <div v-if="activeTab == 0">
-            대시보드
-          </div>
-          <div v-if="activeTab == 1">
-            <InfoForm
-            :approvalList="approvalList"
-            :activeTab="activeTab"
-            @tab-change="handleTabChange"
+          <UserTypeHeader 
+            :active-tab="currentUserTypeTab"
+            @select-user-type="handleUserTypeSelect"
           />
-          </div>
-          <div v-if="activeTab == 2">
-            <ApprovalTemplate :selectedTemplate="selectedTemplate" />
-          </div>
         </div>
+      </div>
+      <div v-if="currentUserTypeTab === 0 && activeTab === 0">
+        <HqSearch />
+      </div>
+      <div v-if="currentUserTypeTab === 1 && activeTab === 0">
+        <FranchiseSearch />
+      </div>
+      <div v-if="currentUserTypeTab === 2 && activeTab === 0">
+        <SupplierSearch />
+      </div>
+
+      <div v-if="currentUserTypeTab === 0 && activeTab === 1">
+        <HqRegister />
+      </div>
+      <div v-if="currentUserTypeTab === 1 && activeTab === 1">
+        <FranchiseRegister />
+      </div>
+      <div v-if="currentUserTypeTab === 2 && activeTab === 1">
+        <SupplierRegister />
       </div>
     </div>
   </div>
@@ -108,7 +122,7 @@ handleTabChange: Function,
 .header-banner {
   /* background: blue; */
   color: white;
-  padding: 32px 24px;
+  padding: 32px 24px 0 24px;
 }
 
 .page-title {

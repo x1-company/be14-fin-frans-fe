@@ -3,30 +3,85 @@
     <NavBar />
     <div class="main-container">
       <!-- ✅ 이벤트 수신 연결 -->
+      
+      <!-- 대시보드 탭 -->
+      <div v-if="activeTab === 0">
+        대시보드
+      </div>
+      
+      <!-- 전자결재 탭 -->
       <SideBar
         :activeTab="activeTab"
         :counts="approvalCounts"
         @select-menu="handleSelectMenu"
         @tab-change="handleTabChange"
+        v-if="activeTab === 1"
       />
-      <!-- ✅ company 전달 -->
+      
+      
+      <!-- 결재템플릿 탭 -->
+      <TemplateSideBar 
+        v-if="activeTab === 2" 
+        ref="templateSidebarRef"
+        :selectedTemplate="selectedTemplate"
+        @select-template="handleTemplateSelect" 
+      />
+      
+      <!-- Info 컴포넌트에 selectedTemplate 전달 -->
       <Info
         :approvalList="approvalList"
         :activeTab="activeTab"
+        :selectedTemplate="selectedTemplate"
         @tab-change="handleTabChange"
+        @update:activeTab="handleTabChange"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, nextTick, onMounted } from "vue";
+import { useAuthStore } from "@/stores/auth";
 import NavBar from "@/components/hq/common/NavBar.vue";
 import SideBar from "@/components/hq/approval/SideBar.vue";
 import Info from "@/components/hq/approval/Info.vue";
 import api from "@/lib/api";
+import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
 
 const approvalList = ref([]);
+const activeTab = ref(0); // 기본값 0 (대시보드 탭)
+
+// 선택된 템플릿 상태 추가
+const selectedTemplate = ref(null);
+
+// 템플릿 사이드바 참조
+const templateSidebarRef = ref(null);
+
+// 탭 변경 처리 함수
+const handleTabChange = async (val) => {
+  const prevTab = activeTab.value;
+  activeTab.value = val;
+  
+  // 템플릿 탭으로 변경된 경우 템플릿 목록 새로고침
+  if (val === 2) {
+    await nextTick();
+    if (templateSidebarRef.value) {
+      templateSidebarRef.value.refreshTemplates();
+    }
+  }
+};
+
+// SideBar에서 emit할 때 처리할 함수
+const handleApprovalSelect = (approval) => {
+  activeMenu.value = approval;
+  console.log("선택된 결재목록:", approval);
+};
+
+// TemplateSideBar에서 템플릿 선택 시 처리할 함수
+const handleTemplateSelect = (template) => {
+  selectedTemplate.value = template;
+  console.log("선택된 템플릿:", template);
+};
 
 const activeMenu = ref("전체");
 const activeTab = ref("전체");

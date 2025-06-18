@@ -14,10 +14,11 @@
           <h3>현재 서명</h3>
           <div class="signature-display">
             <img 
-              v-if="currentSignature" 
+              v-if="currentSignature && showImage" 
               :src="currentSignature" 
-              alt="현재 서명" 
+              alt="현재 서명이 없습니다" 
               class="signature-img"
+              @error="handleImageError"
             />
             <div v-else class="no-signature">
               등록된 서명이 없습니다
@@ -117,6 +118,28 @@ const props = defineProps({
   }
 })
 
+const showImage = ref(true)
+
+const handleImageError = () => {
+  showImage.value = false
+  console.error('이미지 로드 실패: 현재 서명이 없습니다.')
+}
+
+const base64ToBlob = (base64Data) => {
+  const [header, base64String] = base64Data.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const byteString = atob(base64String);
+  const arrayBuffer = new ArrayBuffer(byteString.length);
+  const intArray = new Uint8Array(arrayBuffer);
+
+  for (let i = 0; i < byteString.length; i++) {
+    intArray[i] = byteString.charCodeAt(i);
+  }
+
+  return new Blob([intArray], { type: mime });
+}
+
+
 const emit = defineEmits(['close', 'save'])
 
 const activeTab = ref('draw')
@@ -208,7 +231,7 @@ const clearCanvas = () => {
 const saveDrawnSignature = () => {
   if (canvasRef.value) {
     const dataURL = canvasRef.value.toDataURL('image/png')
-    emit('save', dataURL)
+    emit('save', base64ToBlob(dataURL))
     closeModal()
   }
 }
@@ -240,7 +263,7 @@ const removeUploadedImage = () => {
 
 const saveUploadedSignature = () => {
   if (uploadedImage.value) {
-    emit('save', uploadedImage.value)
+    emit('save', base64ToBlob(uploadedImage.value))
     closeModal()
   }
 }
@@ -350,6 +373,7 @@ const closeModal = () => {
   margin: 0 0 12px 0;
   font-size: 1.1rem;
   font-weight: 500;
+  color: #374151;
 }
 
 .signature-display {
