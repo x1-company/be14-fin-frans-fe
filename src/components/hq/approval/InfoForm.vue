@@ -1,315 +1,193 @@
 <template>
   <div class="info-form">
-    <div
-      v-for="(section, sectionIdx) in getFormSections(supplierDetail)"
-      :key="sectionIdx"
-      class="info-section"
-    >
-      <div class="info-section__header">
-        <img
-          v-if="section.icon"
-          :src="section.icon"
-          class="info-section__icon"
-        />
-        <span>{{ section.title }}</span>
-        <button
-          v-if="section.title === '기본 정보'"
-          class="info-section__edit-button"
-          >수정</button
-        >
+    <!-- <ApprovalList
+      v-for="item in approvalList"
+      :key="item.id"
+      :approval="item"
+    /> -->
+    <ApprovalList :items="approvalList" />
+    <!-- <div class="approval-list">
+      <div v-if="approvalList.length === 0" class="empty-state">
+        결재 목록이 없습니다.
       </div>
-      <div class="info-section__body">
+      <div v-else class="approval-items">
         <div
-          v-for="(row, rowIdx) in section.items"
-          :key="rowIdx"
-          :class="[
-            'info-section__row',
-            { 'has-underline': row.some((item) => item.underline) },
-          ]"
+          v-for="approval in approvalList"
+          :key="approval.id"
+          class="approval-item"
         >
-          <div
-            v-for="(item, itemIdx) in row"
-            :key="itemIdx"
-            class="info-section__item"
-          >
-            <label v-if="item.label">{{ item.label }}</label>
-            <div class="info-item-content">
-              <img v-if="item.icon" :src="item.icon" class="info-item__icon" />
-              <span v-if="item.type === 'badge'" class="info-item__badge">{{
-                item.value
+          <div class="approval-item__header">
+            <span class="approval-item__title">{{ approval.title }}</span>
+            <span
+              :class="[
+                'approval-item__status',
+                getStatusClass(approval.status),
+              ]"
+            >
+              {{ getStatusText(approval.status) }}
+            </span>
+          </div>
+          <div class="approval-item__content">
+            <div class="approval-item__info">
+              <span class="approval-item__date">{{
+                formatDate(approval.createdAt)
               }}</span>
-              <template v-else-if="item.label === '주소'">
-                <div>
-                  <div>{{ item.value }}</div>
-                  <div class="info-item__zipcode"
-                    >우편번호: {{ item.zipcode }}</div
-                  >
-                </div>
-              </template>
-              <span v-else>{{ item.value }}</span>
+              <span class="approval-item__author">{{
+                approval.authorName
+              }}</span>
             </div>
+            <div class="approval-item__description">{{
+              approval.description
+            }}</div>
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue";
-import axios from "axios";
-import api from "@/lib/api";
-
-// 아이콘 이미지 임포트
-import basicInfoIcon from "@/assets/Info.png";
-import contactInfoIcon from "@/assets/phone1.png";
-import phoneIcon from "@/assets/phone.png";
-import userIcon from "@/assets/user.png";
-import calendarIcon from "@/assets/calendar.png";
-import addressIcon from "@/assets/address.png";
-import mailIcon from "@/assets/email.png";
-
+import { defineProps } from "vue";
+import ApprovalList from "@/components/hq/approval/ApprovalList.vue";
+// import { ref, onMounted } from "vue";
+// import ApprovalList from "./ApprovalList.vue";
+// // import api from "@/lib/api";
+// const props = defineProps({ approvalList: Array });
 const props = defineProps({
-  supplierId: {
-    type: [Number, String],
-    required: false,
+  approvalList: {
+    type: Array,
+    required: true,
   },
 });
 
-const supplierDetail = ref(null);
+const getStatusClass = (status) => {
+  const statusMap = {
+    DRAFT: "status-draft",
+    IN_PROGRESS: "status-progress",
+    APPROVED: "status-approved",
+    REJECTED: "status-rejected",
+  };
+  return statusMap[status] || "";
+};
 
-// InfoForm이 기대하는 sections 형태로 데이터 변환
-function getFormSections(detail) {
-  if (!detail) return [];
+const getStatusText = (status) => {
+  const statusMap = {
+    DRAFT: "임시저장",
+    IN_PROGRESS: "결재 중",
+    APPROVED: "결재완료",
+    REJECTED: "결재반려",
+  };
+  return statusMap[status] || status;
+};
 
-  return [
-    {
-      title: "기본 정보",
-      icon: basicInfoIcon,
-      items: [
-        [
-          { label: "공급처코드", value: detail.code },
-          { label: "사업자번호", value: detail.businessNumber },
-        ],
-        [
-          {
-            label: "거래상태",
-            value: detail.isActive ? "거래중" : "거래중단",
-            type: "badge",
-          },
-          {
-            label: "계약일자",
-            value: detail.signedAt ? detail.signedAt.split("T")[0] : "",
-            icon: calendarIcon,
-          },
-        ],
-        [
-          { label: "공급처명", value: detail.name },
-          {
-            label: "주소",
-            value: detail.address,
-            icon: addressIcon,
-            zipcode: detail.zipcode,
-            span: 2,
-          },
-        ],
-        [{ label: "대표자", value: detail.ceoName }],
-      ],
-    },
-    {
-      title: "연락처 정보",
-      icon: contactInfoIcon,
-      items: [
-        [
-          {
-            label: "회사 연락처",
-            value: detail.companyPhone,
-            icon: phoneIcon,
-            underline: true,
-          },
-        ],
-        [
-          {
-            label: "담당자 연락처",
-            value: detail.supplierPhone || "",
-            icon: phoneIcon,
-          },
-          {
-            label: "담당자 이메일",
-            value: detail.supplierEmail || "",
-            icon: mailIcon,
-          },
-        ],
-        [
-          {
-            label: "담당자 이름",
-            value: detail.supplierName || "",
-            icon: userIcon,
-          },
-        ],
-      ],
-    },
-  ];
-}
-
-// 상세 정보 가져오는 함수
-async function fetchSupplierDetail(id) {
-  if (!id) {
-    supplierDetail.value = null;
-    return;
-  }
-  try {
-    const res = await api.get(`/api/hq/suppliers/detail/${id}`);
-    supplierDetail.value = res.data;
-  } catch (e) {
-    supplierDetail.value = null;
-    console.error(`공급처 상세 조회 실패 (ID: ${id})`, e);
-  }
-}
-
-// 컴포넌트 마운트 시 초기 데이터 로드
-onMounted(() => {
-  fetchSupplierDetail(props.supplierId);
-});
-
-// supplierId prop이 변경될 때마다 데이터 다시 로드
-watch(
-  () => props.supplierId,
-  (newId) => {
-    fetchSupplierDetail(newId);
-  },
-  { immediate: true }
-);
-
-const tabs = ["전체", "임시저장", "결재 중", "결재 완료", "결재 반려"];
-const activeTab = ref("전체");
-
-// 예시 데이터
-const groupedApprovals = ref({
-  "2025.05.30": [
-    /* ... */
-  ],
-  "2025.06.01": [
-    /* ... */
-  ],
-});
-
-function onTabChange(tab) {
-  activeTab.value = tab;
-  // 실제로는 탭에 따라 데이터 필터링
-}
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 </script>
 
 <style scoped>
 .info-form {
-  /* background: #f8faff; */
   background: #fff;
   border-radius: 0 0 12px 12px;
   box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
-  padding: 40px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.info-section {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   padding: 24px 32px;
 }
 
-.info-section__header {
-  display: flex;
-  align-items: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #222;
-  margin-bottom: 20px;
-  gap: 10px;
-}
-
-.info-section__icon {
-  width: 24px;
-  height: 24px;
-}
-
-.info-section__body {
+.approval-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.info-section__row {
-  display: flex;
-  gap: 40px;
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: #6c757d;
+  font-size: 1.1rem;
 }
 
-.info-section__row.has-underline {
-  border-bottom: 1px solid #eee;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-}
-
-.info-section__item {
-  flex: 1;
+.approval-items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 16px;
 }
 
-.info-section__item label {
-  font-size: 0.95rem;
-  color: #888;
-  margin-bottom: 2px;
-}
-
-.info-item-content {
-  display: flex;
-  align-items: center;
-  font-size: 1.05rem;
-  color: #222;
-  font-weight: 500;
-}
-
-.info-item__icon {
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
-  opacity: 0.7;
-}
-
-.info-item__badge {
-  background: #e3f8ea;
-  color: #3bb77e;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border-radius: 6px;
-  padding: 2px 8px;
-}
-
-.info-section__edit-button {
-  background: none;
-  border: 1px solid #ffffffa0; /* 흰색 테두리 */
-  color: #fff;
-  padding: 8px 16px;
+.approval-item {
+  background: #fff;
+  border: 1px solid #e9ecef;
   border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-left: auto; /* 기본 정보 타이틀 옆으로 보내기 */
-  color: #4066fa; /* 파란색으로 변경 */
-  border-color: #4066fa; /* 파란색 테두리 */
-  transition: background-color 0.2s, border-color 0.2s;
-}
-.info-section__edit-button:hover {
-  background-color: #4066fa10; /* 호버 시 약간 밝아지게 */
-  border-color: #4066fa;
+  padding: 16px;
+  transition: all 0.2s ease;
 }
 
-.info-item__zipcode {
-  color: #b0b8c1;
-  font-size: 0.98rem;
-  margin-top: 2px;
+.approval-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.approval-item__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.approval-item__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+.approval-item__status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.status-draft {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.status-progress {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-approved {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-rejected {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.approval-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.approval-item__info {
+  display: flex;
+  gap: 16px;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.approval-item__description {
+  color: #495057;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 </style>

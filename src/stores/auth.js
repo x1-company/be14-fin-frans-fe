@@ -46,12 +46,14 @@ export const useAuthStore = defineStore("auth", {
     setAccessToken(token) {
       this.accessToken = token;
       // 개발 편의를 위한 로컬 스토리지 저장
-      localStorage.setItem("accessToken", token); // ✅ 저장
+
+      localStorage.setItem("accessToken", token); 
     },
     clearAccessToken() {
       this.accessToken = "";
+
       // 개발 편의를 위한 로컬 스토리지 저장
-      localStorage.removeItem("accessToken"); // ✅ 삭제
+      localStorage.removeItem("accessToken");
     },
   },
 });

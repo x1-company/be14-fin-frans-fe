@@ -3,8 +3,8 @@ import { ref, onMounted, computed } from "vue";
 import api from "@/lib/api";
 
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
-import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
-import InfoForm from "@/components/hq/approval/InfoForm.vue";
+import InfoHeader from "@/components/hq/supplier/InfoHeader.vue";
+import InfoForm from "@/components/hq/supplier/InfoForm.vue";
 
 const props = defineProps({
   company: Object,
