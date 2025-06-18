@@ -5,10 +5,6 @@ import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
 import ApprovalTemplate from "./ApprovalTemplate.vue";
 
-const updateBreadcrumb = (newItems) => {
-  breadcrumbItems.value = newItems;
-};
-
 const handleTabChange = (tabValue) => {
   emit("tab-change", tabValue); // InfoView.vue 로 전달
 };
@@ -19,10 +15,10 @@ const updateBreadcrumb = (newItems) => {
 };
 
 const tabInfo = ref([
-    { title: "대시보드", desc: "대시보드입니다." },
-    { title: "전자결재", desc: "전자 결재를 관리할 수 있습니다." },
-    { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." }
-])
+  { title: "대시보드", desc: "대시보드입니다." },
+  { title: "전자결재", desc: "전자 결재를 관리할 수 있습니다." },
+  { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." },
+]);
 
 const activeTab = ref(0); // 기본값 0 (대시보드 탭)
 
@@ -38,12 +34,11 @@ const updateTab = (newTabIndex) => {
 };
 
 const props = defineProps({
-approvalList: Array,
-selectedTemplate: Object,
-activeTab: String,
-handleTabChange: Function,
+  approvalList: Array,
+  selectedTemplate: Object,
+  activeTab: String,
+  handleTabChange: Function,
 });
-
 </script>
 
 <template>
@@ -62,15 +57,13 @@ handleTabChange: Function,
             @select-tab="updateTab"
             @update-breadcrumb="updateBreadcrumb"
           />
-          <div v-if="activeTab == 0">
-            대시보드
-          </div>
+          <div v-if="activeTab == 0"> 대시보드 </div>
           <div v-if="activeTab == 1">
             <InfoForm
-            :approvalList="approvalList"
-            :activeTab="activeTab"
-            @tab-change="handleTabChange"
-          />
+              :approvalList="approvalList"
+              :activeTab="activeTab"
+              @tab-change="handleTabChange"
+            />
           </div>
           <div v-if="activeTab == 2">
             <ApprovalTemplate :selectedTemplate="selectedTemplate" />
