@@ -57,6 +57,10 @@ api.interceptors.response.use(
       }
     }
 
+    const message = error.response?.data?.message || "요청이 실패했습니다. 잠시 후 다시 시도해주세요.";
+
+    alert(message);
+
     return Promise.reject(error);
   }
 );

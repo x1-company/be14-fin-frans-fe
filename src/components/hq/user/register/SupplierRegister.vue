@@ -444,7 +444,6 @@ const handleSubmit = async () => {
     resetForm()
   } catch (error) {
     console.error('계정 등록 실패:', error)
-    alert('계정 등록에 실패했습니다. 다시 시도해주세요.')
   } finally {
     isLoading.value = false
   }
@@ -664,10 +663,6 @@ const handleSubmit = async () => {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-height: 300px;
   overflow-y: auto;
-}
-
-.search-results-content {
-  /* No additional styling needed */
 }
 
 .search-result-item {
