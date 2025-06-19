@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
 import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
 import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
 import ApprovalTemplate from "@/components/hq/approval/ApprovalTemplate.vue";
 import ApprovalDashBoard from "./ApprovalDashBoard.vue";
+import ApprovalRegistration from "@/components/hq/approval/ApprovalRegistration.vue";
 // import ApprovalTemplate from "./ApprovalTemplate.vue";
 
 const handleTabChange = (tabValue) => {
@@ -25,6 +26,30 @@ const tabInfo = ref([
 
 const activeTabSwitch = ref(0); // 기본값 0 (대시보드 탭)
 
+// props로 받은 activeTab 값이 변경될 때 activeTabSwitch 업데이트
+const props = defineProps({
+  approvalList: Array,
+  selectedTemplate: Object,
+  activeTab: String,
+  handleTabChange: Function,
+  isRegistrationMode: Boolean,
+});
+
+// props.activeTab 값이 변경될 때 activeTabSwitch 업데이트
+watch(
+  () => props.activeTab,
+  (newValue) => {
+    if (newValue === "전자결재" || newValue === "1") {
+      activeTabSwitch.value = 1;
+    } else if (newValue === "결재템플릿" || newValue === "2") {
+      activeTabSwitch.value = 2;
+    } else if (newValue === "대시보드" || newValue === "0") {
+      activeTabSwitch.value = 0;
+    }
+  },
+  { immediate: true }
+);
+
 const title = computed(() => tabInfo.value[activeTabSwitch.value].title);
 const desc = computed(() => tabInfo.value[activeTabSwitch.value].desc);
 
@@ -32,6 +57,7 @@ const emit = defineEmits([
   "update:activeTab",
   "tab-change",
   "active-tab-change",
+  "toggle-registration-mode",
 ]);
 
 const updateTab = (newTabIndex) => {
@@ -39,14 +65,25 @@ const updateTab = (newTabIndex) => {
   updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
   emit("update:activeTab", newTabIndex);
   emit("active-tab-change", newTabIndex); // 부모에게 현재 탭 인덱스 전달
+
+  // 전자결재 탭을 선택할 때 기본값으로 "전체" 설정
+  if (newTabIndex === 1) {
+    emit("tab-change", "전체");
+    // 전자결재 탭을 클릭할 때만 등록 모드 비활성화
+    emit("toggle-registration-mode", false);
+  }
 };
 
-const props = defineProps({
-  approvalList: Array,
-  selectedTemplate: Object,
-  activeTab: String,
-  handleTabChange: Function,
-});
+const handleToggleRegistrationMode = (value) => {
+  if (value === true) {
+    // 결재 등록 모드로 전환할 때만 전자결재 탭으로 이동
+    activeTabSwitch.value = 1;
+    updateBreadcrumb(["HOME", "결재관리", "전자결재"]);
+    emit("update:activeTab", 1);
+    emit("active-tab-change", 1);
+  }
+  emit("toggle-registration-mode", value);
+};
 </script>
 
 <template>
@@ -71,10 +108,17 @@ const props = defineProps({
 
           <!-- 전자결재 -->
           <InfoForm
-            v-if="activeTabSwitch == 1"
+            v-if="activeTabSwitch == 1 && !isRegistrationMode"
             :approvalList="approvalList"
             :activeTab="activeTab"
             @tab-change="handleTabChange"
+          />
+
+          <!-- 결재 등록 -->
+          <ApprovalRegistration
+            v-if="activeTabSwitch == 1 && isRegistrationMode"
+            :selectedTemplate="props.selectedTemplate"
+            @cancel="(value) => handleToggleRegistrationMode(value)"
           />
 
           <!-- 결재템플릿 -->
