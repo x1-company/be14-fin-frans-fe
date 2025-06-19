@@ -1,5 +1,11 @@
 <template>
   <div class="template-sidebar">
+    <!-- 템플릿 등록 버튼 -->
+    <div class="register-button-container">
+      <button @click="openRegisterModal" class="register-button">
+        템플릿 등록
+      </button>
+    </div>
     <!-- 검색창 -->
     <div class="search-container">
       <div class="search-box">
@@ -78,12 +84,20 @@
       </svg>
       <p>등록된 템플릿이 없습니다.</p>
     </div>
+
+    <!-- 템플릿 등록 모달 -->
+    <TemplateRegisterModal 
+      v-if="showRegisterModal"
+      @close="closeRegisterModal"
+      @success="handleRegisterSuccess"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import api from "@/lib/api";
+import TemplateRegisterModal from './TemplateRegisterModal.vue'
 
 // props로 외부에서 선택된 템플릿 받기
 const props = defineProps({
@@ -96,6 +110,7 @@ const selectedTemplateId = ref(null);
 const searchQuery = ref("");
 const loading = ref(false);
 const error = ref("");
+const showRegisterModal = ref(false)
 
 // 이벤트 정의
 const emit = defineEmits(["select-template"]);
@@ -172,6 +187,20 @@ onMounted(() => {
 defineExpose({
   refreshTemplates: fetchTemplates,
 });
+
+// 모달 관련 함수
+const openRegisterModal = () => {
+  showRegisterModal.value = true
+}
+
+const closeRegisterModal = () => {
+  showRegisterModal.value = false
+}
+
+const handleRegisterSuccess = () => {
+  closeRegisterModal()
+  fetchTemplates() // 템플릿 목록 새로고침
+}
 </script>
 
 <style scoped>
@@ -360,5 +389,34 @@ defineExpose({
 
 .template-list::-webkit-scrollbar-thumb:hover {
   background: #adb5bd;
+}
+
+.register-button-container {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+  background: white;
+  max-height: 100px;;
+}
+
+.register-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.register-button:hover {
+  background: #5a67d8;
 }
 </style>
