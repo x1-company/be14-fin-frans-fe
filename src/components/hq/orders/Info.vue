@@ -1,6 +1,6 @@
 <script setup>
 import InfoHeader from './InfoHeader.vue';
-import InfoForm from './InfoForm.vue';
+import InfoForm from './list/InfoForm.vue';
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
 import { ref } from 'vue';
 
