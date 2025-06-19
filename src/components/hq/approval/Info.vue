@@ -1,91 +1,3 @@
-<script setup>
-import { ref, computed, watch } from "vue";
-import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
-import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
-import InfoForm from "@/components/hq/approval/InfoForm.vue";
-import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
-import ApprovalTemplate from "@/components/hq/approval/ApprovalTemplate.vue";
-import ApprovalDashBoard from "./ApprovalDashBoard.vue";
-import ApprovalRegistration from "@/components/hq/approval/ApprovalRegistration.vue";
-// import ApprovalTemplate from "./ApprovalTemplate.vue";
-
-const handleTabChange = (tabValue) => {
-  emit("tab-change", tabValue); // InfoView.vue 로 전달
-};
-
-const breadcrumbItems = ref(["HOME", "결재관리", "대시보드"]);
-const updateBreadcrumb = (newItems) => {
-  breadcrumbItems.value = newItems;
-};
-
-const tabInfo = ref([
-  { title: "대시보드", desc: "대시보드입니다." },
-  { title: "전자결재", desc: "전자 결재를 관리할 수 있습니다." },
-  { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." },
-]);
-
-const activeTabSwitch = ref(0); // 기본값 0 (대시보드 탭)
-
-// props로 받은 activeTab 값이 변경될 때 activeTabSwitch 업데이트
-const props = defineProps({
-  approvalList: Array,
-  selectedTemplate: { type: Object, default: null },
-  activeTab: String,
-  handleTabChange: Function,
-  isRegistrationMode: Boolean,
-});
-
-// props.activeTab 값이 변경될 때 activeTabSwitch 업데이트
-watch(
-  () => props.activeTab,
-  (newValue) => {
-    if (newValue === "전자결재" || newValue === "1") {
-      activeTabSwitch.value = 1;
-    } else if (newValue === "결재템플릿" || newValue === "2") {
-      activeTabSwitch.value = 2;
-    } else if (newValue === "대시보드" || newValue === "0") {
-      activeTabSwitch.value = 0;
-    }
-  },
-  { immediate: true }
-);
-
-const title = computed(() => tabInfo.value[activeTabSwitch.value].title);
-const desc = computed(() => tabInfo.value[activeTabSwitch.value].desc);
-
-const emit = defineEmits([
-  "update:activeTab",
-  "tab-change",
-  "active-tab-change",
-  "toggle-registration-mode",
-]);
-
-const updateTab = (newTabIndex) => {
-  activeTabSwitch.value = newTabIndex;
-  updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
-  emit("update:activeTab", newTabIndex);
-  emit("active-tab-change", newTabIndex); // 부모에게 현재 탭 인덱스 전달
-
-  // 전자결재 탭을 선택할 때 기본값으로 "전체" 설정
-  if (newTabIndex === 1) {
-    emit("tab-change", "전체");
-    // 전자결재 탭을 클릭할 때만 등록 모드 비활성화
-    emit("toggle-registration-mode", false);
-  }
-};
-
-const handleToggleRegistrationMode = (value) => {
-  if (value === true) {
-    // 결재 등록 모드로 전환할 때만 전자결재 탭으로 이동
-    activeTabSwitch.value = 1;
-    updateBreadcrumb(["HOME", "결재관리", "전자결재"]);
-    emit("update:activeTab", 1);
-    emit("active-tab-change", 1);
-  }
-  emit("toggle-registration-mode", value);
-};
-</script>
-
 <template>
   <div class="info-container">
     <div class="breadcrumb-container">
@@ -125,12 +37,131 @@ const handleToggleRegistrationMode = (value) => {
           <ApprovalTemplate
             v-if="activeTabSwitch === 2"
             :selectedTemplate="props.selectedTemplate"
+            :reorderChanges="props.reorderChanges"
+            @template-deleted="handleTemplateDeleted"
+            @template-updated="handleTemplateUpdated"
+            @reorder-mode-changed="handleReorderModeChanged"
+            @reorder-complete="handleReorderComplete"
+            @reorder-cancel="handleReorderCancel"
           />
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { ref, computed, watch } from "vue";
+import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
+import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
+import InfoForm from "@/components/hq/approval/InfoForm.vue";
+import ApprovalTemplate from "@/components/hq/approval/ApprovalTemplate.vue";
+import ApprovalDashBoard from "./ApprovalDashBoard.vue";
+import ApprovalRegistration from "@/components/hq/approval/ApprovalRegistration.vue";
+
+const handleTabChange = (tabValue) => {
+  emit("tab-change", tabValue); // InfoView.vue 로 전달
+};
+
+const breadcrumbItems = ref(["HOME", "결재관리", "대시보드"]);
+const updateBreadcrumb = (newItems) => {
+  breadcrumbItems.value = newItems;
+};
+
+const tabInfo = ref([
+  { title: "대시보드", desc: "대시보드입니다." },
+  { title: "전자결재", desc: "전자 결재를 관리할 수 있습니다." },
+  { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." },
+]);
+
+const activeTabSwitch = ref(0); // 기본값 0 (대시보드 탭)
+
+// props로 받은 activeTab 값이 변경될 때 activeTabSwitch 업데이트
+const props = defineProps({
+  approvalList: Array,
+  selectedTemplate: { type: Object, default: null },
+  activeTab: String,
+  handleTabChange: Function,
+  isRegistrationMode: Boolean,
+  reorderChanges: Array,
+});
+
+// props.activeTab 값이 변경될 때 activeTabSwitch 업데이트
+watch(
+  () => props.activeTab,
+  (newValue) => {
+    if (newValue === "전자결재" || newValue === "1") {
+      activeTabSwitch.value = 1;
+    } else if (newValue === "결재템플릿" || newValue === "2") {
+      activeTabSwitch.value = 2;
+    } else if (newValue === "대시보드" || newValue === "0") {
+      activeTabSwitch.value = 0;
+    }
+  },
+  { immediate: true }
+);
+
+const title = computed(() => tabInfo.value[activeTabSwitch.value].title);
+const desc = computed(() => tabInfo.value[activeTabSwitch.value].desc);
+
+const emit = defineEmits([
+  "update:activeTab",
+  "tab-change",
+  "active-tab-change",
+  "toggle-registration-mode",
+  "template-deleted",
+  "template-updated",
+  "reorder-mode-changed",
+  "reorder-complete",
+  "reorder-cancel"
+]);
+
+const updateTab = (newTabIndex) => {
+  activeTabSwitch.value = newTabIndex;
+  updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
+  emit("update:activeTab", newTabIndex);
+  emit("active-tab-change", newTabIndex); // 부모에게 현재 탭 인덱스 전달
+
+  // 전자결재 탭을 선택할 때 기본값으로 "전체" 설정
+  if (newTabIndex === 1) {
+    emit("tab-change", "전체");
+    // 전자결재 탭을 클릭할 때만 등록 모드 비활성화
+    emit("toggle-registration-mode", false);
+  }
+};
+
+const handleToggleRegistrationMode = (value) => {
+  if (value === true) {
+    // 결재 등록 모드로 전환할 때만 전자결재 탭으로 이동
+    activeTabSwitch.value = 1;
+    updateBreadcrumb(["HOME", "결재관리", "전자결재"]);
+    emit("update:activeTab", 1);
+    emit("active-tab-change", 1);
+  }
+  emit("toggle-registration-mode", value);
+};
+
+// 템플릿 관련 이벤트 핸들러
+const handleTemplateDeleted = () => {
+  emit("template-deleted");
+};
+
+const handleTemplateUpdated = () => {
+  emit("template-updated");
+};
+
+const handleReorderModeChanged = (mode) => {
+  emit("reorder-mode-changed", mode);
+};
+
+const handleReorderComplete = () => {
+  emit("reorder-complete");
+};
+
+const handleReorderCancel = () => {
+  emit("reorder-cancel");
+};
+</script>
 
 <style scoped>
 .info-container {
@@ -142,7 +173,6 @@ const handleToggleRegistrationMode = (value) => {
 }
 
 .info-header {
-  /* background: transparent; */
   border-bottom: 1px solid #e9ecef;
 }
 
@@ -157,7 +187,6 @@ const handleToggleRegistrationMode = (value) => {
 }
 
 .header-banner {
-  /* background: blue; */
   color: white;
   padding: 32px 24px;
 }
