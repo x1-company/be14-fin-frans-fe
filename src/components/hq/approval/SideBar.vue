@@ -20,7 +20,7 @@
           <BarChart3Icon class="action-icon" />
           <span>대시보드</span>
         </button>
-        <button class="action-btn">
+        <button class="action-btn" @click="handleRegisterApproval">
           <PlusIcon class="action-icon" />
           <span>결재 작성</span>
         </button>
@@ -31,15 +31,15 @@
     <div class="tab-headers">
       <div class="tab-container">
         <button
-          @click="activeTab = 'outgoing'"
-          :class="['tab-button', { active: activeTab === 'outgoing' }]"
+          @click="changeTab('상신')"
+          :class="['tab-button', { active: activeTab === '상신' }]"
         >
           <SendIcon class="tab-icon" />
           <span>상신</span>
         </button>
         <button
-          @click="activeTab = 'incoming'"
-          :class="['tab-button', { active: activeTab === 'incoming' }]"
+          @click="changeTab('수신')"
+          :class="['tab-button', { active: activeTab === '수신' }]"
         >
           <InboxIcon class="tab-icon" />
           <span>수신</span>
@@ -50,77 +50,51 @@
     <!-- Tab Content -->
     <div class="tab-content">
       <!-- 상신 탭 -->
-      <div v-if="activeTab === 'outgoing'" class="tab-panel">
-        <!-- 메뉴 리스트 -->
-        <ul>
-          <li
-            v-for="menu in menus"
-            :key="menu"
-            @click="$emit('select-menu', menu)"
-          >
-            {{ menu }}
-          </li>
-        </ul>
+      <div v-if="activeTab === '상신'" class="tab-panel">
         <div
           class="menu-item"
-          :class="{ active: activeItem === '/approval/outgoing/all' }"
-          @click="setActiveItem('/approval/outgoing/all')"
+          :class="{ active: activeItem === '전체' }"
+          @click="selectMenu('전체')"
         >
           <span class="menu-title">전체</span>
-          <span class="count-badge">12</span>
+          <span class="count-badge">{{ props.counts.전체 }}</span>
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '/approval/outgoing/draft' }"
-          @click="setActiveItem('/approval/outgoing/draft')"
+          :class="{ active: activeItem === '임시저장' }"
+          @click="selectMenu('임시저장')"
         >
-          <div class="menu-content">
-            <SaveIcon class="menu-icon" />
-            <span
-              class="menu-title"
-              @click="emit('select-approval', '임시저장')"
-              >임시저장</span
-            >
-          </div>
-          <span class="count-badge">3</span>
+          <span class="menu-title">임시저장</span>
+          <span class="count-badge">{{ props.counts.임시저장 }}</span>
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '/approval/outgoing/progress' }"
-          @click="setActiveItem('/approval/outgoing/progress')"
+          :class="{ active: activeItem === '결재중' }"
+          @click="selectMenu('결재중')"
         >
-          <div class="menu-content">
-            <ClockIcon class="menu-icon" />
-            <span class="menu-title">결재중</span>
-          </div>
-          <span class="count-badge">5</span>
+          <span class="menu-title">결재중</span>
+          <span class="count-badge">{{ props.counts.결재중 }}</span>
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '/approval/outgoing/completed' }"
-          @click="setActiveItem('/approval/outgoing/completed')"
+          :class="{ active: activeItem === '결재완료' }"
+          @click="selectMenu('결재완료')"
         >
-          <div class="menu-content">
-            <CheckCircleIcon class="menu-icon" />
-            <span class="menu-title">결재완료</span>
-          </div>
-          <span class="count-badge">6</span>
+          <span class="menu-title">결재완료</span>
+          <span class="count-badge">{{ props.counts.결재완료 }}</span>
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '/approval/outgoing/rejected' }"
-          @click="setActiveItem('/approval/outgoing/rejected')"
+          :class="{ active: activeItem === '결재반려' }"
+          @click="selectMenu('결재반려')"
         >
-          <div class="menu-content">
-            <XCircleIcon class="menu-icon" />
-            <span class="menu-title">결재반려</span>
-          </div>
-          <span class="count-badge">1</span>
+          <span class="menu-title">결재반려</span>
+          <span class="count-badge">{{ props.counts.결재반려 }}</span>
         </div>
       </div>
 
-      <!-- 수신 탭 -->
-      <div v-if="activeTab === 'incoming'" class="tab-panel">
+      <!-- 수신 탭 (기존 구조 유지) -->
+      <div v-if="activeTab === '수신'" class="tab-panel">
         <!-- 전체 -->
         <div class="menu-section">
           <div
@@ -650,10 +624,18 @@
       </div>
     </div>
   </div>
+  <!-- 생략 -->
 </template>
 
 <script setup>
 import { ref } from "vue";
+// import {
+//   FileText as FileTextIcon,
+//   Send as SendIcon,
+//   Inbox as InboxIcon,
+//   BarChart3 as BarChart3Icon,
+//   Plus as PlusIcon,
+// } from "lucide-vue-next";
 import {
   FileText as FileTextIcon,
   Send as SendIcon,
@@ -673,29 +655,53 @@ import {
   Calendar as CalendarIcon,
   ChevronDown as ChevronDownIcon,
 } from "lucide-vue-next";
-// import { useAuthStore } from "@/stores/auth";
 
-// 상태 관리
-// const authStore = useAuthStore()
+const emit = defineEmits(["select-menu", "tab-change", "register-approval"]);
+const counts = ref({
+  전체: 0,
+  임시저장: 0,
+  결재중: 0,
+  결재완료: 0,
+  결재반려: 0,
+});
 
-const menus = ["전체", "임시저장", "결재중", "결재완료", "결재반려"];
+const activeTab = ref("상신");
+const activeItem = ref("전체");
 
-const activeTab = ref("outgoing");
-const activeItem = ref("/approval/outgoing/all");
 const openAccordions = ref(["approval-docs", "collaboration-docs"]);
 
+// 탭 변경
+const changeTab = (tabValue) => {
+  activeTab.value = tabValue;
+  emit("tab-change", tabValue);
+};
+
+// 메뉴 선택
+const selectMenu = (menu) => {
+  activeItem.value = menu;
+  emit("select-menu", menu);
+};
+const props = defineProps({
+  activeTab: [String, Number], // 받기
+  counts: Object,
+});
+
 // 메서드
+const toggleAccordion = (accordionId) => {
+  if (openAccordions.value.includes(accordionId)) {
+    openAccordions.value = openAccordions.value.filter(
+      (id) => id !== accordionId
+    );
+  } else {
+    openAccordions.value.push(accordionId);
+  }
+};
 const setActiveItem = (item) => {
   activeItem.value = item;
 };
 
-const toggleAccordion = (accordionId) => {
-  const index = openAccordions.value.indexOf(accordionId);
-  if (index > -1) {
-    openAccordions.value.splice(index, 1);
-  } else {
-    openAccordions.value.push(accordionId);
-  }
+const handleRegisterApproval = () => {
+  emit("register-approval");
 };
 </script>
 
@@ -982,27 +988,6 @@ const toggleAccordion = (accordionId) => {
   font-weight: 500;
   min-width: 20px;
   text-align: center;
-}
-
-/* 화살표 아이콘 */
-.chevron {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.15s ease;
-}
-
-.chevron.rotated {
-  transform: rotate(180deg);
-}
-
-.chevron-small {
-  width: 14px;
-  height: 14px;
-  transition: transform 0.15s ease;
-}
-
-.chevron-small.rotated {
-  transform: rotate(180deg);
 }
 
 /* 푸터 */

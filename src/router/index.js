@@ -7,6 +7,12 @@ import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
 import OrderDetailPage from "@/views/hq/orders/OrderDetailPage.vue";
 import HRMView from "@/views/hq/user/InfoView.vue";
 
+// 개발 환경에서만 테스트 페이지 import
+let TestNotificationView = null;
+if (import.meta.env.DEV) {
+  TestNotificationView = () => import("@/views/TestNotification.vue");
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL || "/"),
   routes: [
@@ -40,17 +46,22 @@ const router = createRouter({
       component: OrderInfoView,
     },
     {
-      path: "/hrm",
-      name: "hrm",
-      component: HRMView,
-    },
-    {
-      path: '/orders/:orderId',
-      name: 'OrderDetail',
-      component: OrderDetailPage,
-      props: true 
-    }
-  ],
+    path: "/orders/:orderId",
+    name: "OrderDetail",
+    component: OrderDetailPage,
+    props: true,
+  },
+  {
+    path: "/hrm",
+    name: "hrm",
+    component: HRMView,
+  },
+  ...(import.meta.env.DEV ? [{
+    path: "/test-notification",
+    name: "test-notification",
+    component: TestNotificationView,
+  }] : [])
+],
 });
 
 export default router;

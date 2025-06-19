@@ -1,34 +1,89 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
-import api from "@/lib/api";
-
+import { ref, computed, watch } from "vue";
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
 import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
-import ApprovalCard from "@/components/hq/approval/ApprovalCard.vue";
+import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
+import ApprovalTemplate from "@/components/hq/approval/ApprovalTemplate.vue";
+import ApprovalDashBoard from "./ApprovalDashBoard.vue";
+import ApprovalRegistration from "@/components/hq/approval/ApprovalRegistration.vue";
+// import ApprovalTemplate from "./ApprovalTemplate.vue";
 
-const supplier = ref(null);
-const breadcrumbItems = ref();
-const selectedApprovalId = ref(null);
-const props = defineProps({
-  approvalList: Array,
-});
-// const selectedSupplierId = computed(() => props.company?.id);
+const handleTabChange = (tabValue) => {
+  emit("tab-change", tabValue); // InfoView.vue 로 전달
+};
+
+const breadcrumbItems = ref(["HOME", "결재관리", "대시보드"]);
 const updateBreadcrumb = (newItems) => {
   breadcrumbItems.value = newItems;
 };
-const tabs = ["전체", "임시저장", "결재중", "결재완료", "결재반려"];
-const activeTab = ref("전체");
-function selectTab(tab) {
-  activeTab.value = tab;
-  // 탭에 따라 데이터 필터링 등 추가 로직 작성 가능
-}
-// const tabs = ["전자결재", "납품관리", "발주관리"];
-// const activeTab = ref("전자결재");
 
-// const selectTab = (tab) => {
-//   activeTab.value = tab;
-// };
+const tabInfo = ref([
+  { title: "대시보드", desc: "대시보드입니다." },
+  { title: "전자결재", desc: "전자 결재를 관리할 수 있습니다." },
+  { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." },
+]);
+
+const activeTabSwitch = ref(0); // 기본값 0 (대시보드 탭)
+
+// props로 받은 activeTab 값이 변경될 때 activeTabSwitch 업데이트
+const props = defineProps({
+  approvalList: Array,
+  selectedTemplate: Object,
+  activeTab: String,
+  handleTabChange: Function,
+  isRegistrationMode: Boolean,
+});
+
+// props.activeTab 값이 변경될 때 activeTabSwitch 업데이트
+watch(
+  () => props.activeTab,
+  (newValue) => {
+    if (newValue === "전자결재" || newValue === "1") {
+      activeTabSwitch.value = 1;
+    } else if (newValue === "결재템플릿" || newValue === "2") {
+      activeTabSwitch.value = 2;
+    } else if (newValue === "대시보드" || newValue === "0") {
+      activeTabSwitch.value = 0;
+    }
+  },
+  { immediate: true }
+);
+
+const title = computed(() => tabInfo.value[activeTabSwitch.value].title);
+const desc = computed(() => tabInfo.value[activeTabSwitch.value].desc);
+
+const emit = defineEmits([
+  "update:activeTab",
+  "tab-change",
+  "active-tab-change",
+  "toggle-registration-mode",
+]);
+
+const updateTab = (newTabIndex) => {
+  activeTabSwitch.value = newTabIndex;
+  updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
+  emit("update:activeTab", newTabIndex);
+  emit("active-tab-change", newTabIndex); // 부모에게 현재 탭 인덱스 전달
+
+  // 전자결재 탭을 선택할 때 기본값으로 "전체" 설정
+  if (newTabIndex === 1) {
+    emit("tab-change", "전체");
+    // 전자결재 탭을 클릭할 때만 등록 모드 비활성화
+    emit("toggle-registration-mode", false);
+  }
+};
+
+const handleToggleRegistrationMode = (value) => {
+  if (value === true) {
+    // 결재 등록 모드로 전환할 때만 전자결재 탭으로 이동
+    activeTabSwitch.value = 1;
+    updateBreadcrumb(["HOME", "결재관리", "전자결재"]);
+    emit("update:activeTab", 1);
+    emit("active-tab-change", 1);
+  }
+  emit("toggle-registration-mode", value);
+};
 </script>
 
 <template>
@@ -36,42 +91,42 @@ function selectTab(tab) {
     <div class="breadcrumb-container">
       <Breadcrumb :items="breadcrumbItems || []" />
     </div>
-
-    <!-- Scrollable Content -->
     <div class="info-content">
       <div class="header-banner">
         <div class="info-group">
           <InfoHeader
-            title="전자 결재"
-            desc="결재 정보를 확인하고 관리할 수 있습니다."
-            :tabs="['전자결재', '납품관리', '발주관리']"
-            :activeTab="0"
+            :title="title"
+            :desc="desc"
+            :tabs="['대시보드', '전자결재', '결재템플릿']"
+            :activeTab="activeTabSwitch"
+            @select-tab="updateTab"
             @update-breadcrumb="updateBreadcrumb"
           />
-          <!-- InfoForm에 supplierId만 넘겨주면 됨 -->
-          <InfoForm :approvalId="selectedApprovalId" />
+
+          <!-- 대시보드 -->
+          <ApprovalDashBoard v-if="activeTabSwitch == 0" />
+
+          <!-- 전자결재 -->
+          <InfoForm
+            v-if="activeTabSwitch == 1 && !isRegistrationMode"
+            :approvalList="approvalList"
+            :activeTab="activeTab"
+            @tab-change="handleTabChange"
+          />
+
+          <!-- 결재 등록 -->
+          <ApprovalRegistration
+            v-if="activeTabSwitch == 1 && isRegistrationMode"
+            :selectedTemplate="props.selectedTemplate"
+            @cancel="(value) => handleToggleRegistrationMode(value)"
+          />
+
+          <!-- 결재템플릿 -->
+          <ApprovalTemplate
+            v-if="activeTabSwitch === 2"
+            :selectedTemplate="props.selectedTemplate"
+          />
         </div>
-      </div>
-      <!-- 본문 시작 -->
-      <div class="content-header">
-        <button class="edit-btn">✏️ 수정</button>
-      </div>
-
-      <div v-if="supplier" class="info-sections">
-        <!-- 기본 정보 -->
-        <section class="info-section">
-          <!-- 탭 영역 추가 -->
-          <div class="approval-tabs">
-            <ApprovalCard
-              v-for="approval in approvalList"
-              :key="approval.id"
-              :approval="approval"
-            />
-          </div>
-        </section>
-
-        <!-- 연락처 정보 -->
-        <section class="info-section"> </section>
       </div>
     </div>
   </div>

@@ -1,9 +1,14 @@
 <template>
   <div>
     <router-view />
+    <RealtimeNotificationContainer />
   </div>
 </template>
 
-<script></script>
+<script setup>
+import RealtimeNotificationContainer from '@/components/RealtimeNotificationContainer.vue';
+</script>
 
-<style scoped></style>
+<style scoped>
+/* App 컴포넌트 전용 스타일 */
+</style>
