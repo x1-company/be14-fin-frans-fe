@@ -7,7 +7,7 @@
         <li @click="selectMenuItem('가맹점관리')">가맹점관리</li>
         <li @click="selectMenuItem('공급처관리')">공급처관리</li>
         <li @click="selectMenuItem('구매관리')">구매관리</li>
-        <li @click="selectMenuItem('창고관리')">창고관리</li>
+        <li @click="navigateToWarehouse">창고관리</li>
         <li @click="selectMenuItem('결재관리')">결재관리</li>
       </ul>
       <img
@@ -27,13 +27,20 @@
 
 <script setup>
 import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 import UserInfo from './UserInfo.vue';
 
 const auth = useAuthStore()
+const router = useRouter()
 const emit = defineEmits(["update-breadcrumb"]);
 
 const selectMenuItem = (itemText) => {
   emit("update-breadcrumb", ["HOME", itemText]);
+};
+
+const navigateToWarehouse = () => {
+  router.push('/warehouse');
+  emit("update-breadcrumb", ["HOME", "창고관리"]);
 };
 </script>
 

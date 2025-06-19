@@ -3,6 +3,7 @@ import LoginView from "@/views/auth/Login.vue";
 import SupplierInfoView from "@/views/hq/supplier/InfoView.vue";
 import PasswordChange from "@/views/auth/PasswordChange.vue";
 import ApprovalListView from "@/views/hq/approval/InfoView.vue";
+import WarehouseInfoView from "@/views/hq/warehouse/InfoView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL || "/"),
@@ -30,6 +31,11 @@ const router = createRouter({
       path: "/approval",
       name: "approval",
       component: ApprovalListView,
+    },
+    {
+      path: "/warehouse",
+      name: "warehouse",
+      component: WarehouseInfoView,
     },
   ],
 });
