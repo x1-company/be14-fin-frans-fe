@@ -20,7 +20,7 @@
           <BarChart3Icon class="action-icon" />
           <span>대시보드</span>
         </button>
-        <button class="action-btn">
+        <button class="action-btn" @click="handleRegisterApproval">
           <PlusIcon class="action-icon" />
           <span>결재 작성</span>
         </button>
@@ -656,7 +656,7 @@ import {
   ChevronDown as ChevronDownIcon,
 } from "lucide-vue-next";
 
-const emit = defineEmits(["select-menu", "tab-change"]);
+const emit = defineEmits(["select-menu", "tab-change", "register-approval"]);
 const counts = ref({
   전체: 0,
   임시저장: 0,
@@ -682,7 +682,7 @@ const selectMenu = (menu) => {
   emit("select-menu", menu);
 };
 const props = defineProps({
-  // activeTab: [String, Number], // 받기
+  activeTab: [String, Number], // 받기
   counts: Object,
 });
 
@@ -698,6 +698,10 @@ const toggleAccordion = (accordionId) => {
 };
 const setActiveItem = (item) => {
   activeItem.value = item;
+};
+
+const handleRegisterApproval = () => {
+  emit("register-approval");
 };
 </script>
 

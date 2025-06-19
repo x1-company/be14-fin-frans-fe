@@ -11,6 +11,7 @@
         :counts="approvalCounts"
         @select-menu="handleSelectMenu"
         @tab-change="handleTabChange"
+        @register-approval="handleRegisterApproval"
       />
 
       <!-- 템플릿 사이드바 (결재템플릿 탭) -->
@@ -25,9 +26,11 @@
         :approvalList="approvalList"
         :activeTab="activeTab.toString()"
         :selectedTemplate="selectedTemplate"
+        :isRegistrationMode="isRegistrationMode"
         @tab-change="handleTabChange"
         @update:activeTab="handleTabChange"
         @active-tab-change="handleActiveTabChange"
+        @toggle-registration-mode="handleToggleRegistrationMode"
       />
     </div>
   </div>
@@ -46,6 +49,7 @@ const activeMenu = ref("전체");
 const activeTab = ref("전체");
 const currentTabIndex = ref(0);
 const selectedTemplate = ref(null);
+const isRegistrationMode = ref(false);
 
 const handleSelectMenu = (menuValue) => {
   activeMenu.value = menuValue;
@@ -62,6 +66,19 @@ const handleActiveTabChange = (tabIndex) => {
 
 const handleTemplateSelect = (template) => {
   selectedTemplate.value = template;
+};
+
+const handleRegisterApproval = () => {
+  // 어떤 탭에서든 결재 등록 버튼을 누르면 전자결재 탭으로 이동하고 등록 모드 활성화
+  currentTabIndex.value = 1; // 전자결재 탭 선택
+  activeTab.value = "전자결재"; // Info 컴포넌트의 탭을 전자결재로 변경
+  isRegistrationMode.value = true; // 등록 모드 활성화
+};
+
+const handleToggleRegistrationMode = (value) => {
+  // 파라미터가 있으면 해당 값으로, 없으면 토글
+  isRegistrationMode.value =
+    value !== undefined ? value : !isRegistrationMode.value;
 };
 
 const approvalCounts = ref({

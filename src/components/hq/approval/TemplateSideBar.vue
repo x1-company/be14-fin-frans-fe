@@ -3,13 +3,21 @@
     <!-- 검색창 -->
     <div class="search-container">
       <div class="search-box">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg
+          class="search-icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
           <circle cx="11" cy="11" r="8"></circle>
           <path d="m21 21-4.35-4.35"></path>
         </svg>
-        <input 
+        <input
           v-model="searchQuery"
-          type="text" 
+          type="text"
           placeholder="템플릿 검색..."
           class="search-input"
         />
@@ -18,10 +26,13 @@
 
     <!-- 템플릿 목록 -->
     <div class="template-list">
-      <div 
-        v-for="template in filteredTemplates" 
+      <div
+        v-for="template in filteredTemplates"
         :key="template.id"
-        :class="['template-card', { 'selected': selectedTemplateId === template.id }]"
+        :class="[
+          'template-card',
+          { selected: selectedTemplateId === template.id },
+        ]"
         @click="selectTemplate(template)"
       >
         <div class="template-header">
@@ -29,8 +40,7 @@
         </div>
         <p class="template-description">{{ template.description }}</p>
         <div class="template-footer">
-          <div class="template-users">
-          </div>
+          <div class="template-users"> </div>
         </div>
       </div>
     </div>
@@ -48,9 +58,22 @@
     </div>
 
     <!-- 빈 상태 -->
-    <div v-if="!loading && !error && templates.length === 0" class="empty-container">
-      <svg class="empty-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+    <div
+      v-if="!loading && !error && templates.length === 0"
+      class="empty-container"
+    >
+      <svg
+        class="empty-icon"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+      >
+        <path
+          d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+        ></path>
         <polyline points="14,2 14,8 20,8"></polyline>
       </svg>
       <p>등록된 템플릿이 없습니다.</p>
@@ -59,94 +82,101 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import api from '@/lib/api'
+import { ref, computed, onMounted, watch } from "vue";
+import api from "@/lib/api";
 
 // props로 외부에서 선택된 템플릿 받기
 const props = defineProps({
-  selectedTemplate: Object
-})
+  selectedTemplate: Object,
+});
 
 // 반응형 데이터
-const templates = ref([])
-const selectedTemplateId = ref(null)
-const searchQuery = ref('')
-const loading = ref(false)
-const error = ref('')
+const templates = ref([]);
+const selectedTemplateId = ref(null);
+const searchQuery = ref("");
+const loading = ref(false);
+const error = ref("");
 
 // 이벤트 정의
-const emit = defineEmits(['select-template'])
+const emit = defineEmits(["select-template"]);
 
 // 외부에서 선택된 템플릿이 변경될 때 내부 상태 업데이트
-watch(() => props.selectedTemplate, (newTemplate) => {
-  if (newTemplate?.id) {
-    selectedTemplateId.value = newTemplate.id
-  }
-}, { immediate: true })
+watch(
+  () => props.selectedTemplate,
+  (newTemplate) => {
+    if (newTemplate?.id) {
+      selectedTemplateId.value = newTemplate.id;
+    }
+  },
+  { immediate: true }
+);
 
 // 계산된 속성 - 검색 필터링
 const filteredTemplates = computed(() => {
   if (!searchQuery.value.trim()) {
-    return templates.value
+    return templates.value;
   }
-  
-  const query = searchQuery.value.toLowerCase().trim()
-  return templates.value.filter(template => 
-    template.name.toLowerCase().includes(query) ||
-    template.description?.toLowerCase().includes(query)
-  )
-})
+
+  const query = searchQuery.value.toLowerCase().trim();
+  return templates.value.filter(
+    (template) =>
+      template.name.toLowerCase().includes(query) ||
+      template.description?.toLowerCase().includes(query)
+  );
+});
 
 // 템플릿 목록 조회
 const fetchTemplates = async () => {
-  loading.value = true
-  error.value = ''
-  
+  loading.value = true;
+  error.value = "";
+
   try {
-    const { data } = await api.get('/api/hq/approvals/templates')
-    templates.value = data
-    
+    const { data } = await api.get("/api/hq/approvals/templates");
+    templates.value = data;
+
     // 첫 번째 템플릿을 기본 선택 (이미 선택된 템플릿이 없을 경우에만)
     if (data.length > 0 && !selectedTemplateId.value) {
-      selectTemplate(data[0])
+      selectTemplate(data[0]);
     } else if (selectedTemplateId.value) {
       // 이미 선택된 템플릿이 있으면 해당 템플릿 다시 선택
-      const selectedTemplate = data.find(t => t.id === selectedTemplateId.value)
+      const selectedTemplate = data.find(
+        (t) => t.id === selectedTemplateId.value
+      );
       if (selectedTemplate) {
-        emit('select-template', selectedTemplate)
+        emit("select-template", selectedTemplate);
       } else if (data.length > 0) {
         // 선택된 템플릿이 목록에 없으면 첫 번째 템플릿 선택
-        selectTemplate(data[0])
+        selectTemplate(data[0]);
       }
     }
   } catch (err) {
-    console.error('템플릿 목록 조회 실패:', err)
-    error.value = '템플릿 목록을 불러오는데 실패했습니다.'
+    console.error("템플릿 목록 조회 실패:", err);
+    error.value = "템플릿 목록을 불러오는데 실패했습니다.";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // 템플릿 선택
 const selectTemplate = (template) => {
-  selectedTemplateId.value = template.id
-  emit('select-template', template)
-}
+  selectedTemplateId.value = template.id;
+  emit("select-template", template);
+};
 
 // 컴포넌트 마운트 시 데이터 로드
 onMounted(() => {
-  fetchTemplates()
-})
+  fetchTemplates();
+});
 
 // 활성 탭이 변경될 때 템플릿 목록 다시 로드하기 위한 함수 노출
 defineExpose({
-  refreshTemplates: fetchTemplates
-})
+  refreshTemplates: fetchTemplates,
+});
 </script>
 
 <style scoped>
 .template-sidebar {
-  width: 320px;
+  width: 300px;
   height: 100%;
   background: #f8f9fa;
   border-right: 1px solid #e9ecef;
@@ -281,8 +311,12 @@ defineExpose({
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {
