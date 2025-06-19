@@ -160,9 +160,7 @@
                 </select>
               </div>
               <button @click="removeLine(index)" class="remove-button">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+                X
               </button>
             </div>
           </div>
@@ -329,26 +327,31 @@ const handleDragLeave = () => {
 
 const handleDrop = (dropIndex, event) => {
   event.preventDefault()
-  
-  if (draggedIndex.value === null || draggedIndex.value === dropIndex) {
-    dragOverIndex.value = null
-    return
+
+  if (draggedIndex.value === null || draggedIndex.value === dropIndex) return
+
+  const dragIndex = draggedIndex.value
+  const lines = [...templateForm.value.lines]
+
+  // 1. 드래그된 아이템 제거
+  const [draggedItem] = lines.splice(dragIndex, 1)
+
+  // 2. 아래로 이동 시 보정
+  let insertIndex = dropIndex
+  if (dragIndex < dropIndex) {
+    insertIndex = dropIndex >= lines.length ? lines.length : dropIndex
   }
 
-  // 배열에서 드래그된 아이템을 제거하고 새 위치에 삽입
-  const draggedItem = templateForm.value.lines[draggedIndex.value]
-  const newLines = [...templateForm.value.lines]
-  
-  // 드래그된 아이템 제거
-  newLines.splice(draggedIndex.value, 1)
-  
-  // 새 위치에 삽입 (드래그된 인덱스가 드롭 인덱스보다 작으면 인덱스 조정)
-  const insertIndex = draggedIndex.value < dropIndex ? dropIndex - 1 : dropIndex
-  newLines.splice(insertIndex, 0, draggedItem)
-  
-  templateForm.value.lines = newLines
+  // 3. 새 위치에 삽입
+  lines.splice(insertIndex, 0, draggedItem)
+
+  // 4. Vue 반응성 유지를 위한 전체 배열 치환
+  templateForm.value.lines.splice(0, lines.length, ...lines)
+
+  // 5. 순서(seq) 재정렬
   updateSequences()
-  
+
+  // 6. 드래그 상태 초기화
   draggedIndex.value = null
   dragOverIndex.value = null
 }

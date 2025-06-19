@@ -867,15 +867,14 @@ const handleOverlayClick = () => {
 }
 
 .remove-button {
-  background: rgba(220, 53, 69, 0.1);
-  border: 1px solid rgba(220, 53, 69, 0.2);
+  background: none;
+  border: none;
   color: #dc3545;
   cursor: pointer;
-  padding: 6px 8px;
+  padding: 4px;
   border-radius: 4px;
-  transition: all 0.2s;
+  transition: background-color 0.2s;
   flex-shrink: 0;
-  font-weight: bold;
 }
 
 .remove-button:hover {
