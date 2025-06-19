@@ -25,7 +25,6 @@
       <Info
         :approvalList="approvalList"
         :activeTab="activeTab.toString()"
-        :selectedTemplate="selectedTemplate"
         :isRegistrationMode="isRegistrationMode"
         @tab-change="handleTabChange"
         @update:activeTab="handleTabChange"

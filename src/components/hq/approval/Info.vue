@@ -29,7 +29,7 @@ const activeTabSwitch = ref(0); // 기본값 0 (대시보드 탭)
 // props로 받은 activeTab 값이 변경될 때 activeTabSwitch 업데이트
 const props = defineProps({
   approvalList: Array,
-  selectedTemplate: Object,
+  selectedTemplate: { type: Object, default: null },
   activeTab: String,
   handleTabChange: Function,
   isRegistrationMode: Boolean,
