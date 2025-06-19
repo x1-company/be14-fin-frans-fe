@@ -23,12 +23,13 @@ const props = defineProps({
   activeTab: Number,
 });
 
-const emit = defineEmits(["update-breadcrumb"]);
+const emit = defineEmits(["update-breadcrumb", "select-tab"]);
 
 const selectTab = (index, tabText) => {
   // 실제 탭 전환 로직이 추가되면 activeTab을 변경해야 합니다.
   // 현재는 props로 activeTab을 받으므로 직접 변경하지 않습니다.
-  emit("update-breadcrumb", ["HOME", "공급처관리", tabText]);
+  emit("update-breadcrumb", ["HOME", "결재관리", tabText]);
+  emit("select-tab", index);
 };
 </script>
 

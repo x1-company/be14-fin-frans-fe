@@ -4,6 +4,15 @@ import SupplierInfoView from "@/views/hq/supplier/InfoView.vue";
 import PasswordChange from "@/views/auth/PasswordChange.vue";
 import ApprovalListView from "@/views/hq/approval/InfoView.vue";
 import WarehouseInfoView from "@/views/hq/warehouse/InfoView.vue";
+import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
+import OrderDetailPage from "@/views/hq/orders/OrderDetailPage.vue";
+import HRMView from "@/views/hq/user/InfoView.vue";
+
+// 개발 환경에서만 테스트 페이지 import
+let TestNotificationView = null;
+if (import.meta.env.DEV) {
+  TestNotificationView = () => import("@/views/TestNotification.vue");
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL || "/"),
@@ -37,7 +46,28 @@ const router = createRouter({
       name: "warehouse",
       component: WarehouseInfoView,
     },
-  ],
+    {
+      path: "/orders",
+      name: "orders",
+      component: OrderInfoView,
+    },
+    {
+      path: "/orders/:orderId",
+      name: "OrderDetail",
+      component: OrderDetailPage,
+      props: true,
+    },
+    {
+      path: "/hrm",
+      name: "hrm",
+      component: HRMView,
+    },
+    ...(import.meta.env.DEV ? [{
+      path: "/test-notification",
+      name: "test-notification",
+      component: TestNotificationView,
+    }] : [])
+],
 });
 
 export default router;

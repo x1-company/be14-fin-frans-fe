@@ -9,6 +9,9 @@
           alt="user profile"
           class="navbar__profile-img"
         />
+        <div v-else class="navbar__profile-placeholder">
+          <UserIcon class="w-4 h-4" />
+        </div>
       </div>
     </div>
 
@@ -41,6 +44,7 @@ import SignatureModal from "./SignatureModal.vue";
 import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
 import { useRouter } from "vue-router";
+import { UserIcon } from 'lucide-vue-next'
 
 const router = useRouter();
 
@@ -74,7 +78,6 @@ const toggleDropdown = () => {
 
 const handleMenuClick = (menuItem) => {
   isDropdownOpen.value = false;
-  console.log("accessToken", auth.accessToken);
 
   switch (menuItem) {
     case "마이 페이지":
@@ -231,5 +234,16 @@ onUnmounted(() => {
 .dropdown-item:last-child {
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
+}
+
+.navbar__profile-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  background: #e6f0ff;
+  border-radius: 50%;
 }
 </style>

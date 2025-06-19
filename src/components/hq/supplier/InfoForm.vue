@@ -180,6 +180,24 @@ watch(
   },
   { immediate: true }
 );
+
+const tabs = ["전체", "임시저장", "결재 중", "결재 완료", "결재 반려"];
+const activeTab = ref("전체");
+
+// 예시 데이터
+const groupedApprovals = ref({
+  "2025.05.30": [
+    /* ... */
+  ],
+  "2025.06.01": [
+    /* ... */
+  ],
+});
+
+function onTabChange(tab) {
+  activeTab.value = tab;
+  // 실제로는 탭에 따라 데이터 필터링
+}
 </script>
 
 <style scoped>
