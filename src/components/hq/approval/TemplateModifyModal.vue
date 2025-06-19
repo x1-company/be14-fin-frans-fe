@@ -2,7 +2,7 @@
   <div class="modal-overlay" @click="handleOverlayClick">
     <div class="modal-container" @click.stop>
       <div class="modal-header">
-        <h2>템플릿 등록</h2>
+        <h2>템플릿 수정</h2>
         <button @click="$emit('close')" class="close-button">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -110,23 +110,40 @@
         <!-- 선택된 사용자 목록 -->
         <div class="form-section">
           <h3>결재 라인 구성 <span class="drag-hint">(드래그하여 순서 변경 가능)</span></h3>
+          <div class="section-actions">
+            <button 
+              v-if="templateForm.lines.length > 0" 
+              @click="clearAllLines" 
+              class="clear-all-button"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              전체 삭제
+            </button>
+          </div>
           <div v-if="templateForm.lines.length === 0" class="empty-lines">
             <p>사용자를 검색하여 결재 라인을 구성하세요.</p>
           </div>
           <div v-else class="approval-lines">
             <div
               v-for="(line, index) in templateForm.lines"
-              :key="`${line.userId}-${index}`"
+              :key="`line-${line.user.id}-${line.seq}`"
               class="approval-line-item"
-              :class="{ 'dragging': draggedIndex === index, 'drag-over': dragOverIndex === index }"
+              :class="{ 
+                'dragging': draggedIndex === index, 
+                'drag-over': dragOverIndex === index && draggedIndex !== index,
+                'drag-placeholder': dragPlaceholderIndex === index
+              }"
               draggable="true"
               @dragstart="handleDragStart(index, $event)"
               @dragend="handleDragEnd"
               @dragover="handleDragOver(index, $event)"
-              @dragleave="handleDragLeave"
+              @dragenter="handleDragEnter(index, $event)"
+              @dragleave="handleDragLeave(index, $event)"
               @drop="handleDrop(index, $event)"
             >
-              <div class="drag-handle">
+              <div class="drag-handle" @mousedown="startDrag">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
                 </svg>
@@ -135,7 +152,7 @@
               <div class="line-user">
                 <div class="user-avatar">
                   <img
-                    v-if="line.user.profileUrl"
+                    v-if="line.user?.profileUrl"
                     :src="line.user.profileUrl"
                     :alt="line.user.name"
                     class="avatar-image"
@@ -147,22 +164,20 @@
                   </div>
                 </div>
                 <div class="user-info">
-                  <div class="user-name">{{ line.user.name }}</div>
-                  <div class="user-details">{{ line.user.positionName }} · {{ line.user.departmentName }}</div>
+                  <div class="user-name">{{ line.user?.name || line.userName }}</div>
+                  <div class="user-details">{{ line.user?.positionName || line.positionName }} · {{ line.user?.departmentName || line.departmentName }}</div>
                 </div>
               </div>
               <div class="line-type">
-                <select v-model="line.type" class="type-select">
+                <select v-model="line.type" class="type-select" @click.stop>
                   <option value="APPROVER">결재자</option>
                   <option value="COOPERATOR">협조자</option>
                   <option value="REFERENCE">참조자</option>
                   <option value="RECIPIENT">수신자</option>
                 </select>
               </div>
-              <button @click="removeLine(index)" class="remove-button">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+              <button @click.stop="removeLine(index)" class="remove-button">
+                X
               </button>
             </div>
           </div>
@@ -181,8 +196,8 @@
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle>
             <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" class="opacity-75"></path>
           </svg>
-          <span v-if="isSubmitting">등록 중...</span>
-          <span v-else>등록</span>
+          <span v-if="isSubmitting">수정 중...</span>
+          <span v-else>수정</span>
         </button>
       </div>
     </div>
@@ -190,9 +205,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { getTopDepartmentNameById, topLevelDepartmentIds } from '@/enums/hqEnums'
 import api from '@/lib/api'
+
+const props = defineProps({
+  template: Object,
+  templateDetail: Array
+})
 
 const emit = defineEmits(['close', 'success'])
 
@@ -200,7 +220,6 @@ const emit = defineEmits(['close', 'success'])
 const templateForm = ref({
   name: '',
   description: '',
-  seq: 1,
   lines: []
 })
 
@@ -216,11 +235,49 @@ const isSubmitting = ref(false)
 // 드래그앤드랍 관련
 const draggedIndex = ref(null)
 const dragOverIndex = ref(null)
+const dragPlaceholderIndex = ref(null)
+const isDragging = ref(false)
 
 // 폼 유효성 검사
 const isFormValid = computed(() => {
   return templateForm.value.name.trim() && templateForm.value.lines.length > 0
 })
+
+// 기존 데이터로 폼 초기화
+const initializeForm = () => {
+  if (props.template && props.templateDetail) {
+    templateForm.value = {
+      name: props.template.name || '',
+      description: props.template.description || '',
+      lines: props.templateDetail.map(item => ({
+        user_id: item.userId,
+        type: item.type,
+        seq: item.seq,
+        user: {
+          id: item.userId,
+          name: item.userName,
+          positionName: item.positionName,
+          departmentName: item.departmentName,
+          profileUrl: item.profileUrl
+        },
+        // 기존 데이터 호환성을 위해 추가
+        userName: item.userName,
+        positionName: item.positionName,
+        departmentName: item.departmentName
+      })).sort((a, b) => a.seq - b.seq)
+    }
+  }
+}
+
+// 컴포넌트 마운트 시 폼 초기화
+onMounted(() => {
+  initializeForm()
+})
+
+// props 변경 감지
+watch(() => [props.template, props.templateDetail], () => {
+  initializeForm()
+}, { deep: true })
 
 // 사용자 검색
 const searchUsers = async () => {
@@ -269,7 +326,7 @@ const handleInputChange = () => {
 // 사용자 선택
 const selectUser = (user) => {
   // 이미 추가된 사용자인지 확인
-  const isAlreadyAdded = templateForm.value.lines.some(line => line.userId === user.id)
+  const isAlreadyAdded = templateForm.value.lines.some(line => line.user_id === user.id)
   if (isAlreadyAdded) {
     alert('이미 추가된 사용자입니다.')
     return
@@ -277,10 +334,14 @@ const selectUser = (user) => {
 
   // 새로운 라인 추가
   const newLine = {
-    userId: user.id,
+    user_id: user.id,
     type: 'APPROVER',
     seq: templateForm.value.lines.length + 1,
-    user: user
+    user: user,
+    // 기존 데이터 호환성을 위해 추가
+    userName: user.name,
+    positionName: user.positionName,
+    departmentName: user.departmentName
   }
   
   templateForm.value.lines.push(newLine)
@@ -298,6 +359,13 @@ const removeLine = (index) => {
   updateSequences()
 }
 
+// 전체 라인 삭제
+const clearAllLines = () => {
+  if (confirm('모든 결재 라인을 삭제하시겠습니까?')) {
+    templateForm.value.lines = []
+  }
+}
+
 // 순서 업데이트
 const updateSequences = () => {
   templateForm.value.lines.forEach((line, idx) => {
@@ -305,53 +373,96 @@ const updateSequences = () => {
   })
 }
 
-// 드래그앤드랍 핸들러
-const handleDragStart = (index, event) => {
-  draggedIndex.value = index
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/html', event.target)
+// 드래그 시작 준비
+const startDrag = () => {
+  isDragging.value = true
 }
 
-const handleDragEnd = () => {
+// 드래그앤드랍 핸들러 - 개선된 버전
+const handleDragStart = (index, event) => {
+  draggedIndex.value = index
+  isDragging.value = true
+  
+  // 드래그 이미지 설정
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/plain', index.toString())
+  
+  // 약간의 지연을 두어 드래그 상태 적용
+  setTimeout(() => {
+    if (draggedIndex.value === index) {
+      // 드래그 중인 요소 스타일 적용
+    }
+  }, 0)
+}
+
+const handleDragEnd = (event) => {
+  // 모든 드래그 상태 초기화
   draggedIndex.value = null
   dragOverIndex.value = null
+  dragPlaceholderIndex.value = null
+  isDragging.value = false
+}
+
+const handleDragEnter = (index, event) => {
+  event.preventDefault()
+  if (draggedIndex.value !== null && draggedIndex.value !== index) {
+    dragOverIndex.value = index
+  }
 }
 
 const handleDragOver = (index, event) => {
   event.preventDefault()
   event.dataTransfer.dropEffect = 'move'
-  dragOverIndex.value = index
+  
+  if (draggedIndex.value !== null && draggedIndex.value !== index) {
+    dragOverIndex.value = index
+  }
 }
 
-const handleDragLeave = () => {
-  dragOverIndex.value = null
+const handleDragLeave = (index, event) => {
+  // 실제로 요소를 벗어났는지 확인
+  const rect = event.currentTarget.getBoundingClientRect()
+  const x = event.clientX
+  const y = event.clientY
+  
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    if (dragOverIndex.value === index) {
+      dragOverIndex.value = null
+    }
+  }
 }
 
 const handleDrop = (dropIndex, event) => {
   event.preventDefault()
-  
-  if (draggedIndex.value === null || draggedIndex.value === dropIndex) {
-    dragOverIndex.value = null
-    return
+
+  if (draggedIndex.value === null || draggedIndex.value === dropIndex) return
+
+  const dragIndex = draggedIndex.value
+  const lines = [...templateForm.value.lines]
+
+  // 드래그된 아이템을 제거
+  const [draggedItem] = lines.splice(dragIndex, 1)
+
+  // 👉 드래그가 아래 방향 & 맨 뒤로 이동할 경우엔 그대로 삽입
+  let insertIndex = dropIndex
+  if (dragIndex < dropIndex) {
+    insertIndex = dropIndex >= lines.length ? lines.length : dropIndex
   }
 
-  // 배열에서 드래그된 아이템을 제거하고 새 위치에 삽입
-  const draggedItem = templateForm.value.lines[draggedIndex.value]
-  const newLines = [...templateForm.value.lines]
-  
-  // 드래그된 아이템 제거
-  newLines.splice(draggedIndex.value, 1)
-  
-  // 새 위치에 삽입 (드래그된 인덱스가 드롭 인덱스보다 작으면 인덱스 조정)
-  const insertIndex = draggedIndex.value < dropIndex ? dropIndex - 1 : dropIndex
-  newLines.splice(insertIndex, 0, draggedItem)
-  
-  templateForm.value.lines = newLines
+  lines.splice(insertIndex, 0, draggedItem)
+
+  // 반응성 있게 반영
+  templateForm.value.lines.splice(0, lines.length, ...lines)
+
   updateSequences()
-  
+
+  // 상태 초기화
   draggedIndex.value = null
   dragOverIndex.value = null
+  dragPlaceholderIndex.value = null
+  isDragging.value = false
 }
+
 
 // 부서 변경 시 재검색
 watch(selectedDepartment, () => {
@@ -371,19 +482,21 @@ const handleSubmit = async () => {
       name: templateForm.value.name,
       description: templateForm.value.description,
       lines: templateForm.value.lines.map(line => ({
-        userId: line.userId,
+        userId: line.user.id,
         type: line.type,
         seq: line.seq
       }))
     }
 
-    await api.post('/api/hq/approvals/templates', submitData)
+    console.log('제출 데이터:', submitData)
+
+    await api.put(`/api/hq/approvals/templates/${props.template.id}`, submitData)
     
-    alert('템플릿이 성공적으로 등록되었습니다.')
+    alert('템플릿이 성공적으로 수정되었습니다.')
     emit('success')
   } catch (error) {
-    console.error('템플릿 등록 실패:', error)
-    alert('템플릿 등록에 실패했습니다.')
+    console.error('템플릿 수정 실패:', error)
+    alert('템플릿 수정에 실패했습니다.')
   } finally {
     isSubmitting.value = false
   }
@@ -657,7 +770,7 @@ const handleOverlayClick = () => {
 .approval-lines {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .approval-line-item {
@@ -670,6 +783,7 @@ const handleOverlayClick = () => {
   background: #f8f9fa;
   cursor: move;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .approval-line-item:hover {
@@ -678,23 +792,33 @@ const handleOverlayClick = () => {
 }
 
 .approval-line-item.dragging {
-  opacity: 0.5;
-  transform: rotate(2deg);
+  opacity: 0.6;
+  transform: rotate(3deg) scale(1.02);
+  z-index: 1000;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  border-color: #667eea;
 }
 
 .approval-line-item.drag-over {
-  border-color: #667eea;
-  background: #e8f0fe;
-  transform: scale(1.02);
+  border-color: #28a745;
+  background: #e8f5e8;
+  border-width: 2px;
+  border-style: dashed;
+}
+
+.approval-line-item.drag-placeholder {
+  opacity: 0.3;
+  background: #f1f3f4;
 }
 
 .drag-handle {
   color: #6c757d;
   cursor: grab;
-  padding: 4px;
+  padding: 6px;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   flex-shrink: 0;
+  user-select: none;
 }
 
 .drag-handle:hover {
@@ -704,11 +828,12 @@ const handleOverlayClick = () => {
 
 .drag-handle:active {
   cursor: grabbing;
+  background: #dee2e6;
 }
 
 .line-order {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background: #667eea;
   color: white;
   border-radius: 50%;
@@ -725,6 +850,7 @@ const handleOverlayClick = () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .line-type {
@@ -737,21 +863,24 @@ const handleOverlayClick = () => {
   border-radius: 4px;
   font-size: 12px;
   background: white;
+  cursor: pointer;
 }
 
 .remove-button {
-  background: none;
-  border: none;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
   color: #dc3545;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px 8px;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   flex-shrink: 0;
+  font-weight: bold;
 }
 
 .remove-button:hover {
-  background: rgba(220, 53, 69, 0.1);
+  background: rgba(220, 53, 69, 0.2);
+  border-color: #dc3545;
 }
 
 .modal-footer {
@@ -815,6 +944,30 @@ const handleOverlayClick = () => {
   to {
     transform: rotate(360deg);
   }
+}
+
+.section-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.clear-all-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clear-all-button:hover {
+  background: #c82333;
 }
 
 /* 스크롤바 스타일링 */

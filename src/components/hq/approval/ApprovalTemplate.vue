@@ -29,19 +29,27 @@
           <p class="template-name">{{ selectedTemplate.name }}</p>
         </div>
         <div class="template-actions">
-          <button class="action-btn edit-btn">
+          <button @click="handleEdit" class="action-btn edit-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6"></path>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
             수정
           </button>
-          <button class="action-btn delete-btn">
+          <button @click="handleDelete" class="action-btn delete-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3,6 5,6 21,6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
             삭제
+          </button>
+          <button @click="toggleReorderMode" class="action-btn reorder-btn" :class="{ 'active': isReorderMode }">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5c-.621 0-1.125-.504-1.125-1.125V20.5"></path>
+              <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5c.621 0 1.125-.504 1.125-1.125V20.5"></path>
+              <path d="M12 4v16"></path>
+            </svg>
+            {{ isReorderMode ? '완료' : '순서 변경' }}
           </button>
         </div>
       </div>
@@ -67,7 +75,6 @@
 
           <!-- 결재 라인 (결재자 + 협조자 순서대로) -->
           <div v-for="(item, index) in approvalFlow" :key="'flow-' + item.seq + '-' + item.type" class="flow-node-container">
-
             <div :class="['flow-node', getNodeClass(item.type)]">
               <div class="node-avatar">
                 <span class="node-label">{{ item.userName.charAt(0) }}</span>
@@ -257,6 +264,15 @@
         </div>
       </div>
     </div>
+
+    <!-- 수정 모달 -->
+    <TemplateModifyModal 
+      v-if="showEditModal"
+      :template="selectedTemplate"
+      :template-detail="templateDetail"
+      @close="closeEditModal"
+      @success="handleEditSuccess"
+    />
   </div>
 </template>
 
@@ -264,15 +280,21 @@
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/lib/api'
+import TemplateModifyModal from './TemplateModifyModal.vue'
 
 const props = defineProps({
-  selectedTemplate: Object
+  selectedTemplate: Object,
+  reorderChanges: Array
 })
+
+const emit = defineEmits(['template-deleted', 'template-updated', 'reorder-mode-changed', 'reorder-complete', 'reorder-cancel'])
 
 const authStore = useAuthStore()
 const templateDetail = ref([])
 const loading = ref(false)
 const error = ref('')
+const showEditModal = ref(false)
+const isReorderMode = ref(false)
 
 // 템플릿 상세 정보 조회
 const fetchTemplateDetail = async (templateId) => {
@@ -376,6 +398,75 @@ const getTypeColor = (type) => {
     RECIPIENT: '#9c27b0'
   }
   return colors[type] || '#666'
+}
+
+// 삭제 처리
+const handleDelete = async () => {
+  if (!props.selectedTemplate) return
+  
+  if (confirm(`"${props.selectedTemplate.name}" 템플릿을 삭제하시겠습니까?`)) {
+    try {
+      await api.delete(`/api/hq/approvals/templates/${props.selectedTemplate.id}`)
+      alert('템플릿이 성공적으로 삭제되었습니다.')
+      emit('template-deleted')
+    } catch (error) {
+      console.error('템플릿 삭제 실패:', error)
+      alert('템플릿 삭제에 실패했습니다.')
+    }
+  }
+}
+
+// 수정 처리
+const handleEdit = () => {
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+}
+
+const handleEditSuccess = () => {
+  closeEditModal()
+  if (props.selectedTemplate?.id) {
+    fetchTemplateDetail(props.selectedTemplate.id)
+  }
+  emit('template-updated')
+}
+
+// 순서 변경 모드 토글
+const toggleReorderMode = async () => {
+  if (isReorderMode.value) {
+    // 완료 버튼을 눌렀을 때
+    if (props.reorderChanges && props.reorderChanges.length > 0) {
+      try {
+        // 각 변경사항에 대해 API 호출
+        for (const change of props.reorderChanges) {
+          const newSequence = change.newIndex
+          console.log(`API 호출: 템플릿 ${change.templateId}의 순서를 ${newSequence}로 변경`)
+          
+          await api.patch(`/api/hq/approvals/templates/${change.templateId}/seq/${newSequence}`)
+        }
+        
+        console.log('모든 순서 변경 API 호출 완료')
+        alert('순서 변경이 완료되었습니다.')
+        
+        // 완료 이벤트 emit
+        emit('reorder-complete')
+      } catch (error) {
+        console.error('순서 변경 API 호출 실패:', error)
+        alert('순서 변경에 실패했습니다.')
+        
+        // 취소 이벤트 emit (롤백)
+        emit('reorder-cancel')
+        return
+      }
+    } else {
+      console.log('변경된 순서가 없습니다.')
+    }
+  }
+  
+  isReorderMode.value = !isReorderMode.value
+  emit('reorder-mode-changed', isReorderMode.value)
 }
 </script>
 
@@ -518,6 +609,18 @@ const getTypeColor = (type) => {
   border-color: #adb5bd;
 }
 
+.delete-btn:hover {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.reorder-btn.active {
+  background: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
 .flow-diagram {
   padding: 40px;
   background: #fafbfc;
@@ -625,11 +728,6 @@ const getTypeColor = (type) => {
   padding: 4px 12px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.flow-arrow {
-  color: #adb5bd;
-  margin: 0 10px;
 }
 
 .additional-section {
@@ -811,10 +909,6 @@ const getTypeColor = (type) => {
   
   .main-flow {
     flex-direction: column;
-  }
-  
-  .flow-arrow {
-    transform: rotate(90deg);
   }
   
   .additional-flow {
