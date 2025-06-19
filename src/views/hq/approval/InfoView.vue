@@ -28,6 +28,7 @@
         :activeTab="activeTab.toString()"
         :isRegistrationMode="isRegistrationMode"
         :reorderChanges="reorderChanges"
+        :selectedTemplate="selectedTemplate"
         @tab-change="handleTabChange"
         @update:activeTab="handleTabChange"
         @active-tab-change="handleActiveTabChange"

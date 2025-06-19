@@ -13,18 +13,10 @@
       </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <div class="actions-grid">
-        <button class="action-btn">
-          <BarChart3Icon class="action-icon" />
-          <span>대시보드</span>
-        </button>
-        <button class="action-btn" @click="handleRegisterApproval">
-          <PlusIcon class="action-icon" />
-          <span>결재 작성</span>
-        </button>
-      </div>
+    <div class="register-button-container">
+      <button @click="openRegisterModal" class="register-button">
+        결재 등록
+      </button>
     </div>
 
     <!-- Tab Headers -->
@@ -761,41 +753,6 @@ const handleRegisterApproval = () => {
   color: #6c757d;
 }
 
-/* 퀵 액션 */
-.quick-actions {
-  padding: 8px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.actions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 8px 12px;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.action-btn:hover {
-  background: #f8f9fa;
-}
-
-.action-icon {
-  width: 16px;
-  height: 16px;
-}
-
 /* 탭 헤더 */
 .tab-headers {
   border-bottom: 1px solid #e9ecef;
@@ -1038,5 +995,32 @@ const handleRegisterApproval = () => {
 .user-role {
   font-size: 12px;
   color: #6c757d;
+}
+
+.register-button-container {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+  background: white;
+}
+
+.register-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.register-button:hover {
+  background: #5a67d8;
 }
 </style>
