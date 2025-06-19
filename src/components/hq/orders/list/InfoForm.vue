@@ -40,7 +40,11 @@
           <tbody>
             <tr v-for="(order, idx) in pagedOrders" :key="order.orderId">
               <td>{{ idx + 1 + (page-1)*pageSize }}</td>
-              <td><a href="#" class="order-link">{{ order.orderCode }}</a></td>
+              <td>
+                <router-link :to="`/orders/${order.orderId}`" class="order-link">
+                  {{ order.orderCode }}
+                </router-link>
+              </td>
               <td>{{ order.productSummary }}</td>
               <td><span :class="['order-status', orderStatusClass(order.status)]">{{ statusText(order.status) }}</span></td>
               <td>{{ order.createdAt.slice(0, 10) }}</td>
@@ -62,6 +66,7 @@
   <script setup>
   import api from '@/lib/api'
   import { ref, computed, watch, onMounted } from 'vue';
+  import { RouterLink } from 'vue-router';
   const props = defineProps({
     orders: Array,
     franchiseId: {
@@ -159,7 +164,6 @@
   page.value = 1;
 });
 
-// ⬇️ 이 부분 추가!
 watch(page, () => {
   fetchOrders();
 });

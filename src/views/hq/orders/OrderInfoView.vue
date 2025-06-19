@@ -11,7 +11,7 @@
   
   <script setup>
   import NavBar from '@/components/hq/common/NavBar.vue';
-  import SideBar from '@/components/hq/orders/SideBar.vue';
+  import SideBar from '@/components/hq/orders/OrderSideBar.vue';
   import OrderInfo from '@/components/hq/orders/Info.vue';
   </script>
   

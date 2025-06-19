@@ -4,7 +4,8 @@ import SupplierInfoView from "@/views/hq/supplier/InfoView.vue";
 import PasswordChange from "@/views/auth/PasswordChange.vue";
 import ApprovalListView from "@/views/hq/approval/InfoView.vue";
 import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
-import HRMView from "@/views/hq/user/InfoView.vue"
+import OrderDetailPage from "@/views/hq/orders/OrderDetailPage.vue";
+import HRMView from "@/views/hq/user/InfoView.vue";
 
 // 개발 환경에서만 테스트 페이지 import
 let TestNotificationView = null;
@@ -45,17 +46,22 @@ const router = createRouter({
       component: OrderInfoView,
     },
     {
-      path: "/hrm",
-      name: "hrm",
-      component: HRMView,
-    },
-    // 개발 환경에서만 테스트 페이지 라우트 추가
-    ...(import.meta.env.DEV ? [{
-      path: "/test-notification",
-      name: "test-notification",
-      component: TestNotificationView,
-    }] : [])
-  ],
+    path: "/orders/:orderId",
+    name: "OrderDetail",
+    component: OrderDetailPage,
+    props: true,
+  },
+  {
+    path: "/hrm",
+    name: "hrm",
+    component: HRMView,
+  },
+  ...(import.meta.env.DEV ? [{
+    path: "/test-notification",
+    name: "test-notification",
+    component: TestNotificationView,
+  }] : [])
+],
 });
 
 export default router;
