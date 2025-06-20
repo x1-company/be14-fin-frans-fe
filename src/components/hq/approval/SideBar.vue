@@ -14,7 +14,7 @@
     </div>
 
     <div class="register-button-container">
-      <button @click="openRegisterModal" class="register-button">
+      <button @click="handleRegisterApproval" class="register-button">
         결재 등록
       </button>
     </div>

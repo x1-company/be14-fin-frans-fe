@@ -1,183 +1,173 @@
 <template>
-  <div class="modal-overlay">
-    <div class="modal-container">
+  <div class="modal-overlay" @click="closeModal">
+    <div class="modal-container" @click.stop>
+      <!-- 모달 헤더 -->
+      <div class="modal-header">
+        <h2 class="modal-title">결재선 지정</h2>
+      </div>
+
+      <!-- 검색 영역 -->
+      <!-- (상단 검색 input 및 결과 영역 전체 제거) -->
+
+      <!-- 선택된 결재선 목록 -->
       <div class="approval-container">
         <!-- Header -->
         <div class="header">
           <h1 class="header-title">결재자 지정</h1>
-          <button class="close-btn">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
         </div>
 
         <!-- Tabs -->
         <div class="tabs-container">
-          <button
-            v-for="tab in tabs"
-            :key="tab"
-            @click="activeTab = tab"
-            :class="['tab-btn', { 'tab-active': activeTab === tab }]"
-          >
-            <svg
-              class="tab-icon"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
+          <div class="tabs-left">
+            <button
+              v-for="tab in tabs"
+              :key="tab"
+              @click="activeTab = tab"
+              :class="['tab-btn', { 'tab-active': activeTab === tab }]"
             >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            {{ tab }}
-          </button>
+              <svg
+                class="tab-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              {{ tab }}
+            </button>
+          </div>
+          <button class="add-btn" @click="addSelectedMembers">추가</button>
         </div>
 
         <div class="main-content">
           <!-- Left Sidebar -->
           <div class="sidebar">
             <div class="sidebar-content">
-              <h3 class="sidebar-title">조직도</h3>
+              <h3 class="sidebar-title">직원 검색</h3>
               <div class="sidebar-info">
-                <span>선택된 직원: 0명</span>
-                <span class="reset-link">선택 초기화</span>
+                <span>선택된 직원: {{ selectedSearchUsers.length }}명</span>
+                <span class="reset-link" @click="selectedSearchUsers = []"
+                  >선택 초기화</span
+                >
               </div>
 
               <!-- Search -->
-              <div class="search-container">
-                <svg
-                  class="search-icon"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <path d="m21 21-4.35-4.35"></path>
-                </svg>
-                <input
-                  type="text"
-                  placeholder="이름 / 부서를 검색하세요"
-                  class="search-input"
-                  v-model="searchQuery"
-                />
-              </div>
-
-              <!-- Department List -->
-              <div class="department-list">
-                <div
-                  v-for="(dept, index) in departments"
-                  :key="index"
-                  class="department-item"
-                >
-                  <button
-                    @click="toggleDepartment(index)"
-                    class="department-header"
+              <div class="search-section">
+                <div class="search-controls">
+                  <input
+                    type="text"
+                    placeholder="이름"
+                    class="search-input"
+                    v-model="searchName"
+                    @input="debouncedSearch"
+                    @focus="showSearchResults = true"
+                  />
+                  <select
+                    v-model="selectedDepartmentId"
+                    class="department-filter"
+                    @change="debouncedSearch"
                   >
-                    <div class="department-header-left">
-                      <svg
-                        :class="[
-                          'chevron-icon',
-                          { 'chevron-rotated': dept.expanded },
-                        ]"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <polyline points="6,9 12,15 18,9"></polyline>
-                      </svg>
-                      <span class="department-name">{{ dept.name }}</span>
-                    </div>
-                    <span class="department-count">{{ dept.count }}</span>
-                  </button>
-
-                  <div v-if="dept.expanded" class="member-list">
-                    <div
-                      v-for="(member, memberIndex) in dept.members"
-                      :key="memberIndex"
-                      class="member-item"
+                    <option value="">부서 필터</option>
+                    <option
+                      v-for="dept in departmentList"
+                      :key="dept.id"
+                      :value="dept.id"
                     >
-                      <input
-                        type="checkbox"
-                        :id="`member-${index}-${memberIndex}`"
-                        v-model="member.checked"
-                        class="member-checkbox"
-                      />
-                      <label
-                        :for="`member-${index}-${memberIndex}`"
-                        class="member-name"
-                      >
-                        {{ member.name }}
-                      </label>
+                      {{ dept.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- 검색 결과 -->
+                <div
+                  v-if="showSearchResults && (isSearching || hasSearched)"
+                  class="search-results"
+                >
+                  <div v-if="isSearching" class="loading-spinner-container">
+                    <div class="loading-spinner"></div>
+                  </div>
+                  <div v-else-if="searchResults.length > 0">
+                    <div
+                      v-for="user in searchResults"
+                      :key="user.id"
+                      class="search-result-item"
+                      :class="{ selected: isSelected(user) }"
+                      @click="toggleUserSelection(user)"
+                    >
+                      <div class="user-initial">{{ user.name[0] }}</div>
+                      <div class="user-info">
+                        <div class="user-name">{{ user.name }}</div>
+                        <div class="user-dept"
+                          >{{ user.departmentName }} ·
+                          {{ user.positionName }}</div
+                        >
+                      </div>
                     </div>
+                  </div>
+                  <div v-else class="no-results">
+                    <div class="no-results-icon">🔍</div>
+                    <p>검색 결과가 없습니다</p>
                   </div>
                 </div>
               </div>
+
+              <!-- Department List -->
+              <!-- 조직도 UI 제거 -->
             </div>
           </div>
 
           <!-- Main Content Area -->
           <div class="content-area">
             <div class="content-grid">
-              <!-- Left Column - 결재 / 협조 -->
+              <!-- 결재/협조 영역 -->
               <div class="content-column">
                 <div class="column-header">
                   <h3 class="column-title">결재 / 협조</h3>
-                  <span class="exclude-text">선택 제외</span>
                 </div>
-                <div
-                  v-if="
-                    approverList.length === 0 && collaboratorList.length === 0
-                  "
-                  class="empty-box"
-                >
+                <div v-if="approvalList.length === 0" class="empty-box">
                   <span class="empty-text">결재자가 없습니다</span>
                 </div>
                 <div v-else>
-                  <div
-                    v-for="(item, idx) in approverList"
-                    :key="'approver-' + idx"
-                    class="user-card approver"
+                  <draggable
+                    v-model="approvalList"
+                    :group="'approval'"
+                    :handle="'.user-card'"
+                    item-key="id"
+                    class="draggable-list"
+                    :animation="200"
                   >
-                    <span class="user-initial">{{ item.name[0] }}</span>
-                    <span class="user-name">{{ item.name }}</span>
-                    <span class="user-dept">{{ item.dept }}</span>
-                    <span class="user-type">결재</span>
-                  </div>
-                  <div
-                    v-for="(item, idx) in collaboratorList"
-                    :key="'collab-' + idx"
-                    class="user-card collaborator"
-                  >
-                    <span class="user-initial">{{ item.name[0] }}</span>
-                    <span class="user-name">{{ item.name }}</span>
-                    <span class="user-dept">{{ item.dept }}</span>
-                    <span class="user-type">협조</span>
-                  </div>
+                    <template #item="{ element, index }">
+                      <div
+                        class="user-card"
+                        :class="
+                          element.type === 'COLLABORATOR'
+                            ? 'collaborator'
+                            : 'approver'
+                        "
+                      >
+                        <span class="user-initial">{{ element.name[0] }}</span>
+                        <span class="user-name">{{ element.name }}</span>
+                        <span class="user-dept"
+                          >{{ element.dept }} · {{ element.position }}</span
+                        >
+                        <button
+                          class="remove-user-btn"
+                          @click.stop="removeMember(approvalList, element.id)"
+                          >×</button
+                        >
+                      </div>
+                    </template>
+                  </draggable>
                 </div>
               </div>
-
-              <!-- Right Column - 수신 / 참조 -->
+              <!-- 수신/참조 영역 (한 컬럼에 같이) -->
               <div class="content-column">
                 <div class="column-header">
                   <h3 class="column-title">수신 / 참조</h3>
-                  <span class="exclude-text">선택 제외</span>
                 </div>
                 <div
                   v-if="receiverList.length === 0 && referenceList.length === 0"
@@ -187,24 +177,36 @@
                 </div>
                 <div v-else>
                   <div
-                    v-for="(item, idx) in receiverList"
-                    :key="'receiver-' + idx"
+                    v-for="user in receiverList"
+                    :key="user.id"
                     class="user-card receiver"
                   >
-                    <span class="user-initial">{{ item.name[0] }}</span>
-                    <span class="user-name">{{ item.name }}</span>
-                    <span class="user-dept">{{ item.dept }}</span>
-                    <span class="user-type">수신</span>
+                    <span class="user-initial">{{ user.name[0] }}</span>
+                    <span class="user-name">{{ user.name }}</span>
+                    <span class="user-dept"
+                      >{{ user.dept }} · {{ user.position }}</span
+                    >
+                    <button
+                      class="remove-user-btn"
+                      @click.stop="removeMember(receiverList, user.id)"
+                      >×</button
+                    >
                   </div>
                   <div
-                    v-for="(item, idx) in referenceList"
-                    :key="'ref-' + idx"
+                    v-for="user in referenceList"
+                    :key="user.id"
                     class="user-card reference"
                   >
-                    <span class="user-initial">{{ item.name[0] }}</span>
-                    <span class="user-name">{{ item.name }}</span>
-                    <span class="user-dept">{{ item.dept }}</span>
-                    <span class="user-type">참조</span>
+                    <span class="user-initial">{{ user.name[0] }}</span>
+                    <span class="user-name">{{ user.name }}</span>
+                    <span class="user-dept"
+                      >{{ user.dept }} · {{ user.position }}</span
+                    >
+                    <button
+                      class="remove-user-btn"
+                      @click.stop="removeMember(referenceList, user.id)"
+                      >×</button
+                    >
                   </div>
                 </div>
               </div>
@@ -214,10 +216,9 @@
 
         <!-- Footer -->
         <div class="footer">
-          <span class="footer-text">선택된 결재자 제외</span>
           <div class="footer-buttons">
             <button class="btn btn-outline" @click="emit('close')">취소</button>
-            <button class="btn btn-primary" @click="handleRegister"
+            <button class="btn btn-primary" @click="confirmSelection"
               >등록</button
             >
           </div>
@@ -228,88 +229,239 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from "vue";
+import { ref, reactive, watch, onMounted, onUnmounted } from "vue";
+import draggable from "vuedraggable";
+import { debounce } from "lodash";
+import api from "@/lib/api";
+
+const props = defineProps({
+  initialLines: {
+    type: Array,
+    default: () => [],
+  },
+});
 const emit = defineEmits(["close", "confirm"]);
 
-const activeTab = ref("결재 추가");
-const searchQuery = ref("");
+const activeTab = ref("결재");
+const tabs = ["결재", "협조", "수신", "참조"];
 
-const tabs = ["결재 추가", "협조 추가", "수신 추가", "참조 추가"];
-
-const departments = reactive([
-  {
-    name: "영업1팀",
-    count: 3,
-    expanded: true,
-    members: [
-      { name: "김영희 주임", checked: false },
-      { name: "이종규 과장", checked: false },
-      { name: "황수민 대리", checked: false },
-    ],
-  },
-  {
-    name: "영업2팀",
-    count: 3,
-    expanded: true,
-    members: [
-      { name: "박지훈 사원", checked: false },
-      { name: "최서연 대리", checked: false },
-    ],
-  },
-  {
-    name: "물류팀",
-    count: 2,
-    expanded: true,
-    members: [
-      { name: "차은우 차장", checked: false },
-      { name: "정민수 과장", checked: false },
-    ],
-  },
+const searchName = ref("");
+const selectedDepartmentId = ref("");
+const departmentList = ref([
+  { id: 1, name: "구매팀" },
+  { id: 2, name: "영업팀" },
+  { id: 3, name: "물류팀" },
+  { id: 4, name: "영업1팀" },
+  { id: 5, name: "영업2팀" },
+  { id: 6, name: "영업3팀" },
+  { id: 7, name: "물류1팀" },
+  { id: 8, name: "물류2팀" },
+  { id: 9, name: "물류3팀" },
+  { id: 10, name: "인사팀" },
 ]);
 
-// 각 영역별 리스트
-const approverList = ref([]); // 결재
-const collaboratorList = ref([]); // 협조
-const receiverList = ref([]); // 수신
-const referenceList = ref([]); // 참조
+const searchResults = ref([]);
+const selectedSearchUsers = ref([]);
+const isSearching = ref(false);
+const hasSearched = ref(false);
+const showSearchResults = ref(false);
+let searchTimeout = null;
 
-function addSelectedMembers() {
-  const selected = [];
-  departments.forEach((dept) => {
-    dept.members.forEach((member) => {
-      if (member.checked) {
-        selected.push({ ...member, dept: dept.name });
-        member.checked = false;
+const approvalList = ref([]);
+const receiverList = ref([]);
+const referenceList = ref([]);
+
+const searchUsers = async () => {
+  if (!searchName.value && !selectedDepartmentId.value) {
+    searchResults.value = [];
+    hasSearched.value = false;
+    return;
+  }
+
+  isSearching.value = true;
+  hasSearched.value = true;
+  showSearchResults.value = true;
+
+  try {
+    const params = {};
+    if (searchName.value) params.name = searchName.value;
+    if (selectedDepartmentId.value)
+      params.departmentId = selectedDepartmentId.value;
+
+    const response = await api.get("/api/hq/user/hq", { params });
+    searchResults.value = response.data || [];
+  } catch (error) {
+    console.error("직원 검색 실패:", error);
+    searchResults.value = [];
+  } finally {
+    isSearching.value = false;
+  }
+};
+
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    searchUsers();
+  }, 300); // 300ms 디바운싱
+};
+
+const addSelectedMembers = () => {
+  const targetList = getListByTab(activeTab.value);
+  selectedSearchUsers.value.forEach((user) => {
+    const isAlreadyAdded = [
+      ...approvalList.value,
+      ...receiverList.value,
+      ...referenceList.value,
+    ].some((member) => member.id === user.id);
+
+    if (!isAlreadyAdded) {
+      const member = {
+        id: user.id,
+        name: user.name,
+        dept: user.departmentName,
+        position: user.positionName,
+        type: getTypeByTab(activeTab.value),
+      };
+      targetList.value.push(member);
+    }
+  });
+  selectedSearchUsers.value = [];
+  showSearchResults.value = false;
+};
+
+const getListByTab = (tab) => {
+  switch (tab) {
+    case "결재":
+    case "협조":
+      return approvalList;
+    case "수신":
+      return receiverList;
+    case "참조":
+      return referenceList;
+    default:
+      return approvalList;
+  }
+};
+
+const getTypeByTab = (tab) => {
+  switch (tab) {
+    case "결재":
+      return "APPROVER";
+    case "협조":
+      return "COLLABORATOR";
+    case "수신":
+      return "RECEIVER";
+    case "참조":
+      return "REFERENCE";
+    default:
+      return "APPROVER";
+  }
+};
+
+onMounted(() => {
+  // 기존 조직도 로딩 로직 제거
+  // 초기 결재선 설정
+  if (props.initialLines && props.initialLines.length > 0) {
+    props.initialLines.forEach((line) => {
+      const user = {
+        id: line.id || line.userId,
+        name: line.name,
+        dept: line.dept,
+        position: line.position,
+        type: line.type,
+      };
+
+      const list = getListByType(line.type);
+      if (list) {
+        list.value.push(user);
       }
     });
-  });
-  if (activeTab.value === "결재 추가") {
-    approverList.value.push(...selected);
-  } else if (activeTab.value === "협조 추가") {
-    collaboratorList.value.push(...selected);
-  } else if (activeTab.value === "수신 추가") {
-    receiverList.value.push(...selected);
-  } else if (activeTab.value === "참조 추가") {
-    referenceList.value.push(...selected);
   }
-}
-
-watch(activeTab, () => {
-  addSelectedMembers();
+  document.addEventListener("click", handleClickOutside);
 });
 
-function toggleDepartment(index) {
-  departments[index].expanded = !departments[index].expanded;
-}
+const getListByType = (type) => {
+  switch (type) {
+    case "APPROVER":
+    case "COLLABORATOR":
+      return approvalList;
+    case "RECEIVER":
+      return receiverList;
+    case "REFERENCE":
+      return referenceList;
+    default:
+      return null;
+  }
+};
 
-function handleRegister() {
+const closeModal = () => {
+  emit("close");
+};
+
+const confirmSelection = () => {
+  const approvalAndCollaboratorLines = approvalList.value.map((user) => ({
+    ...user,
+    type: user.type === "COLLABORATOR" ? "COLLABORATOR" : "APPROVER",
+  }));
+
   emit("confirm", {
-    approvers: approverList.value,
-    collaborators: collaboratorList.value,
+    approvalAndCollaboratorLines: approvalAndCollaboratorLines,
     receivers: receiverList.value,
     references: referenceList.value,
   });
+  closeModal();
+};
+
+const removeMember = (list, userId) => {
+  const arr = Array.isArray(list) ? list : list.value;
+  if (!arr) return;
+  const idx = arr.findIndex((user) => user.id === userId);
+  if (idx > -1) arr.splice(idx, 1);
+};
+
+const resetSelection = () => {
+  approvalList.value = [];
+  receiverList.value = [];
+  referenceList.value = [];
+};
+
+function toggleType(idx) {
+  // 결재/협조 타입 토글
+  if (approvalList.value[idx].type === "APPROVER") {
+    approvalList.value[idx].type = "COLLABORATOR";
+  } else {
+    approvalList.value[idx].type = "APPROVER";
+  }
 }
+
+const handleClickOutside = (event) => {
+  const searchSection = document.querySelector(".search-section");
+  if (searchSection && !searchSection.contains(event.target)) {
+    showSearchResults.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
+
+const isSelected = (user) => {
+  return selectedSearchUsers.value.some((u) => u.id === user.id);
+};
+
+const toggleUserSelection = (user) => {
+  if (isSelected(user)) {
+    selectedSearchUsers.value = selectedSearchUsers.value.filter(
+      (u) => u.id !== user.id
+    );
+  } else {
+    selectedSearchUsers.value.push(user);
+  }
+};
 </script>
 
 <style scoped>
@@ -363,23 +515,51 @@ function handleRegister() {
   margin: 0;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  padding: 8px;
-  cursor: pointer;
-  border-radius: 4px;
-  color: #6b7280;
-}
-
-.close-btn:hover {
-  background-color: #f3f4f6;
-}
-
 /* Tabs */
 .tabs-container {
   display: flex;
+  align-items: center;
   border-bottom: 1px solid #e5e7eb;
+  justify-content: space-between;
+  position: relative;
+}
+.tabs-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.add-btn {
+  margin-left: auto;
+  margin-right: 8px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  letter-spacing: 1px;
+}
+.add-btn:hover {
+  background: #1746a2;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.18);
+  transform: translateY(-50%) scale(1.04);
+}
+.draggable-list {
+  margin-bottom: 8px;
+}
+.user-card {
+  cursor: grab;
+}
+.user-card:active {
+  cursor: grabbing;
 }
 
 .tab-btn {
@@ -452,32 +632,52 @@ function handleRegister() {
 }
 
 /* Search */
-.search-container {
+.search-section {
+  padding: 0;
+  border-bottom: none;
   position: relative;
-  margin-bottom: 24px;
 }
 
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
+.search-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .search-input {
-  width: 100%;
-  padding: 12px 12px 12px 40px;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  flex-grow: 1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 14px;
-  outline: none;
 }
 
-.search-input:focus {
-  border-color: #d1d5db;
-  background-color: white;
+.department-filter {
+  width: 130px;
+  padding: 10px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #fff;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.loading-spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
 
 /* Department List */
@@ -544,20 +744,50 @@ function handleRegister() {
 .member-item {
   display: flex;
   align-items: center;
-  padding: 8px;
-}
-
-.member-checkbox {
-  margin-right: 8px;
-  width: 16px;
-  height: 16px;
-  accent-color: #3b82f6;
-}
-
-.member-name {
-  font-size: 14px;
-  color: #374151;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.member-item:hover {
+  background-color: #f3f4f6;
+}
+
+.member-item.selected {
+  background-color: #eef2ff;
+  font-weight: 500;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  margin-right: 12px;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 500;
+}
+
+.user-meta {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 2px;
 }
 
 /* Content Area */
@@ -621,11 +851,6 @@ function handleRegister() {
   background-color: #f9fafb;
 }
 
-.footer-text {
-  font-size: 14px;
-  color: #6b7280;
-}
-
 .footer-buttons {
   display: flex;
   gap: 12px;
@@ -671,28 +896,41 @@ function handleRegister() {
   font-size: 15px;
 }
 .user-card.approver {
-  border-left: 4px solid #2563eb;
+  border-left-color: #3b82f6;
+}
+.user-card.approver .user-initial {
+  background-color: #3b82f6;
 }
 .user-card.collaborator {
-  border-left: 4px solid #f472b6;
+  border-left-color: #ec4899;
+}
+.user-card.collaborator .user-initial {
+  background-color: #ec4899;
 }
 .user-card.receiver {
-  border-left: 4px solid #fbbf24;
+  border-left-color: #f59e0b;
+}
+.user-card.receiver .user-initial {
+  background-color: #f59e0b;
 }
 .user-card.reference {
-  border-left: 4px solid #a78bfa;
+  border-left-color: #8b5cf6;
+}
+.user-card.reference .user-initial {
+  background-color: #8b5cf6;
 }
 .user-initial {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
+  background: #3b82f6;
+  color: white;
   border-radius: 50%;
-  background: #dbeafe;
-  color: #2563eb;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 15px;
+  margin-right: 12px;
 }
 .user-card.collaborator .user-initial {
   background: #fbcfe8;
@@ -740,5 +978,61 @@ function handleRegister() {
 .user-card.reference .user-type {
   border-color: #a78bfa;
   color: #7c3aed;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+.search-result-item:hover {
+  background-color: #f9fafb;
+}
+.search-result-item.selected {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+.search-result-item.selected .user-name {
+  font-weight: 600;
+}
+
+.search-user-checkbox {
+  margin-right: 10px;
+}
+
+.badge.approver {
+  background-color: #eef2ff;
+  color: #3b82f6;
+}
+
+.badge.collaborator {
+  background-color: #fdf2f8;
+  color: #ec4899;
+}
+
+.badge.receiver {
+  background-color: #fffbeb;
+  color: #f59e0b;
+}
+
+.badge.reference {
+  background-color: #f5f3ff;
+  color: #8b5cf6;
+}
+
+.remove-user-btn {
+  background: none;
+  border: none;
+  color: #bdbdbd;
+  font-size: 20px;
+  margin-left: 8px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.remove-user-btn:hover {
+  color: #ef4444;
 }
 </style>
