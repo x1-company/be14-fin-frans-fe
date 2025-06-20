@@ -40,9 +40,7 @@
             </div>
             <div class="col-code">{{ item.code }}</div>
             <div class="col-date">{{ formatDate(item.createdAt) }}</div>
-            <div class="col-store">{{
-              item.franchiseName || dummyFranchise(index)
-            }}</div>
+            <div class="col-store">{{ item.franchiseName }}</div>
             <div class="col-amount">₩{{ formatAmount(item.totalAmount) }}</div>
           </div>
         </div>
@@ -67,29 +65,12 @@ const selectedItems = ref([]);
 const loading = ref(false);
 const error = ref(null);
 
-const dummyFranchise = (idx) => {
-  const names = [
-    "KFC 한마음점",
-    "KFC 장제점",
-    "KFC 시흥점",
-    "KFC 대학로점",
-    "KFC 수지점",
-    "맥도날드 강남점",
-    "버거킹 역삼점",
-    "롯데리아 신촌점",
-  ];
-  return names[idx % names.length];
-};
-
 const fetchOrderData = async () => {
   loading.value = true;
   error.value = null;
   try {
     const { data } = await api.get("/api/hq/orders/reviewCompleted");
-    orderData.value = data.map((item, idx) => ({
-      ...item,
-      franchiseName: dummyFranchise(idx),
-    }));
+    orderData.value = data;
   } catch (err) {
     error.value = err.message;
     orderData.value = [];

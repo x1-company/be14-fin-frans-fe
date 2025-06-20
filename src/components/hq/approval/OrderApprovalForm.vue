@@ -390,18 +390,23 @@ const handleAddDocument = () => {
 };
 
 const handleSelectDocuments = (selectedItems) => {
-  // Clear the documentIds array to prevent accumulation
-  formData.value.approvalDocuments.documentIds = [];
-
-  const newDocuments = selectedItems.map((item) => {
-    // Only add numeric IDs to the documentIds array
-    if (typeof item.id === "number") {
-      formData.value.approvalDocuments.documentIds.push(item.id);
+  // Append new documents to the existing list, avoiding duplicates
+  selectedItems.forEach((newItem) => {
+    const isDuplicate = selectedDocuments.value.some(
+      (existingDoc) =>
+        (newItem.id !== undefined && existingDoc.id === newItem.id) ||
+        existingDoc.code === newItem.code
+    );
+    if (!isDuplicate) {
+      selectedDocuments.value.push(newItem);
     }
-    return item;
   });
 
-  selectedDocuments.value = newDocuments;
+  // Rebuild the documentIds array to be in sync with the updated selectedDocuments list
+  formData.value.approvalDocuments.documentIds = selectedDocuments.value
+    .map((doc) => doc.id)
+    .filter((id) => typeof id === "number");
+
   showOrderListModal.value = false;
   emitFormData();
 };
