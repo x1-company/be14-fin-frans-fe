@@ -62,8 +62,9 @@ import ApprovalTypeSelector from "./ApprovalTypeSelector.vue";
 import OrderApprovalForm from "./OrderApprovalForm.vue";
 import ReturnApprovalForm from "./ReturnApprovalForm.vue";
 import PurchaseApprovalForm from "./PurchaseApprovalForm.vue";
+import api from "@/lib/api";
 
-const emit = defineEmits(["cancel"]);
+const emit = defineEmits(["submit", "cancel"]);
 const props = defineProps({
   selectedTemplate: { type: Object, default: null },
 });
@@ -189,6 +190,8 @@ const submitApproval = async () => {
   if (currentFormRef && currentFormRef.getFormData) {
     const currentFormData = currentFormRef.getFormData();
     formData.value = { ...formData.value, ...currentFormData };
+    // approvalDocuments를 완전히 덮어쓰기
+    formData.value.approvalDocuments = { ...currentFormData.approvalDocuments };
   }
 
   if (!formData.value.title.trim()) {
@@ -237,15 +240,9 @@ const submitApproval = async () => {
     };
 
     // API 호출
-    const response = await fetch("/api/approvals", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    });
+    const response = await api.post("/api/hq/approvals", requestData);
 
-    if (response.ok) {
+    if (response.status === 200 || response.status === 201) {
       alert("결재 요청이 성공적으로 등록되었습니다.");
       resetFormData();
     } else {
@@ -263,14 +260,14 @@ const uploadFile = async (file) => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch("/api/files/upload", {
-    method: "POST",
-    body: formData,
+  const response = await api.post("/api/files/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 
-  if (response.ok) {
-    const result = await response.json();
-    return result.url;
+  if (response.status === 200 || response.status === 201) {
+    return response.data.url;
   } else {
     throw new Error("파일 업로드에 실패했습니다.");
   }
