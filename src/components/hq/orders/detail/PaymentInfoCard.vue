@@ -41,7 +41,7 @@ const approvalStatusText = computed(() => {
     case 'REJECTED':
       return '반려됨';
     default:
-      return '-';
+      return '결재 전';
   }
 });
 
@@ -54,7 +54,7 @@ const statusClass = computed(() => {
     case 'REJECTED':
       return 'rejected';
     default:
-      return '';
+      return '결재 전';
   }
 });
 </script>
@@ -67,6 +67,8 @@ const statusClass = computed(() => {
   padding: 32px 24px;
   margin: 20px 0 100px 60px;
   background: #fff;
+  max-width: 100%;
+  width: 100%;
 }
 
 .card-title {

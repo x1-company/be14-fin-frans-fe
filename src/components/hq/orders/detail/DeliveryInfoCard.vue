@@ -5,19 +5,19 @@
       배송 정보
     </div>
     <div class="info-grid">
-      <div class="label">배송업체</div>
+      <div class="label">배송 업체</div>
       <div class="value">{{ order.deliveryCompany }}</div>
 
-      <div class="label">차량번호</div>
+      <div class="label">배송 기사명</div>
       <div class="value">{{ order.driverName }}</div>
 
       <div class="label">기사 연락처</div>
       <div class="value">{{ order.driverPhone }}</div>
 
-      <div class="label">운송장번호</div>
+      <div class="label">운송장 번호</div>
       <div class="value">{{ order.trackingNumber }}</div>
 
-      <div class="label">배송일자</div>
+      <div class="label">배송 일자</div>
       <div class="value">{{ formatDate(order.deliveredAt) }}</div>
     </div>
   </div>
@@ -44,6 +44,8 @@ function formatDate(dateStr) {
   margin: 20px 0 10px 60px;
   margin-bottom: 24px;
   background: #fff;
+  max-width: 100%;
+  width: 100%;
 }
 
 .card-title {

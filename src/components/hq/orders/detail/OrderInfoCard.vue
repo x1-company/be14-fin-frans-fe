@@ -8,20 +8,23 @@
     <!-- 주문번호 & 총 주문금액 박스 -->
     <div class="info-box-row">
       <div class="info-box blue">
-        <span class="label"># 주문 번호</span>
+        <span class="label">주문 번호</span>
         <span class="value">{{ order.code || '-' }}</span>
       </div>
       <div class="info-box green">
-        <span class="label">💲 총 주문 금액</span>
+        <span class="label">총 주문 금액</span>
         <span class="value">{{ (order.totalAmount ?? 0).toLocaleString() }}원</span>
       </div>
     </div>
 
     <!-- 날짜, 수량, 상태 -->
-    <div class="info-row">
-      <div><span class="sub-label">주문일</span> <span>{{ order.orderDate || '-' }}</span></div>
-      <div><span class="sub-label">총 자재 수량</span> <span>{{ order.totalQuantity ?? '-' }}</span></div>
-      <div><span class="sub-label">주문 상태</span> <span class="order-status">{{ order.status || '-' }}</span></div>
+    <div class="info-grid">
+      <div class="label">주문 날짜</div>
+      <div class="value">{{ order.orderDate || '-' }}</div>
+      <div class="label">총 자재 수량</div>
+      <div class="value">{{ order.totalQuantity ? `${order.totalQuantity.toLocaleString()}개` : '-' }}</div>
+      <div class="label">주문 상태</div>
+      <div class="value order-status">{{ statusText || '-' }}</div>
     </div>
 
     <!-- 반려 사유 -->
@@ -34,8 +37,21 @@
 
 
 <script setup>
+import { computed } from 'vue';
 const props = defineProps({
   order: Object
+});
+
+const statusText = computed(() => {
+  switch(props.order.status) {
+    case 'REJECTED': return '반려';
+    case 'REVIEWING': return '검토 중';
+    case 'REVIEW_COMPLETED': return '검토 완료';
+    case 'APPROVED': return '결재 완료';
+    case 'DELIVERING': return '배송 중';
+    case 'DELIVERED': return '배송 완료';
+    default: return props.order.status;
+  }
 });
 </script>
 
@@ -48,6 +64,8 @@ const props = defineProps({
   margin: 20px 0 10px 60px;
   margin-bottom: 24px;
   background: #fff;
+  max-width: 100%;
+  width: 100%;
 }
 
 .order-title {
@@ -63,6 +81,7 @@ const props = defineProps({
   display: flex;
   gap: 24px;
   margin-bottom: 24px;
+  max-width: 97%;
 }
 
 .info-box {
@@ -94,6 +113,28 @@ const props = defineProps({
 .info-box.green {
   background-color: #e9f9ee;
   color: #388e3c;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 150px 1fr 150px 1fr;
+  row-gap: 12px;
+  column-gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.info-grid .label {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.info-grid .value {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 30px;
+  text-align: right;
 }
 
 .info-row {
