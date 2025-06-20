@@ -13,20 +13,26 @@
         <table>
           <thead>
             <tr>
+              <th>No.</th>
+              <th>문서번호</th>
               <th>가맹점명</th>
+              <th>작성일자</th>
               <th>금액</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="selectedDocuments.length === 0">
-              <td colspan="3" class="text-center">문서를 추가해주세요.</td>
+              <td colspan="6" class="text-center">문서를 추가해주세요.</td>
             </tr>
             <tr
               v-for="(doc, index) in selectedDocuments"
               :key="doc.id ?? doc.code"
             >
+              <td>{{ index + 1 }}</td>
+              <td>{{ doc.code }}</td>
               <td>{{ doc.franchiseName }}</td>
+              <td>{{ formatDate(doc.createdAt) }}</td>
               <td>{{ doc.totalAmount?.toLocaleString() }}원</td>
               <td>
                 <button class="remove-button" @click="removeDocument(index)">
