@@ -24,16 +24,11 @@ const emit = defineEmits(["type-selected"]);
 
 const selectedType = ref("ORDER");
 
-// 결재 유형 옵션
+// 결재 유형 옵션 (순서: 주문결재, 반품결재, 발주결재)
 const approvalTypes = ref([
   { value: "ORDER", label: "주문 결재", color: "#3b82f6", icon: "📋" },
-  {
-    value: "PURCHASE",
-    label: "발주 결재",
-    color: "#10b981",
-    icon: "🛒",
-  },
   { value: "RETURN", label: "반품 결재", color: "#f59e0b", icon: "🔄" },
+  { value: "PURCHASE", label: "발주 결재", color: "#10b981", icon: "🛒" },
 ]);
 
 const selectType = (type) => {
@@ -45,52 +40,56 @@ const selectType = (type) => {
 <style scoped>
 .form-section {
   margin-bottom: 40px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 24px;
+  border: none;
+  border-radius: 0;
+  padding: 0 0 24px 0;
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
-  margin-bottom: 20px;
-  color: #1f2937;
+  margin-bottom: 18px;
+  color: #222;
 }
 
-/* 결재 유형 선택 */
 .approval-type-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  display: flex;
+  gap: 12px;
 }
 
 .approval-type-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  padding: 24px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 12px 20px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 7px;
   cursor: pointer;
-  transition: all 0.2s;
+  background: none;
+  transition: border 0.18s, background 0.18s;
+  min-width: 120px;
+  gap: 10px;
 }
 
 .approval-type-card:hover {
-  border-color: #d1d5db;
+  border-color: #b6b6b6;
+  background: #f8fafc;
 }
 
 .approval-type-card.active {
   border-color: #3b82f6;
-  background-color: #eff6ff;
+  background: #f3f7fd;
 }
 
 .card-icon {
-  font-size: 24px;
-  margin-bottom: 8px;
+  font-size: 18px;
+  margin-bottom: 0;
+  margin-right: 6px;
 }
 
 .card-label {
   font-weight: 500;
-  color: #374151;
+  color: #222;
+  font-size: 15px;
 }
 </style>
