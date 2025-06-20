@@ -65,19 +65,27 @@
         </table>
       </div>
       <div class="order-form__pagination">
-        <button :disabled="page === 1" @click="page--">이전</button>
-        <span v-for="p in totalPages" :key="p" :class="['page-btn', {active: p === page}]" @click="page = p">{{ p }}</span>
-        <button :disabled="page === totalPages" @click="page++">다음</button>
+        <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
+        <span
+          v-for="p in paginationPages"
+          :key="p"
+          :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
+          @click="typeof p === 'number' && (page = p)"
+        >
+          {{ p }}
+        </span>
+        <button class="page-arrow" :disabled="page === totalPages" @click="page++">&gt;</button>
       </div>
       <div class="order-form__total">총 {{ filteredOrders.length }}개 항목</div>
     </div>
   </template>
   
   <script setup>
-  import { ref, computed } from 'vue';
+  import { ref, computed, watch } from 'vue';
   import { RouterLink } from 'vue-router';
   import Datepicker from '@vuepic/vue-datepicker';
   import '@vuepic/vue-datepicker/dist/main.css';
+  
   const props = defineProps({
     orders: Array
   });
@@ -159,6 +167,28 @@
       default: return '';
     }
   }
+
+  const totalPages = computed(() => Math.ceil(filteredOrders.value.length / pageSize));
+
+  const paginationPages = computed(() => {
+    const pages = [];
+    if (totalPages.value <= 7) {
+      for (let i = 1; i <= totalPages.value; i++) pages.push(i);
+    } else {
+      if (page.value <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages.value);
+      } else if (page.value >= totalPages.value - 3) {
+        pages.push(1, '...', totalPages.value - 4, totalPages.value - 3, totalPages.value - 2, totalPages.value - 1, totalPages.value);
+      } else {
+        pages.push(1, '...', page.value - 1, page.value, page.value + 1, '...', totalPages.value);
+      }
+    }
+    return pages;
+  });
+
+  watch([search, searchDate, filter, activeTab], () => {
+    page.value = 1;
+  });
 
   </script>
   
@@ -300,23 +330,59 @@
   }
   .order-form__pagination {
     display: flex;
-    gap: 4px;
+    gap: 8px;
     align-items: center;
     justify-content: center;
     margin: 16px 0;
   }
   .page-btn {
-    padding: 4px 10px;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
+    min-width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e4ea;
     background: #fff;
+    color: #222;
+    font-size: 1.1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    margin: 0 2px;
+    transition: border 0.2s, color 0.2s;
+    user-select: none;
   }
   .page-btn.active {
-    background: #4066fa;
-    color: #fff;
-    border-color: #4066fa;
+    border: 2px solid #6c47ff;
+    color: #6c47ff;
+    font-weight: 700;
+    background: #f8f6ff;
+  }
+  .page-btn.ellipsis {
+    cursor: default;
+    color: #bdbdbd;
+    border: none;
+    background: transparent;
+    pointer-events: none;
+  }
+  .page-arrow {
+    min-width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e4ea;
+    background: #f5f6fa;
+    color: #bdbdbd;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .page-arrow:disabled {
+    background: #e2e4ea;
+    color: #bdbdbd;
+    cursor: not-allowed;
   }
   .order-form__total {
     text-align: right;
