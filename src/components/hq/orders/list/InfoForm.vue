@@ -64,25 +64,15 @@
   </template>
   
   <script setup>
-  import api from '@/lib/api'
-  import { ref, computed, watch, onMounted } from 'vue';
+  import { ref, computed } from 'vue';
   import { RouterLink } from 'vue-router';
   const props = defineProps({
-    orders: Array,
-    franchiseId: {
-      type: [Number, String],
-      required: true
-    }
+    orders: Array
   });
   const search = ref('');
   const filter = ref('itemName');
   const page = ref(1);
   const pageSize = 10;
-  
-  // API에서 받아온 orders
-  const orders = ref([]);
-  const totalCount = ref(0);
-  const totalPages = ref(1);
   
   // 탭 관련
   const tabs = [
@@ -93,19 +83,11 @@
   ];
   const activeTab = ref(0);
 
-  onMounted(() => {
-    activeTab.value = 0;
-    page.value = 1;
-    fetchOrders();
-  });
-
   function selectTab(idx) {
     activeTab.value = idx;
     page.value = 1;
-    fetchOrders();
   }
   
-  // status 한글 변환
   function statusText(status) {
     switch(status) {
       case 'REJECTED': return '반려';
@@ -118,7 +100,6 @@
     }
   }
   
-  // 탭별 상태 필터 기준
   function tabStatusFilter(order) {
     if (activeTab.value === 1) {
       return order.status === 'REVIEWING';
@@ -131,7 +112,7 @@
   }
   
   const filteredOrders = computed(() => {
-    let result = orders.value || [];
+    let result = props.orders || [];
     // 탭 필터링
     result = result.filter(tabStatusFilter);
     // 검색/필터
@@ -147,10 +128,7 @@
     return result;
   });
   const pagedOrders = computed(() => filteredOrders.value.slice((page.value-1)*pageSize, page.value*pageSize));
-  function onSearch() {
-    page.value = 1;
-  }
-  
+
   function orderStatusClass(status) {
     switch(status) {
       case '접수 대기': return 'status-pending';
@@ -160,35 +138,6 @@
       default: return '';
     }
   }
-  watch([search, filter], () => {
-  page.value = 1;
-});
-
-watch(page, () => {
-  fetchOrders();
-});
-
-
-  // API 연동
-  async function fetchOrders() {
-  try {
-    const res = await api.get('/api/hq/orders', {
-      params: {
-        page: page.value,
-        size: pageSize,
-        franchiseId: props.franchiseId
-      }
-    });
-
-    const data = res.data;
-    orders.value = data.content;
-    totalCount.value = data.totalCount;
-    totalPages.value = data.totalPages;
-  } catch (err) {
-    console.error('주문 목록을 불러오는 중 오류 발생:', err);
-    alert('주문 목록을 불러오는 데 실패했습니다.');
-  }
-}
 
   </script>
   

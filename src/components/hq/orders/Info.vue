@@ -63,7 +63,7 @@ const activeTab = 2; // 주문관리
 }
 
 .breadcrumb {
-  padding: 20px 30px;
+  padding: 20px 0 30px 100px;
   font-size: 14px;
   color: #6c757d;
 }
