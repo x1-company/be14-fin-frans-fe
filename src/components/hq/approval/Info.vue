@@ -113,7 +113,7 @@ const emit = defineEmits([
   "template-updated",
   "reorder-mode-changed",
   "reorder-complete",
-  "reorder-cancel"
+  "reorder-cancel",
 ]);
 
 const updateTab = (newTabIndex) => {

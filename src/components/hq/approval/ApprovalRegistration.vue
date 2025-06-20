@@ -7,6 +7,7 @@
       <!-- 선택된 유형에 따른 폼 컴포넌트 -->
       <OrderApprovalForm
         v-if="selectedType === 'ORDER'"
+        type="ORDER"
         ref="orderFormRef"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
@@ -90,7 +91,6 @@ const formData = ref({
     categoryType: "ORDER",
     documentIds: [],
   },
-  // 추가 필드들
   returnReason: "",
   detailedReason: "",
   supplierName: "",
@@ -103,11 +103,8 @@ const formData = ref({
 const handleTypeSelected = (type) => {
   selectedType.value = type;
   formData.value.approvalDocuments.categoryType = type;
-
-  // 폼 초기화
   resetFormData();
 
-  // 해당 폼 컴포넌트 초기화
   nextTick(() => {
     const currentFormRef = getCurrentFormRef();
     if (currentFormRef && currentFormRef.initializeForm) {
@@ -132,7 +129,6 @@ const getCurrentFormRef = () => {
 
 // 폼 데이터 업데이트 핸들러
 const handleFormDataUpdated = (data) => {
-  // 선택된 유형에 따라 데이터 병합
   formData.value = {
     ...formData.value,
     ...data,
@@ -150,7 +146,6 @@ const handleAddDocument = () => {
 
 // ReturnList에서 문서 선택 완료 핸들러
 const handleDocumentSelection = (selectedDocuments) => {
-  // 선택된 문서들을 현재 폼의 documents 배열에 추가
   const currentFormRef = getCurrentFormRef();
   if (currentFormRef && currentFormRef.addSelectedDocuments) {
     currentFormRef.addSelectedDocuments(selectedDocuments);
@@ -185,17 +180,15 @@ const resetFormData = () => {
 };
 
 const submitApproval = async () => {
-  // 현재 활성화된 폼에서 데이터 가져오기
   const currentFormRef = getCurrentFormRef();
   if (currentFormRef && currentFormRef.getFormData) {
     const currentFormData = currentFormRef.getFormData();
     formData.value = { ...formData.value, ...currentFormData };
-    // approvalDocuments를 완전히 덮어쓰기
     formData.value.approvalDocuments = { ...currentFormData.approvalDocuments };
   }
 
-  if (!formData.value.title.trim()) {
-    alert("제목을 입력해주세요.");
+  if (!formData.value.title.trim() || formData.value.title.trim().length < 2) {
+    alert("제목을 2자 이상 입력해주세요.");
     return;
   }
 
@@ -207,7 +200,6 @@ const submitApproval = async () => {
   isSubmitting.value = true;
 
   try {
-    // 파일 업로드 처리
     const uploadedFiles = [];
     for (const fileData of formData.value.files) {
       if (fileData.file) {
@@ -219,18 +211,24 @@ const submitApproval = async () => {
       }
     }
 
-    // API 요청 데이터 구성
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,
       isRequest: formData.value.isRequest,
-      approvalLines: formData.value.approvalLines,
+      approvalLines: formData.value.approvalLines
+        .filter(
+          (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
+        )
+        .map((line, index) => ({
+          userId: line.userId || line.id,
+          seq: index + 1,
+          type: line.type,
+        })),
       files: uploadedFiles,
       approvalDocuments: {
         categoryType: selectedType.value,
         documentIds: formData.value.approvalDocuments.documentIds,
       },
-      // 추가 필드들
       returnReason: formData.value.returnReason,
       detailedReason: formData.value.detailedReason,
       supplierName: formData.value.supplierName,
@@ -239,12 +237,14 @@ const submitApproval = async () => {
       contractTerms: formData.value.contractTerms,
     };
 
-    // API 호출
     const response = await api.post("/api/hq/approvals", requestData);
 
     if (response.status === 200 || response.status === 201) {
       alert("결재 요청이 성공적으로 등록되었습니다.");
       resetFormData();
+
+      // 성공 시 등록 → 리스트로
+      emit("cancel", true);
     } else {
       throw new Error("결재 요청 등록에 실패했습니다.");
     }
@@ -279,10 +279,8 @@ const handleCancel = () => {
 
 // 컴포넌트 마운트 시 초기화
 onMounted(() => {
-  // 초기 문서 ID 설정
   formData.value.approvalDocuments.documentIds = [1, 2];
 
-  // 첫 번째 폼 초기화
   nextTick(() => {
     if (orderFormRef.value && orderFormRef.value.initializeForm) {
       orderFormRef.value.initializeForm();
@@ -306,7 +304,6 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-/* 제출 버튼 */
 .form-actions {
   display: flex;
   justify-content: space-between;
@@ -339,7 +336,6 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-/* 모달 스타일 */
 .modal-overlay {
   position: fixed;
   top: 0;

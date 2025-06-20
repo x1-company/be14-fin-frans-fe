@@ -13,23 +13,23 @@
         <table>
           <thead>
             <tr>
-              <th>No.</th>
-              <th>문서명</th>
-              <th>작성일</th>
+              <th>가맹점명</th>
               <th>금액</th>
-              <th>코드</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(doc, index) in filteredDocuments" :key="doc.id">
-              <td>{{ index + 1 }}</td>
-              <td>{{ doc.name }}</td>
-              <td>{{ doc.date }}</td>
-              <td>{{ formatCurrency(doc.amount) }}</td>
-              <td>{{ doc.code }}</td>
+            <tr v-if="selectedDocuments.length === 0">
+              <td colspan="3" class="text-center">문서를 추가해주세요.</td>
+            </tr>
+            <tr
+              v-for="(doc, index) in selectedDocuments"
+              :key="doc.id ?? doc.code"
+            >
+              <td>{{ doc.franchiseName }}</td>
+              <td>{{ doc.totalAmount?.toLocaleString() }}원</td>
               <td>
-                <button class="remove-button" @click="removeDocument(doc.id)">
+                <button class="remove-button" @click="removeDocument(index)">
                   ×
                 </button>
               </td>
@@ -249,6 +249,21 @@ import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
 import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
 import api from "@/lib/api";
+import { useRouter } from "vue-router";
+// import { approvalRequest } from "@/lib/api/approval.js";
+import { useAuthStore } from "@/stores/auth";
+
+const authStore = useAuthStore();
+console.log("accessToken:", authStore.accessToken);
+
+const router = useRouter();
+
+const props = defineProps({
+  type: {
+    type: String,
+    required: true,
+  },
+});
 
 const showModal = ref(false);
 const showOrderListModal = ref(false);
@@ -271,6 +286,8 @@ const formData = ref({
 });
 
 const fileInput = ref(null);
+
+const selectedDocuments = ref([]);
 
 // 문서 목록
 const documents = ref([]);
@@ -331,17 +348,15 @@ const removeApprover = (id) => {
   emitFormData();
 };
 
-const removeDocument = (docId) => {
-  // documents 배열에서 삭제
-  const docIndex = documents.value.findIndex((doc) => doc.id === docId);
-  if (docIndex > -1) {
-    documents.value.splice(docIndex, 1);
-  }
-
-  // approvalDocuments에서 삭제
-  const index = formData.value.approvalDocuments.documentIds.indexOf(docId);
-  if (index > -1) {
-    formData.value.approvalDocuments.documentIds.splice(index, 1);
+const removeDocument = (index) => {
+  const removedItem = selectedDocuments.value.splice(index, 1)[0];
+  if (removedItem && typeof removedItem.id === "number") {
+    const idIndex = formData.value.approvalDocuments.documentIds.indexOf(
+      removedItem.id
+    );
+    if (idIndex > -1) {
+      formData.value.approvalDocuments.documentIds.splice(idIndex, 1);
+    }
   }
   emitFormData();
 };
@@ -368,30 +383,46 @@ const handleAddDocument = () => {
   showOrderListModal.value = true;
 };
 
-const handleSelectDocuments = (selectedDocuments) => {
+const handleSelectDocuments = (selectedItems) => {
+  // Clear the documentIds array to prevent accumulation
+  formData.value.approvalDocuments.documentIds = [];
+
+  const newDocuments = selectedItems.map((item) => {
+    // Only add numeric IDs to the documentIds array
+    if (typeof item.id === "number") {
+      formData.value.approvalDocuments.documentIds.push(item.id);
+    }
+    return item;
+  });
+
+  selectedDocuments.value = newDocuments;
+  showOrderListModal.value = false;
+  emitFormData();
+};
+
+const addSelectedDocuments = (selectedDocuments) => {
+  // 1. documentIds 배열을 새로 만듭니다.
+  formData.value.approvalDocuments.documentIds = [];
+
   selectedDocuments.forEach((doc) => {
-    // 이미 존재하는 문서인지 확인
+    const displayId = doc.id ?? doc.code;
     const existingDoc = documents.value.find(
-      (existing) => existing.id === (doc.id || doc.code)
+      (existing) => existing.id === displayId
     );
     if (!existingDoc) {
-      // 주문 코드를 문서명으로 사용하고, 매장명을 추가
-      const documentName = `${doc.franchiseName} - ${doc.code}`;
-
-      // 새로운 문서를 배열의 맨 앞에 추가 (code 필드 포함)
+      const documentName = doc.franchiseName || `문서 (${doc.code})`;
       documents.value.unshift({
-        id: doc.id || doc.code,
-        code: doc.code, // 코드 필드 추가
+        id: displayId,
         name: documentName,
         date: formatDate(doc.createdAt),
-        amount: doc.totalAmount,
+        amount: doc.totalAmount || 0,
       });
-
-      // approvalDocuments에 추가
-      formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
+    }
+    // 숫자 id만 추가
+    if (doc.id !== null && doc.id !== undefined) {
+      formData.value.approvalDocuments.documentIds.push(doc.id);
     }
   });
-  showOrderListModal.value = false;
   emitFormData();
 };
 
@@ -402,32 +433,6 @@ const formatDate = (dateString) => {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}.${month}.${day}`;
-};
-
-// 부모로부터 선택된 문서 받기
-const addSelectedDocuments = (selectedDocuments) => {
-  selectedDocuments.forEach((doc) => {
-    // 이미 존재하는 문서인지 확인
-    const existingDoc = documents.value.find(
-      (existing) => existing.id === doc.id
-    );
-    if (!existingDoc) {
-      // 주문 코드를 문서명으로 사용하고, 매장명을 추가
-      const documentName = `${doc.franchiseName} - ${doc.code}`;
-
-      // 새로운 문서를 배열의 맨 앞에 추가
-      documents.value.unshift({
-        id: doc.id,
-        name: documentName,
-        date: formatDate(doc.createdAt),
-        amount: doc.totalAmount,
-      });
-
-      // approvalDocuments에 추가
-      formData.value.approvalDocuments.documentIds.push(doc.id);
-    }
-  });
-  emitFormData();
 };
 
 const emitFormData = () => {
@@ -570,7 +575,15 @@ const handleTempSave = async () => {
       title: formData.value.title,
       remarks: formData.value.remarks,
       isRequest: false, // 임시저장
-      approvalLines: approvalLines,
+      approvalLines: formData.value.approvalLines
+        .filter(
+          (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
+        ) // ✅ 필터링
+        .map((line, index) => ({
+          userId: line.userId,
+          seq: index + 1,
+          type: line.type,
+        })), // ✅ 변환
       files: files,
       approvalDocuments: formData.value.approvalDocuments,
     };
@@ -588,73 +601,147 @@ const handleTempSave = async () => {
   }
 };
 
-const handleSubmit = async () => {
-  if (isSubmitting.value) return;
+const submitApproval = async () => {
+  const currentFormRef = getCurrentFormRef();
+  if (currentFormRef && currentFormRef.getFormData) {
+    const currentFormData = currentFormRef.getFormData();
+    formData.value = { ...formData.value, ...currentFormData };
+    formData.value.approvalDocuments = { ...currentFormData.approvalDocuments };
+  }
 
-  // 필수 필드 검증
   if (!formData.value.title.trim()) {
     alert("제목을 입력해주세요.");
     return;
   }
 
-  if (!formData.value.remarks.trim()) {
-    alert("내용을 입력해주세요.");
-    return;
-  }
-
   if (formData.value.approvalLines.length === 0) {
-    alert("결재선을 지정해주세요.");
+    alert("결재선을 설정해주세요.");
     return;
   }
 
-  if (formData.value.approvalDocuments.documentIds.length === 0) {
-    alert("주문 문서를 선택해주세요.");
-    return;
-  }
+  isSubmitting.value = true;
 
   try {
-    isSubmitting.value = true;
-
-    // 결재선 데이터 변환
-    const approvalLines = formData.value.approvalLines
-      .filter(
-        (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
-      )
-      .map((line, index) => ({
-        userId: line.userId || line.id || 1, // 기본값 설정
-        seq: index + 1,
-        type: line.type,
-      }));
-
-    // 파일 데이터 변환 (실제로는 파일 업로드 후 URL을 받아야 함)
-    const files = formData.value.files.map((file) => ({
-      name: file.name,
-      url: file.url || "https://files.company.com/docs/temp-file.pdf", // 임시 URL
-    }));
+    const uploadedFiles = [];
+    for (const fileData of formData.value.files) {
+      if (fileData.file) {
+        const uploadedUrl = await uploadFile(fileData.file);
+        uploadedFiles.push({
+          name: fileData.name,
+          url: uploadedUrl,
+        });
+      }
+    }
 
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,
-      isRequest: true, // 결재 등록
-      approvalLines: approvalLines,
-      files: files,
-      approvalDocuments: formData.value.approvalDocuments,
+      isRequest: formData.value.isRequest,
+      approvalLines: formData.value.approvalLines
+        .filter(
+          (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
+        )
+        .map((line, index) => ({
+          userId: line.userId,
+          seq: index + 1,
+          type: line.type,
+        })),
+      files: uploadedFiles,
+      approvalDocuments: {
+        categoryType: selectedType.value,
+        documentIds: formData.value.approvalDocuments.documentIds,
+      },
+      returnReason: formData.value.returnReason,
+      detailedReason: formData.value.detailedReason,
+      supplierName: formData.value.supplierName,
+      contractStartDate: formData.value.contractStartDate,
+      contractEndDate: formData.value.contractEndDate,
+      contractTerms: formData.value.contractTerms,
     };
 
     const response = await api.post("/api/hq/approvals", requestData);
 
     if (response.status === 200 || response.status === 201) {
-      alert("결재가 등록되었습니다.");
-      // 성공 후 폼 초기화 또는 다른 페이지로 이동
-      emit("approval-submitted", response.data);
+      alert("결재 요청이 성공적으로 등록되었습니다.");
+      resetFormData();
+    } else {
+      throw new Error("결재 요청 등록에 실패했습니다.");
     }
   } catch (error) {
-    console.error("결재 등록 실패:", error);
-    alert("결재 등록에 실패했습니다. 다시 시도해주세요.");
+    console.error("Error:", error);
+    alert("결재 요청 등록 중 오류가 발생했습니다.");
   } finally {
     isSubmitting.value = false;
   }
 };
+
+// const handleSubmit = async () => {
+//   if (isSubmitting.value) return;
+
+//   // 필수 필드 검증
+//   if (!formData.value.title.trim()) {
+//     alert("제목을 입력해주세요.");
+//     return;
+//   }
+
+//   if (!formData.value.remarks.trim()) {
+//     alert("내용을 입력해주세요.");
+//     return;
+//   }
+
+//   if (formData.value.approvalLines.length === 0) {
+//     alert("결재선을 지정해주세요.");
+//     return;
+//   }
+
+//   if (formData.value.approvalDocuments.documentIds.length === 0) {
+//     alert("주문 문서를 선택해주세요.");
+//     return;
+//   }
+
+//   try {
+//     isSubmitting.value = true;
+
+//     // 결재선 데이터 변환
+//     const approvalLines = formData.value.approvalLines
+//       .filter(
+//         (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
+//       )
+//       .map((line, index) => ({
+//         userId: line.userId || line.id || 1, // 기본값 설정
+//         seq: index + 1,
+//         type: line.type,
+//       }));
+
+//     // 파일 데이터 변환 (실제로는 파일 업로드 후 URL을 받아야 함)
+//     const files = formData.value.files.map((file) => ({
+//       name: file.name,
+//       url: file.url || "https://files.company.com/docs/temp-file.pdf", // 임시 URL
+//     }));
+
+//     const requestData = {
+//       title: formData.value.title,
+//       remarks: formData.value.remarks,
+//       isRequest: true, // 결재 등록
+//       approvalLines: approvalLines,
+//       files: files,
+//       approvalDocuments: formData.value.approvalDocuments,
+//     };
+
+//     const response = await api.post("/api/hq/approvals", requestData);
+
+//     if (response.status === 200 || response.status === 201) {
+//       alert("결재가 등록되었습니다.");
+//       // 성공 후 폼 초기화 또는 다른 페이지로 이동
+//       emit("approval-submitted", response.data);
+//     }
+//   } catch (error) {
+//     console.error("결재 등록 실패:", error);
+//     alert("결재 등록에 실패했습니다. 다시 시도해주세요.");
+//   } finally {
+//     isSubmitting.value = false;
+//   }
+// };
 
 defineExpose({
   initializeForm,
