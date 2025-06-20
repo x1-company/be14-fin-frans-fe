@@ -15,11 +15,21 @@
       <!-- 검색창 및 필터 -->
       <div class="order-form__header">
         <div class="order-form__search-group">
+          <Datepicker
+            v-model="searchDate"
+            :format="'yyyy-MM-dd'"
+            placeholder="주문 날짜"
+            :clearable="true"
+            input-class-name="custom-datepicker-input"
+            style="width: 150px"
+            locale="ko"
+            :enable-time-picker="false"
+            auto-apply
+          />
           <input v-model="search" placeholder="검색어를 입력해주세요" />
           <select v-model="filter">
             <option value="itemName">품목명</option>
             <option value="status">주문 상태</option>
-            <option value="orderDate">주문 날짜</option>
             <option value="orderNo">주문 번호</option>
           </select>
         </div>
@@ -66,10 +76,13 @@
   <script setup>
   import { ref, computed } from 'vue';
   import { RouterLink } from 'vue-router';
+  import Datepicker from '@vuepic/vue-datepicker';
+  import '@vuepic/vue-datepicker/dist/main.css';
   const props = defineProps({
     orders: Array
   });
   const search = ref('');
+  const searchDate = ref('');
   const filter = ref('itemName');
   const page = ref(1);
   const pageSize = 10;
@@ -113,6 +126,13 @@
   
   const filteredOrders = computed(() => {
     let result = props.orders || [];
+    // 날짜 필터
+    if (searchDate.value) {
+      const dateStr = typeof searchDate.value === 'string'
+        ? searchDate.value
+        : searchDate.value?.toISOString().slice(0, 10);
+      result = result.filter(order => order.createdAt.slice(0, 10) === dateStr);
+    }
     // 탭 필터링
     result = result.filter(tabStatusFilter);
     // 검색/필터
@@ -121,7 +141,6 @@
         if (filter.value === 'orderNo') return order.orderCode.includes(search.value);
         if (filter.value === 'itemName') return order.productSummary.includes(search.value);
         if (filter.value === 'status') return statusText(order.status).includes(search.value);
-        if (filter.value === 'orderDate') return order.createdAt.includes(search.value);
         return true;
       });
     }
@@ -131,10 +150,12 @@
 
   function orderStatusClass(status) {
     switch(status) {
-      case '접수 대기': return 'status-pending';
-      case '결품 완료': return 'status-done';
-      case '반려': return 'status-reject';
-      case '배송 완료': return 'status-complete';
+      case 'REJECTED': return 'status-reject';
+      case 'REVIEWING': return 'status-reviewing';
+      case 'REVIEW_COMPLETED': return 'status-reviewed';
+      case 'APPROVED': return 'status-approved';
+      case 'DELIVERING': return 'status-delivering';
+      case 'DELIVERED': return 'status-delivered';
       default: return '';
     }
   }
@@ -244,26 +265,38 @@
   }
   .order-status {
     display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    font-weight: 500;
-  }
-  .status-pending {
-    background: #ffe9b3;
-    color: #b88a00;
-  }
-  .status-done {
-    background: #d2f8d2;
-    color: #1a7f37;
+    min-width: 80px;
+    text-align: center;
+    padding: 4px 10px;
+    border-radius: 24px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 4px 0;
+    background: #fff;
+    letter-spacing: 1px;
+    box-sizing: border-box;
+    border: none;
   }
   .status-reject {
-    background: #ffd6d6;
-    color: #d32f2f;
+    color: #ff2222;
+    background: #ffebeb;
   }
-  .status-complete {
-    background: #e3eaff;
-    color: #4066fa;
+  .status-reviewing {
+    background: #f3e8ff;
+    color: #9333ea;
+  }
+  .status-reviewed {
+    color: #179a2b;
+    background: #e6ffe6;
+  }
+  .status-approved {
+    background: #e6f9ed;
+    color: #16a34a;
+  }
+  .status-delivering,
+  .status-delivered {
+    background: #e0f0ff;
+    color: #2563eb;
   }
   .order-form__pagination {
     display: flex;
@@ -290,5 +323,13 @@
     color: #888;
     margin-top: 8px;
     font-size: 0.98rem;
+  }
+  .custom-datepicker-input {
+    height: 36px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 1rem;
+    width: 130px;
   }
   </style> 
