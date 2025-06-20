@@ -7,6 +7,7 @@
       <!-- 선택된 유형에 따른 폼 컴포넌트 -->
       <OrderApprovalForm
         v-if="selectedType === 'ORDER'"
+        type="ORDER"
         ref="orderFormRef"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
@@ -29,13 +30,22 @@
       <!-- 제출 버튼 -->
       <div class="form-actions">
         <button class="cancel-button" @click="handleCancel"> 취소 </button>
-        <button
-          class="submit-button"
-          @click="submitApproval"
-          :disabled="isSubmitting"
-        >
-          {{ isSubmitting ? "처리중..." : "결재요청" }}
-        </button>
+        <div class="action-buttons-right">
+          <button
+            class="temp-save-button"
+            @click="handleTempSave"
+            :disabled="isSubmitting"
+          >
+            임시저장
+          </button>
+          <button
+            class="submit-button"
+            @click="submitApproval"
+            :disabled="isSubmitting"
+          >
+            {{ isSubmitting ? "처리중..." : "결재요청" }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -184,30 +194,36 @@ const resetFormData = () => {
   };
 };
 
-const submitApproval = async () => {
-  // 현재 활성화된 폼에서 데이터 가져오기
+const processAndSubmit = async (isRequest) => {
   const currentFormRef = getCurrentFormRef();
   if (currentFormRef && currentFormRef.getFormData) {
     const currentFormData = currentFormRef.getFormData();
     formData.value = { ...formData.value, ...currentFormData };
-    // approvalDocuments를 완전히 덮어쓰기
     formData.value.approvalDocuments = { ...currentFormData.approvalDocuments };
   }
 
-  if (!formData.value.title.trim()) {
-    alert("제목을 입력해주세요.");
-    return;
-  }
+  if (isRequest) {
+    if (
+      !formData.value.title.trim() ||
+      formData.value.title.trim().length < 2
+    ) {
+      alert("제목을 2자 이상 입력해주세요.");
+      return;
+    }
 
-  if (formData.value.approvalLines.length === 0) {
-    alert("결재선을 설정해주세요.");
-    return;
+    if (formData.value.approvalLines.length === 0) {
+      alert("결재선을 설정해주세요.");
+      return;
+    }
+  } else {
+    if (!formData.value.title.trim()) {
+      formData.value.title = "임시 저장 문서";
+    }
   }
 
   isSubmitting.value = true;
 
   try {
-    // 파일 업로드 처리
     const uploadedFiles = [];
     for (const fileData of formData.value.files) {
       if (fileData.file) {
@@ -219,18 +235,24 @@ const submitApproval = async () => {
       }
     }
 
-    // API 요청 데이터 구성
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,
-      isRequest: formData.value.isRequest,
-      approvalLines: formData.value.approvalLines,
+      isRequest: isRequest,
+      approvalLines: formData.value.approvalLines
+        .filter(
+          (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
+        )
+        .map((line, index) => ({
+          userId: line.userId || line.id,
+          seq: index + 1,
+          type: line.type,
+        })),
       files: uploadedFiles,
       approvalDocuments: {
         categoryType: selectedType.value,
         documentIds: formData.value.approvalDocuments.documentIds,
       },
-      // 추가 필드들
       returnReason: formData.value.returnReason,
       detailedReason: formData.value.detailedReason,
       supplierName: formData.value.supplierName,
@@ -239,21 +261,39 @@ const submitApproval = async () => {
       contractTerms: formData.value.contractTerms,
     };
 
-    // API 호출
     const response = await api.post("/api/hq/approvals", requestData);
 
     if (response.status === 200 || response.status === 201) {
-      alert("결재 요청이 성공적으로 등록되었습니다.");
+      alert(
+        isRequest
+          ? "결재 요청이 성공적으로 등록되었습니다."
+          : "임시저장되었습니다."
+      );
       resetFormData();
+      emit("cancel", true);
     } else {
-      throw new Error("결재 요청 등록에 실패했습니다.");
+      throw new Error(
+        isRequest
+          ? "결재 요청 등록에 실패했습니다."
+          : "임시저장에 실패했습니다."
+      );
     }
   } catch (error) {
     console.error("Error:", error);
-    alert("결재 요청 등록 중 오류가 발생했습니다.");
+    alert(
+      (isRequest ? "결재 요청 등록" : "임시저장") + " 중 오류가 발생했습니다."
+    );
   } finally {
     isSubmitting.value = false;
   }
+};
+
+const submitApproval = async () => {
+  await processAndSubmit(true);
+};
+
+const handleTempSave = async () => {
+  await processAndSubmit(false);
 };
 
 const uploadFile = async (file) => {
@@ -314,8 +354,14 @@ onMounted(() => {
   margin-top: 20px;
 }
 
+.action-buttons-right {
+  display: flex;
+  gap: 8px;
+}
+
 .cancel-button,
-.submit-button {
+.submit-button,
+.temp-save-button {
   padding: 8px 16px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -325,6 +371,12 @@ onMounted(() => {
 .cancel-button {
   background: none;
   color: #6b7280;
+}
+
+.temp-save-button {
+  background: #fff;
+  color: #3b82f6;
+  border-color: #3b82f6;
 }
 
 .submit-button {
