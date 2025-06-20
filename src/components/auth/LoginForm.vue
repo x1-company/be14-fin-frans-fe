@@ -59,7 +59,7 @@ const handleLogin = async () => {
           }
         } else if (result.userType === 'FRANCHISE') {
           // 가맹점주 메인 페이지로
-          // TODO: 실제 경로로 변경 필요
+          router.push('/franchise')
         } else if (result.userType === 'SUPPLIER') {
           // 공급처 메인 페이지로
           // TODO: 실제 경로로 변경 필요

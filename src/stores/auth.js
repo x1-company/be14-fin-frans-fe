@@ -42,6 +42,18 @@ export const useAuthStore = defineStore("auth", {
     positionName() {
       return positionMap[this.positionId] || "";
     },
+    franchiseId() {
+      return this.decodedToken?.franchiseId || null;
+    },
+    franchiseName() {
+      return this.decodedToken?.franchiseName || "";
+    },
+    supplierId() {
+      return this.decodedToken?.supplierId || null;
+    },
+    supplierName() {
+      return this.decodedToken?.supplierName || "";
+    },
   },
   actions: {
     async setAccessToken(token) {
