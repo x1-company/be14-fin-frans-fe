@@ -46,8 +46,9 @@ const props = defineProps({
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
   padding: 32px 24px;
   margin: 20px 0 0 60px;
-  /* margin-bottom: 10px; */
   background: #fff;
+  max-width: 100%;
+  width: 100%;
 }
 
 .card-title {
