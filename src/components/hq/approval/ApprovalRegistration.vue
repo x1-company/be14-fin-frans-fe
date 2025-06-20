@@ -30,13 +30,22 @@
       <!-- 제출 버튼 -->
       <div class="form-actions">
         <button class="cancel-button" @click="handleCancel"> 취소 </button>
-        <button
-          class="submit-button"
-          @click="submitApproval"
-          :disabled="isSubmitting"
-        >
-          {{ isSubmitting ? "처리중..." : "결재요청" }}
-        </button>
+        <div class="action-buttons-right">
+          <button
+            class="temp-save-button"
+            @click="handleTempSave"
+            :disabled="isSubmitting"
+          >
+            임시저장
+          </button>
+          <button
+            class="submit-button"
+            @click="submitApproval"
+            :disabled="isSubmitting"
+          >
+            {{ isSubmitting ? "처리중..." : "결재요청" }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -179,7 +188,7 @@ const resetFormData = () => {
   };
 };
 
-const submitApproval = async () => {
+const processAndSubmit = async (isRequest) => {
   const currentFormRef = getCurrentFormRef();
   if (currentFormRef && currentFormRef.getFormData) {
     const currentFormData = currentFormRef.getFormData();
@@ -187,14 +196,23 @@ const submitApproval = async () => {
     formData.value.approvalDocuments = { ...currentFormData.approvalDocuments };
   }
 
-  if (!formData.value.title.trim() || formData.value.title.trim().length < 2) {
-    alert("제목을 2자 이상 입력해주세요.");
-    return;
-  }
+  if (isRequest) {
+    if (
+      !formData.value.title.trim() ||
+      formData.value.title.trim().length < 2
+    ) {
+      alert("제목을 2자 이상 입력해주세요.");
+      return;
+    }
 
-  if (formData.value.approvalLines.length === 0) {
-    alert("결재선을 설정해주세요.");
-    return;
+    if (formData.value.approvalLines.length === 0) {
+      alert("결재선을 설정해주세요.");
+      return;
+    }
+  } else {
+    if (!formData.value.title.trim()) {
+      formData.value.title = "임시 저장 문서";
+    }
   }
 
   isSubmitting.value = true;
@@ -214,7 +232,7 @@ const submitApproval = async () => {
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,
-      isRequest: formData.value.isRequest,
+      isRequest: isRequest,
       approvalLines: formData.value.approvalLines
         .filter(
           (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
@@ -240,20 +258,36 @@ const submitApproval = async () => {
     const response = await api.post("/api/hq/approvals", requestData);
 
     if (response.status === 200 || response.status === 201) {
-      alert("결재 요청이 성공적으로 등록되었습니다.");
+      alert(
+        isRequest
+          ? "결재 요청이 성공적으로 등록되었습니다."
+          : "임시저장되었습니다."
+      );
       resetFormData();
-
-      // 성공 시 등록 → 리스트로
       emit("cancel", true);
     } else {
-      throw new Error("결재 요청 등록에 실패했습니다.");
+      throw new Error(
+        isRequest
+          ? "결재 요청 등록에 실패했습니다."
+          : "임시저장에 실패했습니다."
+      );
     }
   } catch (error) {
     console.error("Error:", error);
-    alert("결재 요청 등록 중 오류가 발생했습니다.");
+    alert(
+      (isRequest ? "결재 요청 등록" : "임시저장") + " 중 오류가 발생했습니다."
+    );
   } finally {
     isSubmitting.value = false;
   }
+};
+
+const submitApproval = async () => {
+  await processAndSubmit(true);
+};
+
+const handleTempSave = async () => {
+  await processAndSubmit(false);
 };
 
 const uploadFile = async (file) => {
@@ -311,8 +345,14 @@ onMounted(() => {
   margin-top: 20px;
 }
 
+.action-buttons-right {
+  display: flex;
+  gap: 8px;
+}
+
 .cancel-button,
-.submit-button {
+.submit-button,
+.temp-save-button {
   padding: 8px 16px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -322,6 +362,12 @@ onMounted(() => {
 .cancel-button {
   background: none;
   color: #6b7280;
+}
+
+.temp-save-button {
+  background: #fff;
+  color: #3b82f6;
+  border-color: #3b82f6;
 }
 
 .submit-button {
