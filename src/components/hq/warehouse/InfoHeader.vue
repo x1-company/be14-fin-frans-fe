@@ -38,11 +38,17 @@ const props = defineProps({
   font-weight: bold;
   margin-bottom: 24px;
 }
+
 .info-header__desc {
   background: #3453c7;
   padding: 12px 0 12px 30px;
   border-radius: 0 0 0 0;
   margin-bottom: 0;
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 .info-header__tabs {
   position: absolute;
