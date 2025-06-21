@@ -54,6 +54,11 @@ const router = createRouter({
       props: true,
     },
     {
+      path: "/warehouse/product/register",
+      name: "ProductRegister",
+      component: WarehouseInfoView,
+    },
+    {
       path: "/orders",
       name: "orders",
       component: OrderInfoView,

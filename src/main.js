@@ -26,8 +26,8 @@ const initializeNotifications = async () => {
       console.log('기존 알림 로드 완료');
       
       console.log('SSE 연결 시도 중...');
-      await notificationService.connect();
-      console.log('SSE 연결 완료');
+      notificationService.connect(); // 비동기 연결, await 제거
+      console.log('SSE 연결 요청 완료');
     } catch (error) {
       console.error('알림 초기화 실패:', error);
     }
@@ -36,9 +36,7 @@ const initializeNotifications = async () => {
   }
 };
 
-// DOM이 로드된 후 알림 초기화
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeNotifications);
-} else {
+// 라우터가 준비된 후, 즉 모든 초기화가 완료된 후 알림 초기화 실행
+router.isReady().then(() => {
   initializeNotifications();
-}
+});
