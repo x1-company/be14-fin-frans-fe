@@ -6,7 +6,7 @@
         <button
           v-for="tab in tabs"
           :key="tab.value"
-          :class="['tab-button', { active: activeTab.value === tab.value }]"
+          :class="['tab-button', { active: activeTab === tab.value }]"
           @click="selectTab(tab.value)"
         >
           {{ tab.label }}
@@ -357,6 +357,7 @@ const getEmptyMessage = () => {
   display: flex;
   padding: 0 24px;
   border-bottom: 1.5px solid #e0e0e0;
+  background-color: white;
 }
 
 .tab-button {
