@@ -498,15 +498,15 @@ const handleRegisterApproval = () => {
 };
 
 const handleApprovalDocsClick = () => {
-  // 결재문서 헤더 클릭 시 "전체" 선택
-  selectMenu("전체");
+  // 결재문서 헤더 클릭 시 "결재-전체" 선택
+  selectMenu("결재-전체");
   // 아코디언 토글
   toggleAccordion("approval-docs");
 };
 
 const handleCollaborationDocsClick = () => {
-  // 협조문서 헤더 클릭 시 "전체" 선택
-  selectMenu("전체");
+  // 협조문서 헤더 클릭 시 "협조-전체" 선택
+  selectMenu("협조-전체");
   // 아코디언 토글
   toggleAccordion("collaboration-docs");
 };

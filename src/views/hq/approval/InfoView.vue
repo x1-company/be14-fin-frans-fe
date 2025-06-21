@@ -287,7 +287,7 @@ watch(
       }
     } else {
       // 수신 관련 API (결재문서)
-      if (activeTab === "전체") {
+      if (activeTab === "전체" || menu === "결재-전체") {
         // 결재문서의 "전체"인지 수신의 "전체"인지 구분
         if (menu === "수신-전체") {
           url = "/api/hq/approvals/list/received/all";
