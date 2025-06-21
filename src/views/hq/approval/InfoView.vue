@@ -25,10 +25,21 @@
 
       <!-- Info 컴포넌트에 selectedTemplate 전달 -->
       <Info
-        v-if="currentTabIndex === 1"
+        v-if="currentTabIndex !== 2"
         :approvalList="approvalList"
         :activeTab="activeTab"
         :activeMenu="activeMenu"
+        :isRegistrationMode="isRegistrationMode"
+        :reorderChanges="reorderChanges"
+        :selectedTemplate="selectedTemplate"
+        @update:activeTab="handleTabChange"
+        @active-tab-change="handleActiveTabChange"
+        @toggle-registration-mode="handleToggleRegistrationMode"
+        @template-deleted="handleTemplateDeleted"
+        @template-updated="handleTemplateUpdated"
+        @reorder-mode-changed="handleReorderModeChanged"
+        @reorder-complete="handleReorderComplete"
+        @reorder-cancel="handleReorderCancel"
         @tab-change="handleTabChange"
       />
     </div>

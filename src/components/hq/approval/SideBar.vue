@@ -102,12 +102,6 @@
                 props.counts.내결재승인 +
                 props.counts.내결재반려
               }}</span>
-              <ChevronDownIcon
-                :class="[
-                  'chevron',
-                  { rotated: openAccordions.includes('approval-docs') },
-                ]"
-              />
             </div>
           </div>
           <div
@@ -178,12 +172,6 @@
                 props.counts.내협조승인 +
                 props.counts.내협조반려
               }}</span>
-              <ChevronDownIcon
-                :class="[
-                  'chevron',
-                  { rotated: openAccordions.includes('collaboration-docs') },
-                ]"
-              />
             </div>
           </div>
           <div
@@ -276,12 +264,6 @@
             </div>
             <div class="accordion-controls">
               <span class="count-badge">5</span>
-              <ChevronDownIcon
-                :class="[
-                  'chevron',
-                  { rotated: openAccordions.includes('completed-docs') },
-                ]"
-              />
             </div>
           </div>
           <div
@@ -297,14 +279,6 @@
                 <span>결재</span>
                 <div class="nested-controls">
                   <span class="count-badge">3</span>
-                  <ChevronDownIcon
-                    :class="[
-                      'chevron-small',
-                      {
-                        rotated: openAccordions.includes('completed-approval'),
-                      },
-                    ]"
-                  />
                 </div>
               </div>
               <div
@@ -355,16 +329,6 @@
                 <span>협조</span>
                 <div class="nested-controls">
                   <span class="count-badge">2</span>
-                  <ChevronDownIcon
-                    :class="[
-                      'chevron-small',
-                      {
-                        rotated: openAccordions.includes(
-                          'completed-collaboration'
-                        ),
-                      },
-                    ]"
-                  />
                 </div>
               </div>
               <div
