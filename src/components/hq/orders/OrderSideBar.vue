@@ -1,5 +1,4 @@
 <script setup>
-// import { ref, computed, onMounted } from "vue";
 import { ref, computed, onMounted, watch } from "vue";
 import api from "@/lib/api";
 
@@ -46,7 +45,6 @@ function handleFranchiseClick(franchise) {
 
 <template>
   <div class="sidebar">
-    <!-- Fixed Header -->
     <div class="sidebar-header">
         <div class="header-item">
             <img
