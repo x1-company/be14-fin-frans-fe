@@ -241,7 +241,7 @@
 
         <!-- 참조문서 -->
         <div class="accordion-section">
-          <div class="accordion-header">
+          <div class="accordion-header" @click="selectMenu('참조문서')">
             <div class="accordion-title">
               <span>참조문서</span>
             </div>
@@ -253,7 +253,7 @@
 
         <!-- 수신문서 -->
         <div class="accordion-section">
-          <div class="accordion-header">
+          <div class="accordion-header" @click="selectMenu('수신문서')">
             <div class="accordion-title">
               <span>수신문서</span>
             </div>

@@ -31,6 +31,18 @@
       :activeTab="activeTab"
       @tab-change="handleTabChange"
     />
+
+    <!-- 참조문서 관련 메뉴일 때 ReferenceList 표시 -->
+    <ReferenceList
+      v-if="shouldShowReferenceList"
+      :approvalList="approvalList"
+    />
+
+    <!-- 수신문서 관련 메뉴일 때 NotificationList 표시 -->
+    <NotificationList
+      v-if="shouldShowNotificationList"
+      :approvalList="approvalList"
+    />
   </div>
 </template>
 
@@ -40,6 +52,8 @@ import ApprovalList from "@/components/hq/approval/ApprovalList.vue";
 import ReceptionList from "@/components/hq/approval/sidebarReception/ReceptionList.vue";
 import ReceptionApproverList from "@/components/hq/approval/sidebarReception/ReceptionApproverList.vue";
 import ReceptionCooperatorList from "@/components/hq/approval/sidebarReception/ReceptionCooperatorList.vue";
+import ReferenceList from "@/components/hq/approval/sidebarReception/ReferenceList.vue";
+import NotificationList from "@/components/hq/approval/sidebarReception/NotificationList.vue";
 
 // 둘다 있어야 메뉴와 탭들이 움직임
 const handleTabChange = (tabValue) => {
@@ -133,6 +147,16 @@ const shouldShowReceptionApproverList = computed(() => {
 const shouldShowReceptionCooperatorList = computed(() => {
   // 협조문서 관련 메뉴인 경우
   return isCooperatorMenu.value;
+});
+
+const shouldShowReferenceList = computed(() => {
+  // 참조문서 관련 메뉴인 경우
+  return props.activeMenu === "참조문서";
+});
+
+const shouldShowNotificationList = computed(() => {
+  // 수신문서 관련 메뉴인 경우
+  return props.activeMenu === "수신문서";
 });
 
 // const getStatusClass = (status) => {

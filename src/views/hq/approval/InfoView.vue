@@ -19,26 +19,17 @@
         :isReorderMode="isReorderMode"
         @select-template="handleTemplateSelect"
         @reorder-change="handleReorderChange"
+        @reorder-cancel="handleReorderCancel"
         ref="templateSidebarRef"
       />
 
       <!-- Info 컴포넌트에 selectedTemplate 전달 -->
       <Info
+        v-if="currentTabIndex === 1"
         :approvalList="approvalList"
-        :activeMenu="activeMenu"
         :activeTab="activeTab"
-        :isRegistrationMode="isRegistrationMode"
-        :reorderChanges="reorderChanges"
-        :selectedTemplate="selectedTemplate"
+        :activeMenu="activeMenu"
         @tab-change="handleTabChange"
-        @update:activeTab="handleTabChange"
-        @active-tab-change="handleActiveTabChange"
-        @toggle-registration-mode="handleToggleRegistrationMode"
-        @template-deleted="handleTemplateDeleted"
-        @template-updated="handleTemplateUpdated"
-        @reorder-mode-changed="handleReorderModeChanged"
-        @reorder-complete="handleReorderComplete"
-        @reorder-cancel="handleReorderCancel"
       />
     </div>
   </div>
@@ -84,8 +75,8 @@ const handleSelectMenu = (menuValue) => {
   isRegistrationMode.value = false; // 등록 모드 비활성화
 };
 
-const handleTabChange = (tabValue) => {
-  activeTab.value = tabValue;
+const handleTabChange = (tab) => {
+  activeTab.value = tab;
 };
 
 const handleActiveTabChange = (tabIndex) => {
@@ -204,6 +195,8 @@ const approvalCounts = ref({
   협조예정: 0,
   내협조승인: 0,
   내협조반려: 0,
+  참조문서: 0,
+  수신문서: 0,
 });
 
 const fetchCounts = async () => {
@@ -222,6 +215,8 @@ const fetchCounts = async () => {
     협조예정: "/api/hq/approvals/list/cooperate/upcoming",
     내협조승인: "/api/hq/approvals/list/cooperate/approved",
     내협조반려: "/api/hq/approvals/list/cooperate/rejected",
+    참조문서: "/api/hq/approvals/list/references",
+    수신문서: "/api/hq/approvals/list/notifications",
   };
   for (const key in endpoints) {
     try {
@@ -290,6 +285,12 @@ watch(
       } else if (activeTab === "내 협조 반려") {
         url = "/api/hq/approvals/list/cooperate/rejected";
       }
+    } else if (menu === "참조문서") {
+      // 참조문서 관련 API
+      url = "/api/hq/approvals/list/references";
+    } else if (menu === "수신문서") {
+      // 수신문서 관련 API
+      url = "/api/hq/approvals/list/notifications";
     } else {
       // 수신 관련 API (결재문서)
       if (activeTab === "전체" || menu === "결재-전체") {
