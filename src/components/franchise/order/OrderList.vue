@@ -323,6 +323,14 @@
     color: #ff2222;
     background: #ffebeb;
   }
+  .status-waiting {
+    background: #fff9bd;
+    color: #d97706;
+  }
+  .status-canceled {
+    background: #ededed;
+    color: #6b7280;
+  }
   .status-reviewing {
     background: #f3e8ff;
     color: #9333ea;
