@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server.js"
   },
   "dependencies": {
     "@vuepic/vue-datepicker": "^11.0.2",
@@ -17,7 +18,8 @@
     "pinia": "^3.0.3",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1",
-    "vuedraggable": "^4.1.0"
+    "vuedraggable": "^4.1.0",
+    "express": "^4.19.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",
