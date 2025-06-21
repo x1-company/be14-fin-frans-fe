@@ -31,7 +31,10 @@
           </select>
           <input v-model="search" class="product-list-search" :disabled="searchType==='all'" placeholder="검색어를 입력해주세요" @keyup.enter="fetchList" />
           <button class="product-list-search-btn" @click="fetchList">검색</button>
-          <button class="product-list-register-btn">등록</button>
+          <button class="product-list-register-btn" @click="goToRegister">
+            <Pencil :size="16" color="white" />
+            <span>등록</span>
+          </button>
         </div>
       </div>
     </div>
@@ -88,8 +91,11 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { Pencil } from 'lucide-vue-next';
 import api from '@/lib/api';
 
+const router = useRouter();
 const page = ref(1);
 const pageSize = 10;
 const total = ref(0);
@@ -141,6 +147,10 @@ const totalPages = computed(() => Math.ceil(total.value / pageSize) || 1);
 function goPage(p) {
   if (p < 1 || p > totalPages.value) return;
   page.value = p;
+}
+
+function goToRegister() {
+  router.push('/warehouse/product/register');
 }
 
 async function fetchList() {
@@ -261,21 +271,24 @@ watch([filterType, filterGroup, filterAttr, filterActive], fetchList);
   background: #3453c7;
 }
 .product-list-register-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   height: 32px;
-  background: #fff;
-  color: #4066fa;
-  border: 1px solid #4066fa;
+  background: #4066fa;
+  color: #fff;
+  border: none;
   border-radius: 6px;
   padding: 0 18px;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   margin-left: 8px;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s;
 }
 .product-list-register-btn:hover {
-  background: #4066fa10;
-  color: #3453c7;
+  background: #3453c7;
 }
 .product-list-table-wrapper {
   margin-top: 8px;
