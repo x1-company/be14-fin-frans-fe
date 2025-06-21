@@ -48,6 +48,17 @@ const router = createRouter({
       component: WarehouseInfoView,
     },
     {
+      path: "/warehouse/product/:id",
+      name: "ProductDetail",
+      component: WarehouseInfoView,
+      props: true,
+    },
+    {
+      path: "/warehouse/product/register",
+      name: "ProductRegister",
+      component: WarehouseInfoView,
+    },
+    {
       path: "/orders",
       name: "orders",
       component: OrderInfoView,

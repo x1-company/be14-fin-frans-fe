@@ -25,6 +25,7 @@
       <!-- Info 컴포넌트에 selectedTemplate 전달 -->
       <Info
         :approvalList="approvalList"
+        :activeMenu="activeMenu.toString()"
         :activeTab="activeTab.toString()"
         :isRegistrationMode="isRegistrationMode"
         :reorderChanges="reorderChanges"
@@ -52,18 +53,24 @@ import Info from "@/components/hq/approval/Info.vue";
 import api from "@/lib/api";
 
 const approvalList = ref([]);
-const activeMenu = ref("전체");
-const activeTab = ref("전체");
-const currentTabIndex = ref(0);
-const selectedTemplate = ref(null);
-const isRegistrationMode = ref(false);
-const isReorderMode = ref(false);
-const templateSidebarRef = ref(null);
+const activeMenu = ref("상신"); // 사이드바 메뉴 선택 (상신, 수신)
+const activeTab = ref("전체"); // ApprovalList 탭 선택 (전체, 임시저장, 결재중, 결재완료, 결재반려)
+const currentTabIndex = ref(0); // 현재 선택된 탭 인덱스 (0: 대시보드, 1: 전자결재, 2: 결재템플릿)
+const isRegistrationMode = ref(false); // 등록 모드 활성화 여부
+
+// 결재템플릿 관련 변수
+const selectedTemplate = ref(null); // 선택된 템플릿 정보
+const isReorderMode = ref(false); // 순서 변경 모드 활성화 여부
+const templateSidebarRef = ref(null); // 결재템플릿 사이드바 참조
 const reorderChanges = ref([]); // 순서 변경 정보 저장
 
 const handleSelectMenu = (menuValue) => {
   activeMenu.value = menuValue;
   activeTab.value = menuValue;
+
+  // 사이드바 메뉴를 클릭하면 항상 전자결재 탭으로 이동
+  currentTabIndex.value = 1; // 전자결재 탭으로 이동
+  isRegistrationMode.value = false; // 등록 모드 비활성화
 };
 
 const handleTabChange = (tabValue) => {
@@ -120,37 +127,42 @@ const handleReorderModeChanged = (mode) => {
 // 순서 변경 정보 저장
 const handleReorderChange = (changeInfo) => {
   reorderChanges.value.push(changeInfo);
-  console.log('순서 변경 정보 저장:', changeInfo);
+  console.log("순서 변경 정보 저장:", changeInfo);
 };
 
 // 순서 변경 완료 처리
 const handleReorderComplete = async () => {
   if (reorderChanges.value.length === 0) {
-    console.log('변경된 순서가 없습니다.');
+    console.log("변경된 순서가 없습니다.");
     return;
   }
 
   try {
     // 모든 순서 변경을 API로 전송
     for (const change of reorderChanges.value) {
-      await api.patch(`/api/hq/approvals/templates/${change.templateId}/seq/${change.newIndex + 1}`);
-      console.log(`템플릿 ${change.templateId} 순서를 ${change.newIndex + 1}로 변경`);
+      await api.patch(
+        `/api/hq/approvals/templates/${change.templateId}/seq/${
+          change.newIndex + 1
+        }`
+      );
+      console.log(
+        `템플릿 ${change.templateId} 순서를 ${change.newIndex + 1}로 변경`
+      );
     }
-    
-    console.log('모든 순서 변경 완료');
-    
+
+    console.log("모든 순서 변경 완료");
+
     // 사이드바 새로고침
     if (templateSidebarRef.value) {
       await templateSidebarRef.value.completeReorder();
     }
-    
+
     // 변경 정보 초기화
     reorderChanges.value = [];
-    
   } catch (error) {
-    console.error('순서 변경 실패:', error);
-    alert('순서 변경에 실패했습니다.');
-    
+    console.error("순서 변경 실패:", error);
+    alert("순서 변경에 실패했습니다.");
+
     // 실패 시 사이드바 롤백
     if (templateSidebarRef.value) {
       templateSidebarRef.value.cancelReorder();
@@ -164,7 +176,7 @@ const handleReorderCancel = () => {
   if (templateSidebarRef.value) {
     templateSidebarRef.value.cancelReorder();
   }
-  console.log('순서 변경 취소됨');
+  console.log("순서 변경 취소됨");
 };
 
 const approvalCounts = ref({
