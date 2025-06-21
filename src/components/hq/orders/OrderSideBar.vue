@@ -1,5 +1,4 @@
 <script setup>
-// import { ref, computed, onMounted } from "vue";
 import { ref, computed, onMounted, watch } from "vue";
 import api from "@/lib/api";
 
@@ -46,7 +45,6 @@ function handleFranchiseClick(franchise) {
 
 <template>
   <div class="sidebar">
-    <!-- Fixed Header -->
     <div class="sidebar-header">
         <div class="header-item">
             <img
@@ -116,7 +114,7 @@ function handleFranchiseClick(franchise) {
   max-width: 340px;      /* 필요시 최대 너비도 지정 */
   width: 300px;
   flex-shrink: 0;        /* 줄어들지 않게 */
-  background: #f8f9fa;
+  background: #ffffff;
   border-right: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
