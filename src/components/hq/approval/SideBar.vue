@@ -159,7 +159,7 @@
               <div class="menu-content">
                 <span class="menu-title">내결재 반려</span>
               </div>
-              <span class="count-badge">{{ props.counts.결재반려 }}</span>
+              <span class="count-badge">{{ props.counts.내결재반려 }}</span>
             </div>
           </div>
         </div>
@@ -424,32 +424,6 @@
 
 <script setup>
 import { ref, computed } from "vue";
-// import {
-//   FileText as FileTextIcon,
-//   Send as SendIcon,
-//   Inbox as InboxIcon,
-//   BarChart3 as BarChart3Icon,
-//   Plus as PlusIcon,
-// } from "lucide-vue-next";
-import {
-  FileText as FileTextIcon,
-  Send as SendIcon,
-  Inbox as InboxIcon,
-  Save as SaveIcon,
-  Clock as ClockIcon,
-  CheckCircle as CheckCircleIcon,
-  XCircle as XCircleIcon,
-  AlertCircle as AlertCircleIcon,
-  Users as UsersIcon,
-  Eye as EyeIcon,
-  MessageCircle as MessageCircleIcon,
-  Archive as ArchiveIcon,
-  BarChart3 as BarChart3Icon,
-  Plus as PlusIcon,
-  ClipboardList as ClipboardListIcon,
-  Calendar as CalendarIcon,
-  ChevronDown as ChevronDownIcon,
-} from "lucide-vue-next";
 
 const emit = defineEmits(["select-menu", "tab-change", "register-approval"]);
 const counts = ref({

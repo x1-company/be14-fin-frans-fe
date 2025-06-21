@@ -77,19 +77,23 @@ const isReceivedMenu = computed(() => {
 // 결재문서 관련 메뉴인지 확인
 const isApproverMenu = computed(() => {
   const approverMenus = [
-    "전체",
     "결재대기",
     "결재요청",
     "내 결재 승인",
     "내 결재 반려",
   ];
-  return approverMenus.includes(props.activeMenu);
+  return (
+    approverMenus.includes(props.activeMenu) ||
+    (props.activeMenu === "전체" &&
+      props.activeTab === "전체" &&
+      !isCooperatorMenu.value)
+  );
 });
 
 // 협조문서 관련 메뉴인지 확인
 const isCooperatorMenu = computed(() => {
   const cooperatorMenus = [
-    "전체",
+    "협조-전체",
     "협조대기",
     "협조예정",
     "내 협조 승인",
@@ -127,12 +131,16 @@ const shouldShowReceptionList = computed(() => {
 
 const shouldShowReceptionApproverList = computed(() => {
   // 결재문서 관련 메뉴인 경우 (수신-전체 제외)
-  return isApproverMenu.value && props.activeMenu !== "수신-전체";
+  return (
+    isApproverMenu.value &&
+    props.activeMenu !== "수신-전체" &&
+    !isCooperatorMenu.value
+  );
 });
 
 const shouldShowReceptionCooperatorList = computed(() => {
-  // 협조문서 관련 메뉴인 경우 (수신-전체 제외)
-  return isCooperatorMenu.value && props.activeMenu !== "수신-전체";
+  // 협조문서 관련 메뉴인 경우
+  return isCooperatorMenu.value;
 });
 
 // const getStatusClass = (status) => {

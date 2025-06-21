@@ -244,10 +244,20 @@ watch(
 
     // 협조문서 관련 메뉴인지 확인 (activeMenu와 activeTab 모두 확인)
     const isCooperatorMenu =
-      ["협조대기", "협조예정", "내 협조 승인", "내 협조 반려"].includes(
-        activeTab
-      ) ||
-      ["협조대기", "협조예정", "내 협조 승인", "내 협조 반려"].includes(menu);
+      [
+        "협조-전체",
+        "협조대기",
+        "협조예정",
+        "내 협조 승인",
+        "내 협조 반려",
+      ].includes(activeTab) ||
+      [
+        "협조-전체",
+        "협조대기",
+        "협조예정",
+        "내 협조 승인",
+        "내 협조 반려",
+      ].includes(menu);
 
     if (isSentMenu) {
       // 상신 관련 API
@@ -264,7 +274,7 @@ watch(
       }
     } else if (isCooperatorMenu) {
       // 협조문서 관련 API
-      if (activeTab === "전체") {
+      if (activeTab === "전체" || menu === "협조-전체") {
         url = "/api/hq/approvals/list/cooperate/all";
       } else if (activeTab === "협조대기") {
         url = "/api/hq/approvals/list/cooperate/pending";
