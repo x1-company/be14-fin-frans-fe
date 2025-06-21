@@ -5,14 +5,11 @@
   </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
+const emit = defineEmits(['close']);
 
 function handleClose() {
-  router.push({ path: '/franchise', query: { tab: '주문관리' } });
+  emit('close');
 }
-
 </script>
 
 <style scoped>

@@ -9,7 +9,7 @@
                 <button class="recent-order-btn" @click="loadRecentOrder">
                     📋 최근 주문 불러오기
                 </button>
-                <Outbutton />
+                <Outbutton @close="$emit('back-to-list')" />
             </div>
         </div>
 
