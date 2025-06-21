@@ -23,6 +23,7 @@
             v-if="activeTabSwitch == 1 && !isRegistrationMode"
             :approvalList="approvalList"
             :activeTab="activeTab"
+            :activeMenu="activeMenu"
             @tab-change="handleTabChange"
           />
 
@@ -81,6 +82,7 @@ const props = defineProps({
   approvalList: Array,
   selectedTemplate: { type: Object, default: null },
   activeTab: String,
+  activeMenu: String,
   handleTabChange: Function,
   isRegistrationMode: Boolean,
   reorderChanges: Array,

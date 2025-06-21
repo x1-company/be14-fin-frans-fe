@@ -21,13 +21,19 @@
     <div class="tab-headers">
       <div class="tab-container">
         <button
-          @click="changeTab('상신')"
+          @click="
+            changeTab('상신');
+            selectMenu('상신');
+          "
           :class="['tab-button', { active: activeTab === '상신' }]"
         >
           <span>상신</span>
         </button>
         <button
-          @click="changeTab('수신')"
+          @click="
+            changeTab('수신');
+            selectMenu('수신');
+          "
           :class="['tab-button', { active: activeTab === '수신' }]"
         >
           <span>수신</span>
@@ -41,7 +47,7 @@
       <div v-if="activeTab === '상신'" class="tab-panel">
         <div
           class="menu-item"
-          :class="{ active: activeItem === '임시저장' }"
+          :class="{ active: computedActiveItem === '임시저장' }"
           @click="selectMenu('임시저장')"
         >
           <div class="menu-content">
@@ -51,7 +57,7 @@
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '결재중' }"
+          :class="{ active: computedActiveItem === '결재중' }"
           @click="selectMenu('결재중')"
         >
           <div class="menu-content">
@@ -61,7 +67,7 @@
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '결재완료' }"
+          :class="{ active: computedActiveItem === '결재완료' }"
           @click="selectMenu('결재완료')"
         >
           <div class="menu-content">
@@ -71,7 +77,7 @@
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '결재반려' }"
+          :class="{ active: computedActiveItem === '결재반려' }"
           @click="selectMenu('결재반려')"
         >
           <div class="menu-content">
@@ -85,21 +91,17 @@
       <div v-if="activeTab === '수신'" class="tab-panel">
         <!-- 결재문서 -->
         <div class="accordion-section">
-          <div
-            class="accordion-header"
-            @click="toggleAccordion('approval-docs')"
-          >
+          <div class="accordion-header" @click="handleApprovalDocsClick">
             <div class="accordion-title">
               <span>결재문서</span>
             </div>
             <div class="accordion-controls">
-              <span class="count-badge">15</span>
-              <ChevronDownIcon
-                :class="[
-                  'chevron',
-                  { rotated: openAccordions.includes('approval-docs') },
-                ]"
-              />
+              <span class="count-badge">{{
+                props.counts.결재대기 +
+                props.counts.결재예정 +
+                props.counts.내결재승인 +
+                props.counts.내결재반려
+              }}</span>
             </div>
           </div>
           <div
@@ -109,77 +111,67 @@
             <div
               class="menu-item"
               :class="{
-                active: activeItem === '/approval/incoming/approval-pending',
+                active: computedActiveItem === '결재대기',
               }"
-              @click="setActiveItem('/approval/incoming/approval-pending')"
+              @click="selectMenu('결재대기')"
             >
               <div class="menu-content">
                 <span class="menu-title">결재대기</span>
               </div>
-              <span class="count-badge">3</span>
+              <span class="count-badge">{{ props.counts.결재대기 }}</span>
             </div>
             <div
               class="menu-item"
               :class="{
-                active: activeItem === '/approval/incoming/approval-scheduled',
+                active: computedActiveItem === '결재요청',
               }"
-              @click="setActiveItem('/approval/incoming/approval-scheduled')"
+              @click="selectMenu('결재요청')"
             >
               <div class="menu-content">
-                <span class="menu-title">결재예정</span>
+                <span class="menu-title">결재요청</span>
               </div>
-              <span class="count-badge">2</span>
+              <span class="count-badge">{{ props.counts.결재예정 }}</span>
             </div>
-
-            <!-- 내결재 승인 -->
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/my-approval-approved',
+                active: computedActiveItem === '내 결재 승인',
               }"
-              @click="setActiveItem('/approval/incoming/my-approval-approved')"
+              @click="selectMenu('내 결재 승인')"
             >
               <div class="menu-content">
                 <span class="menu-title">내결재 승인</span>
               </div>
-              <span class="count-badge">8</span>
+              <span class="count-badge">{{ props.counts.내결재승인 }}</span>
             </div>
-
-            <!-- 내결재 반려 -->
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/my-approval-rejected',
+                active: computedActiveItem === '내 결재 반려',
               }"
-              @click="setActiveItem('/approval/incoming/my-approval-rejected')"
+              @click="selectMenu('내 결재 반려')"
             >
               <div class="menu-content">
                 <span class="menu-title">내결재 반려</span>
               </div>
-              <span class="count-badge">2</span>
+              <span class="count-badge">{{ props.counts.내결재반려 }}</span>
             </div>
           </div>
         </div>
 
         <!-- 협조문서 -->
         <div class="accordion-section">
-          <div
-            class="accordion-header"
-            @click="toggleAccordion('collaboration-docs')"
-          >
+          <div class="accordion-header" @click="handleCollaborationDocsClick">
             <div class="accordion-title">
               <span>협조문서</span>
             </div>
             <div class="accordion-controls">
-              <span class="count-badge">8</span>
-              <ChevronDownIcon
-                :class="[
-                  'chevron',
-                  { rotated: openAccordions.includes('collaboration-docs') },
-                ]"
-              />
+              <span class="count-badge">{{
+                props.counts.협조대기 +
+                props.counts.협조예정 +
+                props.counts.내협조승인 +
+                props.counts.내협조반려
+              }}</span>
             </div>
           </div>
           <div
@@ -189,88 +181,74 @@
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/collaboration-pending',
+                active: computedActiveItem === '협조대기',
               }"
-              @click="setActiveItem('/approval/incoming/collaboration-pending')"
+              @click="selectMenu('협조대기')"
             >
               <div class="menu-content">
                 <span class="menu-title">협조대기</span>
               </div>
-              <span class="count-badge">2</span>
+              <span class="count-badge">{{ props.counts.협조대기 }}</span>
             </div>
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/collaboration-scheduled',
+                active: computedActiveItem === '협조예정',
               }"
-              @click="
-                setActiveItem('/approval/incoming/collaboration-scheduled')
-              "
+              @click="selectMenu('협조예정')"
             >
               <div class="menu-content">
                 <span class="menu-title">협조예정</span>
               </div>
-              <span class="count-badge">1</span>
+              <span class="count-badge">{{ props.counts.협조예정 }}</span>
             </div>
-
-            <!-- 내협조 승인 -->
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/my-collaboration-approved',
+                active: computedActiveItem === '내 협조 승인',
               }"
-              @click="
-                setActiveItem('/approval/incoming/my-collaboration-approved')
-              "
+              @click="selectMenu('내 협조 승인')"
             >
               <div class="menu-content">
                 <span class="menu-title">내협조 승인</span>
               </div>
-              <span class="count-badge">4</span>
+              <span class="count-badge">{{ props.counts.내협조승인 }}</span>
             </div>
-
-            <!-- 내협조 반려 -->
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/my-collaboration-rejected',
+                active: computedActiveItem === '내 협조 반려',
               }"
-              @click="
-                setActiveItem('/approval/incoming/my-collaboration-rejected')
-              "
+              @click="selectMenu('내 협조 반려')"
             >
               <div class="menu-content">
                 <span class="menu-title">내협조 반려</span>
               </div>
-              <span class="count-badge">1</span>
+              <span class="count-badge">{{ props.counts.내협조반려 }}</span>
             </div>
           </div>
         </div>
 
         <!-- 참조문서 -->
         <div class="accordion-section">
-          <div class="accordion-header">
+          <div class="accordion-header" @click="selectMenu('참조문서')">
             <div class="accordion-title">
               <span>참조문서</span>
             </div>
             <div class="accordion-controls">
-              <span class="count-badge">4</span>
+              <span class="count-badge">{{ props.counts.참조문서 }}</span>
             </div>
           </div>
         </div>
 
         <!-- 수신문서 -->
         <div class="accordion-section">
-          <div class="accordion-header">
+          <div class="accordion-header" @click="selectMenu('수신문서')">
             <div class="accordion-title">
               <span>수신문서</span>
             </div>
             <div class="accordion-controls">
-              <span class="count-badge">3</span>
+              <span class="count-badge">{{ props.counts.수신문서 }}</span>
             </div>
           </div>
         </div>
@@ -286,12 +264,6 @@
             </div>
             <div class="accordion-controls">
               <span class="count-badge">5</span>
-              <ChevronDownIcon
-                :class="[
-                  'chevron',
-                  { rotated: openAccordions.includes('completed-docs') },
-                ]"
-              />
             </div>
           </div>
           <div
@@ -307,14 +279,6 @@
                 <span>결재</span>
                 <div class="nested-controls">
                   <span class="count-badge">3</span>
-                  <ChevronDownIcon
-                    :class="[
-                      'chevron-small',
-                      {
-                        rotated: openAccordions.includes('completed-approval'),
-                      },
-                    ]"
-                  />
                 </div>
               </div>
               <div
@@ -365,16 +329,6 @@
                 <span>협조</span>
                 <div class="nested-controls">
                   <span class="count-badge">2</span>
-                  <ChevronDownIcon
-                    :class="[
-                      'chevron-small',
-                      {
-                        rotated: openAccordions.includes(
-                          'completed-collaboration'
-                        ),
-                      },
-                    ]"
-                  />
                 </div>
               </div>
               <div
@@ -435,33 +389,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-// import {
-//   FileText as FileTextIcon,
-//   Send as SendIcon,
-//   Inbox as InboxIcon,
-//   BarChart3 as BarChart3Icon,
-//   Plus as PlusIcon,
-// } from "lucide-vue-next";
-import {
-  FileText as FileTextIcon,
-  Send as SendIcon,
-  Inbox as InboxIcon,
-  Save as SaveIcon,
-  Clock as ClockIcon,
-  CheckCircle as CheckCircleIcon,
-  XCircle as XCircleIcon,
-  AlertCircle as AlertCircleIcon,
-  Users as UsersIcon,
-  Eye as EyeIcon,
-  MessageCircle as MessageCircleIcon,
-  Archive as ArchiveIcon,
-  BarChart3 as BarChart3Icon,
-  Plus as PlusIcon,
-  ClipboardList as ClipboardListIcon,
-  Calendar as CalendarIcon,
-  ChevronDown as ChevronDownIcon,
-} from "lucide-vue-next";
+import { ref, computed } from "vue";
 
 const emit = defineEmits(["select-menu", "tab-change", "register-approval"]);
 const counts = ref({
@@ -472,8 +400,8 @@ const counts = ref({
   결재반려: 0,
 });
 
-const activeTab = ref("상신"); // 상신, 수신
-const activeItem = ref("all"); // 전체, 임시저장, 결재중, 결재완료, 결재반려
+const activeTab = ref("상신");
+const activeItem = ref(""); // 복원
 
 const openAccordions = ref(["approval-docs", "collaboration-docs"]);
 
@@ -481,20 +409,39 @@ const openAccordions = ref(["approval-docs", "collaboration-docs"]);
 const changeTab = (tabValue) => {
   activeTab.value = tabValue;
   if (tabValue === "상신") {
-    activeItem.value = "all";
-    emit("select-menu", "상신");
+    activeItem.value = "상신";
+    emit("select-menu", "상신-전체");
+  } else if (tabValue === "수신") {
+    activeItem.value = "수신";
+    emit("select-menu", "수신-전체");
   }
   emit("tab-change", tabValue);
 };
 
 // 메뉴 선택
 const selectMenu = (menu) => {
-  activeItem.value = menu;
-  emit("select-menu", menu);
+  if (menu === "상신") {
+    activeItem.value = "상신";
+    emit("select-menu", "상신-전체");
+  } else if (menu === "수신") {
+    activeItem.value = "수신";
+    emit("select-menu", "수신-전체");
+  } else {
+    activeItem.value = menu;
+    emit("select-menu", menu);
+  }
 };
+
 const props = defineProps({
   activeTab: [String, Number], // 받기
+  activeMenu: String, // 현재 선택된 메뉴
   counts: Object,
+});
+
+// activeItem을 props.activeMenu와 동기화
+const computedActiveItem = computed(() => {
+  // props.activeMenu가 있으면 그것을 우선 사용, 없으면 로컬 activeItem 사용
+  return props.activeMenu || activeItem.value;
 });
 
 // 메서드
@@ -507,12 +454,27 @@ const toggleAccordion = (accordionId) => {
     openAccordions.value.push(accordionId);
   }
 };
+
 const setActiveItem = (item) => {
   activeItem.value = item;
 };
 
 const handleRegisterApproval = () => {
   emit("register-approval");
+};
+
+const handleApprovalDocsClick = () => {
+  // 결재문서 헤더 클릭 시 "결재-전체" 선택
+  selectMenu("결재-전체");
+  // 아코디언 토글
+  toggleAccordion("approval-docs");
+};
+
+const handleCollaborationDocsClick = () => {
+  // 협조문서 헤더 클릭 시 "협조-전체" 선택
+  selectMenu("협조-전체");
+  // 아코디언 토글
+  toggleAccordion("collaboration-docs");
 };
 </script>
 
