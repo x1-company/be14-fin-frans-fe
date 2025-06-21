@@ -350,16 +350,48 @@ const removeDocument = (docId) => {
   emitFormData();
 };
 
-const handleFileSelect = (event) => {
-  const files = Array.from(event.target.files);
-  files.forEach((file) => {
-    formData.value.files.push({
-      name: file.name,
-      size: file.size,
-      file: file,
-      url: "",
+// 파일 업로드 함수 (FormData 방식)
+const uploadFiles = async (files) => {
+  try {
+    const formData = new FormData();
+
+    files.forEach((file) => {
+      formData.append("files", file);
     });
-  });
+
+    formData.append("type", "approval"); // 폴더명 구분용
+
+    const response = await api.post("/api/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    console.log(response.data); // S3 URL, uuid 파일명, 원본 파일명 리스트
+    return response.data;
+  } catch (error) {
+    console.error("파일 업로드 실패:", error);
+    throw new Error("파일 업로드에 실패했습니다.");
+  }
+};
+
+const handleFileSelect = async (event) => {
+  const files = Array.from(event.target.files);
+  try {
+    const uploadedFiles = await uploadFiles(files);
+    // 업로드된 파일들을 formData에 추가
+    uploadedFiles.forEach((uploadedFile) => {
+      formData.value.files.push({
+        name: uploadedFile.originalName || uploadedFile.name,
+        size: uploadedFile.size,
+        url: uploadedFile.url,
+        uuid: uploadedFile.uuid,
+      });
+    });
+  } catch (error) {
+    console.error("파일 업로드 실패:", error);
+    alert("파일 업로드에 실패했습니다. 다시 시도해주세요.");
+  }
   emitFormData();
 };
 
@@ -560,10 +592,10 @@ const handleTempSave = async () => {
         type: line.type,
       }));
 
-    // 파일 데이터 변환 (실제로는 파일 업로드 후 URL을 받아야 함)
+    // 파일 데이터 변환 (FormData 업로드된 파일 URL 사용)
     const files = formData.value.files.map((file) => ({
       name: file.name,
-      url: file.url || "https://files.company.com/docs/temp-file.pdf", // 임시 URL
+      url: file.url,
     }));
 
     const requestData = {
@@ -626,10 +658,10 @@ const handleSubmit = async () => {
         type: line.type,
       }));
 
-    // 파일 데이터 변환 (실제로는 파일 업로드 후 URL을 받아야 함)
+    // 파일 데이터 변환 (FormData 업로드된 파일 URL 사용)
     const files = formData.value.files.map((file) => ({
       name: file.name,
-      url: file.url || "https://files.company.com/docs/temp-file.pdf", // 임시 URL
+      url: file.url,
     }));
 
     const requestData = {
