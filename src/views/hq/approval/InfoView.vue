@@ -67,8 +67,13 @@ const reorderChanges = ref([]); // 순서 변경 정보 저장
 const handleSelectMenu = (menuValue) => {
   activeMenu.value = menuValue;
 
-  // 상신-전체나 수신-전체인 경우 activeTab을 "전체"로 설정
-  if (menuValue === "상신-전체" || menuValue === "수신-전체") {
+  // 상신-전체, 수신-전체, 협조-전체, 결재-전체인 경우 activeTab을 "전체"로 설정
+  if (
+    menuValue === "상신-전체" ||
+    menuValue === "수신-전체" ||
+    menuValue === "협조-전체" ||
+    menuValue === "결재-전체"
+  ) {
     activeTab.value = "전체";
   } else {
     activeTab.value = menuValue;
