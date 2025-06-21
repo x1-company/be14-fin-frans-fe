@@ -19,14 +19,16 @@
 
                     <FranchiseInfo v-if="activeTabSwitch === 1" />
 
-                    <OrderRegister v-if="activeTabSwitch === 2" />
-
-                    <OrderList v-if="activeTabSwitch === 3" />
-                    <!-- <div v-if="activeTabSwitch === 3" class="content-section">
+                    <div v-if="activeTabSwitch === 2">
+                        <OrderRegister v-if="showOrderRegister" @back-to-list="showOrderRegister = false" />
+                        <OrderList v-else @show-register-view="showOrderRegister = true" />
+                    </div>
+                    
+                    <div v-if="activeTabSwitch === 3" class="content-section">
                         <h3>반품관리 컨텐츠</h3>
                         <p>반품 관리 내용이 여기에 표시됩니다.</p>
                         <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
-                    </div> -->
+                    </div>
 
                     <div v-if="activeTabSwitch === 4" class="content-section">
                         <h3>매출관리 컨텐츠</h3>
@@ -50,8 +52,8 @@ import { ref, computed, watch } from 'vue'
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from './InfoHeader.vue'
 import FranchiseInfo from '@/components/franchise/info/FranchiseInfo.vue'
-import OrderRegister from '@/components/franchise/order/OrderRegister.vue'
 import OrderList from '@/components/franchise/order/OrderList.vue'
+import OrderRegister from '@/components/franchise/order/OrderRegister.vue'
 
 const props = defineProps({
     activeTab: String
@@ -97,8 +99,30 @@ watch(
     { immediate: true }
 )
 
-const title = computed(() => tabInfo.value[activeTabSwitch.value]?.title || '대시보드')
-const desc = computed(() => tabInfo.value[activeTabSwitch.value]?.desc || '대시보드입니다.')
+const showOrderRegister = ref(false)
+
+// activeTab이 '주문관리'가 아니게 되면, 목록 뷰로 리셋
+watch(
+    () => activeTabSwitch.value,
+    (newTabIndex) => {
+        if (newTabIndex !== 2) {
+            showOrderRegister.value = false
+        }
+    }
+)
+
+const title = computed(() => {
+    if (activeTabSwitch.value === 2 && showOrderRegister.value) {
+        return "주문 등록"
+    }
+    return tabInfo.value[activeTabSwitch.value]?.title || '대시보드'
+})
+const desc = computed(() => {
+    if (activeTabSwitch.value === 2 && showOrderRegister.value) {
+        return "주문할 자재를 등록할 수 있습니다."
+    }
+    return tabInfo.value[activeTabSwitch.value]?.desc || '대시보드입니다.'
+})
 
 const updateTab = (newTabIndex) => {
     activeTabSwitch.value = newTabIndex

@@ -44,6 +44,8 @@ const props = defineProps({
 
 const statusText = computed(() => {
   switch(props.order.status) {
+    case 'WAITING_FOR_RECEIPT': return '접수 대기';
+    case 'RECEIPT_CANCELED': return '접수 취소';
     case 'REJECTED': return '반려';
     case 'REVIEWING': return '검토 중';
     case 'REVIEW_COMPLETED': return '검토 완료';

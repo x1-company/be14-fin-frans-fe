@@ -41,6 +41,7 @@
     import api from '@/lib/api'
     import { ref, onMounted } from 'vue';
     import NavBar from '@/components/hq/common/NavBar.vue';
+    import SideBar from '@/components/franchise/common/FrSideBar.vue';
     import FrOrderActionButtons from '@/components/franchise/order/button/FrOrderActionButtons.vue';
     import OrderProgressBar from '@/components/hq/orders/detail/OrderProgressBar.vue';
     import FranchiseInfoCard from '@/components/hq/orders/detail/FranchiseInfoCard.vue';

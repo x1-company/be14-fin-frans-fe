@@ -22,7 +22,9 @@
   async function fetchOrders(franchiseId = null, page = 1, size = 10) {
     const params = { page, size };
     if (franchiseId) params.franchiseId = franchiseId;
+    console.log("params", params);
     const { data } = await api.get('/api/hq/orders', { params });
+    console.log("data", data);
     orders.value = data.content;
   }
 

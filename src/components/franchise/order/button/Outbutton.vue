@@ -1,6 +1,5 @@
 <template>
     <div class="order-actions">
-        <button class="btn print" @click="handlePrint"><span class="icon">&#128424;</span> 주문서 출력</button>
         <button class="btn close" @click="handleClose"><span class="icon">&#10005;</span> 닫기</button>
     </div>
   </template>
@@ -12,11 +11,6 @@ const router = useRouter();
 
 function handleClose() {
   router.push({ path: '/franchise', query: { tab: '주문관리' } });
-}
-
-function handlePrint() {
-  // 주문서 출력 기능은 아직 구현되지 않았습니다.
-  alert('주문서 출력 기능은 준비 중입니다.');
 }
 
 </script>

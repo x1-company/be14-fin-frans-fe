@@ -9,6 +9,7 @@
                 <button class="recent-order-btn" @click="loadRecentOrder">
                     📋 최근 주문 불러오기
                 </button>
+                <Outbutton />
             </div>
         </div>
 
@@ -110,8 +111,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from "@/stores/auth.js"
+import Outbutton from './button/Outbutton.vue'
 import api from "@/lib/api"
 
+const emit = defineEmits(['back-to-list'])
 const auth = useAuthStore()
 
 // 상태 관리
@@ -207,6 +210,7 @@ const submitOrder = async () => {
 
         // 주문 목록 초기화
         orderList.value = []
+        emit('back-to-list')
 
     } catch (error) {
         console.error('주문 등록 실패:', error)
@@ -274,6 +278,27 @@ onMounted(() => {
     color: #212529;
     font-size: 20px;
     font-weight: 600;
+}
+
+.header-right {
+    display: flex;
+    gap: 8px;
+}
+
+.list-btn {
+    background: #f8f9fa;
+    color: #212529;
+    border: 1px solid #dee2e6;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.list-btn:hover {
+    background: #e9ecef;
 }
 
 .recent-order-btn {
