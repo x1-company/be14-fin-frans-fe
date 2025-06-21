@@ -55,8 +55,9 @@ import Info from "@/components/hq/approval/Info.vue";
 import api from "@/lib/api";
 
 const approvalList = ref([]);
-const activeMenu = ref("상신"); // 사이드바 메뉴 선택 (상신, 수신)
-const activeTab = ref("전체"); // ApprovalList 탭 선택 (전체, 임시저장, 결재중, 결재완료, 결재반려)
+const mainTab = ref("상신"); // '상신' 또는 '수신'
+const activeMenu = ref("상신-전체");
+const activeTab = ref("전체");
 const currentTabIndex = ref(0); // 현재 선택된 탭 인덱스 (0: 대시보드, 1: 전자결재, 2: 결재템플릿)
 const isRegistrationMode = ref(false); // 등록 모드 활성화 여부
 
@@ -67,23 +68,28 @@ const templateSidebarRef = ref(null); // 결재템플릿 사이드바 참조
 const reorderChanges = ref([]); // 순서 변경 정보 저장
 
 const handleSelectMenu = (menuValue) => {
+  // '상신' 또는 '수신' 탭을 직접 클릭했을 때 mainTab 상태 업데이트
+  if (menuValue === "상신-전체") {
+    mainTab.value = "상신";
+  } else if (
+    menuValue.startsWith("결재") ||
+    menuValue.startsWith("협조") ||
+    menuValue.startsWith("참조") ||
+    menuValue.startsWith("수신")
+  ) {
+    mainTab.value = "수신";
+  }
+
   activeMenu.value = menuValue;
 
-  // 상신-전체, 수신-전체, 협조-전체, 결재-전체인 경우 activeTab을 "전체"로 설정
-  if (
-    menuValue === "상신-전체" ||
-    menuValue === "수신-전체" ||
-    menuValue === "협조-전체" ||
-    menuValue === "결재-전체"
-  ) {
+  if (menuValue.endsWith("-전체")) {
     activeTab.value = "전체";
   } else {
     activeTab.value = menuValue;
   }
 
-  // 사이드바 메뉴를 클릭하면 항상 전자결재 탭으로 이동
-  currentTabIndex.value = 1; // 전자결재 탭으로 이동
-  isRegistrationMode.value = false; // 등록 모드 비활성화
+  currentTabIndex.value = 1;
+  isRegistrationMode.value = false;
 };
 
 const handleTabChange = (tab) => {
@@ -221,7 +227,7 @@ const fetchCounts = async () => {
     결재대기: "/api/hq/approvals/list/received/pending",
     결재예정: "/api/hq/approvals/list/received/upcoming",
     내결재승인: "/api/hq/approvals/list/received/my-completed/approved",
-    내결재반려: "api/hq/approvals/list/received/my-completed/rejected",
+    내결재반려: "/api/hq/approvals/list/received/my-completed/rejected",
     협조대기: "/api/hq/approvals/list/cooperate/pending",
     협조예정: "/api/hq/approvals/list/cooperate/upcoming",
     내협조승인: "/api/hq/approvals/list/cooperate/approved",
@@ -242,92 +248,81 @@ const fetchCounts = async () => {
 onMounted(fetchCounts);
 
 watch(
-  [activeMenu, activeTab],
-  async ([menu, tab]) => {
-    const activeTab = tab || menu;
-    let url = "";
-    console.log("activeMenu:", menu, "activeTab:", activeTab);
+  [mainTab, activeMenu, activeTab],
+  async ([currentMainTab, menu, tab]) => {
+    const apiGroups = {
+      상신: {
+        "상신-전체": "/api/hq/approvals/list/submitted/all",
+        임시저장: "/api/hq/approvals/list/submitted/draft",
+        결재중: "/api/hq/approvals/list/submitted/in-progress",
+        결재완료: "/api/hq/approvals/list/submitted/approved",
+        결재반려: "/api/hq/approvals/list/submitted/rejected",
+      },
+      수신: {
+        "수신-전체": "/api/hq/approvals/list/received/all",
+        "결재-전체": "/api/hq/approvals/list/received/all",
+        결재대기: "/api/hq/approvals/list/received/pending",
+        결재요청: "/api/hq/approvals/list/received/upcoming",
+        "내 결재 승인": "/api/hq/approvals/list/received/my-completed/approved",
+        "내 결재 반려": "/api/hq/approvals/list/received/my-completed/rejected",
+        "협조-전체": "/api/hq/approvals/list/cooperate/all",
+        협조대기: "/api/hq/approvals/list/cooperate/pending",
+        협조예정: "/api/hq/approvals/list/cooperate/upcoming",
+        "내 협조 승인": "/api/hq/approvals/list/cooperate/approved",
+        "내 협조 반려": "/api/hq/approvals/list/cooperate/rejected",
+        참조문서: "/api/hq/approvals/list/references",
+        수신문서: "/api/hq/approvals/list/notifications",
+      },
+    };
 
-    // 상신 관련 메뉴인지 확인
-    const isSentMenu =
-      menu === "상신-전체" ||
-      ["임시저장", "결재중", "결재완료", "결재반려"].includes(activeTab);
+    const apiGroup = apiGroups[currentMainTab];
+    if (!apiGroup) {
+      console.warn(`Invalid main tab: ${currentMainTab}`);
+      return;
+    }
 
-    // 협조문서 관련 메뉴인지 확인 (activeMenu와 activeTab 모두 확인)
-    const isCooperatorMenu =
-      [
-        "협조-전체",
-        "협조대기",
-        "협조예정",
-        "내 협조 승인",
-        "내 협조 반려",
-      ].includes(activeTab) ||
-      [
-        "협조-전체",
-        "협조대기",
-        "협조예정",
-        "내 협조 승인",
-        "내 협조 반려",
-      ].includes(menu);
+    let endpointKey;
 
-    if (isSentMenu) {
-      // 상신 관련 API
-      if (activeTab === "임시저장") {
-        url = "/api/hq/approvals/list/submitted/draft";
-      } else if (activeTab === "전체") {
-        url = "/api/hq/approvals/list/submitted/all";
-      } else if (activeTab === "결재중") {
-        url = "/api/hq/approvals/list/submitted/in-progress";
-      } else if (activeTab === "결재완료") {
-        url = "/api/hq/approvals/list/submitted/approved";
-      } else if (activeTab === "결재반려") {
-        url = "/api/hq/approvals/list/submitted/rejected";
-      }
-    } else if (isCooperatorMenu) {
-      // 협조문서 관련 API
-      if (activeTab === "전체" || menu === "협조-전체") {
-        url = "/api/hq/approvals/list/cooperate/all";
-      } else if (activeTab === "협조대기") {
-        url = "/api/hq/approvals/list/cooperate/pending";
-      } else if (activeTab === "협조예정") {
-        url = "/api/hq/approvals/list/cooperate/upcoming";
-      } else if (activeTab === "내 협조 승인") {
-        url = "/api/hq/approvals/list/cooperate/approved";
-      } else if (activeTab === "내 협조 반려") {
-        url = "/api/hq/approvals/list/cooperate/rejected";
-      }
-    } else if (menu === "참조문서") {
-      // 참조문서 관련 API
-      url = "/api/hq/approvals/list/references";
-    } else if (menu === "수신문서") {
-      // 수신문서 관련 API
-      url = "/api/hq/approvals/list/notifications";
+    // 1. 특정 탭(예: 결재중, 결재대기)이 선택되면, 해당 탭을 API 키로 사용
+    if (tab !== "전체") {
+      endpointKey = tab;
     } else {
-      // 수신 관련 API (결재문서)
-      if (activeTab === "전체" || menu === "결재-전체") {
-        // 결재문서의 "전체"인지 수신의 "전체"인지 구분
-        if (menu === "수신-전체") {
-          url = "/api/hq/approvals/list/received/all";
+      // 2. '전체' 탭이 선택된 경우
+      if (currentMainTab === "상신") {
+        endpointKey = "상신-전체";
+      } else {
+        // '수신' 탭의 경우, 현재 메뉴가 어느 카테고리에 속하는지 확인
+        const is결재Category = [
+          "결재-전체",
+          "결재대기",
+          "결재요청",
+          "내 결재 승인",
+          "내 결재 반려",
+        ].includes(menu);
+        const is협조Category = [
+          "협조-전체",
+          "협조대기",
+          "협조예정",
+          "내 협조 승인",
+          "내 협조 반려",
+        ].includes(menu);
+
+        if (is결재Category) {
+          endpointKey = "결재-전체";
+        } else if (is협조Category) {
+          endpointKey = "협조-전체";
         } else {
-          // 결재문서의 "전체"
-          url = "/api/hq/approvals/list/received/all";
+          // '수신-전체', '참조문서', '수신문서'
+          endpointKey = menu;
         }
-      } else if (activeTab === "결재중") {
-        url = "/api/hq/approvals/list/received/in-progress"; // 결재중
-      } else if (activeTab === "결재완료") {
-        url = "/api/hq/approvals/list/received/approved"; // 결재완료
-      } else if (activeTab === "결재반려") {
-        url = "/api/hq/approvals/list/received/rejected"; // 결재반려
-      } else if (activeTab === "결재대기") {
-        url = "/api/hq/approvals/list/received/pending";
-      } else if (activeTab === "결재예정") {
-        url = "/api/hq/approvals/list/received/upcoming";
-      } else if (activeTab === "내결재 승인") {
-        url = "/api/hq/approvals/list/received/my-completed/approved";
-      } else if (activeTab === "내결재 반려") {
-        url = "/api/hq/approvals/list/received/my-completed/rejected";
       }
     }
+
+    const url = apiGroup[endpointKey];
+
+    console.log(
+      `Fetching data for: [${currentMainTab}] ${endpointKey}, URL: ${url}`
+    );
 
     if (url) {
       try {
@@ -337,6 +332,11 @@ watch(
         console.error("결재 목록 조회 실패:", error);
         approvalList.value = [];
       }
+    } else {
+      console.warn(
+        `No endpoint found for key: ${endpointKey} in ${currentMainTab}`
+      );
+      approvalList.value = [];
     }
   },
   { immediate: true }
