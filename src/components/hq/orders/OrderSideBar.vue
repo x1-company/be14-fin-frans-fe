@@ -112,12 +112,18 @@ function handleFranchiseClick(franchise) {
 
 <style scoped>
 .sidebar {
+  min-width: 260px;      /* 최소 너비 추가 */
+  max-width: 340px;      /* 필요시 최대 너비도 지정 */
   width: 300px;
+  flex-shrink: 0;        /* 줄어들지 않게 */
   background: #f8f9fa;
   border-right: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;         /* 화면 전체 높이로 고정 */
+  overflow-x: hidden;    /* 가로 스크롤 방지 */
+  position: relative;    /* 겹침 방지 */
+  z-index: 2;
 }
 
 .sidebar-header {

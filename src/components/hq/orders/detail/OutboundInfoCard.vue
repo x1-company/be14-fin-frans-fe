@@ -44,6 +44,8 @@
     margin: 20px 0 10px 60px;
     margin-bottom: 24px;
     background: #fff;
+    max-width: 100%;
+    width: 100%;
   }
   
   .card-title {

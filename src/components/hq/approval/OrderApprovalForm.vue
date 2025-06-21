@@ -1,18 +1,9 @@
 <template>
   <div class="order-approval-form">
-    <!-- 주문 문서 선택 -->
+    <!-- 결재문서 선택 -->
     <div class="form-section">
-      <h3 class="section-title">주문 문서 선택</h3>
-      <div class="document-search">
-        <div class="search-input-wrapper">
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="문서 검색"
-            class="search-input"
-          />
-          <button class="search-button">검색</button>
-        </div>
+      <div class="section-header">
+        <h3 class="section-title">결재문서</h3>
         <button class="add-document-button" @click="handleAddDocument"
           >문서 추가</button
         >
@@ -26,15 +17,17 @@
               <th>문서명</th>
               <th>작성일</th>
               <th>금액</th>
+              <th>코드</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="doc in filteredDocuments" :key="doc.id">
-              <td>{{ doc.id }}</td>
+            <tr v-for="(doc, index) in filteredDocuments" :key="doc.id">
+              <td>{{ index + 1 }}</td>
               <td>{{ doc.name }}</td>
               <td>{{ doc.date }}</td>
               <td>{{ formatCurrency(doc.amount) }}</td>
+              <td>{{ doc.code }}</td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
                   ×
@@ -65,160 +58,145 @@
             v-model="formData.remarks"
             placeholder="결재 내용을 입력하세요"
             class="content-textarea"
+            maxlength="255"
+            @input="updateRemarksCount"
           ></textarea>
+          <div class="char-count">{{ remarksLength }}/255</div>
         </div>
       </div>
     </div>
 
     <!-- 결재선 -->
     <div class="form-section">
-      <h3 class="section-title">결재선</h3>
-      <div class="approval-line-header">
-        <button class="load-template-button">결재선 불러오기</button>
-        <button
-          class="add-approver-button"
-          @click="showApprovalLineModal = true"
-        >
-          결재자 추가
-        </button>
+      <div class="section-header">
+        <h3 class="section-title">결재선</h3>
+        <div class="header-buttons">
+          <button class="load-template-button" @click="showTemplateModal = true"
+            >결재선 불러오기</button
+          >
+          <button
+            class="add-approver-button"
+            @click="showApprovalLineModal = true"
+          >
+            결재자 추가
+          </button>
+        </div>
       </div>
 
       <div v-if="formData.approvalLines.length === 0" class="no-approval-line">
         <p>결재선이 지정되지 않았습니다.</p>
-        <p>결재자나 추가하거나 템플릿을 불러와주세요.</p>
+        <p>결재자를 추가하거나 템플릿을 불러와주세요.</p>
       </div>
 
-      <div v-else>
-        <div class="approval-tab-header">
-          <span
-            :class="['approval-tab', { active: approvalTab === 'APPROVER' }]"
-            @click="approvalTab = 'APPROVER'"
-            >결재</span
+      <div v-else class="approval-line-list approval-line-row">
+        <div class="approval-line-left">
+          <div class="side-section-title main">결재 / 협조</div>
+          <draggable
+            :list="approvalAndCollaboratorLines"
+            group="people"
+            item-key="id"
+            class="approval-draggable-list"
+            :animation="200"
+            @end="onDragEnd"
           >
-          <span
-            :class="[
-              'approval-tab',
-              { active: approvalTab === 'COLLABORATOR' },
-            ]"
-            @click="approvalTab = 'COLLABORATOR'"
-            >협조</span
-          >
+            <template #item="{ element, index }">
+              <div class="approval-card" :class="element.type.toLowerCase()">
+                <span class="order-num" :class="element.type.toLowerCase()">{{
+                  index + 1
+                }}</span>
+                <span
+                  class="circle-initial"
+                  :class="element.type.toLowerCase()"
+                  >{{ element.name[0] }}</span
+                >
+                <div class="user-info">
+                  <span class="user-name">{{ element.name }}</span>
+                  <span class="user-meta"
+                    >{{ element.position }} / {{ element.dept }}</span
+                  >
+                </div>
+                <span
+                  class="badge"
+                  :class="`badge-${element.type.toLowerCase()}`"
+                >
+                  {{ element.type === "APPROVER" ? "결재" : "협조" }}
+                </span>
+                <button
+                  class="remove-approver"
+                  @click="removeApprover(element.id)"
+                >
+                  ×
+                </button>
+              </div>
+            </template>
+          </draggable>
         </div>
-        <div v-if="approvalTab === 'APPROVER'">
-          <div
-            v-for="(line, idx) in formData.approvalLines.filter(
-              (l) => l.type === 'APPROVER'
-            )"
-            :key="'approver-' + idx"
-            class="approval-card approver"
-          >
-            <span class="order-num">{{ idx + 1 }}</span>
-            <span class="circle-initial">{{ line.name[0] }}</span>
-            <span class="user-info">
-              <span class="user-name">{{ line.name }}</span>
-              <span class="user-meta"
-                >{{ line.position }} / {{ line.dept }}</span
-              >
-            </span>
-            <span class="badge badge-approver">결재</span>
-            <button class="remove-approver" @click="removeApprover(idx)"
-              >×</button
+        <div class="approval-line-right">
+          <div v-if="receiverLines.length > 0" class="approval-side-section">
+            <div class="side-section-title receiver">수신</div>
+            <div
+              v-for="line in receiverLines"
+              :key="line.id"
+              class="approval-card receiver"
             >
+              <span class="circle-initial receiver">{{ line.name[0] }}</span>
+              <div class="user-info">
+                <span class="user-name">{{ line.name }}</span>
+                <span class="user-meta"
+                  >{{ line.position }} / {{ line.dept }}</span
+                >
+              </div>
+              <button class="remove-approver" @click="removeApprover(line.id)">
+                ×
+              </button>
+            </div>
           </div>
-        </div>
-        <div v-if="approvalTab === 'COLLABORATOR'">
-          <div
-            v-for="(line, idx) in formData.approvalLines.filter(
-              (l) => l.type === 'COLLABORATOR'
-            )"
-            :key="'collab-' + idx"
-            class="approval-card collaborator"
-          >
-            <span class="circle-initial">{{ line.name[0] }}</span>
-            <span class="user-info">
-              <span class="user-name">{{ line.name }}</span>
-              <span class="user-meta"
-                >{{ line.position }} / {{ line.dept }}</span
-              >
-            </span>
-            <span class="badge badge-collaborator">협조</span>
-            <button class="remove-approver" @click="removeApprover(idx)"
-              >×</button
+          <div v-if="referenceLines.length > 0" class="approval-side-section">
+            <div class="side-section-title reference">참조</div>
+            <div
+              v-for="line in referenceLines"
+              :key="line.id"
+              class="approval-card reference"
             >
+              <span class="circle-initial reference">{{ line.name[0] }}</span>
+              <div class="user-info">
+                <span class="user-name">{{ line.name }}</span>
+                <span class="user-meta"
+                  >{{ line.position }} / {{ line.dept }}</span
+                >
+              </div>
+              <button class="remove-approver" @click="removeApprover(line.id)">
+                ×
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-    <div class="approval-side-box">
-      <div class="approval-tab-header">
-        <span
-          :class="['approval-tab', { active: sideTab === 'RECEIVER' }]"
-          @click="sideTab = 'RECEIVER'"
-          >수신</span
-        >
-        <span
-          :class="['approval-tab', { active: sideTab === 'REFERENCE' }]"
-          @click="sideTab = 'REFERENCE'"
-          >참조</span
-        >
-      </div>
-      <div v-if="sideTab === 'RECEIVER'">
-        <div
-          v-for="(line, idx) in formData.approvalLines.filter(
-            (l) => l.type === 'RECEIVER'
-          )"
-          :key="'receiver-' + idx"
-          class="approval-card receiver"
-        >
-          <span class="circle-initial">{{ line.name[0] }}</span>
-          <span class="user-info">
-            <span class="user-name">{{ line.name }}</span>
-            <span class="user-meta">{{ line.position }} / {{ line.dept }}</span>
-          </span>
-          <span class="badge badge-receiver">수신</span>
-          <button class="remove-approver" @click="removeApprover(idx)"
-            >×</button
-          >
-        </div>
-      </div>
-      <div v-if="sideTab === 'REFERENCE'">
-        <div
-          v-for="(line, idx) in formData.approvalLines.filter(
-            (l) => l.type === 'REFERENCE'
-          )"
-          :key="'ref-' + idx"
-          class="approval-card reference"
-        >
-          <span class="circle-initial">{{ line.name[0] }}</span>
-          <span class="user-info">
-            <span class="user-name">{{ line.name }}</span>
-            <span class="user-meta">{{ line.position }} / {{ line.dept }}</span>
-          </span>
-          <span class="badge badge-reference">참조</span>
-          <button class="remove-approver" @click="removeApprover(idx)"
-            >×</button
-          >
         </div>
       </div>
     </div>
 
     <!-- 첨부파일 -->
     <div class="form-section">
-      <h3 class="section-title">첨부파일</h3>
-      <div class="file-upload-area">
-        <input
-          type="file"
-          ref="fileInput"
-          @change="handleFileSelect"
-          multiple
-          style="display: none"
-        />
-        <button class="file-upload-button" @click="$refs.fileInput.click()">
-          파일 추가
-        </button>
+      <div class="section-header">
+        <h3 class="section-title">첨부파일</h3>
+        <div class="header-buttons">
+          <button class="add-file-button" @click="openFilePicker"
+            >파일 추가</button
+          >
+          <input
+            type="file"
+            ref="fileInput"
+            multiple
+            @change="handleFileSelect"
+            style="display: none"
+          />
+        </div>
       </div>
 
-      <div v-if="formData.files.length > 0" class="file-list">
+      <div v-if="formData.files.length === 0" class="no-files-attached">
+        <p>첨부된 파일이 없습니다.</p>
+      </div>
+
+      <div v-else class="file-list">
         <div
           v-for="(file, index) in formData.files"
           :key="index"
@@ -242,15 +220,24 @@
     <!-- OrderList 모달 -->
     <OrderList
       v-if="showOrderListModal"
+      :isVisible="showOrderListModal"
       @close="showOrderListModal = false"
       @select-documents="handleSelectDocuments"
     />
 
-    <!-- ApprovalLineModal 모달 -->
+    <!-- 결재선 지정 모달 -->
     <ApprovalLineModal
       v-if="showApprovalLineModal"
+      :initial-lines="formData.approvalLines"
       @close="showApprovalLineModal = false"
       @confirm="handleApprovalLineConfirm"
+    />
+
+    <!-- 결재선 템플릿 모달 -->
+    <ApprovalTemplateModal
+      v-if="showTemplateModal"
+      @close="showTemplateModal = false"
+      @select-template="handleSelectTemplate"
     />
   </div>
 </template>
@@ -259,12 +246,17 @@
 import { ref, computed, watch } from "vue";
 import OrderList from "./modal/OrderList.vue";
 import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
+import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
+import draggable from "vuedraggable";
+import api from "@/lib/api";
 
 const showModal = ref(false);
 const showOrderListModal = ref(false);
 const showApprovalLineModal = ref(false);
+const showTemplateModal = ref(false);
+const isSubmitting = ref(false);
 
-const emit = defineEmits(["form-data-updated"]);
+const emit = defineEmits(["form-data-updated", "approval-submitted"]);
 
 const searchQuery = ref("");
 const formData = ref({
@@ -278,16 +270,10 @@ const formData = ref({
   },
 });
 
+const fileInput = ref(null);
+
 // 문서 목록
-const documents = ref([
-  {
-    id: 1,
-    name: "KFC 관리운영 위 6건 주문 결재",
-    date: "2025.05.30",
-    amount: 1250000,
-  },
-  { id: 2, name: "KFC 입점 주문 결재", date: "2025.05.30", amount: 890000 },
-]);
+const documents = ref([]);
 
 // 계산된 속성
 const filteredDocuments = computed(() => {
@@ -338,11 +324,10 @@ const handleAddApprover = (approvalLineData) => {
   emitFormData();
 };
 
-const removeApprover = (index) => {
-  formData.value.approvalLines.splice(index, 1);
-  formData.value.approvalLines.forEach((line, idx) => {
-    line.seq = idx + 1;
-  });
+const removeApprover = (id) => {
+  formData.value.approvalLines = formData.value.approvalLines.filter(
+    (line) => line.id !== id
+  );
   emitFormData();
 };
 
@@ -387,22 +372,23 @@ const handleSelectDocuments = (selectedDocuments) => {
   selectedDocuments.forEach((doc) => {
     // 이미 존재하는 문서인지 확인
     const existingDoc = documents.value.find(
-      (existing) => existing.id === doc.id
+      (existing) => existing.id === (doc.id || doc.code)
     );
     if (!existingDoc) {
       // 주문 코드를 문서명으로 사용하고, 매장명을 추가
       const documentName = `${doc.franchiseName} - ${doc.code}`;
 
-      // 새로운 문서를 배열의 맨 앞에 추가
+      // 새로운 문서를 배열의 맨 앞에 추가 (code 필드 포함)
       documents.value.unshift({
-        id: doc.id,
+        id: doc.id || doc.code,
+        code: doc.code, // 코드 필드 추가
         name: documentName,
         date: formatDate(doc.createdAt),
         amount: doc.totalAmount,
       });
 
       // approvalDocuments에 추가
-      formData.value.approvalDocuments.documentIds.push(doc.id);
+      formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
     }
   });
   showOrderListModal.value = false;
@@ -469,23 +455,206 @@ const updateFormData = (data) => {
 };
 
 const handleApprovalLineConfirm = ({
-  approvers,
-  collaborators,
+  approvalAndCollaboratorLines,
   receivers,
   references,
 }) => {
-  // 결재선 데이터 통합
+  const receiverList = receivers.map((u) => ({
+    ...u,
+    type: "RECEIVER",
+    userId: u.id || u.userId,
+  }));
+  const referenceList = references.map((u) => ({
+    ...u,
+    type: "REFERENCE",
+    userId: u.id || u.userId,
+  }));
+
+  // approvalAndCollaboratorLines에도 userId 추가
+  const approvalAndCollaboratorList = approvalAndCollaboratorLines.map((u) => ({
+    ...u,
+    userId: u.id || u.userId,
+  }));
+
   formData.value.approvalLines = [
-    ...approvers.map((u) => ({ ...u, type: "APPROVER" })),
-    ...collaborators.map((u) => ({ ...u, type: "COLLABORATOR" })),
-    ...receivers.map((u) => ({ ...u, type: "RECEIVER" })),
-    ...references.map((u) => ({ ...u, type: "REFERENCE" })),
+    ...approvalAndCollaboratorList,
+    ...receiverList,
+    ...referenceList,
   ];
+
   showApprovalLineModal.value = false;
 };
 
+const approvalAndCollaboratorLines = computed(() =>
+  formData.value.approvalLines.filter(
+    (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
+  )
+);
+
+const receiverLines = computed(() =>
+  formData.value.approvalLines.filter((line) => line.type === "RECEIVER")
+);
+
+const referenceLines = computed(() =>
+  formData.value.approvalLines.filter((line) => line.type === "REFERENCE")
+);
+
 const approvalTab = ref("APPROVER");
 const sideTab = ref("RECEIVER");
+
+const handleSelectTemplate = async (template) => {
+  // 템플릿 상세 결재선 정보 조회
+  try {
+    const { data } = await api.get(
+      `/api/hq/approvals/templates/${template.id}`
+    );
+    // data가 결재선 배열(approvalLines)이라고 가정
+    formData.value.approvalLines = data.map((line) => ({
+      ...line,
+      id: line.userId || line.id, // 내부 일관성 위해 id 필드 보장
+      name: line.userName || line.name,
+      position: line.positionName || line.position,
+      dept: line.departmentName || line.dept,
+      type: line.type,
+    }));
+  } catch (error) {
+    alert("템플릿 결재선 정보를 불러오지 못했습니다.");
+    console.error(error);
+  }
+  showTemplateModal.value = false;
+};
+
+const remarksLength = computed(() => formData.value.remarks.length);
+const updateRemarksCount = () => {
+  if (formData.value.remarks.length > 255) {
+    formData.value.remarks = formData.value.remarks.slice(0, 255);
+  }
+};
+
+const onDragEnd = () => {
+  formData.value.approvalLines = [
+    ...approvalAndCollaboratorLines.value,
+    ...receiverLines.value,
+    ...referenceLines.value,
+  ];
+};
+
+const openFilePicker = () => {
+  fileInput.value.click();
+};
+
+const handleTempSave = async () => {
+  if (isSubmitting.value) return;
+
+  try {
+    isSubmitting.value = true;
+
+    // 결재선 데이터 변환
+    const approvalLines = formData.value.approvalLines
+      .filter(
+        (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
+      )
+      .map((line, index) => ({
+        userId: line.userId || line.id || 1, // 기본값 설정
+        seq: index + 1,
+        type: line.type,
+      }));
+
+    // 파일 데이터 변환 (실제로는 파일 업로드 후 URL을 받아야 함)
+    const files = formData.value.files.map((file) => ({
+      name: file.name,
+      url: file.url || "https://files.company.com/docs/temp-file.pdf", // 임시 URL
+    }));
+
+    const requestData = {
+      title: formData.value.title,
+      remarks: formData.value.remarks,
+      isRequest: false, // 임시저장
+      approvalLines: approvalLines,
+      files: files,
+      approvalDocuments: formData.value.approvalDocuments,
+    };
+
+    const response = await api.post("/api/hq/approvals", requestData);
+
+    if (response.status === 200 || response.status === 201) {
+      alert("임시저장이 완료되었습니다.");
+    }
+  } catch (error) {
+    console.error("임시저장 실패:", error);
+    alert("임시저장에 실패했습니다. 다시 시도해주세요.");
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const handleSubmit = async () => {
+  if (isSubmitting.value) return;
+
+  // 필수 필드 검증
+  if (!formData.value.title.trim()) {
+    alert("제목을 입력해주세요.");
+    return;
+  }
+
+  if (!formData.value.remarks.trim()) {
+    alert("내용을 입력해주세요.");
+    return;
+  }
+
+  if (formData.value.approvalLines.length === 0) {
+    alert("결재선을 지정해주세요.");
+    return;
+  }
+
+  if (formData.value.approvalDocuments.documentIds.length === 0) {
+    alert("주문 문서를 선택해주세요.");
+    return;
+  }
+
+  try {
+    isSubmitting.value = true;
+
+    // 결재선 데이터 변환
+    const approvalLines = formData.value.approvalLines
+      .filter(
+        (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
+      )
+      .map((line, index) => ({
+        userId: line.userId || line.id || 1, // 기본값 설정
+        seq: index + 1,
+        type: line.type,
+      }));
+
+    // 파일 데이터 변환 (실제로는 파일 업로드 후 URL을 받아야 함)
+    const files = formData.value.files.map((file) => ({
+      name: file.name,
+      url: file.url || "https://files.company.com/docs/temp-file.pdf", // 임시 URL
+    }));
+
+    const requestData = {
+      title: formData.value.title,
+      remarks: formData.value.remarks,
+      isRequest: true, // 결재 등록
+      approvalLines: approvalLines,
+      files: files,
+      approvalDocuments: formData.value.approvalDocuments,
+    };
+
+    const response = await api.post("/api/hq/approvals", requestData);
+
+    if (response.status === 200 || response.status === 201) {
+      alert("결재가 등록되었습니다.");
+      // 성공 후 폼 초기화 또는 다른 페이지로 이동
+      emit("approval-submitted", response.data);
+    }
+  } catch (error) {
+    console.error("결재 등록 실패:", error);
+    alert("결재 등록에 실패했습니다. 다시 시도해주세요.");
+  } finally {
+    isSubmitting.value = false;
+  }
+};
 
 defineExpose({
   initializeForm,
@@ -506,13 +675,48 @@ defineExpose({
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 24px;
+  margin-bottom: 32px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 .section-title {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 20px;
   color: #1f2937;
+  margin: 0;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.load-template-button,
+.add-approver-button {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.add-approver-button {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.side-section-title.main {
+  color: #374151;
+  font-weight: 600;
 }
 
 /* 문서 검색 */
@@ -538,15 +742,18 @@ defineExpose({
 .search-button,
 .add-document-button {
   padding: 8px 16px;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
+  background: #3b82f6;
+  color: #fff;
+  border: 1px solid #3b82f6;
   border-radius: 6px;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 .search-button:hover,
 .add-document-button:hover {
-  background: #e5e7eb;
+  background: #2563eb;
+  border-color: #2563eb;
 }
 
 /* 문서 테이블 */
@@ -622,6 +829,11 @@ defineExpose({
   font-size: 16px;
 }
 
+.textarea-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .content-textarea {
   padding: 12px;
   border: 1px solid #d1d5db;
@@ -631,36 +843,20 @@ defineExpose({
   font-family: inherit;
 }
 
+.char-count {
+  text-align: right;
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+  margin-right: 2px;
+}
+
+.textarea-wrapper,
+.char-count-box {
+  all: unset;
+}
+
 /* 결재선 */
-.approval-line-header {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.load-template-button,
-.add-approver-button {
-  padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  cursor: pointer;
-}
-
-.add-approver-button {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-}
-
-.no-approval-line {
-  text-align: center;
-  padding: 40px;
-  color: #6b7280;
-  background: #f9fafb;
-  border-radius: 6px;
-}
-
 .approval-line-list {
   display: flex;
   flex-direction: column;
@@ -751,136 +947,188 @@ defineExpose({
   padding: 4px;
 }
 
-.approval-line-grid {
+.approval-line-row {
   display: flex;
+  flex-direction: row;
   gap: 32px;
+  align-items: flex-start;
 }
-.approval-line-left,
+.approval-line-left {
+  flex: 2;
+  min-width: 0;
+}
 .approval-line-right {
   flex: 1;
+  min-width: 220px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+.approval-side-section {
+  margin-bottom: 12px;
 }
 .approval-card {
   display: flex;
   align-items: center;
-  background: #f4f7fd;
-  border-radius: 10px;
-  padding: 14px 18px;
-  gap: 14px;
-  font-size: 15px;
+  padding: 16px 20px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  background-color: #ffffff;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   position: relative;
 }
-.approval-card.approver {
-  border-left: 4px solid #2563eb;
+.order-num {
+  font-size: 16px;
+  font-weight: 600;
+  width: 24px;
 }
-.approval-card.collaborator {
-  border-left: 4px solid #f472b6;
+.order-num.approver {
+  color: #3b82f6;
 }
-.approval-card.receiver {
-  border-left: 4px solid #fbbf24;
-}
-.approval-card.reference {
-  border-left: 4px solid #a78bfa;
+.order-num.collaborator {
+  color: #ec4899;
 }
 .circle-initial {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: #dbeafe;
-  color: #2563eb;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 17px;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 16px;
 }
-.approval-card.collaborator .circle-initial {
-  background: #fbcfe8;
-  color: #f472b6;
+.circle-initial.approver {
+  background-color: #3b82f6;
 }
-.approval-card.receiver .circle-initial {
-  background: #fde68a;
-  color: #b45309;
+.circle-initial.collaborator {
+  background-color: #ec4899;
 }
-.approval-card.reference .circle-initial {
-  background: #e9e1fa;
-  color: #7c3aed;
+.circle-initial.receiver {
+  background-color: #f59e0b;
+}
+.circle-initial.reference {
+  background-color: #8b5cf6;
 }
 .user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex: 1;
 }
 .user-name {
+  font-size: 15px;
   font-weight: 600;
-  color: #222;
+  color: #111827;
 }
 .user-meta {
-  color: #666;
   font-size: 13px;
+  color: #6b7280;
+  margin-top: 2px;
 }
 .badge {
-  margin-left: auto;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 2px 12px;
-  border-radius: 8px;
-  background: #fff;
-  border: 1.5px solid #d1d5db;
-  color: #888;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-left: 16px;
+  display: none; /* 기본적으로 숨김 */
 }
 .badge-approver {
-  border-color: #2563eb;
-  color: #2563eb;
+  background-color: #eff6ff;
+  color: #3b82f6;
 }
 .badge-collaborator {
-  border-color: #f472b6;
-  color: #f472b6;
-}
-.badge-receiver {
-  border-color: #fbbf24;
-  color: #b45309;
-}
-.badge-reference {
-  border-color: #a78bfa;
-  color: #7c3aed;
-}
-.order-num {
-  font-weight: 700;
-  color: #2563eb;
-  margin-right: 8px;
-  font-size: 16px;
+  background-color: #fdf2f8;
+  color: #ec4899;
 }
 .remove-approver {
   background: none;
   border: none;
-  color: #ef4444;
+  color: #9ca3af;
+  font-size: 24px;
   cursor: pointer;
-  font-size: 18px;
-  margin-left: 8px;
+  padding: 0 8px;
 }
-.approval-tab-header {
+.side-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #8b5cf6;
+}
+.side-section-title.receiver {
+  color: #fbbf24;
+}
+.side-section-title.reference {
+  color: #a78bfa;
+}
+
+.no-approval-line {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+.no-approval-line p:first-child {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.add-file-button {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.action-buttons {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 12px;
   gap: 16px;
 }
-.approval-tab {
-  color: #bdbdbd;
+
+.submit-button,
+.temp-save-button {
+  padding: 12px 24px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
   cursor: pointer;
-  padding-bottom: 2px;
-  border-bottom: 2px solid transparent;
-  transition: color 0.2s, border-bottom 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
-.approval-tab.active {
-  color: #2563eb;
-  border-bottom: 2px solid #2563eb;
+
+.submit-button {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  font-weight: 600;
 }
-.approval-side-box {
-  margin-top: 32px;
+.submit-button:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.temp-save-button {
+  background: #f3f4f6;
+  color: #374151;
+}
+.temp-save-button:hover:not(:disabled) {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.submit-button:disabled,
+.temp-save-button:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-color: #d1d5db;
 }
 </style>

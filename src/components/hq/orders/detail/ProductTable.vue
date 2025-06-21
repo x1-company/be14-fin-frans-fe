@@ -68,6 +68,8 @@ import { computed } from 'vue';
   margin: 20px 0 10px 60px;
   margin-bottom: 24px;
   background: #fff;
+  max-width: 100%;
+  width: 100%;
 }
 
 .card-title {
@@ -109,9 +111,9 @@ import { computed } from 'vue';
 
 .badge {
   padding: 4px 10px;
-  font-size: 12px;
+  font-size: 13px;
   border-radius: 12px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .badge.blue {

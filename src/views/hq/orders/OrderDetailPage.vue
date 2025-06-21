@@ -4,8 +4,22 @@
     <div class="main-container">
       <SideBar />
       <div v-if="order">
-        <OrderActionButtons :orderId="order.id" :rejectedReason="order.rejectedReason" />
-        <OrderProgressBar :status="order.status" />
+        <OrderActionButtons
+          v-if="order && props.orderId"
+          :orderId="props.orderId"
+          :rejectedReason="order.rejectedReason"
+          :status="order.status"
+          :delivery-info="{
+            deliveryCompany: order.deliveryCompany,
+            name: order.driverName,
+            phone: order.driverPhone,
+            trackingNumber: order.trackingNumber
+          }"
+          @refreshOrder="fetchOrder"
+        />
+        <div class="progress-bar-wrapper">
+          <OrderProgressBar :status="order.status" />
+        </div>
         <div class="detail-wrapper">
           <FranchiseInfoCard :order="order" />
           <OrderInfoCard :order="order" />
@@ -15,7 +29,11 @@
           <PaymentInfoCard :order="order" />
         </div>
       </div>
-      <div v-else>로딩중...</div>
+      <!-- 로딩 상태 -->
+      <div v-if="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>로딩 중</p>
+    </div>
     </div>
   </div>
 </template>
@@ -43,6 +61,13 @@
   });
   
   const order = ref(null);
+
+  async function fetchOrder() {
+    const res = await api.get(`api/hq/orders/${props.orderId}`);
+    order.value = res.data ? res.data : res;
+  }
+
+  onMounted(fetchOrder);
   
   onMounted(async () => {
     const res = await api.get(`api/hq/orders/${props.orderId}`);
@@ -56,11 +81,18 @@
     display: flex;
     background: #f8f9fa;
     overflow: auto;
+    max-width: 1800px;
+    width: 100%;
+    margin: 0 auto;
   }
   
   .detail-wrapper {
     display: flex;
     flex-direction: column;
+    width: 1200px;
+    max-width: 1800px;
+    margin: 0 0 0 70px;
+    /* padding: 0 50px; */
   }
 
   .row {
@@ -74,5 +106,21 @@
     display: flex;
     flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .spinner {
+    margin: 20px auto;
+    border: 4px solid #eee;
+    border-top: 4px solid #4169e1;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .progress-bar-wrapper {
+    margin-left: 100px;
+    width: 1200px;
+    max-width: 1800px;
   }
   </style>

@@ -19,11 +19,7 @@
 
                     <FranchiseInfo v-if="activeTabSwitch === 1" />
 
-                    <div v-if="activeTabSwitch === 2" class="content-section">
-                        <h3>주문관리 컨텐츠</h3>
-                        <p>주문 관리 내용이 여기에 표시됩니다.</p>
-                        <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
-                    </div>
+                    <OrderRegister v-if="activeTabSwitch === 2" />
 
                     <div v-if="activeTabSwitch === 3" class="content-section">
                         <h3>반품관리 컨텐츠</h3>
@@ -53,6 +49,7 @@ import { ref, computed, watch } from 'vue'
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from './InfoHeader.vue'
 import FranchiseInfo from '@/components/franchise/info/FranchiseInfo.vue'
+import OrderRegister from '@/components/franchise/order/OrderRegister.vue'
 
 const props = defineProps({
     activeTab: String
