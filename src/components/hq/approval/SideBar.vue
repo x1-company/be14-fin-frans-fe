@@ -96,7 +96,12 @@
               <span>결재문서</span>
             </div>
             <div class="accordion-controls">
-              <span class="count-badge">15</span>
+              <span class="count-badge">{{
+                props.counts.결재대기 +
+                props.counts.결재예정 +
+                props.counts.내결재승인 +
+                props.counts.내결재반려
+              }}</span>
               <ChevronDownIcon
                 :class="[
                   'chevron',
@@ -119,7 +124,7 @@
               <div class="menu-content">
                 <span class="menu-title">결재대기</span>
               </div>
-              <span class="count-badge">3</span>
+              <span class="count-badge">{{ props.counts.결재대기 }}</span>
             </div>
             <div
               class="menu-item"
@@ -131,10 +136,8 @@
               <div class="menu-content">
                 <span class="menu-title">결재요청</span>
               </div>
-              <span class="count-badge">2</span>
+              <span class="count-badge">{{ props.counts.결재예정 }}</span>
             </div>
-
-            <!-- 내결재 승인 -->
             <div
               class="menu-item"
               :class="{
@@ -145,10 +148,8 @@
               <div class="menu-content">
                 <span class="menu-title">내결재 승인</span>
               </div>
-              <span class="count-badge">8</span>
+              <span class="count-badge">{{ props.counts.내결재승인 }}</span>
             </div>
-
-            <!-- 내결재 반려 -->
             <div
               class="menu-item"
               :class="{
@@ -171,7 +172,12 @@
               <span>협조문서</span>
             </div>
             <div class="accordion-controls">
-              <span class="count-badge">8</span>
+              <span class="count-badge">{{
+                props.counts.협조대기 +
+                props.counts.협조예정 +
+                props.counts.내협조승인 +
+                props.counts.내협조반려
+              }}</span>
               <ChevronDownIcon
                 :class="[
                   'chevron',
@@ -194,7 +200,7 @@
               <div class="menu-content">
                 <span class="menu-title">협조대기</span>
               </div>
-              <span class="count-badge">2</span>
+              <span class="count-badge">{{ props.counts.협조대기 }}</span>
             </div>
             <div
               class="menu-item"
@@ -206,10 +212,8 @@
               <div class="menu-content">
                 <span class="menu-title">협조예정</span>
               </div>
-              <span class="count-badge">1</span>
+              <span class="count-badge">{{ props.counts.협조예정 }}</span>
             </div>
-
-            <!-- 내협조 승인 -->
             <div
               class="menu-item"
               :class="{
@@ -220,10 +224,8 @@
               <div class="menu-content">
                 <span class="menu-title">내협조 승인</span>
               </div>
-              <span class="count-badge">4</span>
+              <span class="count-badge">{{ props.counts.내협조승인 }}</span>
             </div>
-
-            <!-- 내협조 반려 -->
             <div
               class="menu-item"
               :class="{
@@ -234,7 +236,7 @@
               <div class="menu-content">
                 <span class="menu-title">내협조 반려</span>
               </div>
-              <span class="count-badge">1</span>
+              <span class="count-badge">{{ props.counts.내협조반려 }}</span>
             </div>
           </div>
         </div>
@@ -246,7 +248,7 @@
               <span>참조문서</span>
             </div>
             <div class="accordion-controls">
-              <span class="count-badge">4</span>
+              <span class="count-badge">{{ props.counts.참조문서 }}</span>
             </div>
           </div>
         </div>
@@ -258,7 +260,7 @@
               <span>수신문서</span>
             </div>
             <div class="accordion-controls">
-              <span class="count-badge">3</span>
+              <span class="count-badge">{{ props.counts.수신문서 }}</span>
             </div>
           </div>
         </div>
