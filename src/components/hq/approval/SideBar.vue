@@ -21,13 +21,19 @@
     <div class="tab-headers">
       <div class="tab-container">
         <button
-          @click="changeTab('상신')"
+          @click="
+            changeTab('상신');
+            selectMenu('상신');
+          "
           :class="['tab-button', { active: activeTab === '상신' }]"
         >
           <span>상신</span>
         </button>
         <button
-          @click="changeTab('수신')"
+          @click="
+            changeTab('수신');
+            selectMenu('수신');
+          "
           :class="['tab-button', { active: activeTab === '수신' }]"
         >
           <span>수신</span>
@@ -472,8 +478,8 @@ const counts = ref({
   결재반려: 0,
 });
 
-const activeTab = ref("상신"); // 상신, 수신
-const activeItem = ref("all"); // 전체, 임시저장, 결재중, 결재완료, 결재반려
+const activeTab = ref("상신");
+const activeItem = ref("");
 
 const openAccordions = ref(["approval-docs", "collaboration-docs"]);
 
@@ -481,16 +487,25 @@ const openAccordions = ref(["approval-docs", "collaboration-docs"]);
 const changeTab = (tabValue) => {
   activeTab.value = tabValue;
   if (tabValue === "상신") {
-    activeItem.value = "all";
-    emit("select-menu", "상신");
+    emit("select-menu", "전체");
+  } else if (tabValue === "수신") {
+    emit("select-menu", "전체");
   }
   emit("tab-change", tabValue);
 };
 
 // 메뉴 선택
 const selectMenu = (menu) => {
-  activeItem.value = menu;
-  emit("select-menu", menu);
+  if (menu === "상신") {
+    activeItem.value = "상신";
+    emit("select-menu", "전체");
+  } else if (menu === "수신") {
+    activeItem.value = "수신";
+    emit("select-menu", "전체");
+  } else {
+    activeItem.value = menu;
+    emit("select-menu", menu);
+  }
 };
 const props = defineProps({
   activeTab: [String, Number], // 받기

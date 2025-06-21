@@ -1,6 +1,16 @@
 <template>
   <div class="info-form">
+    <!-- 상신 관련 메뉴일 때 ApprovalList 표시 -->
     <ApprovalList
+      v-if="shouldShowApprovalList"
+      :approvalList="approvalList"
+      :activeTab="activeTab"
+      @tab-change="handleTabChange"
+    />
+
+    <!-- 수신 관련 메뉴일 때 ReceptionList 표시 -->
+    <ReceptionList
+      v-if="shouldShowReceptionList"
       :approvalList="approvalList"
       :activeTab="activeTab"
       @tab-change="handleTabChange"
@@ -9,8 +19,9 @@
 </template>
 
 <script setup>
-import { defineProps } from "vue";
+import { defineProps, computed } from "vue";
 import ApprovalList from "@/components/hq/approval/ApprovalList.vue";
+import ReceptionList from "@/components/hq/approval/sidebarReception/ReceptionList.vue";
 
 // 둘다 있어야 메뉴와 탭들이 움직임
 const handleTabChange = (tabValue) => {
@@ -24,6 +35,48 @@ const props = defineProps({
     required: true,
   },
   activeTab: { type: String, required: true },
+  activeMenu: { type: String, required: true },
+  currentSidebarTab: { type: String, required: true },
+});
+
+// 상신 관련 메뉴인지 확인
+const isSentMenu = computed(() => {
+  const sentMenus = ["상신", "임시저장", "결재중", "결재완료", "결재반려"];
+  return sentMenus.includes(props.activeMenu);
+});
+
+// 수신 관련 메뉴인지 확인
+const isReceivedMenu = computed(() => {
+  const receivedMenus = [
+    "수신",
+    "결재대기",
+    "결재예정",
+    "내결재 승인",
+    "내결재 반려",
+    "협조대기",
+    "협조예정",
+    "내협조 승인",
+    "내협조 반려",
+  ];
+  return receivedMenus.includes(props.activeMenu);
+});
+
+// 전체 메뉴는 현재 활성화된 탭에 따라 결정
+const isSentTab = computed(() => {
+  // activeTab이 상신 관련 탭이거나, activeMenu가 상신 관련 메뉴인 경우
+  const sentTabs = ["전체", "임시저장", "결재중", "결재완료", "결재반려"];
+  return (
+    sentTabs.includes(props.activeTab) || sentTabs.includes(props.activeMenu)
+  );
+});
+
+// 최종 렌더링 조건 - currentSidebarTab을 기준으로 결정
+const shouldShowApprovalList = computed(() => {
+  return props.currentSidebarTab === "상신";
+});
+
+const shouldShowReceptionList = computed(() => {
+  return props.currentSidebarTab === "수신";
 });
 
 // const getStatusClass = (status) => {

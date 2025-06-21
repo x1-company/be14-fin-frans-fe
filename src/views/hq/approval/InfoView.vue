@@ -8,7 +8,7 @@
         :activeTab="activeTab.toString()"
         :counts="approvalCounts"
         @select-menu="handleSelectMenu"
-        @tab-change="handleTabChange"
+        @tab-change="handleSidebarTabChange"
         @register-approval="handleRegisterApproval"
       />
 
@@ -25,8 +25,9 @@
       <!-- Info 컴포넌트에 selectedTemplate 전달 -->
       <Info
         :approvalList="approvalList"
-        :activeMenu="activeMenu.toString()"
-        :activeTab="activeTab.toString()"
+        :activeMenu="activeMenu"
+        :activeTab="activeTab"
+        :currentSidebarTab="currentSidebarTab"
         :isRegistrationMode="isRegistrationMode"
         :reorderChanges="reorderChanges"
         :selectedTemplate="selectedTemplate"
@@ -57,6 +58,7 @@ const activeMenu = ref("상신"); // 사이드바 메뉴 선택 (상신, 수신)
 const activeTab = ref("전체"); // ApprovalList 탭 선택 (전체, 임시저장, 결재중, 결재완료, 결재반려)
 const currentTabIndex = ref(0); // 현재 선택된 탭 인덱스 (0: 대시보드, 1: 전자결재, 2: 결재템플릿)
 const isRegistrationMode = ref(false); // 등록 모드 활성화 여부
+const currentSidebarTab = ref("상신"); // 현재 사이드바 탭 (상신/수신)
 
 // 결재템플릿 관련 변수
 const selectedTemplate = ref(null); // 선택된 템플릿 정보
@@ -75,6 +77,16 @@ const handleSelectMenu = (menuValue) => {
 
 const handleTabChange = (tabValue) => {
   activeTab.value = tabValue;
+};
+
+const handleSidebarTabChange = (tabValue) => {
+  currentSidebarTab.value = tabValue;
+  // 탭이 변경되면 기본 메뉴로 설정
+  if (tabValue === "상신") {
+    activeMenu.value = "전체";
+  } else if (tabValue === "수신") {
+    activeMenu.value = "전체";
+  }
 };
 
 const handleActiveTabChange = (tabIndex) => {
