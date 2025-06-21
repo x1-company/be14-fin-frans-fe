@@ -6,6 +6,7 @@
       <SideBar
         v-if="currentTabIndex !== 2"
         :activeTab="activeTab.toString()"
+        :activeMenu="activeMenu"
         :counts="approvalCounts"
         @select-menu="handleSelectMenu"
         @register-approval="handleRegisterApproval"
@@ -190,6 +191,14 @@ const approvalCounts = ref({
   결재중: 0,
   결재완료: 0,
   결재반려: 0,
+  결재대기: 0,
+  결재예정: 0,
+  내결재승인: 0,
+  내결재반려: 0,
+  협조대기: 0,
+  협조예정: 0,
+  내협조승인: 0,
+  내협조반려: 0,
 });
 
 const fetchCounts = async () => {
@@ -199,6 +208,15 @@ const fetchCounts = async () => {
     결재중: "/api/hq/approvals/list/submitted/in-progress",
     결재완료: "/api/hq/approvals/list/submitted/approved",
     결재반려: "/api/hq/approvals/list/submitted/rejected",
+    //수신
+    결재대기: "/api/hq/approvals/list/received/pending",
+    결재예정: "/api/hq/approvals/list/received/upcoming",
+    내결재승인: "/api/hq/approvals/list/received/my-completed/approved",
+    내결재반려: "api/hq/approvals/list/received/my-completed/rejected",
+    협조대기: "/api/hq/approvals/list/cooperate/pending",
+    협조예정: "/api/hq/approvals/list/cooperate/upcoming",
+    내협조승인: "/api/hq/approvals/list/cooperate/approved",
+    내협조반려: "/api/hq/approvals/list/cooperate/rejected",
   };
   for (const key in endpoints) {
     try {
@@ -217,17 +235,71 @@ watch(
   async ([menu, tab]) => {
     const activeTab = tab || menu;
     let url = "";
-    console.log(activeTab);
-    if (activeTab === "임시저장") {
-      url = "/api/hq/approvals/list/submitted/draft";
-    } else if (activeTab === "전체") {
-      url = "/api/hq/approvals/list/submitted/all";
-    } else if (activeTab === "결재중") {
-      url = "/api/hq/approvals/list/submitted/in-progress";
-    } else if (activeTab === "결재완료") {
-      url = "/api/hq/approvals/list/submitted/approved";
-    } else if (activeTab === "결재반려") {
-      url = "/api/hq/approvals/list/submitted/rejected";
+    console.log("activeMenu:", menu, "activeTab:", activeTab);
+
+    // 상신 관련 메뉴인지 확인
+    const isSentMenu =
+      menu === "상신-전체" ||
+      ["임시저장", "결재중", "결재완료", "결재반려"].includes(activeTab);
+
+    // 협조문서 관련 메뉴인지 확인 (activeMenu와 activeTab 모두 확인)
+    const isCooperatorMenu =
+      ["협조대기", "협조예정", "내 협조 승인", "내 협조 반려"].includes(
+        activeTab
+      ) ||
+      ["협조대기", "협조예정", "내 협조 승인", "내 협조 반려"].includes(menu);
+
+    if (isSentMenu) {
+      // 상신 관련 API
+      if (activeTab === "임시저장") {
+        url = "/api/hq/approvals/list/submitted/draft";
+      } else if (activeTab === "전체") {
+        url = "/api/hq/approvals/list/submitted/all";
+      } else if (activeTab === "결재중") {
+        url = "/api/hq/approvals/list/submitted/in-progress";
+      } else if (activeTab === "결재완료") {
+        url = "/api/hq/approvals/list/submitted/approved";
+      } else if (activeTab === "결재반려") {
+        url = "/api/hq/approvals/list/submitted/rejected";
+      }
+    } else if (isCooperatorMenu) {
+      // 협조문서 관련 API
+      if (activeTab === "전체") {
+        url = "/api/hq/approvals/list/cooperate/all";
+      } else if (activeTab === "협조대기") {
+        url = "/api/hq/approvals/list/cooperate/pending";
+      } else if (activeTab === "협조예정") {
+        url = "/api/hq/approvals/list/cooperate/upcoming";
+      } else if (activeTab === "내 협조 승인") {
+        url = "/api/hq/approvals/list/cooperate/approved";
+      } else if (activeTab === "내 협조 반려") {
+        url = "/api/hq/approvals/list/cooperate/rejected";
+      }
+    } else {
+      // 수신 관련 API (결재문서)
+      if (activeTab === "전체") {
+        // 결재문서의 "전체"인지 수신의 "전체"인지 구분
+        if (menu === "수신-전체") {
+          url = "/api/hq/approvals/list/received/all";
+        } else {
+          // 결재문서의 "전체"
+          url = "/api/hq/approvals/list/received/all";
+        }
+      } else if (activeTab === "결재중") {
+        url = "/api/hq/approvals/list/received/in-progress"; // 결재중
+      } else if (activeTab === "결재완료") {
+        url = "/api/hq/approvals/list/received/approved"; // 결재완료
+      } else if (activeTab === "결재반려") {
+        url = "/api/hq/approvals/list/received/rejected"; // 결재반려
+      } else if (activeTab === "결재대기") {
+        url = "/api/hq/approvals/list/received/pending";
+      } else if (activeTab === "결재예정") {
+        url = "/api/hq/approvals/list/received/upcoming";
+      } else if (activeTab === "내결재 승인") {
+        url = "/api/hq/approvals/list/received/my-completed/approved";
+      } else if (activeTab === "내결재 반려") {
+        url = "/api/hq/approvals/list/received/my-completed/rejected";
+      }
     }
 
     if (url) {

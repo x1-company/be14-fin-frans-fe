@@ -15,6 +15,22 @@
       :activeTab="activeTab"
       @tab-change="handleTabChange"
     />
+
+    <!-- 결재문서 관련 메뉴일 때 ReceptionApproverList 표시 -->
+    <ReceptionApproverList
+      v-if="shouldShowReceptionApproverList"
+      :approvalList="approvalList"
+      :activeTab="activeTab"
+      @tab-change="handleTabChange"
+    />
+
+    <!-- 협조문서 관련 메뉴일 때 ReceptionCooperatorList 표시 -->
+    <ReceptionCooperatorList
+      v-if="shouldShowReceptionCooperatorList"
+      :approvalList="approvalList"
+      :activeTab="activeTab"
+      @tab-change="handleTabChange"
+    />
   </div>
 </template>
 
@@ -22,6 +38,8 @@
 import { defineProps, computed } from "vue";
 import ApprovalList from "@/components/hq/approval/ApprovalList.vue";
 import ReceptionList from "@/components/hq/approval/sidebarReception/ReceptionList.vue";
+import ReceptionApproverList from "@/components/hq/approval/sidebarReception/ReceptionApproverList.vue";
+import ReceptionCooperatorList from "@/components/hq/approval/sidebarReception/ReceptionCooperatorList.vue";
 
 // 둘다 있어야 메뉴와 탭들이 움직임
 const handleTabChange = (tabValue) => {
@@ -44,7 +62,7 @@ const isSentMenu = computed(() => {
   return sentMenus.includes(props.activeMenu);
 });
 
-// 수신 관련 메뉴인지 확인
+// 수신 관련 메뉴인지 확인 (협조문서 제외)
 const isReceivedMenu = computed(() => {
   const receivedMenus = [
     "수신",
@@ -52,12 +70,35 @@ const isReceivedMenu = computed(() => {
     "결재예정",
     "내결재 승인",
     "내결재 반려",
-    "협조대기",
-    "협조예정",
-    "내협조 승인",
-    "내협조 반려",
   ];
   return receivedMenus.includes(props.activeMenu);
+});
+
+// 결재문서 관련 메뉴인지 확인
+const isApproverMenu = computed(() => {
+  const approverMenus = [
+    "전체",
+    "결재대기",
+    "결재요청",
+    "내 결재 승인",
+    "내 결재 반려",
+  ];
+  return approverMenus.includes(props.activeMenu);
+});
+
+// 협조문서 관련 메뉴인지 확인
+const isCooperatorMenu = computed(() => {
+  const cooperatorMenus = [
+    "전체",
+    "협조대기",
+    "협조예정",
+    "내 협조 승인",
+    "내 협조 반려",
+  ];
+  return (
+    cooperatorMenus.includes(props.activeMenu) ||
+    cooperatorMenus.includes(props.activeTab)
+  );
 });
 
 // 전체 메뉴는 현재 활성화된 탭에 따라 결정
@@ -76,8 +117,22 @@ const shouldShowApprovalList = computed(() => {
 });
 
 const shouldShowReceptionList = computed(() => {
-  // 수신 관련 메뉴이거나 수신-전체인 경우
-  return isReceivedMenu.value || props.activeMenu === "수신-전체";
+  // 수신 관련 메뉴이거나 수신-전체인 경우 (결재문서, 협조문서 메뉴 제외)
+  return (
+    (isReceivedMenu.value || props.activeMenu === "수신-전체") &&
+    !isApproverMenu.value &&
+    !isCooperatorMenu.value
+  );
+});
+
+const shouldShowReceptionApproverList = computed(() => {
+  // 결재문서 관련 메뉴인 경우 (수신-전체 제외)
+  return isApproverMenu.value && props.activeMenu !== "수신-전체";
+});
+
+const shouldShowReceptionCooperatorList = computed(() => {
+  // 협조문서 관련 메뉴인 경우 (수신-전체 제외)
+  return isCooperatorMenu.value && props.activeMenu !== "수신-전체";
 });
 
 // const getStatusClass = (status) => {

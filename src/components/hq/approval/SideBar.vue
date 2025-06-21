@@ -47,7 +47,7 @@
       <div v-if="activeTab === '상신'" class="tab-panel">
         <div
           class="menu-item"
-          :class="{ active: activeItem === '임시저장' }"
+          :class="{ active: computedActiveItem === '임시저장' }"
           @click="selectMenu('임시저장')"
         >
           <div class="menu-content">
@@ -57,7 +57,7 @@
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '결재중' }"
+          :class="{ active: computedActiveItem === '결재중' }"
           @click="selectMenu('결재중')"
         >
           <div class="menu-content">
@@ -67,7 +67,7 @@
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '결재완료' }"
+          :class="{ active: computedActiveItem === '결재완료' }"
           @click="selectMenu('결재완료')"
         >
           <div class="menu-content">
@@ -77,7 +77,7 @@
         </div>
         <div
           class="menu-item"
-          :class="{ active: activeItem === '결재반려' }"
+          :class="{ active: computedActiveItem === '결재반려' }"
           @click="selectMenu('결재반려')"
         >
           <div class="menu-content">
@@ -91,10 +91,7 @@
       <div v-if="activeTab === '수신'" class="tab-panel">
         <!-- 결재문서 -->
         <div class="accordion-section">
-          <div
-            class="accordion-header"
-            @click="toggleAccordion('approval-docs')"
-          >
+          <div class="accordion-header" @click="handleApprovalDocsClick">
             <div class="accordion-title">
               <span>결재문서</span>
             </div>
@@ -115,9 +112,9 @@
             <div
               class="menu-item"
               :class="{
-                active: activeItem === '/approval/incoming/approval-pending',
+                active: computedActiveItem === '결재대기',
               }"
-              @click="setActiveItem('/approval/incoming/approval-pending')"
+              @click="selectMenu('결재대기')"
             >
               <div class="menu-content">
                 <span class="menu-title">결재대기</span>
@@ -127,12 +124,12 @@
             <div
               class="menu-item"
               :class="{
-                active: activeItem === '/approval/incoming/approval-scheduled',
+                active: computedActiveItem === '결재요청',
               }"
-              @click="setActiveItem('/approval/incoming/approval-scheduled')"
+              @click="selectMenu('결재요청')"
             >
               <div class="menu-content">
-                <span class="menu-title">결재예정</span>
+                <span class="menu-title">결재요청</span>
               </div>
               <span class="count-badge">2</span>
             </div>
@@ -141,10 +138,9 @@
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/my-approval-approved',
+                active: computedActiveItem === '내 결재 승인',
               }"
-              @click="setActiveItem('/approval/incoming/my-approval-approved')"
+              @click="selectMenu('내 결재 승인')"
             >
               <div class="menu-content">
                 <span class="menu-title">내결재 승인</span>
@@ -156,25 +152,21 @@
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/my-approval-rejected',
+                active: computedActiveItem === '내 결재 반려',
               }"
-              @click="setActiveItem('/approval/incoming/my-approval-rejected')"
+              @click="selectMenu('내 결재 반려')"
             >
               <div class="menu-content">
                 <span class="menu-title">내결재 반려</span>
               </div>
-              <span class="count-badge">2</span>
+              <span class="count-badge">{{ props.counts.결재반려 }}</span>
             </div>
           </div>
         </div>
 
         <!-- 협조문서 -->
         <div class="accordion-section">
-          <div
-            class="accordion-header"
-            @click="toggleAccordion('collaboration-docs')"
-          >
+          <div class="accordion-header" @click="handleCollaborationDocsClick">
             <div class="accordion-title">
               <span>협조문서</span>
             </div>
@@ -195,10 +187,9 @@
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/collaboration-pending',
+                active: computedActiveItem === '협조대기',
               }"
-              @click="setActiveItem('/approval/incoming/collaboration-pending')"
+              @click="selectMenu('협조대기')"
             >
               <div class="menu-content">
                 <span class="menu-title">협조대기</span>
@@ -208,12 +199,9 @@
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/collaboration-scheduled',
+                active: computedActiveItem === '협조예정',
               }"
-              @click="
-                setActiveItem('/approval/incoming/collaboration-scheduled')
-              "
+              @click="selectMenu('협조예정')"
             >
               <div class="menu-content">
                 <span class="menu-title">협조예정</span>
@@ -225,12 +213,9 @@
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/my-collaboration-approved',
+                active: computedActiveItem === '내 협조 승인',
               }"
-              @click="
-                setActiveItem('/approval/incoming/my-collaboration-approved')
-              "
+              @click="selectMenu('내 협조 승인')"
             >
               <div class="menu-content">
                 <span class="menu-title">내협조 승인</span>
@@ -242,12 +227,9 @@
             <div
               class="menu-item"
               :class="{
-                active:
-                  activeItem === '/approval/incoming/my-collaboration-rejected',
+                active: computedActiveItem === '내 협조 반려',
               }"
-              @click="
-                setActiveItem('/approval/incoming/my-collaboration-rejected')
-              "
+              @click="selectMenu('내 협조 반려')"
             >
               <div class="menu-content">
                 <span class="menu-title">내협조 반려</span>
@@ -441,7 +423,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 // import {
 //   FileText as FileTextIcon,
 //   Send as SendIcon,
@@ -479,7 +461,7 @@ const counts = ref({
 });
 
 const activeTab = ref("상신");
-const activeItem = ref("");
+const activeItem = ref(""); // 복원
 
 const openAccordions = ref(["approval-docs", "collaboration-docs"]);
 
@@ -487,8 +469,10 @@ const openAccordions = ref(["approval-docs", "collaboration-docs"]);
 const changeTab = (tabValue) => {
   activeTab.value = tabValue;
   if (tabValue === "상신") {
+    activeItem.value = "상신";
     emit("select-menu", "상신-전체");
   } else if (tabValue === "수신") {
+    activeItem.value = "수신";
     emit("select-menu", "수신-전체");
   }
   emit("tab-change", tabValue);
@@ -507,9 +491,17 @@ const selectMenu = (menu) => {
     emit("select-menu", menu);
   }
 };
+
 const props = defineProps({
   activeTab: [String, Number], // 받기
+  activeMenu: String, // 현재 선택된 메뉴
   counts: Object,
+});
+
+// activeItem을 props.activeMenu와 동기화
+const computedActiveItem = computed(() => {
+  // props.activeMenu가 있으면 그것을 우선 사용, 없으면 로컬 activeItem 사용
+  return props.activeMenu || activeItem.value;
 });
 
 // 메서드
@@ -522,12 +514,27 @@ const toggleAccordion = (accordionId) => {
     openAccordions.value.push(accordionId);
   }
 };
+
 const setActiveItem = (item) => {
   activeItem.value = item;
 };
 
 const handleRegisterApproval = () => {
   emit("register-approval");
+};
+
+const handleApprovalDocsClick = () => {
+  // 결재문서 헤더 클릭 시 "전체" 선택
+  selectMenu("전체");
+  // 아코디언 토글
+  toggleAccordion("approval-docs");
+};
+
+const handleCollaborationDocsClick = () => {
+  // 협조문서 헤더 클릭 시 "전체" 선택
+  selectMenu("전체");
+  // 아코디언 토글
+  toggleAccordion("collaboration-docs");
 };
 </script>
 
