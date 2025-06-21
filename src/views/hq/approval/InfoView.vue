@@ -23,16 +23,14 @@
         ref="templateSidebarRef"
       />
 
-      <!-- Info 컴포넌트에 selectedTemplate 전달 -->
+      <!-- Info 컴포넌트는 항상 표시되어야 함 -->
       <Info
-        v-if="currentTabIndex !== 2"
         :approvalList="approvalList"
-        :activeTab="activeTab"
+        :activeTab="activeTab.toString()"
         :activeMenu="activeMenu"
         :isRegistrationMode="isRegistrationMode"
         :reorderChanges="reorderChanges"
         :selectedTemplate="selectedTemplate"
-        @update:activeTab="handleTabChange"
         @active-tab-change="handleActiveTabChange"
         @toggle-registration-mode="handleToggleRegistrationMode"
         @template-deleted="handleTemplateDeleted"
@@ -68,15 +66,11 @@ const templateSidebarRef = ref(null); // 결재템플릿 사이드바 참조
 const reorderChanges = ref([]); // 순서 변경 정보 저장
 
 const handleSelectMenu = (menuValue) => {
-  // '상신' 또는 '수신' 탭을 직접 클릭했을 때 mainTab 상태 업데이트
-  if (menuValue === "상신-전체") {
+  const sentMenus = ["상신-전체", "임시저장", "결재중", "결재완료", "결재반려"];
+
+  if (sentMenus.includes(menuValue)) {
     mainTab.value = "상신";
-  } else if (
-    menuValue.startsWith("결재") ||
-    menuValue.startsWith("협조") ||
-    menuValue.startsWith("참조") ||
-    menuValue.startsWith("수신")
-  ) {
+  } else {
     mainTab.value = "수신";
   }
 
@@ -263,6 +257,9 @@ watch(
         "결재-전체": "/api/hq/approvals/list/received/all",
         결재대기: "/api/hq/approvals/list/received/pending",
         결재요청: "/api/hq/approvals/list/received/upcoming",
+        결재중: "/api/hq/approvals/list/received/in-progress",
+        결재완료: "/api/hq/approvals/list/received/approved",
+        결재반려: "/api/hq/approvals/list/received/rejected",
         "내 결재 승인": "/api/hq/approvals/list/received/my-completed/approved",
         "내 결재 반려": "/api/hq/approvals/list/received/my-completed/rejected",
         "협조-전체": "/api/hq/approvals/list/cooperate/all",
