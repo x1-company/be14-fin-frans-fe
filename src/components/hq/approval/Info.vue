@@ -107,7 +107,7 @@ const title = computed(() => tabInfo.value[activeTabSwitch.value].title);
 const desc = computed(() => tabInfo.value[activeTabSwitch.value].desc);
 
 const emit = defineEmits([
-  "update:activeTab",
+  // "update:activeTab",
   "tab-change",
   "active-tab-change",
   "toggle-registration-mode",
@@ -121,7 +121,7 @@ const emit = defineEmits([
 const updateTab = (newTabIndex) => {
   activeTabSwitch.value = newTabIndex;
   updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
-  emit("update:activeTab", newTabIndex);
+  // emit("update:activeTab", newTabIndex);
   emit("active-tab-change", newTabIndex); // 부모에게 현재 탭 인덱스 전달
 
   // 전자결재 탭을 선택할 때 기본값으로 "전체" 설정
@@ -137,7 +137,7 @@ const handleToggleRegistrationMode = (value) => {
     // 결재 등록 모드로 전환할 때만 전자결재 탭으로 이동
     activeTabSwitch.value = 1;
     updateBreadcrumb(["HOME", "결재관리", "전자결재"]);
-    emit("update:activeTab", 1);
+    // emit("update:activeTab", 1);
     emit("active-tab-change", 1);
   }
   emit("toggle-registration-mode", value);
