@@ -1,140 +1,152 @@
 <template>
   <div class="info-form">
-    <!-- 탭 메뉴 -->
-    <div class="tab-container">
-      <div class="tab-list">
-        <button
-          v-for="tab in tabs"
-          :key="tab.value"
-          :class="['tab-button', { active: activeTab === tab.value }]"
-          @click="selectTab(tab.value)"
-        >
-          {{ tab.label }}
-        </button>
+    <ApprovalDetail
+      v-if="isDetailViewMode"
+      :document="selectedDocument"
+      @close-detail="
+        () => {
+          isDetailViewMode.value = false;
+          selectedDocument.value = null;
+        }
+      "
+    />
+    <div v-else>
+      <!-- 탭 메뉴 -->
+      <div class="tab-container">
+        <div class="tab-list">
+          <button
+            v-for="tab in tabs"
+            :key="tab.value"
+            :class="['tab-button', { active: activeTab === tab.value }]"
+            @click="selectTab(tab.value)"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- 검색 영역 -->
-    <div class="search-section">
-      <div class="search-box">
-        <svg
-          class="search-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-        >
-          <circle cx="11" cy="11" r="8"></circle>
-          <path d="m21 21-4.35-4.35"></path>
-        </svg>
-        <input
-          type="text"
-          placeholder="결재자명 또는 제목을 입력하세요"
-          v-model="searchQuery"
-          @input="handleSearch"
-        />
-      </div>
-    </div>
-
-    <!-- 문서 목록 -->
-    <div class="document-list">
-      <!-- 날짜별 그룹 -->
-      <div
-        v-for="group in groupedDocuments"
-        :key="group.date"
-        class="date-group"
-      >
-        <!-- 날짜 헤더 -->
-        <div class="date-header">
+      <!-- 검색 영역 -->
+      <div class="search-section">
+        <div class="search-box">
           <svg
-            class="calendar-icon"
+            class="search-icon"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
           >
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
           </svg>
-          <span class="date-text">{{ group.date }}</span>
-        </div>
-
-        <!-- 문서 카드들 -->
-        <div class="document-cards">
-          <div
-            v-for="document in group.documents"
-            :key="document.approvalId"
-            class="document-card"
-            @click="openDocument(document)"
-          >
-            <!-- 왼쪽: 문서 아이콘 및 정보 -->
-            <div class="document-info">
-              <div
-                class="document-icon"
-                :class="getDocumentTypeClass(document.code)"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path
-                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                  ></path>
-                  <polyline points="14,2 14,8 20,8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-              </div>
-
-              <div class="document-details">
-                <h3 class="document-title">{{ document.title }}</h3>
-                <div class="document-meta">
-                  <span class="document-type">{{
-                    getDocumentTypeText(document.code)
-                  }}</span>
-                  <span class="document-author"
-                    >{{ document.drafterName }} /
-                    {{ document.positionName }}</span
-                  >
-                  <span class="document-date">{{
-                    formatDateTime(document.createdAt)
-                  }}</span>
-                  <span v-if="document.amount" class="document-amount">{{
-                    formatAmount(document.amount)
-                  }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 오른쪽: 액션 버튼 -->
-            <div class="document-actions">
-              <button
-                v-if="canApprove(document)"
-                class="action-btn approve-btn"
-                @click.stop="approveDocument(document)"
-              >
-                결재하기
-              </button>
-              <button
-                v-else-if="canEdit(document)"
-                class="action-btn edit-btn"
-                @click.stop="editDocument(document)"
-              >
-                수정하기
-              </button>
-              <button
-                class="action-btn detail-btn"
-                @click.stop="viewDocument(document)"
-              >
-                상세보기
-              </button>
-            </div>
-          </div>
+          <input
+            type="text"
+            placeholder="결재자명 또는 제목을 입력하세요"
+            v-model="searchQuery"
+            @input="handleSearch"
+          />
         </div>
       </div>
 
-      <!-- 빈 상태 -->
-      <div v-if="filteredDocuments.length === 0" class="empty-state">
-        <div class="empty-icon">📄</div>
-        <h3>결재 문서가 없습니다</h3>
-        <p>{{ getEmptyMessage() }}</p>
+      <!-- 문서 목록 -->
+      <div class="document-list">
+        <!-- 날짜별 그룹 -->
+        <div
+          v-for="group in groupedDocuments"
+          :key="group.date"
+          class="date-group"
+        >
+          <!-- 날짜 헤더 -->
+          <div class="date-header">
+            <svg
+              class="calendar-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span class="date-text">{{ group.date }}</span>
+          </div>
+
+          <!-- 문서 카드들 -->
+          <div class="document-cards">
+            <div
+              v-for="document in group.documents"
+              :key="document.approvalId"
+              class="document-card"
+              @click="openDocument(document)"
+            >
+              <!-- 왼쪽: 문서 아이콘 및 정보 -->
+              <div class="document-info">
+                <div
+                  class="document-icon"
+                  :class="getDocumentTypeClass(document.code)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    ></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                </div>
+
+                <div class="document-details">
+                  <h3 class="document-title">{{ document.title }}</h3>
+                  <div class="document-meta">
+                    <span class="document-type">{{
+                      getDocumentTypeText(document.code)
+                    }}</span>
+                    <span class="document-author"
+                      >{{ document.drafterName }} /
+                      {{ document.positionName }}</span
+                    >
+                    <span class="document-date">{{
+                      formatDateTime(document.createdAt)
+                    }}</span>
+                    <span v-if="document.amount" class="document-amount">{{
+                      formatAmount(document.amount)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 오른쪽: 액션 버튼 -->
+              <div class="document-actions">
+                <button
+                  v-if="canApprove(document)"
+                  class="action-btn approve-btn"
+                  @click.stop="approveDocument(document)"
+                >
+                  결재하기
+                </button>
+                <button
+                  v-else-if="canEdit(document)"
+                  class="action-btn edit-btn"
+                  @click.stop="editDocument(document)"
+                >
+                  수정하기
+                </button>
+                <button
+                  class="action-btn detail-btn"
+                  @click.stop="viewDocument(document)"
+                >
+                  상세보기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 빈 상태 -->
+        <div v-if="filteredDocuments.length === 0" class="empty-state">
+          <div class="empty-icon">📄</div>
+          <h3>결재 문서가 없습니다</h3>
+          <p>{{ getEmptyMessage() }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -142,6 +154,8 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+
 const emit = defineEmits([
   "tab-change",
   "document-click",
@@ -161,6 +175,10 @@ const props = defineProps({
 // 반응형 데이터
 const activeTab = computed(() => props.activeTab);
 const searchQuery = ref("");
+
+// 상세 보기 모드 상태 관리
+const isDetailViewMode = ref(false);
+const selectedDocument = ref(null);
 
 // 탭 설정
 const tabs = [
@@ -257,7 +275,9 @@ const viewDocument = (document) => {
 };
 
 const approveDocument = (document) => {
-  emit("document-approve", document);
+  // emit("document-approve", document);
+  selectedDocument.value = document;
+  isDetailViewMode.value = true;
 };
 
 const editDocument = (document) => {

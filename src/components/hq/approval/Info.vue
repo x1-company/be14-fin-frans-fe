@@ -28,7 +28,7 @@
 
           <!-- 결재 등록 -->
           <ApprovalRegistration
-            v-if="activeTabSwitch == 1 && isRegistrationMode"
+            v-if="activeTabSwitch === 1 && isRegistrationMode"
             :selectedTemplate="props.selectedTemplate"
             @cancel="(value) => handleToggleRegistrationMode(value)"
           />
@@ -113,7 +113,7 @@ const emit = defineEmits([
   "template-updated",
   "reorder-mode-changed",
   "reorder-complete",
-  "reorder-cancel"
+  "reorder-cancel",
 ]);
 
 const updateTab = (newTabIndex) => {
@@ -277,7 +277,6 @@ const handleReorderCancel = () => {
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
-
 .section-title {
   margin: 0 0 20px 0;
   color: #212529;
