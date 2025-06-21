@@ -36,7 +36,6 @@ const props = defineProps({
   },
   activeTab: { type: String, required: true },
   activeMenu: { type: String, required: true },
-  currentSidebarTab: { type: String, required: true },
 });
 
 // 상신 관련 메뉴인지 확인
@@ -70,13 +69,15 @@ const isSentTab = computed(() => {
   );
 });
 
-// 최종 렌더링 조건 - currentSidebarTab을 기준으로 결정
+// 최종 렌더링 조건 - activeMenu를 기준으로 결정
 const shouldShowApprovalList = computed(() => {
-  return props.currentSidebarTab === "상신";
+  // 상신 관련 메뉴이거나 상신-전체인 경우
+  return isSentMenu.value || props.activeMenu === "상신-전체";
 });
 
 const shouldShowReceptionList = computed(() => {
-  return props.currentSidebarTab === "수신";
+  // 수신 관련 메뉴이거나 수신-전체인 경우
+  return isReceivedMenu.value || props.activeMenu === "수신-전체";
 });
 
 // const getStatusClass = (status) => {

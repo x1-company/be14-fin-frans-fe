@@ -487,9 +487,9 @@ const openAccordions = ref(["approval-docs", "collaboration-docs"]);
 const changeTab = (tabValue) => {
   activeTab.value = tabValue;
   if (tabValue === "상신") {
-    emit("select-menu", "전체");
+    emit("select-menu", "상신-전체");
   } else if (tabValue === "수신") {
-    emit("select-menu", "전체");
+    emit("select-menu", "수신-전체");
   }
   emit("tab-change", tabValue);
 };
@@ -498,10 +498,10 @@ const changeTab = (tabValue) => {
 const selectMenu = (menu) => {
   if (menu === "상신") {
     activeItem.value = "상신";
-    emit("select-menu", "전체");
+    emit("select-menu", "상신-전체");
   } else if (menu === "수신") {
     activeItem.value = "수신";
-    emit("select-menu", "전체");
+    emit("select-menu", "수신-전체");
   } else {
     activeItem.value = menu;
     emit("select-menu", menu);

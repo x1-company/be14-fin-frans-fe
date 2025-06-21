@@ -24,7 +24,6 @@
             :approvalList="approvalList"
             :activeTab="activeTab"
             :activeMenu="activeMenu"
-            :currentSidebarTab="currentSidebarTab"
             @tab-change="handleTabChange"
           />
 
@@ -84,7 +83,6 @@ const props = defineProps({
   selectedTemplate: { type: Object, default: null },
   activeTab: String,
   activeMenu: String,
-  currentSidebarTab: String,
   handleTabChange: Function,
   isRegistrationMode: Boolean,
   reorderChanges: Array,
