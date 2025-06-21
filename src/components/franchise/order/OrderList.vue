@@ -67,8 +67,8 @@
       <div class="order-form__pagination">
         <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
         <span
-          v-for="p in paginationPages"
-          :key="p"
+          v-for="(p, index) in paginationPages"
+          :key="index"
           :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
           @click="typeof p === 'number' && (page = p)"
         >
@@ -97,6 +97,23 @@
   const totalCount = ref(0);
   const loading = ref(false);
   
+  const paginationPages = computed(() => {
+    const C = page.value;
+    const T = totalPages.value;
+
+    if (T <= 1) return [];
+    if (T <= 7) {
+      return Array.from({ length: T }, (_, i) => i + 1);
+    }
+    if (C < 5) {
+      return [1, 2, 3, 4, 5, '...', T];
+    }
+    if (C > T - 4) {
+      return [1, '...', T - 4, T - 3, T - 2, T - 1, T];
+    }
+    return [1, '...', C - 1, C, C + 1, '...', T];
+  });
+
   // 탭 관련
   const tabs = [
     { label: '전체', value: 'all' },
@@ -147,20 +164,6 @@
     const kst = new Date(d.getTime() - offset + 9 * 60 * 60000);
     return kst.toISOString().slice(0, 10);
   }
-
-//   function statusKorToCode(kor) {
-//     switch (kor) {
-//       case '접수 대기': return 'WAITING_FOR_RECEIPT';
-//       case '접수 취소': return 'RECEIPT_CANCELED';
-//       case '반려': return 'REJECTED';
-//       case '검토 중': return 'REVIEWING';
-//       case '검토 완료': return 'REVIEW_COMPLETED';
-//       case '결재 완료': return 'APPROVED';
-//       case '배송 중': return 'DELIVERING';
-//       case '배송 완료': return 'DELIVERED';
-//       default: return kor;
-//     }
-//   }
 
   async function fetchOrders() {
     loading.value = true;
