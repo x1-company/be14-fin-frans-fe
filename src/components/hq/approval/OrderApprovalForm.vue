@@ -14,29 +14,20 @@
           <thead>
             <tr>
               <th>No.</th>
-              <th>문서명</th>
+              <th>문서번호</th>
+              <th>가맹점명</th>
               <th>작성일</th>
               <th>금액</th>
-              <th>코드</th>
-              <th>액션</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(doc, index) in filteredDocuments" :key="doc.id">
               <td>{{ index + 1 }}</td>
+              <td>{{ doc.code }}</td>
               <td>{{ doc.name }}</td>
               <td>{{ doc.date }}</td>
               <td>{{ formatCurrency(doc.amount) }}</td>
-              <td>{{ doc.code }}</td>
-              <td>
-                <button
-                  class="approve-button"
-                  @click="handleApproveDocument(doc)"
-                >
-                  결재하기
-                </button>
-              </td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
                   ×
@@ -385,22 +376,19 @@ const handleSelectDocuments = (selectedDocuments) => {
   selectedDocuments.forEach((doc) => {
     // 이미 존재하는 문서인지 확인
     const existingDoc = documents.value.find(
-      (existing) => existing.id === doc.id
+      (existing) => existing.id === (doc.id || doc.code)
     );
     if (!existingDoc) {
-      // 주문 코드를 문서명으로 사용하고, 매장명을 추가
-      const documentName = `${doc.franchiseName} - ${doc.code}`;
-
-      // 새로운 문서를 배열의 맨 앞에 추가
       documents.value.unshift({
-        id: doc.id,
-        name: documentName,
+        id: doc.id || doc.code,
+        code: doc.code,
+        name: doc.name,
         date: formatDate(doc.createdAt),
         amount: doc.totalAmount,
       });
 
       // approvalDocuments에 추가
-      formData.value.approvalDocuments.documentIds.push(doc.id);
+      formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
     }
   });
   showOrderListModal.value = false;
