@@ -1,10 +1,5 @@
 <template>
   <div class="info-form">
-    <!-- <ApprovalList
-      v-for="item in approvalList"
-      :key="item.id"
-      :approval="item"
-    /> -->
     <ApprovalList
       :approvalList="approvalList"
       :activeTab="activeTab"

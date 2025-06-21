@@ -16,6 +16,6 @@ export default defineConfig({
     },
   },
   server: {
-    port: 8080,
+    port: 5173, // 개발용 서버
   },
 })
