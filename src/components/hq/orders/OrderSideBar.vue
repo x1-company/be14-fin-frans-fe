@@ -114,7 +114,7 @@ function handleFranchiseClick(franchise) {
   max-width: 340px;      /* 필요시 최대 너비도 지정 */
   width: 300px;
   flex-shrink: 0;        /* 줄어들지 않게 */
-  background: #f8f9fa;
+  background: #ffffff;
   border-right: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
