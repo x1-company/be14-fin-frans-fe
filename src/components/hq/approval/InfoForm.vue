@@ -12,6 +12,7 @@
 import { defineProps } from "vue";
 import ApprovalList from "@/components/hq/approval/ApprovalList.vue";
 
+// 둘다 있어야 메뉴와 탭들이 움직임
 const handleTabChange = (tabValue) => {
   emit("tab-change", tabValue); // Info.vue 로 전달
 };
@@ -25,36 +26,36 @@ const props = defineProps({
   activeTab: { type: String, required: true },
 });
 
-const getStatusClass = (status) => {
-  const statusMap = {
-    DRAFT: "status-draft",
-    IN_PROGRESS: "status-progress",
-    APPROVED: "status-approved",
-    REJECTED: "status-rejected",
-  };
-  return statusMap[status] || "";
-};
+// const getStatusClass = (status) => {
+//   const statusMap = {
+//     DRAFT: "status-draft",
+//     IN_PROGRESS: "status-progress",
+//     APPROVED: "status-approved",
+//     REJECTED: "status-rejected",
+//   };
+//   return statusMap[status] || "";
+// };
 
-const getStatusText = (status) => {
-  const statusMap = {
-    DRAFT: "임시저장",
-    IN_PROGRESS: "결재 중",
-    APPROVED: "결재완료",
-    REJECTED: "결재반려",
-  };
-  return statusMap[status] || status;
-};
+// const getStatusText = (status) => {
+//   const statusMap = {
+//     DRAFT: "임시저장",
+//     IN_PROGRESS: "결재 중",
+//     APPROVED: "결재완료",
+//     REJECTED: "결재반려",
+//   };
+//   return statusMap[status] || status;
+// };
 
-const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+// const formatDate = (dateString) => {
+//   const date = new Date(dateString);
+//   return date.toLocaleDateString("ko-KR", {
+//     year: "numeric",
+//     month: "2-digit",
+//     day: "2-digit",
+//     hour: "2-digit",
+//     minute: "2-digit",
+//   });
+// };
 </script>
 
 <style scoped>

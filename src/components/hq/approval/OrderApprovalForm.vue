@@ -18,6 +18,7 @@
               <th>작성일</th>
               <th>금액</th>
               <th>코드</th>
+              <th>액션</th>
               <th></th>
             </tr>
           </thead>
@@ -28,6 +29,14 @@
               <td>{{ doc.date }}</td>
               <td>{{ formatCurrency(doc.amount) }}</td>
               <td>{{ doc.code }}</td>
+              <td>
+                <button
+                  class="approve-button"
+                  @click="handleApproveDocument(doc)"
+                >
+                  결재하기
+                </button>
+              </td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
                   ×
@@ -256,7 +265,11 @@ const showApprovalLineModal = ref(false);
 const showTemplateModal = ref(false);
 const isSubmitting = ref(false);
 
-const emit = defineEmits(["form-data-updated", "approval-submitted"]);
+const emit = defineEmits([
+  "form-data-updated",
+  "approval-submitted",
+  "document-approve",
+]);
 
 const searchQuery = ref("");
 const formData = ref({
@@ -372,23 +385,22 @@ const handleSelectDocuments = (selectedDocuments) => {
   selectedDocuments.forEach((doc) => {
     // 이미 존재하는 문서인지 확인
     const existingDoc = documents.value.find(
-      (existing) => existing.id === (doc.id || doc.code)
+      (existing) => existing.id === doc.id
     );
     if (!existingDoc) {
       // 주문 코드를 문서명으로 사용하고, 매장명을 추가
       const documentName = `${doc.franchiseName} - ${doc.code}`;
 
-      // 새로운 문서를 배열의 맨 앞에 추가 (code 필드 포함)
+      // 새로운 문서를 배열의 맨 앞에 추가
       documents.value.unshift({
-        id: doc.id || doc.code,
-        code: doc.code, // 코드 필드 추가
+        id: doc.id,
         name: documentName,
         date: formatDate(doc.createdAt),
         amount: doc.totalAmount,
       });
 
       // approvalDocuments에 추가
-      formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
+      formData.value.approvalDocuments.documentIds.push(doc.id);
     }
   });
   showOrderListModal.value = false;
@@ -656,6 +668,11 @@ const handleSubmit = async () => {
   }
 };
 
+// 결재하기 버튼 클릭 핸들러
+const handleApproveDocument = (document) => {
+  emit("document-approve", document);
+};
+
 defineExpose({
   initializeForm,
   updateFormData,
@@ -795,13 +812,23 @@ defineExpose({
   border: none;
   color: #ef4444;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   padding: 4px;
-  font-weight: bold;
 }
 
-.remove-button:hover {
-  color: #dc2626;
+.approve-button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.approve-button:hover {
+  background: #2563eb;
 }
 
 /* 결재 내용 */
