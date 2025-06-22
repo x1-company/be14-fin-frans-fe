@@ -62,7 +62,7 @@ const handleLogin = async () => {
           router.push('/franchise')
         } else if (result.userType === 'SUPPLIER') {
           // 공급처 메인 페이지로
-          // TODO: 실제 경로로 변경 필요
+          router.push('/supplier')
         } else {
           // 기본 페이지
           // TODO: 기본 경로로 변경 필요
