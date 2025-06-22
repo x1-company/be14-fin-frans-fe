@@ -19,7 +19,7 @@
 
                     <FranchiseInfo v-if="activeTabSwitch === 1" :selectedFranchiseId="selectedFranchiseId"/>
 
-                    <OrderList v-if="activeTabSwitch === 2" :franchiseId="franchiseId" />
+                    <OrderList v-if="activeTabSwitch === 2" :franchiseId="franchiseId" :selectedFranchiseId="selectedFranchiseId"/>
                     
                     <div v-if="activeTabSwitch === 3" class="content-section">
                         <h3>반품관리 컨텐츠</h3>
@@ -42,8 +42,8 @@ import FranchiseInfo from '../franchise/FranchiseInfo.vue'
 
 const props = defineProps({
     activeTab: String,
-    franchiseId: [String, Number]
-    // selectedFranchiseId: [String, Number]
+    franchiseId: [String, Number],
+    selectedFranchiseId: [String, Number]
 })
 
 
