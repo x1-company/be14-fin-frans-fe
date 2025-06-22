@@ -3,7 +3,7 @@
       <div class="info-section">
         <div class="info-section__header purchase-header">
           <span class="purchase-title">구매 요청 목록</span>
-          <button class="register-btn">등록</button>
+          <button class="register-btn" @click="goToRegister">등록</button>
         </div>
         
         <div class="purchase-filters">
@@ -89,6 +89,7 @@
   import { ref, onMounted, watch } from 'vue';
   import api from '@/lib/api';
   import { Search as SearchIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
+  import { useRouter } from 'vue-router';
   
   const tabLabels = [
     '전체',
@@ -115,6 +116,7 @@
   const error = ref(null);
   const currentPage = ref(1);
   const totalPages = ref(1);
+  const router = useRouter();
   
   function changeTab(idx) {
     activeTab.value = idx;
@@ -202,6 +204,10 @@
   function handleSearch() {
     currentPage.value = 1;
     fetchData();
+  }
+  
+  function goToRegister() {
+    router.push('/purchase/register');
   }
   
   watch(() => activeTab.value, () => {
