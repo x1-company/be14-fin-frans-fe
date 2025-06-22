@@ -54,6 +54,7 @@
 import { ref, onMounted } from 'vue';
 import { useNotificationStore } from '@/stores/notification';
 import notificationService from '@/lib/notificationService';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   notification: {
@@ -70,6 +71,7 @@ const emit = defineEmits(['close', 'click']);
 
 const notificationStore = useNotificationStore();
 const isVisible = ref(true);
+const router = useRouter();
 
 let autoHideTimer = null;
 
@@ -110,9 +112,11 @@ const handleClick = () => {
 };
 
 const handleNotificationNavigation = (notification) => {
-  // 예시: 알림 타입에 따라 다른 라우터로 이동
-  // 실제 구현은 프로젝트에 맞게 수정 필요
-  // router.push(`/notifications/${notification.id}`);
+  if (notification.url) {
+    router.push(notification.url);
+  } else {
+    // 기존 타입별 분기 fallback
+  }
 };
 
 const getNotificationTypeText = (type) => {

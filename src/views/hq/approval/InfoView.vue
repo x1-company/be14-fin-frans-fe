@@ -23,8 +23,16 @@
         ref="templateSidebarRef"
       />
 
-      <!-- Info 컴포넌트는 항상 표시되어야 함 -->
+      <!-- 상세 라우트면 ApprovalDetail만 -->
+      <ApprovalDetail
+        v-if="approvalId && approvalDetail"
+        :document="approvalDetail"
+        @close-detail="$router.push('/approval')"
+      />
+
+      <!-- 아니면 기존 Info -->
       <Info
+        v-else
         :approvalList="approvalList"
         :activeTab="activeTab.toString()"
         :activeMenu="activeMenu"
@@ -46,10 +54,12 @@
 
 <script setup>
 import { ref, watch, nextTick, onMounted } from "vue";
+import { useRoute } from "vue-router";
 import NavBar from "@/components/hq/common/NavBar.vue";
 import SideBar from "@/components/hq/approval/SideBar.vue";
 import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
 import Info from "@/components/hq/approval/Info.vue";
+import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
 import api from "@/lib/api";
 
 const approvalList = ref([]);
@@ -64,6 +74,10 @@ const selectedTemplate = ref(null); // 선택된 템플릿 정보
 const isReorderMode = ref(false); // 순서 변경 모드 활성화 여부
 const templateSidebarRef = ref(null); // 결재템플릿 사이드바 참조
 const reorderChanges = ref([]); // 순서 변경 정보 저장
+
+const route = useRoute();
+const approvalId = ref(route.params.approvalId);
+const approvalDetail = ref(null);
 
 const handleSelectMenu = (menuValue) => {
   const sentMenus = ["상신-전체", "임시저장", "결재중", "결재완료", "결재반려"];
@@ -240,6 +254,26 @@ const fetchCounts = async () => {
 };
 
 onMounted(fetchCounts);
+
+// approvalId가 있을 때 상세 fetch
+const fetchApprovalDetail = async (id) => {
+  if (!id) return;
+  try {
+    const { data } = await api.get(`/api/hq/approvals/detail/${id}/content`);
+    approvalDetail.value = data[0] || null;
+  } catch (e) {
+    approvalDetail.value = null;
+  }
+};
+
+watch(
+  () => route.params.approvalId,
+  (newId) => {
+    approvalId.value = newId;
+    if (newId) fetchApprovalDetail(newId);
+  },
+  { immediate: true }
+);
 
 watch(
   [mainTab, activeMenu, activeTab],

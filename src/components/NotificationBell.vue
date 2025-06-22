@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted } from 'vue';
 import { useNotificationStore } from '@/stores/notification';
 import notificationService from '@/lib/notificationService';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   isOpen: {
@@ -13,6 +14,7 @@ const props = defineProps({
 const emit = defineEmits(['close']);
 
 const notificationStore = useNotificationStore();
+const router = useRouter();
 
 // 계산된 속성
 const notifications = computed(() => notificationStore.notifications);
@@ -56,19 +58,23 @@ const handleNotificationClick = (notification) => {
 };
 
 const handleNotificationNavigation = (notification) => {
-  // 알림 타입에 따라 적절한 페이지로 이동
-  switch (notification.type) {
-    case 'ORDER_RESPONSE':
-      console.log('주문 페이지로 이동');
-      break;
-    case 'APPROVAL_REQUEST':
-      console.log('결재 페이지로 이동');
-      break;
-    case 'LOW_STOCK':
-      console.log('재고 페이지로 이동');
-      break;
-    default:
-      console.log('기본 페이지로 이동');
+  if (notification.url) {
+    router.push(notification.url);
+  } else {
+    // 알림 타입에 따라 적절한 페이지로 이동 (기존 fallback)
+    switch (notification.type) {
+      case 'ORDER_RESPONSE':
+        console.log('주문 페이지로 이동');
+        break;
+      case 'APPROVAL_REQUEST':
+        console.log('결재 페이지로 이동');
+        break;
+      case 'LOW_STOCK':
+        console.log('재고 페이지로 이동');
+        break;
+      default:
+        console.log('기본 페이지로 이동');
+    }
   }
 };
 

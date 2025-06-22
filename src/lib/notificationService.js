@@ -43,6 +43,8 @@ class NotificationService {
 
       const url = `http://localhost:8080/api/notification/subscribe?lastEventId=${lastEventId}`;
 
+      console.log('SSE 연결 시도:', url);
+
       // fetch API를 사용한 SSE 연결
       const response = await fetch(url, {
         method: 'GET',
@@ -60,6 +62,8 @@ class NotificationService {
         throw new Error(`SSE 연결 실패: ${response.status} ${response.statusText}`);
       }
 
+      console.log('SSE 연결 성공');
+
       this.isConnected = true;
       this.isConnecting = false;
       notificationStore.setConnectionStatus(true);
@@ -76,6 +80,7 @@ class NotificationService {
       this.isConnecting = false;
       
       if (error.name === 'AbortError') {
+        console.log('SSE 연결이 의도적으로 중단됨');
         return;
       }
       
@@ -95,15 +100,19 @@ class NotificationService {
       let buffer = '';
       const authStore = useAuthStore();
       
+      console.log('SSE 스트림 처리 시작');
+      
       while (true) {
         const { done, value } = await reader.read();
         
         if (done) {
+          console.log('SSE 스트림 정상 종료');
           this.isConnected = false;
           notificationStore.setConnectionStatus(false);
           
           // 스트림이 정상적으로 종료된 경우 재연결 시도
           if (!this.abortController?.signal.aborted) {
+            console.log('SSE 재연결 시도 예정');
             this.handleReconnect();
           }
           break;
@@ -171,6 +180,10 @@ class NotificationService {
           // event: 라인 처리
           else if (line.trim().startsWith('event:')) {
             // 이벤트 타입 정보는 필요시 사용
+            const eventType = line.substring(line.indexOf('event:') + 6).trim();
+            if (eventType === 'heartbeat') {
+              console.log('Heartbeat 수신됨');
+            }
           } 
           // 빈 라인 처리
           else if (line.trim() === '') {
@@ -218,19 +231,29 @@ class NotificationService {
         }
       }
     } catch (error) {
+      console.error('SSE 스트림 처리 오류:', error);
+      console.error('오류 타입:', error.name);
+      console.error('오류 메시지:', error.message);
+      
       this.isConnected = false;
       notificationStore.setConnectionStatus(false);
       
       // AbortError는 정상적인 연결 해제이므로 오류로 처리하지 않음
       if (error.name === 'AbortError') {
+        console.log('SSE 스트림이 의도적으로 중단됨');
         return;
       }
       
-      console.error('스트림 처리 오류:', error);
-      
-      // AbortError가 아닌 경우에만 재연결 시도
-      if (error.name !== 'AbortError') {
+      // 네트워크 오류인 경우 재연결 시도
+      if (error.name === 'TypeError' && error.message.includes('network error')) {
+        console.log('네트워크 오류로 인한 재연결 시도');
         this.handleReconnect();
+      } else {
+        // AbortError가 아닌 경우에만 재연결 시도
+        if (error.name !== 'AbortError') {
+          console.log('일반 오류로 인한 재연결 시도');
+          this.handleReconnect();
+        }
       }
     }
   }
@@ -250,9 +273,12 @@ class NotificationService {
     this.reconnectAttempts++;
     const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), this.maxReconnectDelay);
 
+    console.log(`SSE 재연결 시도 ${this.reconnectAttempts}/${this.maxReconnectAttempts} (${delay}ms 후)`);
+
     this.reconnectTimeout = setTimeout(() => {
       // 재연결 시도 전에 연결 상태 확인
       if (!this.isConnected && !this.isConnecting) {
+        console.log('SSE 재연결 시도 중...');
         this.connect();
       }
     }, delay);
@@ -335,11 +361,15 @@ class NotificationService {
   // 읽은 알림 전체 삭제
   async deleteAllRead() {
     try {
-      await api.delete('/api/notification/delete/read-all');
+      console.log('읽은 알림 전체 삭제 API 호출 시작');
+      const response = await api.delete('/api/notification/delete/read-all');
+      console.log('읽은 알림 전체 삭제 API 응답:', response);
+      
       const notificationStore = useNotificationStore();
       notificationStore.clearReadNotifications();
     } catch (error) {
       console.error('읽은 알림 삭제 실패:', error);
+      console.error('에러 응답:', error.response);
       throw error;
     }
   }
@@ -347,11 +377,15 @@ class NotificationService {
   // 특정 알림 삭제
   async deleteNotification(notificationId) {
     try {
-      await api.delete(`/api/notification/delete/${notificationId}`);
+      console.log('알림 삭제 API 호출 시작:', notificationId);
+      const response = await api.delete(`/api/notification/delete/${notificationId}`);
+      console.log('알림 삭제 API 응답:', response);
+      
       const notificationStore = useNotificationStore();
       notificationStore.removeNotification(notificationId);
     } catch (error) {
       console.error('알림 삭제 실패:', error);
+      console.error('에러 응답:', error.response);
       throw error;
     }
   }
@@ -372,4 +406,4 @@ class NotificationService {
 // 싱글톤 인스턴스 생성
 const notificationService = new NotificationService();
 
-export default notificationService; 
+export default notificationService;
