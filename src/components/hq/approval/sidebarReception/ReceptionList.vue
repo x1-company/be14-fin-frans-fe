@@ -124,6 +124,13 @@
                   결재하기
                 </button>
                 <button
+                  v-else-if="canCooperate(document)"
+                  class="action-btn cooperate-btn"
+                  @click.stop="cooperateDocument(document)"
+                >
+                  협조하기
+                </button>
+                <button
                   v-else-if="canEdit(document)"
                   class="action-btn edit-btn"
                   @click.stop="editDocument(document)"
@@ -131,6 +138,7 @@
                   수정하기
                 </button>
                 <button
+                  v-else-if="!(canApprove(document) || canCooperate(document))"
                   class="action-btn detail-btn"
                   @click.stop="viewDocument(document)"
                 >
@@ -153,8 +161,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+import { useAuthStore } from "@/stores/auth";
 
 const emit = defineEmits([
   "tab-change",
@@ -172,8 +181,11 @@ const props = defineProps({
   activeTab: { type: String, required: true },
 });
 
+const auth = useAuthStore();
+
 // 반응형 데이터
-const activeTab = computed(() => props.activeTab);
+const localActiveTab = ref(props.activeTab);
+const activeTab = computed(() => localActiveTab.value);
 const searchQuery = ref("");
 
 // 상세 보기 모드 상태 관리
@@ -256,7 +268,8 @@ const groupedDocuments = computed(() => {
 
 // 메서드
 const selectTab = (tabValue) => {
-  emit("tab-change", tabValue);
+  // 부모 컴포넌트로 이벤트를 전달하지 않고 로컬 상태만 변경
+  localActiveTab.value = tabValue;
 };
 
 const handleSearch = () => {
@@ -276,13 +289,33 @@ const approveDocument = (document) => {
   isDetailViewMode.value = true;
 };
 
+const cooperateDocument = (document) => {
+  selectedDocument.value = document;
+  isDetailViewMode.value = true;
+};
+
 const editDocument = (document) => {
   emit("document-edit", document);
 };
 
 const canApprove = (document) => {
-  // 수신자는 결재 권한이 없으므로 항상 false를 반환합니다.
-  return false;
+  // 현재 로그인한 사용자가 이 문서의 결재선에 'APPROVER'로 있고 상태가 'WAITING'인 경우
+  return document.lines?.some(
+    (line) =>
+      line.id === auth.userId &&
+      line.type === "APPROVER" &&
+      line.status === "WAITING"
+  );
+};
+
+const canCooperate = (document) => {
+  // 현재 로그인한 사용자가 이 문서의 협조선에 'COOPERATOR'로 있고 상태가 'WAITING'인 경우
+  return document.lines?.some(
+    (line) =>
+      line.id === auth.userId &&
+      line.type === "COOPERATOR" &&
+      line.status === "WAITING"
+  );
 };
 
 const canEdit = (document) => {
@@ -347,6 +380,14 @@ const getEmptyMessage = () => {
       return "수신된 결재 문서가 없습니다.";
   }
 };
+
+// props.activeTab이 변경될 때 localActiveTab 업데이트
+watch(
+  () => props.activeTab,
+  (newTab) => {
+    localActiveTab.value = newTab;
+  }
+);
 </script>
 
 <style scoped>
@@ -564,6 +605,15 @@ const getEmptyMessage = () => {
 
 .approve-btn:hover {
   background: #3551d1;
+}
+
+.cooperate-btn {
+  background: #28a745;
+  color: white;
+}
+
+.cooperate-btn:hover {
+  background: #218838;
 }
 
 .edit-btn {
