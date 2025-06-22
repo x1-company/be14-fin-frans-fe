@@ -8,6 +8,7 @@ import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
 import OrderDetailPage from "@/views/hq/orders/OrderDetailPage.vue";
 import HRMView from "@/views/hq/user/InfoView.vue";
 import FranchisePage from "@/views/franchise/FranchisePage.vue";
+import FrOrderDetailPage from "@/views/franchise/orders/FrOrderDetailPage.vue";
 import SupplierPage from "@/views/auth/supplier/SupplierPage.vue";
 
 // 개발 환경에서만 테스트 페이지 import
@@ -49,6 +50,17 @@ const router = createRouter({
       component: WarehouseInfoView,
     },
     {
+      path: "/warehouse/product/:id",
+      name: "ProductDetail",
+      component: WarehouseInfoView,
+      props: true,
+    },
+    {
+      path: "/warehouse/product/register",
+      name: "ProductRegister",
+      component: WarehouseInfoView,
+    },
+    {
       path: "/orders",
       name: "orders",
       component: OrderInfoView,
@@ -68,6 +80,12 @@ const router = createRouter({
       path: "/franchise",
       name: "franchise",
       component: FranchisePage,
+    },
+    {
+      path: "/franchise/orders/:orderId",
+      name: "FranchiseOrderDetail",
+      component: FrOrderDetailPage,
+      props: true,
     },
     {
       path: "/supplier",

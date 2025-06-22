@@ -144,7 +144,7 @@
         <!-- 빈 상태 -->
         <div v-if="filteredDocuments.length === 0" class="empty-state">
           <div class="empty-icon">📄</div>
-          <h3>결재 문서가 없습니다</h3>
+          <h3>수신 문서가 없습니다</h3>
           <p>{{ getEmptyMessage() }}</p>
         </div>
       </div>
@@ -180,10 +180,9 @@ const searchQuery = ref("");
 const isDetailViewMode = ref(false);
 const selectedDocument = ref(null);
 
-// 탭 설정
+// 탭 설정 (수신 문서용)
 const tabs = [
   { label: "전체", value: "전체" },
-  { label: "임시저장", value: "임시저장" },
   { label: "결재중", value: "결재중" },
   { label: "결재완료", value: "결재완료" },
   { label: "결재반려", value: "결재반려" },
@@ -199,196 +198,180 @@ const statusMap = {
 
 // 필터링된 문서
 const filteredDocuments = computed(() => {
-  let filtered = [...(props.approvalList || [])];
+  let documents = props.approvalList || [];
 
-  // 탭 필터링
+  // 탭별 필터링
   if (activeTab.value !== "전체") {
-    const statusKey = Object.keys(statusMap).find(
+    const targetStatus = Object.keys(statusMap).find(
       (key) => statusMap[key] === activeTab.value
     );
-    filtered = filtered.filter((doc) => doc.status === statusKey);
+    if (targetStatus) {
+      documents = documents.filter((doc) => doc.status === targetStatus);
+    }
   }
 
   // 검색 필터링
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(
+    documents = documents.filter(
       (doc) =>
-        doc.title?.toLowerCase().includes(query) ||
-        doc.drafterName?.toLowerCase().includes(query) ||
-        doc.deptName?.toLowerCase().includes(query) ||
-        // 결재자명으로도 검색 가능
-        doc.lines?.some((line) =>
-          line.approverName?.toLowerCase().includes(query)
-        )
+        doc.title.toLowerCase().includes(query) ||
+        doc.drafterName.toLowerCase().includes(query)
     );
   }
 
-  return filtered;
+  return documents;
 });
 
-// 날짜별로 그룹화된 문서
+// 날짜별 그룹핑
 const groupedDocuments = computed(() => {
   const groups = {};
-
-  filteredDocuments.value.forEach((doc) => {
-    const date = new Date(doc.createdAt);
-    const dateKey = `${date.getFullYear()}.${String(
-      date.getMonth() + 1
-    ).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")} ${getWeekday(
-      date
-    )}`;
-
-    if (!groups[dateKey]) {
-      groups[dateKey] = {
-        date: dateKey,
-        documents: [],
-      };
+  filteredDocuments.value.forEach((document) => {
+    const date = formatDate(document.createdAt);
+    if (!groups[date]) {
+      groups[date] = [];
     }
-    groups[dateKey].documents.push(doc);
+    groups[date].push(document);
   });
 
-  // 날짜순 정렬 (최신순)
-  return Object.values(groups).sort((a, b) => {
-    const dateA = new Date(a.date.split(" ")[0].replace(/\./g, "-"));
-    const dateB = new Date(b.date.split(" ")[0].replace(/\./g, "-"));
-    return dateB - dateA;
-  });
+  return Object.keys(groups)
+    .sort((a, b) => new Date(b) - new Date(a))
+    .map((date) => ({
+      date,
+      documents: groups[date],
+    }));
 });
 
-// 메서드
+// 탭 선택
 const selectTab = (tabValue) => {
-  // activeTab.value = tabValue;
   emit("tab-change", tabValue);
 };
 
+// 검색 처리
 const handleSearch = () => {
   // 검색 로직은 computed에서 처리됨
 };
 
+// 문서 열기
 const openDocument = (document) => {
+  selectedDocument.value = document;
+  isDetailViewMode.value = true;
   emit("document-click", document);
 };
 
+// 문서 상세보기
 const viewDocument = (document) => {
   emit("document-view", document);
 };
 
+// 문서 결재
 const approveDocument = (document) => {
-  // emit("document-approve", document);
-  selectedDocument.value = document;
-  isDetailViewMode.value = true;
+  emit("document-approve", document);
 };
 
+// 문서 수정
 const editDocument = (document) => {
   emit("document-edit", document);
 };
 
+// 결재 가능 여부 확인
 const canApprove = (document) => {
-  // 결재 진행중이고 결재선이 있는 경우
-  return (
-    document.status === "IN_PROGRESS" &&
-    document.lines &&
-    document.lines.some((line) => line.type === "APPROVER")
-  );
+  return document.status === "IN_PROGRESS";
 };
 
+// 수정 가능 여부 확인
 const canEdit = (document) => {
-  // 임시저장 상태이거나 기안자가 본인인 경우 (실제로는 현재 사용자 정보와 비교해야 함)
   return document.status === "DRAFT";
 };
 
+// 문서 타입별 클래스
 const getDocumentTypeClass = (code) => {
-  if (code?.startsWith("APP")) return "type-approval";
-  if (code?.startsWith("APR")) return "type-request";
-  if (code?.startsWith("RPT")) return "type-report";
-  return "type-default";
+  const typeMap = {
+    PURCHASE: "type-purchase",
+    ORDER: "type-order",
+    RETURN: "type-return",
+  };
+  return typeMap[code] || "type-default";
 };
 
+// 문서 타입별 텍스트
 const getDocumentTypeText = (code) => {
-  if (code?.startsWith("APP")) return "결재서";
-  if (code?.startsWith("APR")) return "요청서";
-  if (code?.startsWith("RPT")) return "보고서";
-  return "문서";
+  const typeMap = {
+    PURCHASE: "구매결재",
+    ORDER: "주문결재",
+    RETURN: "반품결재",
+  };
+  return typeMap[code] || "기타결재";
 };
 
-const getWeekday = (date) => {
-  const weekdays = [
-    "일요일",
-    "월요일",
-    "화요일",
-    "수요일",
-    "목요일",
-    "금요일",
-    "토요일",
-  ];
-  return weekdays[date.getDay()];
-};
-
-const formatDateTime = (dateString) => {
-  if (!dateString) return "";
-
+// 날짜 포맷팅
+const formatDate = (dateString) => {
   const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-
-  return `${year}.${month}.${day} ${hours}:${minutes}`;
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 };
 
+// 날짜시간 포맷팅
+const formatDateTime = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+// 금액 포맷팅
 const formatAmount = (amount) => {
-  if (!amount) return "";
-  return `₩${amount.toLocaleString()}`;
+  return new Intl.NumberFormat("ko-KR").format(amount) + "원";
 };
 
+// 빈 상태 메시지
 const getEmptyMessage = () => {
-  switch (activeTab.value) {
-    case "임시저장":
-      return "임시저장된 문서가 없습니다.";
-    case "결재중":
-      return "결재 진행중인 문서가 없습니다.";
-    case "결재완료":
-      return "결재 완료된 문서가 없습니다.";
-    case "결재반려":
-      return "반려된 문서가 없습니다.";
-    default:
-      return "등록된 결재 문서가 없습니다.";
-  }
+  const messages = {
+    전체: "수신된 결재 문서가 없습니다.",
+    결재중: "결재 중인 수신 문서가 없습니다.",
+    결재완료: "결재 완료된 수신 문서가 없습니다.",
+    결재반려: "결재 반려된 수신 문서가 없습니다.",
+  };
+  return messages[activeTab.value] || messages.전체;
 };
 </script>
 
 <style scoped>
 .info-form {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: white;
+  background: #fff;
   border-radius: 0 0 12px 12px;
-  overflow: hidden;
+  box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
+  padding: 24px 32px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* 탭 메뉴 */
 .tab-container {
-  border-bottom: 1px solid #e9ecef;
-  background: #f8f9fa;
+  margin-bottom: 24px;
 }
 
 .tab-list {
   display: flex;
-  padding: 0 24px;
-  border-bottom: 1.5px solid #e0e0e0;
-  background-color: white;
+  gap: 8px;
+  border-bottom: 1px solid #e9ecef;
 }
 
 .tab-button {
-  padding: 16px 32px;
+  padding: 12px 24px;
   border: none;
   background: none;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 500;
   color: #6c757d;
-  border-bottom: 3px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
   transition: all 0.2s ease;
 }
 
@@ -399,76 +382,72 @@ const getEmptyMessage = () => {
 .tab-button.active {
   color: #4066fa;
   border-bottom-color: #4066fa;
-  border-bottom: 2.5px solid #1976d2;
-  background: none;
 }
 
-/* 검색 영역 */
 .search-section {
-  padding: 20px 24px;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  justify-content: flex-end;
+  margin-bottom: 24px;
 }
 
 .search-box {
-  display: flex;
-  align-items: center;
-  background: #f8f9fa;
-  border-radius: 24px;
-  padding: 8px 16px;
-  width: 320px;
-  gap: 8px;
+  position: relative;
+  max-width: 400px;
 }
 
 .search-icon {
-  width: 16px;
-  height: 16px;
-  color: #969696;
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: #6c757d;
 }
 
 .search-box input {
-  flex: 1;
-  border: none;
-  background: none;
-  outline: none;
+  width: 100%;
+  padding: 12px 12px 12px 44px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
   font-size: 14px;
-  color: #495057;
+  outline: none;
+  transition: border-color 0.2s ease;
 }
 
-.search-box input::placeholder {
-  color: #969696;
+.search-box input:focus {
+  border-color: #4066fa;
 }
 
-/* 문서 목록 */
 .document-list {
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-/* 날짜 그룹 */
 .date-group {
-  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .date-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
-  color: #6c757d;
+  padding: 8px 0;
 }
 
 .calendar-icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
+  color: #6c757d;
 }
 
 .date-text {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
 }
 
-/* 문서 카드 */
 .document-cards {
   display: flex;
   flex-direction: column;
@@ -477,22 +456,21 @@ const getEmptyMessage = () => {
 
 .document-card {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding: 20px;
-  background: white;
   border: 1px solid #e9ecef;
-  border-radius: 8px;
+  border-radius: 12px;
+  background: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .document-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-color: #4066fa;
+  box-shadow: 0 4px 12px rgba(64, 102, 250, 0.1);
 }
 
-/* 문서 정보 */
 .document-info {
   display: flex;
   align-items: center;
@@ -501,37 +479,34 @@ const getEmptyMessage = () => {
 }
 
 .document-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
 }
 
 .document-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
-.type-approval {
-  background: #e3f2fd;
-  color: #1976d2;
+.type-purchase {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.type-request {
-  background: #fff8e1;
-  color: #f57f17;
+.type-order {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
-.type-report {
-  background: #f3e5f5;
-  color: #7b1fa2;
+.type-return {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
 .type-default {
-  background: #f5f5f5;
-  color: #757575;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
 }
 
 .document-details {
@@ -549,22 +524,19 @@ const getEmptyMessage = () => {
 
 .document-meta {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
   font-size: 14px;
   color: #6c757d;
 }
 
 .document-type {
-  color: #4066fa;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
   font-weight: 500;
 }
 
-.document-amount {
-  color: #212529;
-  font-weight: 600;
-}
-
-/* 액션 버튼 */
 .document-actions {
   display: flex;
   gap: 8px;
@@ -586,32 +558,31 @@ const getEmptyMessage = () => {
 }
 
 .approve-btn:hover {
-  background: #3056e0;
+  background: #3451d1;
 }
 
 .edit-btn {
-  background: #ffc107;
-  color: #212529;
+  background: #28a745;
+  color: white;
 }
 
 .edit-btn:hover {
-  background: #e0a800;
+  background: #218838;
 }
 
 .detail-btn {
-  background: #f8f9fa;
-  color: #495057;
-  border: 1px solid #dee2e6;
+  background: #6c757d;
+  color: white;
 }
 
 .detail-btn:hover {
-  background: #e9ecef;
+  background: #5a6268;
 }
 
-/* 빈 상태 */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 48px;
+  color: #6c757d;
 }
 
 .empty-icon {
@@ -620,35 +591,14 @@ const getEmptyMessage = () => {
 }
 
 .empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
   margin: 0 0 8px 0;
   color: #495057;
-  font-size: 18px;
 }
 
 .empty-state p {
-  margin: 0;
-  color: #6c757d;
   font-size: 14px;
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
-  .search-section {
-    justify-content: stretch;
-  }
-
-  .search-box {
-    width: 100%;
-  }
-
-  .document-card {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  .document-actions {
-    justify-content: center;
-  }
+  margin: 0;
 }
 </style>

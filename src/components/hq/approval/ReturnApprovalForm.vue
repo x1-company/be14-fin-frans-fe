@@ -18,6 +18,7 @@
               <th>반품일</th>
               <th>반품사유</th>
               <th>금액</th>
+              <th>액션</th>
               <th></th>
             </tr>
           </thead>
@@ -28,6 +29,14 @@
               <td>{{ doc.createdAt ? formatDate(doc.createdAt) : "" }}</td>
               <td>{{ doc.description }}</td>
               <td>{{ formatCurrency(doc.totalAmount) }}</td>
+              <td>
+                <button
+                  class="approve-button"
+                  @click="handleApproveDocument(doc)"
+                >
+                  결재하기
+                </button>
+              </td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
                   ×
@@ -255,7 +264,11 @@ const showApprovalLineModal = ref(false);
 const showTemplateModal = ref(false);
 const isSubmitting = ref(false);
 
-const emit = defineEmits(["form-data-updated", "approval-submitted"]);
+const emit = defineEmits([
+  "form-data-updated",
+  "approval-submitted",
+  "document-approve",
+]);
 
 const searchQuery = ref("");
 const formData = ref({
@@ -649,6 +662,11 @@ const handleSubmit = async () => {
   }
 };
 
+// 결재하기 버튼 클릭 핸들러
+const handleApproveDocument = (document) => {
+  emit("document-approve", document);
+};
+
 defineExpose({
   initializeForm,
   updateFormData,
@@ -788,13 +806,23 @@ defineExpose({
   border: none;
   color: #ef4444;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   padding: 4px;
-  font-weight: bold;
 }
 
-.remove-button:hover {
-  color: #dc2626;
+.approve-button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.approve-button:hover {
+  background: #2563eb;
 }
 
 /* 결재 내용 */

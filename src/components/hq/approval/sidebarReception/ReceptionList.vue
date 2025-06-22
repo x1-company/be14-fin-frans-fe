@@ -144,7 +144,7 @@
         <!-- 빈 상태 -->
         <div v-if="filteredDocuments.length === 0" class="empty-state">
           <div class="empty-icon">📄</div>
-          <h3>결재 문서가 없습니다</h3>
+          <h3>수신 문서가 없습니다</h3>
           <p>{{ getEmptyMessage() }}</p>
         </div>
       </div>
@@ -180,10 +180,9 @@ const searchQuery = ref("");
 const isDetailViewMode = ref(false);
 const selectedDocument = ref(null);
 
-// 탭 설정
+// 탭 설정 (수신 문서용)
 const tabs = [
   { label: "전체", value: "전체" },
-  { label: "임시저장", value: "임시저장" },
   { label: "결재중", value: "결재중" },
   { label: "결재완료", value: "결재완료" },
   { label: "결재반려", value: "결재반려" },
@@ -191,7 +190,6 @@ const tabs = [
 
 // 상태 매핑
 const statusMap = {
-  DRAFT: "임시저장",
   IN_PROGRESS: "결재중",
   APPROVED: "결재완료",
   REJECTED: "결재반려",
@@ -258,7 +256,6 @@ const groupedDocuments = computed(() => {
 
 // 메서드
 const selectTab = (tabValue) => {
-  // activeTab.value = tabValue;
   emit("tab-change", tabValue);
 };
 
@@ -275,7 +272,6 @@ const viewDocument = (document) => {
 };
 
 const approveDocument = (document) => {
-  // emit("document-approve", document);
   selectedDocument.value = document;
   isDetailViewMode.value = true;
 };
@@ -345,16 +341,14 @@ const formatAmount = (amount) => {
 
 const getEmptyMessage = () => {
   switch (activeTab.value) {
-    case "임시저장":
-      return "임시저장된 문서가 없습니다.";
     case "결재중":
-      return "결재 진행중인 문서가 없습니다.";
+      return "결재 진행중인 수신 문서가 없습니다.";
     case "결재완료":
-      return "결재 완료된 문서가 없습니다.";
+      return "결재 완료된 수신 문서가 없습니다.";
     case "결재반려":
-      return "반려된 문서가 없습니다.";
+      return "반려된 수신 문서가 없습니다.";
     default:
-      return "등록된 결재 문서가 없습니다.";
+      return "수신된 결재 문서가 없습니다.";
   }
 };
 </script>
@@ -399,53 +393,50 @@ const getEmptyMessage = () => {
 .tab-button.active {
   color: #4066fa;
   border-bottom-color: #4066fa;
-  border-bottom: 2.5px solid #1976d2;
-  background: none;
+  font-weight: 600;
 }
 
 /* 검색 영역 */
 .search-section {
-  padding: 20px 24px;
+  padding: 24px 32px;
   border-bottom: 1px solid #e9ecef;
-  display: flex;
-  justify-content: flex-end;
+  background: white;
 }
 
 .search-box {
-  display: flex;
-  align-items: center;
-  background: #f8f9fa;
-  border-radius: 24px;
-  padding: 8px 16px;
-  width: 320px;
-  gap: 8px;
+  position: relative;
+  max-width: 400px;
 }
 
 .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 16px;
   height: 16px;
-  color: #969696;
+  color: #6c757d;
 }
 
 .search-box input {
-  flex: 1;
-  border: none;
-  background: none;
-  outline: none;
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
   font-size: 14px;
-  color: #495057;
+  transition: border-color 0.2s ease;
 }
 
-.search-box input::placeholder {
-  color: #969696;
+.search-box input:focus {
+  outline: none;
+  border-color: #4066fa;
 }
 
 /* 문서 목록 */
 .document-list {
-  padding: 24px;
+  padding: 24px 32px;
 }
 
-/* 날짜 그룹 */
 .date-group {
   margin-bottom: 32px;
 }
@@ -455,20 +446,22 @@ const getEmptyMessage = () => {
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  color: #6c757d;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
 }
 
 .calendar-icon {
   width: 16px;
   height: 16px;
+  color: #6c757d;
 }
 
 .date-text {
+  font-weight: 600;
+  color: #495057;
   font-size: 14px;
-  font-weight: 500;
 }
 
-/* 문서 카드 */
 .document-cards {
   display: flex;
   flex-direction: column;
@@ -480,19 +473,18 @@ const getEmptyMessage = () => {
   align-items: center;
   justify-content: space-between;
   padding: 20px;
-  background: white;
   border: 1px solid #e9ecef;
-  border-radius: 8px;
+  border-radius: 12px;
+  background: white;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .document-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-color: #4066fa;
+  box-shadow: 0 4px 12px rgba(64, 102, 250, 0.1);
 }
 
-/* 문서 정보 */
 .document-info {
   display: flex;
   align-items: center;
@@ -507,6 +499,23 @@ const getEmptyMessage = () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+.document-icon.type-approval {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.document-icon.type-request {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.document-icon.type-report {
+  background: #f3e5f5;
+  color: #7b1fa2;
 }
 
 .document-icon svg {
@@ -514,57 +523,29 @@ const getEmptyMessage = () => {
   height: 20px;
 }
 
-.type-approval {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.type-request {
-  background: #fff8e1;
-  color: #f57f17;
-}
-
-.type-report {
-  background: #f3e5f5;
-  color: #7b1fa2;
-}
-
-.type-default {
-  background: #f5f5f5;
-  color: #757575;
-}
-
 .document-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex: 1;
 }
 
 .document-title {
+  margin: 0 0 8px 0;
   font-size: 16px;
   font-weight: 600;
   color: #212529;
-  margin: 0;
 }
 
 .document-meta {
   display: flex;
-  gap: 12px;
-  font-size: 14px;
+  gap: 16px;
+  font-size: 13px;
   color: #6c757d;
 }
 
 .document-type {
-  color: #4066fa;
   font-weight: 500;
+  color: #4066fa;
 }
 
-.document-amount {
-  color: #212529;
-  font-weight: 600;
-}
-
-/* 액션 버튼 */
 .document-actions {
   display: flex;
   gap: 8px;
@@ -574,7 +555,7 @@ const getEmptyMessage = () => {
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -586,32 +567,32 @@ const getEmptyMessage = () => {
 }
 
 .approve-btn:hover {
-  background: #3056e0;
+  background: #3551d1;
 }
 
 .edit-btn {
-  background: #ffc107;
-  color: #212529;
+  background: #28a745;
+  color: white;
 }
 
 .edit-btn:hover {
-  background: #e0a800;
+  background: #218838;
 }
 
 .detail-btn {
-  background: #f8f9fa;
-  color: #495057;
-  border: 1px solid #dee2e6;
+  background: #6c757d;
+  color: white;
 }
 
 .detail-btn:hover {
-  background: #e9ecef;
+  background: #5a6268;
 }
 
 /* 빈 상태 */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 24px;
+  color: #6c757d;
 }
 
 .empty-icon {
@@ -621,34 +602,13 @@ const getEmptyMessage = () => {
 
 .empty-state h3 {
   margin: 0 0 8px 0;
-  color: #495057;
   font-size: 18px;
+  font-weight: 600;
+  color: #495057;
 }
 
 .empty-state p {
   margin: 0;
-  color: #6c757d;
   font-size: 14px;
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
-  .search-section {
-    justify-content: stretch;
-  }
-
-  .search-box {
-    width: 100%;
-  }
-
-  .document-card {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  .document-actions {
-    justify-content: center;
-  }
 }
 </style>
