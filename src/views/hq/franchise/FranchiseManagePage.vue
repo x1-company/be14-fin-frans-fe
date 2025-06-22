@@ -29,8 +29,13 @@ const handleTabChange = (tabValue) => {
 }
 
 const handleFranchiseSelect = (franchiseId) => {
-    selectedFranchiseId.value = franchiseId;
-    console.log('선택된 가맹점 ID:', franchiseId); // 디버깅용
+    if (selectedFranchiseId.value === franchiseId) {
+            selectedFranchiseId.value = null;
+            console.log('가맹점 선택 해제됨');
+        } else {
+            selectedFranchiseId.value = franchiseId;
+            console.log('선택된 가맹점 ID:', franchiseId);
+        }
 }
 </script>
 
