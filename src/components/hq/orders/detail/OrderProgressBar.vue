@@ -5,10 +5,11 @@
       :key="step.key"
       class="step"
       :class="{
-        active: idx === currentStep && !isRejected,
+        active: idx === currentStep && !isRejected && !isCanceled,
         completed: idx < currentStep,
         inactive: idx > currentStep,
-        rejected: isRejected && idx === currentStep
+        rejected: isRejected && idx === currentStep,
+        canceled: isCanceled && idx === currentStep
       }"
     >
       <div class="circle">
@@ -19,8 +20,14 @@
           class="icon"
         />
         <img
+          v-else-if="isCanceled && idx === 1"
+          :src="getIcon('RECEIPT_CANCELED', true)"
+          alt="canceled"
+          class="icon"
+        />
+        <img
           v-else
-          :src="getIcon(step.key, (idx === currentStep && !isRejected) || (idx < currentStep && !isRejected))"
+          :src="getIcon(step.key, (idx === currentStep && !isRejected && !isCanceled) || (idx < currentStep && !isRejected && !isCanceled))"
           :alt="step.label"
           class="icon"
         />
@@ -29,13 +36,14 @@
         class="label"
         :class="{
           rejected: isRejected && idx === currentStep,
-          active: idx === currentStep && !isRejected,
+          canceled: isCanceled && idx === currentStep,
+          active: idx === currentStep && !isRejected && !isCanceled,
           completed: idx < currentStep
         }"
       >
         {{ step.label }}
       </div>
-      <div v-if="idx < steps.length - 1" class="bar" :class="{ completed: idx < currentStep && !isRejected, rejected: isRejected && idx === 0 }"></div>
+      <div v-if="idx < steps.length - 1" class="bar" :class="{ completed: idx < currentStep && !isRejected && !isCanceled, rejected: isRejected && idx === 0, canceled: isCanceled && idx === 0 }"></div>
     </div>
   </div>
 </template>
@@ -48,10 +56,11 @@ const props = defineProps({
 });
 
 const isRejected = computed(() => props.status === 'REJECTED');
+const isCanceled = computed(() => props.status === 'RECEIPT_CANCELED');
 
 const steps = computed(() => [
   { key: 'REVIEWING', label: '검토 중' },
-  { key: isRejected.value ? 'REJECTED' : 'REVIEW_COMPLETED', label: isRejected.value ? '반려' : '검토 완료' },
+  { key: isRejected.value ? 'REJECTED' : isCanceled.value ? 'RECEIPT_CANCELED' : 'REVIEW_COMPLETED', label: isRejected.value ? '반려' : isCanceled.value ? '접수 취소' : '검토 완료' },
   { key: 'APPROVED', label: '결재 완료' },
   { key: 'DELIVERING', label: '배송 중' },
   { key: 'DELIVERED', label: '배송 완료' }
@@ -63,7 +72,8 @@ const statusToStep = {
   APPROVED: 2,
   DELIVERING: 3,
   DELIVERED: 4,
-  REJECTED: 1
+  REJECTED: 1,
+  RECEIPT_CANCELED: 1
 };
 
 const currentStep = computed(() => statusToStep[props.status] ?? 0);
@@ -71,6 +81,9 @@ const currentStep = computed(() => statusToStep[props.status] ?? 0);
 function getIcon(key, isActive) {
   if (key === 'REJECTED') {
     return new URL('@/assets/rejected.png', import.meta.url).href;
+  }
+  if (key === 'RECEIPT_CANCELED') {
+    return new URL('@/assets/REVIEW_CANCEL.png', import.meta.url).href;
   }
   // 파랑/흰색 아이콘 분기 필요시 파일명 규칙에 맞게 수정
   const suffix = isActive ? '-active' : '-inactive';
@@ -181,6 +194,16 @@ function getIcon(key, isActive) {
   font-weight: 700;
 }
 .bar.rejected {
+  background: #ff5252;
+}
+.canceled .circle {
+  background: #ff5252;
+}
+.canceled .label {
+  color: #ff5252;
+  font-weight: 700;
+}
+.bar.canceled {
   background: #ff5252;
 }
 </style>

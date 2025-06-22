@@ -1,6 +1,12 @@
 <template>
     <div class="order-actions">
-      <button class="btn cancel" @click="openCancelModal">주문 취소</button>
+      <button
+        v-if="props.status !== 'RECEIPT_CANCELED'"
+        class="btn cancel"
+        @click="openCancelModal"
+      >
+        주문 취소
+      </button>
         <button class="btn print" @click="handlePrint"><span class="icon">&#128424;</span> 주문서 출력</button>
         <button class="btn close" @click="handleClose"><span class="icon">&#10005;</span> 닫기</button>
         <div v-if="showCancelModal" class="modal-overlay">
@@ -31,6 +37,10 @@ import api from '@/lib/api';
 const props = defineProps({
   orderId: {
     type: [String, Number],
+    required: true
+  },
+  status: {
+    type: String,
     required: true
   }
 });
@@ -70,7 +80,7 @@ async function handleCancelConfirm() {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
-  margin: 60px -30px -70px 0;
+  margin: 60px 50px -70px 0;
 }
 .btn {
   padding: 8px 18px;
