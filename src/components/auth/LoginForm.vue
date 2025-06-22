@@ -47,7 +47,7 @@ const handleLogin = async () => {
         if (result.userType === 'HQ') {
           if (authStore.departmentName && authStore.departmentName.includes('영업')) {
             // 가맹점 메인 페이지로
-            // TODO: 실제 경로로 변경 필요
+            router.push("/hq/franchise")
           } else if (authStore.departmentName && authStore.departmentName.includes('물류')) {
             // 창고 관리 페이지로
             // TODO: 실제 경로로 변경 필요

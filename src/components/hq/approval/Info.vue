@@ -9,18 +9,15 @@
           <InfoHeader
             :title="title"
             :desc="desc"
-            :tabs="['대시보드', '전자결재', '결재템플릿']"
+            :tabs="['전자결재', '결재템플릿']"
             :activeTab="activeTabSwitch"
             @select-tab="updateTab"
             @update-breadcrumb="updateBreadcrumb"
           />
 
-          <!-- 대시보드 -->
-          <ApprovalDashBoard v-if="activeTabSwitch == 0" />
-
           <!-- 전자결재 -->
           <InfoForm
-            v-if="activeTabSwitch == 1 && !isRegistrationMode"
+            v-if="activeTabSwitch == 0 && !isRegistrationMode"
             :approvalList="approvalList"
             :activeTab="activeTab"
             :activeMenu="activeMenu"
@@ -29,14 +26,14 @@
 
           <!-- 결재 등록 -->
           <ApprovalRegistration
-            v-if="activeTabSwitch === 1 && isRegistrationMode"
+            v-if="activeTabSwitch === 0 && isRegistrationMode"
             :selectedTemplate="props.selectedTemplate"
             @cancel="(value) => handleToggleRegistrationMode(value)"
           />
 
           <!-- 결재템플릿 -->
           <ApprovalTemplate
-            v-if="activeTabSwitch === 2"
+            v-if="activeTabSwitch === 1"
             :selectedTemplate="props.selectedTemplate"
             :reorderChanges="props.reorderChanges"
             @template-deleted="handleTemplateDeleted"
@@ -57,25 +54,23 @@ import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
 import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
 import ApprovalTemplate from "@/components/hq/approval/ApprovalTemplate.vue";
-import ApprovalDashBoard from "./ApprovalDashBoard.vue";
 import ApprovalRegistration from "@/components/hq/approval/ApprovalRegistration.vue";
 
 const handleTabChange = (tabValue) => {
   emit("tab-change", tabValue); // InfoView.vue 로 전달
 };
 
-const breadcrumbItems = ref(["HOME", "결재관리", "대시보드"]);
+const breadcrumbItems = ref(["HOME", "결재관리", "전자결재"]);
 const updateBreadcrumb = (newItems) => {
   breadcrumbItems.value = newItems;
 };
 
 const tabInfo = ref([
-  { title: "대시보드", desc: "대시보드입니다." },
   { title: "전자결재", desc: "전자 결재를 관리할 수 있습니다." },
   { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." },
 ]);
 
-const activeTabSwitch = ref(0); // 기본값 0 (대시보드 탭)
+const activeTabSwitch = ref(0); // 기본값 0 (전자결재 탭)
 
 // props로 받은 activeTab 값이 변경될 때 activeTabSwitch 업데이트
 const props = defineProps({
@@ -92,11 +87,9 @@ const props = defineProps({
 watch(
   () => props.activeTab,
   (newValue) => {
-    if (newValue === "전자결재" || newValue === "1") {
+    if (newValue === "결재템플릿" || newValue === "1") {
       activeTabSwitch.value = 1;
-    } else if (newValue === "결재템플릿" || newValue === "2") {
-      activeTabSwitch.value = 2;
-    } else if (newValue === "대시보드" || newValue === "0") {
+    } else {
       activeTabSwitch.value = 0;
     }
   },
@@ -107,7 +100,6 @@ const title = computed(() => tabInfo.value[activeTabSwitch.value].title);
 const desc = computed(() => tabInfo.value[activeTabSwitch.value].desc);
 
 const emit = defineEmits([
-  // "update:activeTab",
   "tab-change",
   "active-tab-change",
   "toggle-registration-mode",
@@ -121,24 +113,25 @@ const emit = defineEmits([
 const updateTab = (newTabIndex) => {
   activeTabSwitch.value = newTabIndex;
   updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
-  // emit("update:activeTab", newTabIndex);
-  emit("active-tab-change", newTabIndex); // 부모에게 현재 탭 인덱스 전달
 
-  // 전자결재 탭을 선택할 때 기본값으로 "전체" 설정
+  // 결재템플릿 탭(인덱스 1)일 때는 currentTabIndex를 2로 설정
   if (newTabIndex === 1) {
-    emit("tab-change", "전체");
-    // 전자결재 탭을 클릭할 때만 등록 모드 비활성화
+    emit("active-tab-change", 2);
+  } else {
+    emit("active-tab-change", newTabIndex);
+  }
+
+  if (newTabIndex === 0) {
+    emit("tab-change", "상신-전체");
     emit("toggle-registration-mode", false);
   }
 };
 
 const handleToggleRegistrationMode = (value) => {
   if (value === true) {
-    // 결재 등록 모드로 전환할 때만 전자결재 탭으로 이동
-    activeTabSwitch.value = 1;
+    activeTabSwitch.value = 0;
     updateBreadcrumb(["HOME", "결재관리", "전자결재"]);
-    // emit("update:activeTab", 1);
-    emit("active-tab-change", 1);
+    emit("active-tab-change", 0);
   }
   emit("toggle-registration-mode", value);
 };
