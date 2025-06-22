@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import { useAuthStore } from "@/stores/auth";
 
 export const useNotificationStore = defineStore("notification", () => {
   // 상태
@@ -24,6 +25,13 @@ export const useNotificationStore = defineStore("notification", () => {
 
   // 액션
   const addNotification = (notification) => {
+    const authStore = useAuthStore();
+    
+    // 로그인되지 않은 상태에서는 알림 추가하지 않음
+    if (!authStore.accessToken || !authStore.decodedToken) {
+      return;
+    }
+    
     // 중복 알림 방지
     const exists = notifications.value.some(n => n.id === notification.id);
     if (!exists) {

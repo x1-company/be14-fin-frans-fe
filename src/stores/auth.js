@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { jwtDecode } from "jwt-decode";
 import { getDepartmentNameById, departmentMap, dutyMap, positionMap } from "@/enums/hqEnums";
 import notificationService from "@/lib/notificationService";
+import { useNotificationStore } from "@/stores/notification";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -62,8 +63,8 @@ export const useAuthStore = defineStore("auth", {
       // 개발 편의를 위한 로컬 스토리지 저장
       localStorage.setItem("accessToken", token);
 
-      // 토큰이 설정되면 SSE 연결 시작
-      if (token) {
+      // 토큰이 설정되고 유효한 경우에만 SSE 연결 시작
+      if (token && this.decodedToken) {
         try {
           console.log('SSE 연결 시도 중...');
           await notificationService.connect();
@@ -77,6 +78,8 @@ export const useAuthStore = defineStore("auth", {
           console.error('SSE 연결 실패:', error);
           // SSE 연결 실패해도 로그인은 계속 진행
         }
+      } else {
+        console.log('토큰이 유효하지 않아 SSE 연결을 건너뜁니다.');
       }
     },
     async clearAccessToken() {
@@ -89,8 +92,11 @@ export const useAuthStore = defineStore("auth", {
       }
 
       this.accessToken = "";
-
       localStorage.removeItem("accessToken");
+      
+      // 알림 스토어도 명시적으로 리셋
+      const notificationStore = useNotificationStore();
+      notificationStore.reset();
     },
   },
 });

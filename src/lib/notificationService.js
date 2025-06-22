@@ -24,8 +24,8 @@ class NotificationService {
       return;
     }
 
-    // 토큰이 없으면 연결하지 않음
-    if (!authStore.accessToken) {
+    // 토큰이 없거나 유효하지 않으면 연결하지 않음
+    if (!authStore.accessToken || !authStore.decodedToken) {
       return;
     }
 

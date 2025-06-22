@@ -10,6 +10,9 @@ import HRMView from "@/views/hq/user/InfoView.vue";
 import FranchisePage from "@/views/franchise/FranchisePage.vue";
 import FrOrderDetailPage from "@/views/franchise/orders/FrOrderDetailPage.vue";
 import SupplierPage from "@/views/auth/supplier/SupplierPage.vue";
+import { useAuthStore } from "@/stores/auth";
+import { useNotificationStore } from "@/stores/notification";
+import notificationService from "@/lib/notificationService";
 
 // 개발 환경에서만 테스트 페이지 import
 let TestNotificationView = null;
@@ -28,6 +31,33 @@ const router = createRouter({
       path: "/login",
       name: "login",
       component: LoginView,
+      beforeEnter: (to, from, next) => {
+        // 로그인 페이지 접근 시 토큰과 알림 정리
+        const authStore = useAuthStore();
+        const notificationStore = useNotificationStore();
+        
+        // 토큰이 있지만 유효하지 않은 경우 정리
+        if (authStore.accessToken && !authStore.decodedToken) {
+          console.log('유효하지 않은 토큰 발견, 정리 중...');
+          authStore.clearAccessToken();
+          notificationStore.reset();
+          notificationService.cleanup();
+        }
+        
+        // 이미 로그인된 상태라면 적절한 페이지로 리다이렉트
+        if (authStore.accessToken && authStore.decodedToken) {
+          // 사용자 타입에 따라 리다이렉트
+          if (authStore.franchiseId) {
+            next('/franchise');
+          } else if (authStore.supplierId) {
+            next('/supplier');
+          } else {
+            next('/approval'); // 추후 부서에 따라 수정 필요함
+          }
+        } else {
+          next();
+        }
+      }
     },
     {
       path: "/password-change",
@@ -98,6 +128,23 @@ const router = createRouter({
       component: TestNotificationView,
     }] : [])
   ],
+});
+
+// 전역 라우터 가드
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  
+  // 로그인 페이지가 아닌 경우에만 인증 확인
+  if (to.name !== 'login' && to.name !== 'password-change') {
+    // 토큰이 없거나 유효하지 않은 경우 로그인 페이지로 리다이렉트
+    if (!authStore.accessToken || !authStore.decodedToken) {
+      console.log('인증되지 않은 접근, 로그인 페이지로 리다이렉트');
+      next('/login');
+      return;
+    }
+  }
+  
+  next();
 });
 
 export default router;
