@@ -40,7 +40,7 @@
             </div>
             <div class="col-code">{{ item.code }}</div>
             <div class="col-date">{{ formatDate(item.createdAt) }}</div>
-            <div class="col-store">{{ item.name }}</div>
+            <div class="col-store">{{ item.franchiseName }}</div>
             <div class="col-amount">₩{{ formatAmount(item.totalAmount) }}</div>
           </div>
         </div>

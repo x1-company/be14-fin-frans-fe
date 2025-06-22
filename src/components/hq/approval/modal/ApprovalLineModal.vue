@@ -144,8 +144,8 @@
                       <div
                         class="user-card"
                         :class="
-                          element.type === 'COLLABORATOR'
-                            ? 'collaborator'
+                          element.type === 'COOPERATOR'
+                            ? 'cooperator'
                             : 'approver'
                         "
                       >
@@ -348,7 +348,7 @@ const getTypeByTab = (tab) => {
     case "결재":
       return "APPROVER";
     case "협조":
-      return "COLLABORATOR";
+      return "COOPERATOR";
     case "수신":
       return "RECEIVER";
     case "참조":
@@ -383,7 +383,7 @@ onMounted(() => {
 const getListByType = (type) => {
   switch (type) {
     case "APPROVER":
-    case "COLLABORATOR":
+    case "COOPERATOR":
       return approvalList;
     case "RECEIVER":
       return receiverList;
@@ -399,13 +399,8 @@ const closeModal = () => {
 };
 
 const confirmSelection = () => {
-  const approvalAndCollaboratorLines = approvalList.value.map((user) => ({
-    ...user,
-    type: user.type === "COLLABORATOR" ? "COLLABORATOR" : "APPROVER",
-  }));
-
   emit("confirm", {
-    approvalAndCollaboratorLines: approvalAndCollaboratorLines,
+    approvalAndCollaboratorLines: approvalList.value,
     receivers: receiverList.value,
     references: referenceList.value,
   });
@@ -428,7 +423,7 @@ const resetSelection = () => {
 function toggleType(idx) {
   // 결재/협조 타입 토글
   if (approvalList.value[idx].type === "APPROVER") {
-    approvalList.value[idx].type = "COLLABORATOR";
+    approvalList.value[idx].type = "COOPERATOR";
   } else {
     approvalList.value[idx].type = "APPROVER";
   }
@@ -901,10 +896,10 @@ const toggleUserSelection = (user) => {
 .user-card.approver .user-initial {
   background-color: #3b82f6;
 }
-.user-card.collaborator {
+.user-card.cooperator {
   border-left-color: #ec4899;
 }
-.user-card.collaborator .user-initial {
+.user-card.cooperator .user-initial {
   background-color: #ec4899;
 }
 .user-card.receiver {
@@ -932,7 +927,7 @@ const toggleUserSelection = (user) => {
   font-size: 15px;
   margin-right: 12px;
 }
-.user-card.collaborator .user-initial {
+.user-card.cooperator .user-initial {
   background: #fbcfe8;
   color: #f472b6;
 }
@@ -967,7 +962,7 @@ const toggleUserSelection = (user) => {
   border-color: #2563eb;
   color: #2563eb;
 }
-.user-card.collaborator .user-type {
+.user-card.cooperator .user-type {
   border-color: #f472b6;
   color: #f472b6;
 }
@@ -1008,7 +1003,7 @@ const toggleUserSelection = (user) => {
   color: #3b82f6;
 }
 
-.badge.collaborator {
+.badge.cooperator {
   background-color: #fdf2f8;
   color: #ec4899;
 }
