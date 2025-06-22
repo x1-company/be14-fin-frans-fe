@@ -4,14 +4,6 @@
     </div>
   </template>
 
-<!-- <script setup>
-const emit = defineEmits(['show-register-view']);
-
-function goToOrderRegister () {
-emit('show-register-view');
-}
-</script> -->
-
 <style>
 .order-register-btn {
     height: 36px;
@@ -24,4 +16,8 @@ emit('show-register-view');
     cursor: pointer;
     transition: background 0.2s;
   }
+
+.order-register-btn:hover {
+    background: #3453c7;
+}
 </style>

@@ -1,7 +1,7 @@
 <template>
-    <div class="order-actions">
+    <!-- <div class="order-actions"> -->
         <button class="btn close" @click="handleClose"><span class="icon">&#10005;</span> 닫기</button>
-    </div>
+    <!-- </div> -->
   </template>
 
 <script setup>
@@ -13,12 +13,12 @@ function handleClose() {
 </script>
 
 <style scoped>
-.order-actions {
+/* .order-actions {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
   margin: 60px -30px -70px 0;
-}
+} */
 .btn {
   padding: 8px 18px;
   border-radius: 8px;

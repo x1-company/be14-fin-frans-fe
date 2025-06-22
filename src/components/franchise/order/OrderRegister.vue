@@ -282,7 +282,7 @@ onMounted(() => {
 
 .header-right {
     display: flex;
-    gap: 8px;
+    gap: 15px;
 }
 
 .list-btn {
@@ -302,18 +302,23 @@ onMounted(() => {
 }
 
 .recent-order-btn {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
+    transition: background 0.15s, color 0.15s, border 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #1976d2;
+    border-color: #bbdefb;
 }
 
 .recent-order-btn:hover {
-    background: #5a6268;
+    background: #f5faff;
 }
 
 .search-section {
@@ -348,7 +353,8 @@ onMounted(() => {
     padding: 10px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 600;
     transition: background-color 0.2s;
 }
 
@@ -544,7 +550,7 @@ onMounted(() => {
 }
 
 .submit-btn {
-    background: #28a745;
+    background: #4066fa;
     color: white;
     border: none;
     padding: 12px 32px;
@@ -556,7 +562,7 @@ onMounted(() => {
 }
 
 .submit-btn:hover:not(:disabled) {
-    background: #218838;
+    background: #3553cc;
 }
 
 .submit-btn:disabled {
