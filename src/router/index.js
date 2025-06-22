@@ -9,7 +9,6 @@ import HRMView from "@/views/hq/user/InfoView.vue";
 import PurchaseInfoView from "@/views/hq/purchase/InfoView.vue";
 import FranchisePage from "@/views/franchise/FranchisePage.vue";
 import FrOrderDetailPage from "@/views/franchise/orders/FrOrderDetailPage.vue";
-import SupplierPage from "@/views/auth/supplier/SupplierPage.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useNotificationStore } from "@/stores/notification";
 import notificationService from "@/lib/notificationService";
@@ -132,7 +131,12 @@ const router = createRouter({
     {
       path: "/supplier",
       name: "supplier",
-      component: SupplierPage,
+      component: () => import('@/views/auth/supplier/SupplierEntryPoint.vue'),
+    },
+    {
+      path: '/hq/user/info',
+      name: 'HqUserInfo',
+      component: () => import('@/views/hq/user/InfoView.vue')
     },
     ...(import.meta.env.DEV ? [{
       path: "/test-notification",
