@@ -63,7 +63,7 @@ const statusText = computed(() => {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
   padding: 32px 24px;
-  margin: 20px 0 10px 60px;
+  margin: 20px 0 10px -20px;      /* 위치 변경 */
   margin-bottom: 24px;
   background: #fff;
   max-width: 100%;

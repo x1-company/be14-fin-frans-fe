@@ -80,7 +80,7 @@ async function handleCancelConfirm() {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
-  margin: 60px 50px -70px 0;
+  margin: 40px 55px -70px 0;
 }
 .btn {
   padding: 8px 18px;

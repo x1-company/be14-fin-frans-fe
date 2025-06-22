@@ -117,7 +117,7 @@ function getIcon(key, isActive) {
   padding: 32px 0 16px 0;
   max-width: 100%;
   width: 100%;
-  margin-left: 30px;
+  margin-left: -50px;       /* 위치 변경 */
 }
 
 .step {
