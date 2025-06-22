@@ -447,21 +447,22 @@ const handleApprovalLineConfirm = ({
   receivers,
   references,
 }) => {
+  const approvalAndCollaboratorList = approvalAndCollaboratorLines.map((u) => ({
+    ...u,
+    userId: u.id || u.userId,
+    type: u.type || (u.approverType ? u.approverType : "APPROVER"), // fallback 처리
+  }));
+
   const receiverList = receivers.map((u) => ({
     ...u,
-    type: "RECIPIENT",
     userId: u.id || u.userId,
+    type: u.type || "RECIPIENT", // fallback 처리
   }));
 
   const referenceList = references.map((u) => ({
     ...u,
-    type: "REFERENCE",
     userId: u.id || u.userId,
-  }));
-
-  const approvalAndCollaboratorList = approvalAndCollaboratorLines.map((u) => ({
-    ...u,
-    userId: u.id || u.userId,
+    type: u.type || "REFERENCE", // fallback 처리
   }));
 
   formData.value.approvalLines = [
@@ -516,12 +517,21 @@ const updateRemarksCount = () => {
   }
 };
 
-const onDragEnd = () => {
-  formData.value.approvalLines = [
-    ...approvalAndCollaboratorLines.value,
-    ...receiverLines.value,
-    ...referenceLines.value,
-  ];
+const onDragEnd = (event) => {
+  // approvalAndCollaboratorLines 배열은 드래그앤드롭 라이브러리에 의해 자동으로 순서가 변경됩니다.
+  // 이 변경된 순서를 기반으로 formData.approvalLines를 재구성합니다.
+  const newApprovalLines = approvalAndCollaboratorLines.value.map((line) => {
+    // approvalAndCollaboratorLines에 있는 요소들은 순서를 유지해야 합니다.
+    return formData.value.approvalLines.find(
+      (original) => original.id === line.id
+    );
+  });
+
+  const otherLines = formData.value.approvalLines.filter(
+    (line) => line.type !== "APPROVER" && line.type !== "COOPERATOR"
+  );
+
+  formData.value.approvalLines = [...newApprovalLines, ...otherLines];
 };
 
 const openFilePicker = () => {
@@ -534,13 +544,32 @@ const handleTempSave = async () => {
   try {
     isSubmitting.value = true;
 
-    const approvalLines = formData.value.approvalLines
-      .filter((line) => line.type === "APPROVER" || line.type === "COOPERATOR")
-      .map((line, index) => ({
-        userId: line.userId || line.id || 1,
-        seq: index + 1,
-        type: line.type,
-      }));
+    // ✅ 수정된 approvalLines 처리
+    const approvalLines = [];
+    let approverSeq = 1;
+    let cooperatorSeq = 1;
+
+    formData.value.approvalLines.forEach((line) => {
+      if (line.type === "APPROVER") {
+        approvalLines.push({
+          userId: line.userId || line.id,
+          seq: approverSeq++,
+          type: line.type,
+        });
+      } else if (line.type === "COOPERATOR") {
+        approvalLines.push({
+          userId: line.userId || line.id,
+          seq: cooperatorSeq++,
+          type: line.type,
+        });
+      } else {
+        approvalLines.push({
+          userId: line.userId || line.id,
+          seq: 0,
+          type: line.type,
+        });
+      }
+    });
 
     const files = formData.value.files.map((file) => ({
       name: file.name,
@@ -555,6 +584,8 @@ const handleTempSave = async () => {
       files: files,
       approvalDocuments: formData.value.approvalDocuments,
     };
+
+    console.log("임시저장 전송 데이터 확인:", requestData);
 
     const response = await api.post("/api/hq/approvals", requestData);
 
@@ -595,19 +626,40 @@ const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
 
-    const approvalLines = formData.value.approvalLines
-      .filter((line) => line.type === "APPROVER" || line.type === "COOPERATOR")
-      .map((line, index) => ({
-        userId: line.userId || line.id || 1,
-        seq: index + 1,
-        type: line.type,
-      }));
+    // ✅ 수정된 approvalLines 처리
+    const approvalLines = [];
+    let approverSeq = 1;
+    let cooperatorSeq = 1;
 
+    formData.value.approvalLines.forEach((line) => {
+      if (line.type === "APPROVER") {
+        approvalLines.push({
+          userId: line.userId || line.id,
+          seq: approverSeq++,
+          type: line.type,
+        });
+      } else if (line.type === "COOPERATOR") {
+        approvalLines.push({
+          userId: line.userId || line.id,
+          seq: cooperatorSeq++,
+          type: line.type,
+        });
+      } else {
+        approvalLines.push({
+          userId: line.userId || line.id,
+          seq: 0,
+          type: line.type, // REFERENCE or RECIPIENT
+        });
+      }
+    });
+
+    // 파일도 기존 그대로
     const files = formData.value.files.map((file) => ({
       name: file.name,
       url: file.url,
     }));
 
+    // 최종 전송 데이터
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,
@@ -616,6 +668,8 @@ const handleSubmit = async () => {
       files: files,
       approvalDocuments: formData.value.approvalDocuments,
     };
+
+    console.log("전송 데이터 확인:", requestData);
 
     const response = await api.post("/api/hq/approvals", requestData);
 

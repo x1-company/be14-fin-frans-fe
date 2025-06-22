@@ -239,15 +239,33 @@ const processAndSubmit = async (isRequest) => {
       title: formData.value.title,
       remarks: formData.value.remarks,
       isRequest: isRequest,
-      approvalLines: formData.value.approvalLines
-        .filter(
-          (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
-        )
-        .map((line, index) => ({
-          userId: line.userId || line.id,
-          seq: index + 1,
-          type: line.type,
-        })),
+      approvalLines: (() => {
+        const approvalLines = [];
+        let approverSeq = 1;
+        let cooperatorSeq = 1;
+        formData.value.approvalLines.forEach((line) => {
+          if (line.type === "APPROVER") {
+            approvalLines.push({
+              userId: line.userId || line.id,
+              seq: approverSeq++,
+              type: line.type,
+            });
+          } else if (line.type === "COOPERATOR") {
+            approvalLines.push({
+              userId: line.userId || line.id,
+              seq: cooperatorSeq++,
+              type: line.type,
+            });
+          } else {
+            approvalLines.push({
+              userId: line.userId || line.id,
+              seq: 0,
+              type: line.type, // RECIPIENT, REFERENCE 등
+            });
+          }
+        });
+        return approvalLines;
+      })(),
       files: uploadedFiles,
       approvalDocuments: {
         categoryType: selectedType.value,
