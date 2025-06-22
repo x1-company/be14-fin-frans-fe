@@ -840,100 +840,11 @@ defineExpose({
   margin-right: 2px;
 }
 
-.textarea-wrapper,
-.char-count-box {
-  all: unset;
-}
-
 /* 결재선 */
 .approval-line-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.approval-line-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.approver-name {
-}
-
-/* 파일 업로드 */
-.file-upload-area {
-  margin-bottom: 20px;
-}
-
-.file-upload-button {
-  padding: 8px 16px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.file-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.file-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.file-icon {
-  font-size: 20px;
-}
-
-.file-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.file-name {
-  font-weight: 500;
-  color: #374151;
-}
-
-.file-size {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.file-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.file-status {
-  font-size: 12px;
-  color: #10b981;
-}
-
-.remove-file {
-  background: none;
-  border: none;
-  color: #ef4444;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 4px;
 }
 
 .approval-line-row {
@@ -942,10 +853,12 @@ defineExpose({
   gap: 32px;
   align-items: flex-start;
 }
+
 .approval-line-left {
   flex: 2;
   min-width: 0;
 }
+
 .approval-line-right {
   flex: 1;
   min-width: 220px;
@@ -953,9 +866,11 @@ defineExpose({
   flex-direction: column;
   gap: 16px;
 }
+
 .approval-side-section {
   margin-bottom: 12px;
 }
+
 .approval-card {
   display: flex;
   align-items: center;
@@ -967,17 +882,21 @@ defineExpose({
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   position: relative;
 }
+
 .order-num {
   font-size: 16px;
   font-weight: 600;
   width: 24px;
 }
+
 .order-num.approver {
   color: #3b82f6;
 }
-.order-num.collaborator {
+
+.order-num.cooperator {
   color: #ec4899;
 }
+
 .circle-initial {
   width: 36px;
   height: 36px;
@@ -990,47 +909,58 @@ defineExpose({
   font-weight: 600;
   margin: 0 16px;
 }
+
 .circle-initial.approver {
   background-color: #3b82f6;
 }
-.circle-initial.collaborator {
+
+.circle-initial.cooperator {
   background-color: #ec4899;
 }
+
 .circle-initial.receiver {
   background-color: #f59e0b;
 }
+
 .circle-initial.reference {
   background-color: #8b5cf6;
 }
+
 .user-info {
   flex: 1;
 }
+
 .user-name {
   font-size: 15px;
   font-weight: 600;
   color: #111827;
 }
+
 .user-meta {
   font-size: 13px;
   color: #6b7280;
   margin-top: 2px;
 }
+
 .badge {
   font-size: 12px;
   font-weight: 500;
   padding: 4px 8px;
   border-radius: 6px;
   margin-left: 16px;
-  display: none; /* 기본적으로 숨김 */
+  display: none; /* 기본 숨김 */
 }
+
 .badge-approver {
   background-color: #eff6ff;
   color: #3b82f6;
 }
-.badge-collaborator {
+
+.badge-cooperator {
   background-color: #fdf2f8;
   color: #ec4899;
 }
+
 .remove-approver {
   background: none;
   border: none;
@@ -1039,15 +969,18 @@ defineExpose({
   cursor: pointer;
   padding: 0 8px;
 }
+
 .side-section-title {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 8px;
   color: #8b5cf6;
 }
+
 .side-section-title.receiver {
   color: #fbbf24;
 }
+
 .side-section-title.reference {
   color: #a78bfa;
 }
@@ -1060,6 +993,7 @@ defineExpose({
   border-radius: 8px;
   margin-top: 16px;
 }
+
 .no-approval-line p:first-child {
   font-weight: 600;
   margin-bottom: 8px;
@@ -1099,6 +1033,7 @@ defineExpose({
   border-color: #3b82f6;
   font-weight: 600;
 }
+
 .submit-button:hover:not(:disabled) {
   background: #2563eb;
   border-color: #2563eb;
@@ -1108,6 +1043,7 @@ defineExpose({
   background: #f3f4f6;
   color: #374151;
 }
+
 .temp-save-button:hover:not(:disabled) {
   background: #e5e7eb;
   border-color: #9ca3af;
