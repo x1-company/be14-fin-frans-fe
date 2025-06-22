@@ -12,12 +12,7 @@
                 <!-- 탭별 컨텐츠 영역 -->
                 <div class="tab-content">
                     <RequestedOrderList v-if="activeTabSwitch === 0" />
-
-                    <div v-if="activeTabSwitch === 1" class="content-section">
-                        <h3>납품목록 컨텐츠</h3>
-                        <p>납품목록 내용이 여기에 표시됩니다.</p>
-                        <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
-                    </div>
+                    <CompletedOrderList v-if="activeTabSwitch === 1" />
                 </div>
             </div>
         </div>
@@ -29,6 +24,7 @@ import { ref, computed, watch } from 'vue'
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from './InfoHeader.vue'
 import RequestedOrderList from '../deliveryList/RequestedOrderList.vue'
+import CompletedOrderList from '../deliveryList/CompletedOrderList.vue'
 
 const props = defineProps({
     activeTab: String
