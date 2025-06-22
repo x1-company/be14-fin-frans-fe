@@ -6,7 +6,7 @@
         <li @click="selectMenuItem('대시보드')">대시보드</li>
         <li @click="selectMenuItem('가맹점관리')">가맹점관리</li>
         <li @click="navigateToSupplier">공급처관리</li>
-        <li @click="selectMenuItem('구매관리')">구매관리</li>
+        <li @click="navigateToPurchase">구매관리</li>
         <li @click="navigateToWarehouse">창고관리</li>
         <li @click="navigateToApproval">결재관리</li>
       </ul>
@@ -63,6 +63,11 @@ const navigateToApproval = () => {
 const navigateToSupplier = () => {
   router.push("/supplier");
   emit("update-breadcrumb", ["HOME", "공급처관리"]);
+};
+
+const navigateToPurchase = () => {
+  router.push('/purchase');
+  emit('update-breadcrumb', ['HOME', '구매관리']);
 };
 
 const toggleNotificationBell = () => {

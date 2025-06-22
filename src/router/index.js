@@ -7,6 +7,7 @@ import WarehouseInfoView from "@/views/hq/warehouse/InfoView.vue";
 import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
 import OrderDetailPage from "@/views/hq/orders/OrderDetailPage.vue";
 import HRMView from "@/views/hq/user/InfoView.vue";
+import PurchaseInfoView from "@/views/hq/purchase/InfoView.vue";
 import FranchisePage from "@/views/franchise/FranchisePage.vue";
 import FrOrderDetailPage from "@/views/franchise/orders/FrOrderDetailPage.vue";
 import SupplierPage from "@/views/auth/supplier/SupplierPage.vue";
@@ -105,6 +106,11 @@ const router = createRouter({
       path: "/hrm",
       name: "hrm",
       component: HRMView,
+    },
+    {
+      path: "/purchase",
+      name: "purchase",
+      component: PurchaseInfoView,
     },
     {
       path: "/franchise",
