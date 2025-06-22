@@ -155,6 +155,9 @@
 <script setup>
 import { ref, computed } from "vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+import { useAuthStore } from "@/stores/auth";
+
+const auth = useAuthStore();
 
 const emit = defineEmits([
   "tab-change",
@@ -184,15 +187,15 @@ const selectedDocument = ref(null);
 const tabs = [
   { label: "전체", value: "전체" },
   { label: "협조대기", value: "협조대기" },
-  { label: "협조예정", value: "협조예정" },
+  { label: "협조요청", value: "협조요청" },
   { label: "내 협조 승인", value: "내 협조 승인" },
   { label: "내 협조 반려", value: "내 협조 반려" },
 ];
 
 // 상태 매핑
 const statusMap = {
-  PENDING: "협조대기",
-  SCHEDULED: "협조예정",
+  WAITING: "협조대기",
+  REQUESTED: "협조요청",
   APPROVED: "내 협조 승인",
   REJECTED: "내 협조 반려",
 };
@@ -207,7 +210,11 @@ const filteredDocuments = computed(() => {
       (key) => statusMap[key] === activeTab.value
     );
     if (statusKey) {
-      filtered = filtered.filter((doc) => doc.status === statusKey);
+      filtered = filtered.filter((doc) =>
+        doc.lines.some(
+          (line) => line.id === auth.userId && line.status === statusKey
+        )
+      );
     }
   }
 
@@ -221,7 +228,7 @@ const filteredDocuments = computed(() => {
         doc.deptName?.toLowerCase().includes(query) ||
         // 협조자명으로도 검색 가능
         doc.lines?.some((line) =>
-          line.cooperatorName?.toLowerCase().includes(query)
+          line.approverName?.toLowerCase().includes(query)
         )
     );
   }
@@ -347,8 +354,8 @@ const getEmptyMessage = () => {
   switch (activeTab.value) {
     case "협조대기":
       return "협조 대기중인 문서가 없습니다.";
-    case "협조예정":
-      return "협조 예정인 문서가 없습니다.";
+    case "협조요청":
+      return "협조 요청인 문서가 없습니다.";
     case "내 협조 승인":
       return "내가 승인한 협조 문서가 없습니다.";
     case "내 협조 반려":
