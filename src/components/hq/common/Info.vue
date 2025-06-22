@@ -23,9 +23,7 @@
                         <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
                     </div>
 
-                    <div v-if="activeTabSwitch === 2" class="content-section">
-                        <OrderList />
-                    </div>
+                    <OrderList v-if="activeTabSwitch === 2" :franchiseId="franchiseId" />
                     
                     <div v-if="activeTabSwitch === 3" class="content-section">
                         <h3>반품관리 컨텐츠</h3>
@@ -46,8 +44,9 @@ import OrderList from '../orders/list/OrderList.vue'
 
 
 const props = defineProps({
-    activeTab: String
-})
+    activeTab: String,
+    franchiseId: [String, Number]
+});
 
 const emit = defineEmits(['tab-change', "select-tab"])
 
