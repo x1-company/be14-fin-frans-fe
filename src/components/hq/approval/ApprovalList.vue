@@ -124,6 +124,13 @@
                   결재하기
                 </button>
                 <button
+                  v-else-if="canCollaborate(document)"
+                  class="action-btn collaborate-btn"
+                  @click.stop="collaborateDocument(document)"
+                >
+                  협조하기
+                </button>
+                <button
                   v-else-if="canEdit(document)"
                   class="action-btn edit-btn"
                   @click.stop="editDocument(document)"
@@ -131,6 +138,7 @@
                   수정하기
                 </button>
                 <button
+                  v-else-if="!canEdit(document)"
                   class="action-btn detail-btn"
                   @click.stop="viewDocument(document)"
                 >
@@ -280,22 +288,29 @@ const approveDocument = (document) => {
   isDetailViewMode.value = true;
 };
 
+const collaborateDocument = (document) => {
+  // emit("document-collaborate", document);
+  selectedDocument.value = document;
+  isDetailViewMode.value = true;
+};
+
 const editDocument = (document) => {
   emit("document-edit", document);
 };
 
 const canApprove = (document) => {
-  // 결재 진행중이고 결재선이 있는 경우
-  return (
-    document.status === "IN_PROGRESS" &&
-    document.lines &&
-    document.lines.some((line) => line.type === "APPROVER")
-  );
+  // 상신 탭에서는 결재하기 버튼을 표시하지 않음
+  return false;
 };
 
 const canEdit = (document) => {
-  // 임시저장 상태이거나 기안자가 본인인 경우 (실제로는 현재 사용자 정보와 비교해야 함)
-  return document.status === "DRAFT";
+  // 임시저장 탭에서만 수정하기 버튼 표시
+  return activeTab.value === "임시저장" && document.status === "DRAFT";
+};
+
+const canCollaborate = (document) => {
+  // 상신 탭에서는 협조하기 버튼을 표시하지 않음
+  return false;
 };
 
 const getDocumentTypeClass = (code) => {
@@ -587,6 +602,15 @@ const getEmptyMessage = () => {
 
 .approve-btn:hover {
   background: #3056e0;
+}
+
+.collaborate-btn {
+  background: #ec4899;
+  color: white;
+}
+
+.collaborate-btn:hover {
+  background: #db2777;
 }
 
 .edit-btn {
