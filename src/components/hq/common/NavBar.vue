@@ -10,17 +10,18 @@
         <li @click="navigateToWarehouse">창고관리</li>
         <li @click="navigateToApproval">결재관리</li>
       </ul>
-      <div class="notification-wrapper" @click="toggleNotificationBell">
+      <div class="notification-wrapper" ref="notificationWrapper">
         <img
           src="@/assets/notification.png"
           alt="알림"
           class="notification-icon"
+          @click="toggleNotificationBell"
+        />
+        <NotificationBell
+          :isOpen="isNotificationBellOpen"
+          @close="isNotificationBellOpen = false"
         />
       </div>
-      <NotificationBell
-        :isOpen="isNotificationBellOpen"
-        @close="isNotificationBellOpen = false"
-      />
       <UserInfo
         :userName="auth.userName"
         :positionName="auth.positionName"
@@ -32,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import UserInfo from "./UserInfo.vue";
@@ -43,6 +44,7 @@ const router = useRouter();
 const emit = defineEmits(["update-breadcrumb"]);
 
 const isNotificationBellOpen = ref(false);
+const notificationWrapper = ref(null);
 
 const selectMenuItem = (itemText) => {
   emit("update-breadcrumb", ["HOME", itemText]);
@@ -63,10 +65,26 @@ const navigateToSupplier = () => {
   emit("update-breadcrumb", ["HOME", "공급처관리"]);
 };
 
-const toggleNotificationBell = (e) => {
-  e.stopPropagation();
+const toggleNotificationBell = () => {
   isNotificationBellOpen.value = !isNotificationBellOpen.value;
 };
+
+const handleClickOutside = (event) => {
+  if (
+    notificationWrapper.value &&
+    !notificationWrapper.value.contains(event.target)
+  ) {
+    isNotificationBellOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <style scoped>
