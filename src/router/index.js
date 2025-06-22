@@ -14,6 +14,7 @@ import SupplierPage from "@/views/auth/supplier/SupplierPage.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useNotificationStore } from "@/stores/notification";
 import notificationService from "@/lib/notificationService";
+import FranchiseManagePage from "@/views/hq/franchise/FranchiseManagePage.vue";
 
 // 개발 환경에서만 테스트 페이지 import
 let TestNotificationView = null;
@@ -98,10 +99,16 @@ const router = createRouter({
       component: WarehouseInfoView,
     },
     {
-      path: "/orders",
-      name: "orders",
-      component: OrderInfoView,
+      path: '/hq/franchise',
+      name: 'FranchiseManagement',
+      component: FranchiseManagePage,
     },
+    
+    // {
+    //   path: "/orders",
+    //   name: "orders",
+    //   component: OrderInfoView,
+    // },
     {
       path: "/orders/:orderId",
       name: "OrderDetail",
