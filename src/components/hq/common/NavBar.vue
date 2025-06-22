@@ -61,7 +61,7 @@ const navigateToApproval = () => {
 };
 
 const navigateToSupplier = () => {
-  router.push("/supplier");
+  router.push("/hq-supplier");
   emit("update-breadcrumb", ["HOME", "공급처관리"]);
 };
 
