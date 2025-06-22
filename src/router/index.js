@@ -7,6 +7,7 @@ import WarehouseInfoView from "@/views/hq/warehouse/InfoView.vue";
 import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
 import OrderDetailPage from "@/views/hq/orders/OrderDetailPage.vue";
 import HRMView from "@/views/hq/user/InfoView.vue";
+import PurchaseInfoView from "@/views/hq/purchase/InfoView.vue";
 
 // 개발 환경에서만 테스트 페이지 import
 let TestNotificationView = null;
@@ -61,6 +62,11 @@ const router = createRouter({
       path: "/hrm",
       name: "hrm",
       component: HRMView,
+    },
+    {
+      path: "/purchase",
+      name: "purchase",
+      component: PurchaseInfoView,
     },
     ...(import.meta.env.DEV ? [{
       path: "/test-notification",
