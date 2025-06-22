@@ -15,25 +15,35 @@
             @update-breadcrumb="updateBreadcrumb"
           />
 
-          <!-- 전자결재 -->
+          <!-- 결재 상세 -->
+          <ApprovalDetail
+            v-if="approvalId && approvalDetail"
+            :document="approvalDetail"
+            @close-detail="$emit('close-detail')"
+            @refresh-list="$emit('refresh-list')"
+          />
+
+          <!-- 전자결재 목록 -->
           <InfoForm
-            v-if="activeTabSwitch == 0 && !isRegistrationMode"
+            v-else-if="activeTabSwitch == 0 && !isRegistrationMode"
             :approvalList="approvalList"
             :activeTab="activeTab"
             :activeMenu="activeMenu"
             @tab-change="handleTabChange"
+            @refresh-list="$emit('refresh-list')"
           />
 
           <!-- 결재 등록 -->
           <ApprovalRegistration
-            v-if="activeTabSwitch === 0 && isRegistrationMode"
+            v-else-if="activeTabSwitch === 0 && isRegistrationMode"
             :selectedTemplate="props.selectedTemplate"
             @cancel="(value) => handleToggleRegistrationMode(value)"
+            @approval-submitted="handleApprovalSubmitted"
           />
 
           <!-- 결재템플릿 -->
           <ApprovalTemplate
-            v-if="activeTabSwitch === 1"
+            v-else-if="activeTabSwitch === 1"
             :selectedTemplate="props.selectedTemplate"
             :reorderChanges="props.reorderChanges"
             @template-deleted="handleTemplateDeleted"
@@ -55,6 +65,7 @@ import InfoHeader from "@/components/hq/approval/InfoHeader.vue";
 import InfoForm from "@/components/hq/approval/InfoForm.vue";
 import ApprovalTemplate from "@/components/hq/approval/ApprovalTemplate.vue";
 import ApprovalRegistration from "@/components/hq/approval/ApprovalRegistration.vue";
+import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
 
 const handleTabChange = (tabValue) => {
   emit("tab-change", tabValue); // InfoView.vue 로 전달
@@ -81,6 +92,8 @@ const props = defineProps({
   handleTabChange: Function,
   isRegistrationMode: Boolean,
   reorderChanges: Array,
+  approvalId: [String, Number],
+  approvalDetail: Object,
 });
 
 // props.activeTab 값이 변경될 때 activeTabSwitch 업데이트
@@ -108,6 +121,9 @@ const emit = defineEmits([
   "reorder-mode-changed",
   "reorder-complete",
   "reorder-cancel",
+  "refresh-list",
+  "approval-submitted",
+  "close-detail",
 ]);
 
 const updateTab = (newTabIndex) => {
@@ -155,6 +171,10 @@ const handleReorderComplete = () => {
 
 const handleReorderCancel = () => {
   emit("reorder-cancel");
+};
+
+const handleApprovalSubmitted = (approvalData) => {
+  emit("approval-submitted", approvalData);
 };
 </script>
 
