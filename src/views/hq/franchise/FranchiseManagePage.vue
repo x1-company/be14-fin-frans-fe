@@ -2,9 +2,10 @@
     <div class="app">
         <NavBar />
         <div class="main-container">
-            <OrderSideBar />
+            <OrderSideBar @select-franchise="handleFranchiseSelect" />
         <Info 
           :activeTab="activeTab"
+          :selectedFranchiseId="selectedFranchiseId"
           @tab-change="handleTabChange"
         />
     </div>
@@ -12,19 +13,24 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import NavBar from '@/components/hq/common/NavBar.vue';
 import OrderSideBar from '@/components/hq/orders/OrderSideBar.vue';
 import Info from '@/components/hq/common/Info.vue';
 
 const route = useRoute();
-const router = useRouter();
+const selectedFranchiseId = ref(null);
 
 const activeTab = computed(() => route.query.tab || '대시보드');
 
 const handleTabChange = (tabValue) => {
-    router.push({ query: { tab: tabValue } });
+    console.log(tabValue)
+}
+
+const handleFranchiseSelect = (franchiseId) => {
+    selectedFranchiseId.value = franchiseId;
+    console.log('선택된 가맹점 ID:', franchiseId); // 디버깅용
 }
 </script>
 
