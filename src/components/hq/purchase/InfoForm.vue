@@ -10,20 +10,12 @@
           <div class="filter-group">
             <div class="filter-select-wrapper">
               <CalendarIcon class="filter-icon" />
-              <select class="filter-select">
-                <option>지난 30일</option>
-                <option>지난 7일</option>
-                <option>지난 90일</option>
+              <select v-model="dateFilter" class="filter-select">
+                <option value="30">지난 30일</option>
+                <option value="7">지난 7일</option>
+                <option value="90">지난 90일</option>
               </select>
             </div>
-            <select class="filter-select">
-              <option>전체</option>
-              <option>승인</option>
-              <option>요청 대기</option>
-              <option>검토 중</option>
-              <option>취소</option>
-              <option>반려</option>
-            </select>
           </div>
           <div class="search-group">
             <select v-model="searchType" class="search-type-select">
@@ -39,7 +31,7 @@
   
         <div class="purchase-tabs">
           <span 
-            v-for="(tab, idx) in ['전체', '대기 중인 구매 요청 목록', '진행중인 구매 요청 목록', '완료된 구매 요청 목록']" 
+            v-for="(tab, idx) in tabLabels" 
             :key="tab" 
             :class="['purchase-tab', { active: idx === activeTab }]"
             @click="changeTab(idx)"
@@ -98,67 +90,66 @@
   import api from '@/lib/api';
   import { Search as SearchIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
   
-  const props = defineProps({
-    activeTab: Number
-  });
-  
-  const emit = defineEmits(['change-tab']);
-  
+  const tabLabels = [
+    '전체',
+    '대기 중인 구매 요청 목록',
+    '진행중인 구매 요청 목록',
+    '완료된 구매 요청 목록',
+    '취소된 구매 요청 목록',
+    '반려된 구매 요청 목록'
+  ];
+  const statusMap = {
+    0: 'ALL',
+    1: 'REQUEST_PENDING',
+    2: 'REVIEWING',
+    3: 'APPROVED',
+    4: 'REQUEST_CANCEL',
+    5: 'REJECTED'
+  };
+  const activeTab = ref(0);
+  const dateFilter = ref('30');
+  const searchType = ref('title');
+  const searchQuery = ref('');
   const purchaseList = ref([]);
   const loading = ref(true);
   const error = ref(null);
-  
   const currentPage = ref(1);
   const totalPages = ref(1);
-  const searchQuery = ref('');
-  const searchType = ref('title');
   
-  const statusMap = {
-    // 0: 'ALL_EXCEPT_DRAFT', // '전체' 탭은 별도 API 사용
-    1: 'REQUEST_PENDING', // 대기 중
-    2: 'REVIEWING',       // 진행 중
-    3: 'APPROVED'         // 완료
-  };
+  function changeTab(idx) {
+    activeTab.value = idx;
+    currentPage.value = 1;
+    searchQuery.value = '';
+    fetchData();
+  }
   
   async function fetchData() {
     loading.value = true;
     error.value = null;
-  
     try {
       let response;
       const params = {
         page: currentPage.value - 1,
         size: 10
       };
-      
       let url;
-  
-      // Add status to params if a specific status tab is selected
-      if (props.activeTab !== 0) {
-        params.status = statusMap[props.activeTab];
-      }
-  
       if (searchQuery.value) {
         if (searchType.value === 'title') {
           params.title = searchQuery.value;
           url = '/api/hq/purchase/requests/search';
-        } else { // code
+        } else {
           params.code = searchQuery.value;
           url = '/api/hq/purchase/requests/search/code';
         }
       } else {
-        // '전체' 탭
-        if (props.activeTab === 0) {
+        if (activeTab.value === 0) {
           url = '/api/hq/purchase/requests';
-        } 
-        // 그 외 탭은 status와 함께
-        else {
+        } else {
+          params.status = statusMap[activeTab.value];
           url = '/api/hq/purchase/requests/status';
         }
       }
-  
       response = await api.get(url, { params });
-  
       const { data } = response;
       purchaseList.value = data.content.map(item => ({
         id: item.id,
@@ -208,20 +199,18 @@
     }
   }
   
-  function changeTab(tabIndex) {
-    emit('change-tab', tabIndex);
-  }
-  
   function handleSearch() {
     currentPage.value = 1;
     fetchData();
   }
   
-  watch(() => props.activeTab, () => {
+  watch(() => activeTab.value, () => {
     currentPage.value = 1;
     searchQuery.value = '';
     fetchData();
   });
+  
+  watch([dateFilter, searchType], fetchData);
   
   onMounted(fetchData);
   </script>
@@ -305,7 +294,7 @@
   }
   
   .filter-select {
-    padding: 10px 12px 10px 38px;
+    padding: 10px 36px 10px 38px !important;
     border: 1px solid #ddd;
     border-radius: 8px;
     background-color: #fff;
@@ -316,7 +305,7 @@
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 12px center;
+    background-position: right 16px center !important;
   }
   
   .search-group {
@@ -326,7 +315,7 @@
   }
   
   .search-type-select {
-      padding: 10px 12px;
+      padding: 10px 36px 10px 38px !important;
       border: 1px solid #ddd;
       border-radius: 8px;
       background-color: #fff;
@@ -334,7 +323,7 @@
       color: #555;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 12px center;
+      background-position: right 16px center !important;
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
