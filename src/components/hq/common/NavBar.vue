@@ -4,7 +4,7 @@
     <div class="navbar__right">
       <ul class="navbar__menu">
         <li @click="selectMenuItem('대시보드')">대시보드</li>
-        <li @click="selectMenuItem('가맹점관리')">가맹점관리</li>
+        <li @click="navigateToHqFranchise">가맹점관리</li>
         <li @click="navigateToSupplier">공급처관리</li>
         <li @click="navigateToPurchase">구매관리</li>
         <li @click="navigateToWarehouse">창고관리</li>
@@ -69,6 +69,11 @@ const navigateToPurchase = () => {
   router.push('/purchase');
   emit('update-breadcrumb', ['HOME', '구매관리']);
 };
+
+const navigateToHqFranchise = () => {
+  router.push('/hq/franchise');
+  emit('update-breadcrumb', ['HOME', '가맹점관리']);
+}
 
 const toggleNotificationBell = () => {
   isNotificationBellOpen.value = !isNotificationBellOpen.value;
