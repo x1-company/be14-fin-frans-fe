@@ -88,7 +88,7 @@
   import '@vuepic/vue-datepicker/dist/main.css';
   import api from '@/lib/api';
   import OrderRegisterButton from './button/OrderRegisterButton.vue';
-  
+
   const emit = defineEmits(['show-register-view']);
 
   const orders = ref([]);
@@ -100,25 +100,7 @@
   const totalPages = ref(1);
   const totalCount = ref(0);
   const loading = ref(false);
-  
-  const paginationPages = computed(() => {
-    const C = page.value;
-    const T = totalPages.value;
 
-    if (T <= 1) return [];
-    if (T <= 7) {
-      return Array.from({ length: T }, (_, i) => i + 1);
-    }
-    if (C < 5) {
-      return [1, 2, 3, 4, 5, '...', T];
-    }
-    if (C > T - 4) {
-      return [1, '...', T - 4, T - 3, T - 2, T - 1, T];
-    }
-    return [1, '...', C - 1, C, C + 1, '...', T];
-  });
-
-  // 탭 관련
   const tabs = [
     { label: '전체', value: 'all' },
     { label: '승인 대기중인 주문 목록', value: 'pending' },
@@ -132,9 +114,9 @@
     page.value = 1;
     fetchOrders();
   }
-  
+
   function statusText(status) {
-    switch(status) {
+    switch (status) {
       case 'WAITING_FOR_RECEIPT': return '접수 대기';
       case 'RECEIPT_CANCELED': return '접수 취소';
       case 'REJECTED': return '반려';
@@ -148,7 +130,7 @@
   }
 
   function orderStatusClass(status) {
-    switch(status) {
+    switch (status) {
       case 'WAITING_FOR_RECEIPT': return 'status-waiting';
       case 'RECEIPT_CANCELED': return 'status-canceled';
       case 'REJECTED': return 'status-reject';
@@ -160,7 +142,15 @@
       default: return '';
     }
   }
-  
+
+  // ✅ 날짜 포맷 함수 (UTC로 변환 안 하고 로컬 기준으로 유지)
+  function formatDateToYYYYMMDD(date) {
+    const year = date.getFullYear();
+    const month = (`0${date.getMonth() + 1}`).slice(-2);
+    const day = (`0${date.getDate()}`).slice(-2);
+    return `${year}-${month}-${day}`;
+  }
+
   async function fetchOrders() {
     loading.value = true;
     try {
@@ -168,11 +158,13 @@
       params.append('page', page.value);
       params.append('size', pageSize);
 
-      // 날짜 필터
-      if (searchDate.value && searchDate.value.length === 2) {
-        const [start, end] = searchDate.value;
-        if (start) params.append('startDate', start.toISOString().slice(0, 10));
-        if (end) params.append('endDate', end.toISOString().slice(0, 10));
+      // ✅ 날짜 필터 (로컬 기준 변환)
+      if (Array.isArray(searchDate.value) && searchDate.value.length === 2) {
+        const [start, end] = searchDate.value.map(d => new Date(d));
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          params.append('startDate', formatDateToYYYYMMDD(start));
+          params.append('endDate', formatDateToYYYYMMDD(end));
+        }
       }
 
       // 검색어 필터 (품목명, 주문번호)
@@ -194,15 +186,14 @@
       if (statusMap[tab]) {
         statusMap[tab].forEach(s => params.append('statusList', s));
       }
-      
+
       const { data } = await api.get('/api/franchise/orders', { params });
       orders.value = data.content;
       totalPages.value = data.totalPages;
       totalCount.value = data.totalCount;
     } catch (error) {
       console.error('Error fetching orders:', error);
-    }
-    finally {
+    } finally {
       loading.value = false;
     }
   }
@@ -214,8 +205,8 @@
 
   watch(page, fetchOrders);
   onMounted(fetchOrders);
-
 </script>
+
   
   <style scoped>
   .order-form {
