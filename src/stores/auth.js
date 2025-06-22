@@ -16,6 +16,9 @@ export const useAuthStore = defineStore("auth", {
         return null;
       }
     },
+    userId() {
+      return this.decodedToken?.userId || null
+    },
     userName() {
       return this.decodedToken?.userName || "";
     },
@@ -97,6 +100,10 @@ export const useAuthStore = defineStore("auth", {
       // 사용자 계정에 귀속되지 않는 accessToken과 팝업 기록만 지웁니다.
       // 사용자별 삭제 기록(localStorage)은 보존됩니다.
       localStorage.removeItem("accessToken");
+
+      // 알림 스토어도 명시적으로 리셋
+      const notificationStore = useNotificationStore();
+      notificationStore.reset();
       sessionStorage.clear();
     },
     forceLogoutAndClear() {
