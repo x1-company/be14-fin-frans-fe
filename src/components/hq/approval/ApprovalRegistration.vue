@@ -74,7 +74,7 @@ import ReturnApprovalForm from "./ReturnApprovalForm.vue";
 import PurchaseApprovalForm from "./PurchaseApprovalForm.vue";
 import api from "@/lib/api";
 
-const emit = defineEmits(["submit", "cancel"]);
+const emit = defineEmits(["submit", "cancel", "approval-submitted"]);
 const props = defineProps({
   selectedTemplate: { type: Object, default: null },
 });
@@ -281,6 +281,9 @@ const processAndSubmit = async (isRequest) => {
 
     const response = await api.post("/api/hq/approvals", requestData);
 
+    console.log("결재 등록 응답:", response.data);
+    console.log("결재 ID:", response.data?.data?.id);
+
     if (response.status === 200 || response.status === 201) {
       alert(
         isRequest
@@ -288,7 +291,16 @@ const processAndSubmit = async (isRequest) => {
           : "임시저장되었습니다."
       );
       resetFormData();
-      emit("cancel", true);
+
+      if (isRequest && response.data?.data?.id) {
+        // 결재 요청 성공 시 생성된 결재 ID를 전달
+        console.log("결재 상세 페이지로 이동:", response.data.data.id);
+        emit("approval-submitted", response.data.data);
+      } else {
+        // 임시저장이거나 ID가 없는 경우 기존 동작
+        console.log("임시저장 또는 ID 없음, 등록 모드 종료");
+        emit("cancel", true);
+      }
     } else {
       throw new Error(
         isRequest
