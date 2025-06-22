@@ -131,6 +131,12 @@
                   수정하기
                 </button>
                 <button
+                  v-else-if="
+                    !(
+                      activeTab === '결재대기' ||
+                      (activeTab === '전체' && canApprove(document))
+                    )
+                  "
                   class="action-btn detail-btn"
                   @click.stop="viewDocument(document)"
                 >
@@ -210,9 +216,9 @@ const filteredDocuments = computed(() => {
       (key) => statusMap[key] === activeTab.value
     );
     if (statusKey) {
-      filtered = filtered.filter((doc) => 
-        doc.lines.some(line => 
-          line.id === auth.userId && line.status === statusKey
+      filtered = filtered.filter((doc) =>
+        doc.lines.some(
+          (line) => line.id === auth.userId && line.status === statusKey
         )
       );
     }
@@ -292,11 +298,12 @@ const editDocument = (document) => {
 };
 
 const canApprove = (document) => {
-  // 결재 진행중이고 결재선이 있는 경우
-  return (
-    document.status === "PENDING" &&
-    document.lines &&
-    document.lines.some((line) => line.type === "APPROVER")
+  // 현재 로그인한 사용자가 이 문서의 결재선에 'APPROVER'로 있고 상태가 'WAITING'인 경우
+  return document.lines?.some(
+    (line) =>
+      line.id === auth.userId &&
+      line.type === "APPROVER" &&
+      line.status === "WAITING"
   );
 };
 
@@ -593,12 +600,13 @@ const getEmptyMessage = () => {
 }
 
 .detail-btn {
-  background: #6c757d;
-  color: white;
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
 }
 
 .detail-btn:hover {
-  background: #5a6268;
+  background: #e9ecef;
 }
 
 /* 빈 상태 */

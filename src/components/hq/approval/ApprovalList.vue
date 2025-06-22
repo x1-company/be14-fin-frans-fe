@@ -179,7 +179,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
 import ApproverDetail from "@/components/hq/approval/Detail/ApproverDetail.vue";
 
@@ -202,7 +202,8 @@ const props = defineProps({
 });
 
 // 반응형 데이터
-const activeTab = computed(() => props.activeTab);
+const localActiveTab = ref(props.activeTab);
+const activeTab = computed(() => localActiveTab.value);
 const searchQuery = ref("");
 
 // 상세 보기 모드 상태 관리
@@ -288,8 +289,8 @@ const groupedDocuments = computed(() => {
 
 // 메서드
 const selectTab = (tabValue) => {
-  // activeTab.value = tabValue;
-  emit("tab-change", tabValue);
+  // 부모 컴포넌트로 이벤트를 전달하지 않고 로컬 상태만 변경
+  localActiveTab.value = tabValue;
 };
 
 const handleSearch = () => {
@@ -328,8 +329,8 @@ const canApprove = (document) => {
 };
 
 const canEdit = (document) => {
-  // 임시저장 탭에서만 수정하기 버튼 표시
-  return activeTab.value === "임시저장" && document.status === "DRAFT";
+  // 임시저장 상태이면 수정하기 버튼 표시 (전체 탭에서도)
+  return document.status === "DRAFT";
 };
 
 const canCollaborate = (document) => {
@@ -414,6 +415,14 @@ const handleRefreshList = () => {
   // 부모 컴포넌트에 목록 새로고침 이벤트 전달
   emit("refresh-list");
 };
+
+// props.activeTab이 변경될 때 localActiveTab 업데이트
+watch(
+  () => props.activeTab,
+  (newTab) => {
+    localActiveTab.value = newTab;
+  }
+);
 </script>
 
 <style scoped>
