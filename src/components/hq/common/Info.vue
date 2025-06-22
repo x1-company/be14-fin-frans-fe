@@ -49,7 +49,7 @@ const props = defineProps({
     activeTab: String
 })
 
-const emit = defineEmits(['tab-change'])
+const emit = defineEmits(['tab-change', "select-tab"])
 
 const breadcrumbItems = ref(["HOME", "가맹점관리", "대시보드"])
 
@@ -113,7 +113,6 @@ const desc = computed(() => {
 const updateTab = (newTabIndex) => {
     activeTabSwitch.value = newTabIndex
     const selectedTab = tabs[newTabIndex]
-    console.log("HI")
     emit('tab-change', selectedTab)
 }
 </script>
