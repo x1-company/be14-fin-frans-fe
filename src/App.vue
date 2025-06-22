@@ -6,7 +6,7 @@
 </template>
 
 <script setup>
-import RealtimeNotificationContainer from '@/components/RealtimeNotificationContainer.vue';
+import RealtimeNotificationContainer from "@/components/RealtimeNotificationContainer.vue";
 </script>
 
 <style scoped>

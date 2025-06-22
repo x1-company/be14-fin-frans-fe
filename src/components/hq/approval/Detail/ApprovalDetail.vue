@@ -41,28 +41,26 @@
 
     <!-- Content -->
     <div v-if="activeTab === 'document'" class="detail-content">
-      <div v-if="documentContent">
+      <div v-if="document">
         <!-- Notice -->
-        <div class="notice-section">
+        <div v-if="noticeInfo" class="notice-section">
           <div class="notice-icon">ℹ️</div>
           <div class="notice-text">
             <strong>결재 요청</strong><br />
-            협조인 대리님, 3차 결재를 요청합니다. 아래 문서를 검토하시고 승인
-            또는 반려 처리 부탁드립니다.
+            {{ currentUserName }} {{ currentUserDutyName }}님,
+            {{ noticeInfo.line.seq }}차 {{ noticeInfo.typeText }}를 요청합니다.
+            아래 문서를 검토하시고 승인 또는 반려 처리 부탁드립니다.
           </div>
         </div>
 
         <!-- Document Title -->
         <div class="document-title-section">
-          <h1 class="document-title">{{ documentContent.title }}</h1>
+          <h1 class="document-title">{{ document.title }}</h1>
           <div class="status-badges">
             <span
-              :class="[
-                'status-badge',
-                getDocumentStatusClass(documentContent.status),
-              ]"
+              :class="['status-badge', getDocumentStatusClass(document.status)]"
             >
-              {{ getDocumentStatusText(documentContent.status) }}
+              {{ getDocumentStatusText(document.status) }}
             </span>
           </div>
         </div>
@@ -72,20 +70,24 @@
           <div class="info-grid">
             <div class="info-item">
               <label>작성일자:</label>
-              <span>{{ formatDate(documentContent.createdAt) }}</span>
+              <span>{{ formatDate(document.createdAt) }}</span>
             </div>
             <div class="info-item">
               <label>작성자:</label>
-              <span>{{ documentContent.drafterName }}</span>
+              <span>{{ document.drafterName }}</span>
             </div>
             <div class="info-item">
               <label>문서번호:</label>
-              <span>{{ documentContent.code }}</span>
+              <span>{{ document.code }}</span>
             </div>
             <div class="info-item">
               <label>총 금액:</label>
               <span class="amount">{{
-                formatAmount(calculateTotalAmount(documentContent.history))
+                formatAmount(
+                  calculateTotalAmount(
+                    documentContent?.history || document.history
+                  )
+                )
               }}</span>
             </div>
           </div>
@@ -93,7 +95,10 @@
 
         <!-- Order Details -->
         <div
-          v-if="documentContent.history && documentContent.history.length > 0"
+          v-if="
+            (documentContent?.history && documentContent.history.length > 0) ||
+            (document.history && document.history.length > 0)
+          "
           class="order-section"
         >
           <h2 class="section-title">주문 내역</h2>
@@ -112,8 +117,9 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="(item, index) in documentContent.history"
-                  :key="item.historyId"
+                  v-for="(item, index) in documentContent?.history ||
+                  document.history"
+                  :key="item.historyId || index"
                 >
                   <td>{{ index + 1 }}</td>
                   <td>{{ item.productName }}</td>
@@ -128,7 +134,11 @@
                 <tr class="total-row">
                   <td colspan="6" class="total-label">합 계</td>
                   <td class="total-amount">{{
-                    formatAmount(calculateTotalAmount(documentContent.history))
+                    formatAmount(
+                      calculateTotalAmount(
+                        documentContent?.history || document.history
+                      )
+                    )
                   }}</td>
                 </tr>
               </tfoot>
@@ -137,23 +147,29 @@
         </div>
 
         <!-- Remarks -->
-        <div v-if="documentContent.remarks" class="notes-section">
+        <div
+          v-if="documentContent?.remarks || document.remarks"
+          class="notes-section"
+        >
           <h2 class="section-title">비고</h2>
           <div class="notes-content">
-            <p>{{ documentContent.remarks }}</p>
+            <p>{{ documentContent?.remarks || document.remarks }}</p>
           </div>
         </div>
 
         <!-- Attachments -->
         <div
-          v-if="documentContent.files && documentContent.files.length > 0"
+          v-if="
+            (documentContent?.files && documentContent.files.length > 0) ||
+            (document.files && document.files.length > 0)
+          "
           class="attachments-section"
         >
           <h2 class="section-title">첨부파일</h2>
           <div class="attachment-list">
             <div
-              v-for="file in documentContent.files"
-              :key="file.id"
+              v-for="file in documentContent?.files || document.files"
+              :key="file.fileId || file.id"
               class="attachment-item"
             >
               <div class="file-icon">
@@ -165,16 +181,15 @@
                 </svg>
               </div>
               <div class="file-info">
-                <span class="file-name">{{ file.name }}</span>
-                <span class="file-size">{{ file.size }}</span>
+                <span class="file-name">{{ file.fileName || file.name }}</span>
               </div>
-              <button class="download-button">
+              <a :href="file.url" target="_blank" class="download-button">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7,10 12,15 17,10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -187,28 +202,21 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="action-section">
-      <button class="action-button reject-button" @click="rejectDocument">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-        반려
-      </button>
-      <button class="action-button approve-button" @click="approveDocument">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <polyline points="20,6 9,17 4,12" />
-        </svg>
-        승인
-      </button>
-    </div>
+    <ApprovalActionButtons
+      v-if="isCurrentUserTurn"
+      :document="document"
+      @refresh-list="$emit('refresh-list')"
+      @close-detail="goBack"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import api from "@/lib/api";
 import ApprovalLineDetail from "./ApprovalLineDetail.vue";
+import ApprovalActionButtons from "./ApprovalActionButtons.vue";
+import { useAuthStore } from "@/stores/auth";
 
 // 본문ㅡ결재선 탭 선택
 const activeTab = ref("document"); // 'document' or 'approvalLine'
@@ -224,6 +232,36 @@ const props = defineProps({
 
 const approvalLine = ref(null);
 const documentContent = ref(null);
+const authStore = useAuthStore();
+const currentUserId = computed(() => authStore.userId);
+const currentUserName = computed(() => authStore.userName);
+const currentUserDutyName = computed(() => authStore.dutyName);
+
+const isCurrentUserTurn = computed(() => {
+  if (!props.document || !currentUserId.value) {
+    return false;
+  }
+  return props.document.lines?.some(
+    (line) => line.id === currentUserId.value && line.status === "WAITING"
+  );
+});
+
+const noticeInfo = computed(() => {
+  if (!isCurrentUserTurn.value) {
+    return null;
+  }
+  const userLine = props.document.lines?.find(
+    (line) => line.id === currentUserId.value && line.status === "WAITING"
+  );
+  if (!userLine) {
+    return null;
+  }
+  const typeText = userLine.type === "APPROVER" ? "결재" : "협조";
+  return {
+    line: userLine,
+    typeText: typeText,
+  };
+});
 
 const fetchApprovalLine = async () => {
   if (!props.document?.approvalId) return;
@@ -234,7 +272,6 @@ const fetchApprovalLine = async () => {
     approvalLine.value = response.data;
   } catch (error) {
     console.error("결재선 정보를 불러오는 데 실패했습니다.", error);
-    // 에러 처리 (예: 사용자에게 알림)
   }
 };
 
@@ -254,57 +291,6 @@ const fetchDocumentContent = async () => {
 
 const goBack = () => {
   emit("close-detail");
-};
-
-const approveDocument = async () => {
-  if (confirm("이 문서를 승인하시겠습니까?")) {
-    try {
-      const response = await api.post(
-        `/api/hq/approvals/${props.document.approvalId}/approve`,
-        {
-          approvalId: props.document.approvalId,
-          status: "APPROVED",
-          remarks: "승인 처리되었습니다.",
-        }
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        alert("문서가 승인되었습니다.");
-        emit("approve", props.document);
-        emit("refresh-list");
-        goBack();
-      }
-    } catch (error) {
-      console.error("승인 처리 실패:", error);
-      alert("승인 처리에 실패했습니다. 다시 시도해주세요.");
-    }
-  }
-};
-
-const rejectDocument = async () => {
-  const reason = prompt("반려 사유를 입력해주세요:");
-  if (reason) {
-    try {
-      const response = await api.post(
-        `/api/hq/approvals/${props.document.approvalId}/reject`,
-        {
-          approvalId: props.document.approvalId,
-          status: "REJECTED",
-          remarks: reason,
-        }
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        alert("문서가 반려되었습니다.");
-        emit("reject", { document: props.document, reason });
-        emit("refresh-list");
-        goBack();
-      }
-    } catch (error) {
-      console.error("반려 처리 실패:", error);
-      alert("반려 처리에 실패했습니다. 다시 시도해주세요.");
-    }
-  }
 };
 
 const formatDate = (dateString) => {

@@ -22,6 +22,7 @@
             :activeTab="activeTab"
             :activeMenu="activeMenu"
             @tab-change="handleTabChange"
+            @refresh-list="$emit('refresh-list')"
           />
 
           <!-- 결재 등록 -->
@@ -108,6 +109,7 @@ const emit = defineEmits([
   "reorder-mode-changed",
   "reorder-complete",
   "reorder-cancel",
+  "refresh-list",
 ]);
 
 const updateTab = (newTabIndex) => {

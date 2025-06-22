@@ -3,6 +3,7 @@
     <ApprovalDetail
       v-if="isDetailViewMode"
       :document="selectedDocument"
+      :is-current-user-turn="canApprove(selectedDocument)"
       @close-detail="
         () => {
           isDetailViewMode.value = false;
@@ -10,6 +11,7 @@
         }
       "
     />
+
     <div v-else>
       <!-- 탭 메뉴 -->
       <div class="tab-container">

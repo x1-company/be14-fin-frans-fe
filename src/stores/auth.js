@@ -1,6 +1,11 @@
 import { defineStore } from "pinia";
 import { jwtDecode } from "jwt-decode";
-import { getDepartmentNameById, departmentMap, dutyMap, positionMap } from "@/enums/hqEnums";
+import {
+  getDepartmentNameById,
+  departmentMap,
+  dutyMap,
+  positionMap,
+} from "@/enums/hqEnums";
 import notificationService from "@/lib/notificationService";
 import { useNotificationStore } from "@/stores/notification";
 
@@ -17,7 +22,7 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     userId() {
-      return this.decodedToken?.userId || null
+      return this.decodedToken?.userId || null;
     },
     userName() {
       return this.decodedToken?.userName || "";
@@ -69,20 +74,20 @@ export const useAuthStore = defineStore("auth", {
       // 토큰이 설정되고 유효한 경우에만 SSE 연결 시작
       if (token && this.decodedToken) {
         try {
-          console.log('SSE 연결 시도 중...');
+          console.log("SSE 연결 시도 중...");
           await notificationService.connect();
-          console.log('SSE 연결 성공');
+          console.log("SSE 연결 성공");
 
           // 알림 목록도 함께 로드
-          console.log('알림 목록 로드 중...');
+          console.log("알림 목록 로드 중...");
           await notificationService.fetchNotifications();
-          console.log('알림 목록 로드 완료');
+          console.log("알림 목록 로드 완료");
         } catch (error) {
-          console.error('SSE 연결 실패:', error);
+          console.error("SSE 연결 실패:", error);
           // SSE 연결 실패해도 로그인은 계속 진행
         }
       } else {
-        console.log('토큰이 유효하지 않아 SSE 연결을 건너뜁니다.');
+        console.log("토큰이 유효하지 않아 SSE 연결을 건너뜁니다.");
       }
     },
     async clearAccessToken() {
@@ -90,13 +95,13 @@ export const useAuthStore = defineStore("auth", {
       try {
         // cleanup이 notificationStore.reset()을 호출하여 인메모리 상태를 정리합니다.
         await notificationService.cleanup();
-        console.log('SSE 연결 정리 완료');
+        console.log("SSE 연결 정리 완료");
       } catch (error) {
-        console.error('SSE 연결 정리 실패:', error);
+        console.error("SSE 연결 정리 실패:", error);
       }
 
       this.accessToken = "";
-      
+
       // 사용자 계정에 귀속되지 않는 accessToken과 팝업 기록만 지웁니다.
       // 사용자별 삭제 기록(localStorage)은 보존됩니다.
       localStorage.removeItem("accessToken");
@@ -108,16 +113,16 @@ export const useAuthStore = defineStore("auth", {
     },
     forceLogoutAndClear() {
       console.warn("--- 강제 로그아웃 및 전체 데이터 클리어 실행 ---");
-      
+
       // 이 함수는 모든 localStorage와 sessionStorage를 지우므로,
       // 사용자별 삭제 기록까지 완벽하게 초기화합니다.
-      const notificationService = require('@/lib/notificationService').default;
+      const notificationService = require("@/lib/notificationService").default;
       notificationService.disconnect();
 
       localStorage.clear();
       sessionStorage.clear();
 
-      window.location.href = '/login';
+      window.location.href = "/login";
     },
   },
 });
