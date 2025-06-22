@@ -18,7 +18,7 @@
     <!-- 드롭다운 메뉴 -->
     <div v-if="isDropdownOpen" class="dropdown-menu">
       <div class="dropdown-item" @click="handleMenuClick('마이 페이지')">
-        마이 페이지
+        내 정보
       </div>
       <div class="dropdown-item" @click="handleMenuClick('서명 관리')">
         서명 관리

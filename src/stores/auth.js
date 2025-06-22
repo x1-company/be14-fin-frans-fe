@@ -16,6 +16,9 @@ export const useAuthStore = defineStore("auth", {
         return null;
       }
     },
+    userId() {
+      return this.decodedToken?.userId || null
+    },
     userName() {
       return this.decodedToken?.userName || "";
     },
@@ -93,7 +96,7 @@ export const useAuthStore = defineStore("auth", {
 
       this.accessToken = "";
       localStorage.removeItem("accessToken");
-      
+
       // 알림 스토어도 명시적으로 리셋
       const notificationStore = useNotificationStore();
       notificationStore.reset();

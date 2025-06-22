@@ -155,6 +155,9 @@
 <script setup>
 import { ref, computed } from "vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+import { useAuthStore } from "@/stores/auth";
+
+const auth = useAuthStore();
 
 const emit = defineEmits([
   "tab-change",
@@ -191,7 +194,7 @@ const tabs = [
 
 // 상태 매핑
 const statusMap = {
-  PENDING: "결재대기",
+  WAITING: "결재대기",
   REQUESTED: "결재요청",
   APPROVED: "내 결재 승인",
   REJECTED: "내 결재 반려",
@@ -207,7 +210,11 @@ const filteredDocuments = computed(() => {
       (key) => statusMap[key] === activeTab.value
     );
     if (statusKey) {
-      filtered = filtered.filter((doc) => doc.status === statusKey);
+      filtered = filtered.filter((doc) => 
+        doc.lines.some(line => 
+          line.id === auth.userId && line.status === statusKey
+        )
+      );
     }
   }
 

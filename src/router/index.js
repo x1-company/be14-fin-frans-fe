@@ -35,7 +35,7 @@ const router = createRouter({
         // 로그인 페이지 접근 시 토큰과 알림 정리
         const authStore = useAuthStore();
         const notificationStore = useNotificationStore();
-        
+
         // 토큰이 있지만 유효하지 않은 경우 정리
         if (authStore.accessToken && !authStore.decodedToken) {
           console.log('유효하지 않은 토큰 발견, 정리 중...');
@@ -43,7 +43,7 @@ const router = createRouter({
           notificationStore.reset();
           notificationService.cleanup();
         }
-        
+
         // 이미 로그인된 상태라면 적절한 페이지로 리다이렉트
         if (authStore.accessToken && authStore.decodedToken) {
           // 사용자 타입에 따라 리다이렉트
@@ -65,8 +65,8 @@ const router = createRouter({
       component: PasswordChange,
     },
     {
-      path: "/supplier",
-      name: "supplier",
+      path: "/hq-supplier",
+      name: "hq-supplier",
       component: SupplierInfoView,
     },
     {
@@ -133,7 +133,7 @@ const router = createRouter({
 // 전역 라우터 가드
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
-  
+
   // 로그인 페이지가 아닌 경우에만 인증 확인
   if (to.name !== 'login' && to.name !== 'password-change') {
     // 토큰이 없거나 유효하지 않은 경우 로그인 페이지로 리다이렉트
@@ -143,7 +143,7 @@ router.beforeEach((to, from, next) => {
       return;
     }
   }
-  
+
   next();
 });
 
