@@ -4,7 +4,6 @@ import SupplierInfoView from "@/views/hq/supplier/InfoView.vue";
 import PasswordChange from "@/views/auth/PasswordChange.vue";
 import ApprovalListView from "@/views/hq/approval/InfoView.vue";
 import WarehouseInfoView from "@/views/hq/warehouse/InfoView.vue";
-import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
 import OrderDetailPage from "@/views/hq/orders/OrderDetailPage.vue";
 import HRMView from "@/views/hq/user/InfoView.vue";
 import PurchaseInfoView from "@/views/hq/purchase/InfoView.vue";
@@ -102,14 +101,8 @@ const router = createRouter({
       name: 'FranchiseManagement',
       component: FranchiseManagePage,
     },
-    
-    // {
-    //   path: "/orders",
-    //   name: "orders",
-    //   component: OrderInfoView,
-    // },
     {
-      path: "/orders/:orderId",
+      path: "/hq/franchise/orders/:orderId",
       name: "OrderDetail",
       component: OrderDetailPage,
       props: true,

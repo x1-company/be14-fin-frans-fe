@@ -51,7 +51,7 @@
             <tr v-for="(order, idx) in orders" :key="order.orderId">
               <td>{{ idx + 1 + (page-1)*pageSize }}</td>
               <td>
-                <router-link :to="`/franchise/orders/${order.orderId}`" class="order-link">
+                <router-link :to="`/hq/franchise/orders/${order.orderId}`" class="order-link">
                   {{ order.orderCode }}
                 </router-link>
               </td>
@@ -81,135 +81,126 @@
   </template>
   
   <script setup>
-  import { ref, computed, watch, onMounted } from 'vue';
-  import { RouterLink } from 'vue-router';
-  import Datepicker from '@vuepic/vue-datepicker';
-  import '@vuepic/vue-datepicker/dist/main.css';
-  import api from '@/lib/api';
-  
-  const emit = defineEmits(['show-register-view']);
+    import { ref, computed, watch, onMounted } from 'vue';
+    import { RouterLink } from 'vue-router';
+    import Datepicker from '@vuepic/vue-datepicker';
+    import '@vuepic/vue-datepicker/dist/main.css';
+    import api from '@/lib/api';
 
-  const orders = ref([]);
-  const search = ref('');
-  const searchDate = ref(null);
-  const filter = ref('itemName');
-  const page = ref(1);
-  const pageSize = 10;
-  const totalPages = ref(1);
-  const totalCount = ref(0);
-  const loading = ref(false);
-  
-  const paginationPages = computed(() => {
-    const C = page.value;
-    const T = totalPages.value;
+    const emit = defineEmits(['show-register-view']);
 
-    if (T <= 1) return [];
-    if (T <= 7) {
-      return Array.from({ length: T }, (_, i) => i + 1);
-    }
-    if (C < 5) {
-      return [1, 2, 3, 4, 5, '...', T];
-    }
-    if (C > T - 4) {
-      return [1, '...', T - 4, T - 3, T - 2, T - 1, T];
-    }
-    return [1, '...', C - 1, C, C + 1, '...', T];
-  });
+    const orders = ref([]);
+    const search = ref('');
+    const searchDate = ref(null);
+    const filter = ref('itemName');
+    const page = ref(1);
+    const pageSize = 10;
+    const totalPages = ref(1);
+    const totalCount = ref(0);
+    const loading = ref(false);
 
-  // 탭 관련
-  const tabs = [
+    const tabs = [
     { label: '전체', value: 'all' },
     { label: '승인 대기중인 주문 목록', value: 'pending' },
     { label: '진행중인 주문 목록', value: 'progress' },
     { label: '완료된 주문 목록', value: 'complete' },
-  ];
-  const activeTab = ref(0);
+    ];
+    const activeTab = ref(0);
 
-  function selectTab(idx) {
+    function selectTab(idx) {
     activeTab.value = idx;
     page.value = 1;
     fetchOrders();
-  }
-  
-  function statusText(status) {
-    switch(status) {
-      case 'REJECTED': return '반려';
-      case 'REVIEWING': return '검토 중';
-      case 'REVIEW_COMPLETED': return '검토 완료';
-      case 'APPROVED': return '결재 완료';
-      case 'DELIVERING': return '배송 중';
-      case 'DELIVERED': return '배송 완료';
-      default: return status;
     }
-  }
 
-  function orderStatusClass(status) {
-    switch(status) {
-      case 'REJECTED': return 'status-reject';
-      case 'REVIEWING': return 'status-reviewing';
-      case 'REVIEW_COMPLETED': return 'status-reviewed';
-      case 'APPROVED': return 'status-approved';
-      case 'DELIVERING': return 'status-delivering';
-      case 'DELIVERED': return 'status-delivered';
-      default: return '';
+    function statusText(status) {
+    switch (status) {
+        case 'REJECTED': return '반려';
+        case 'REVIEWING': return '검토 중';
+        case 'REVIEW_COMPLETED': return '검토 완료';
+        case 'APPROVED': return '결재 완료';
+        case 'DELIVERING': return '배송 중';
+        case 'DELIVERED': return '배송 완료';
+        default: return status;
     }
-  }
-  
-  async function fetchOrders() {
+    }
+
+    function orderStatusClass(status) {
+    switch (status) {
+        case 'REJECTED': return 'status-reject';
+        case 'REVIEWING': return 'status-reviewing';
+        case 'REVIEW_COMPLETED': return 'status-reviewed';
+        case 'APPROVED': return 'status-approved';
+        case 'DELIVERING': return 'status-delivering';
+        case 'DELIVERED': return 'status-delivered';
+        default: return '';
+    }
+    }
+
+    // ✅ 날짜 포맷 유틸 (UTC 밀림 방지)
+    function formatDateToYYYYMMDD(date) {
+    const year = date.getFullYear();
+    const month = (`0${date.getMonth() + 1}`).slice(-2);
+    const day = (`0${date.getDate()}`).slice(-2);
+    return `${year}-${month}-${day}`;
+    }
+
+    async function fetchOrders() {
     loading.value = true;
     try {
-      const params = new URLSearchParams();
-      params.append('page', page.value);
-      params.append('size', pageSize);
+        const params = new URLSearchParams();
+        params.append('page', page.value);
+        params.append('size', pageSize);
 
-      // 날짜 필터
-      if (searchDate.value && searchDate.value.length === 2) {
-        const [start, end] = searchDate.value;
-        if (start) params.append('startDate', start.toISOString().slice(0, 10));
-        if (end) params.append('endDate', end.toISOString().slice(0, 10));
-      }
-
-      // 검색어 필터 (품목명, 주문번호)
-      if (search.value) {
-        if (filter.value === 'orderNo') {
-          params.append('code', search.value);
-        } else if (filter.value === 'itemName') {
-          params.append('product', search.value);
+        // ✅ 로컬 기준 날짜 필터
+        if (Array.isArray(searchDate.value) && searchDate.value.length === 2) {
+        const [start, end] = searchDate.value.map(d => new Date(d));
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+            params.append('startDate', formatDateToYYYYMMDD(start));
+            params.append('endDate', formatDateToYYYYMMDD(end));
         }
-      }
+        }
 
-      // 상태 필터 (탭)
-      const tab = tabs[activeTab.value].value;
-      const statusMap = {
+        // 검색어 필터 (품목명, 주문번호)
+        if (search.value) {
+        if (filter.value === 'orderNo') {
+            params.append('code', search.value);
+        } else if (filter.value === 'itemName') {
+            params.append('product', search.value);
+        }
+        }
+
+        // 상태 필터 (탭)
+        const tab = tabs[activeTab.value].value;
+        const statusMap = {
         pending: ['REVIEWING'],
         progress: ['REVIEW_COMPLETED', 'APPROVED', 'DELIVERING'],
         complete: ['DELIVERED', 'REJECTED'],
-      };
-      if (statusMap[tab]) {
+        };
+        if (statusMap[tab]) {
         statusMap[tab].forEach(s => params.append('statusList', s));
-      }
-      
-      const { data } = await api.get('/api/hq/orders', { params });
-      orders.value = data.content;
-      totalPages.value = data.totalPages;
-      totalCount.value = data.totalCount;
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    }
-    finally {
-      loading.value = false;
-    }
-  }
+        }
 
-  watch([search, searchDate, filter], () => {
+        const { data } = await api.get('/api/hq/orders', { params });
+        orders.value = data.content;
+        totalPages.value = data.totalPages;
+        totalCount.value = data.totalCount;
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+    } finally {
+        loading.value = false;
+    }
+    }
+
+    watch([search, searchDate, filter], () => {
     page.value = 1;
     fetchOrders();
-  });
+    });
 
-  watch(page, fetchOrders);
-  onMounted(fetchOrders);
-
+    watch(page, fetchOrders);
+    onMounted(fetchOrders);
 </script>
+
   
   <style scoped>
   .order-form {

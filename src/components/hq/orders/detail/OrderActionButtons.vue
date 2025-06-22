@@ -204,7 +204,7 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
 }
 
 function handleClose() {
-  router.push('/orders');
+  router.push({ path: '/hq/franchise', query: { tab: '주문관리' } });
 }
 
 </script>
