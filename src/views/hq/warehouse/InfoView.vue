@@ -2,8 +2,8 @@
   <div class="app">
     <NavBar />
     <div class="main-container">
-      <SideBar @select-warehouse="handleWarehouseSelect" />
-      <Info :warehouse="selectedWarehouse" />
+      <SideBar v-if="activeTab === 0" @select-warehouse="handleWarehouseSelect" />
+      <Info :warehouse="selectedWarehouse" @tab-changed="updateActiveTab" />
     </div>
   </div>
 </template>
@@ -14,11 +14,15 @@ import NavBar from "@/components/hq/common/NavBar.vue";
 import SideBar from "@/components/hq/warehouse/SideBar.vue";
 import Info from "@/components/hq/warehouse/Info.vue";
 
-const selectedWarehouse = ref(null);
+const selectedWarehouse = ref({ id: 1, name: '기본 창고' }); // 기본값 설정
+const activeTab = ref(0);
 
 const handleWarehouseSelect = (warehouse) => {
   selectedWarehouse.value = warehouse;
-  console.log("선택된 창고:", warehouse);
+};
+
+const updateActiveTab = (tabIndex) => {
+  activeTab.value = tabIndex;
 };
 </script>
 

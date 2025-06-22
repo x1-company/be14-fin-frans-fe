@@ -6,8 +6,9 @@
       class="step"
       :class="{
         active: idx === currentStep && !isRejected,
-        inactive: idx !== currentStep && !isRejected,
-        rejected: isRejected && idx === 1
+        completed: idx < currentStep,
+        inactive: idx > currentStep,
+        rejected: isRejected && idx === currentStep
       }"
     >
       <div class="circle">
@@ -19,18 +20,22 @@
         />
         <img
           v-else
-          :src="getIcon(step.key, idx === currentStep && !isRejected)"
+          :src="getIcon(step.key, (idx === currentStep && !isRejected) || (idx < currentStep && !isRejected))"
           :alt="step.label"
           class="icon"
         />
       </div>
       <div
         class="label"
-        :class="{ rejected: isRejected && idx === 1, active: idx === currentStep && !isRejected }"
+        :class="{
+          rejected: isRejected && idx === currentStep,
+          active: idx === currentStep && !isRejected,
+          completed: idx < currentStep
+        }"
       >
         {{ step.label }}
       </div>
-      <div v-if="idx < steps.length - 1" class="bar"></div>
+      <div v-if="idx < steps.length - 1" class="bar" :class="{ completed: idx < currentStep && !isRejected, rejected: isRejected && idx === 0 }"></div>
     </div>
   </div>
 </template>
@@ -42,13 +47,15 @@ const props = defineProps({
   status: String
 });
 
-const steps = [
+const isRejected = computed(() => props.status === 'REJECTED');
+
+const steps = computed(() => [
   { key: 'REVIEWING', label: '검토 중' },
-  { key: 'REVIEW_COMPLETED', label: '검토 완료' },
+  { key: isRejected.value ? 'REJECTED' : 'REVIEW_COMPLETED', label: isRejected.value ? '반려' : '검토 완료' },
   { key: 'APPROVED', label: '결재 완료' },
-  { key: 'DELIVERING', label: '배송 준비 중' },
+  { key: 'DELIVERING', label: '배송 중' },
   { key: 'DELIVERED', label: '배송 완료' }
-];
+]);
 
 const statusToStep = {
   REVIEWING: 0,
@@ -60,7 +67,6 @@ const statusToStep = {
 };
 
 const currentStep = computed(() => statusToStep[props.status] ?? 0);
-const isRejected = computed(() => props.status === 'REJECTED');
 
 function getIcon(key, isActive) {
   if (key === 'REJECTED') {
@@ -87,14 +93,20 @@ function getIcon(key, isActive) {
 
 <style scoped>
 .progress-bar {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  margin: 100px 0 0 70px;
+  margin: 100px 0 10px 60px;
   background: #fff;
-  border-radius: 12px;
   padding: 32px 0 16px 0;
+  max-width: 100%;
+  width: 100%;
+  margin-left: 30px;
 }
+
 .step {
   display: flex;
   flex-direction: column;
@@ -103,15 +115,17 @@ function getIcon(key, isActive) {
   flex: 1;
 }
 .circle {
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  background: #f1f3f5;
+  background: #e9ecef;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
   transition: background 0.2s;
+  position: relative;
+  z-index: 1;
 }
 .icon {
   width: 32px;
@@ -127,25 +141,34 @@ function getIcon(key, isActive) {
 }
 .bar {
   position: absolute;
-  top: 28px;
-  left: 100%;
-  width: 120px;
-  height: 4px;
+  top: 40%;
+  left: 50%;
+  width: calc(100% - 28px);
+  height: 3px;
   background: #e9ecef;
   z-index: 0;
-  /* margin-left: 0; */
-  /* margin-right: 0; */
   border-radius: 2px;
+  transform: translateY(-50%);
+}
+.bar.completed {
+  background: #4285F4;
+}
+.completed .circle {
+  background: #4285F4;
+}
+.completed .label {
+  color: #4285F4;
+  font-weight: 700;
 }
 .active .circle {
-  background: #1976d2;
+  background: #4285F4;
 }
 .active .label {
   color: #1976d2;
   font-weight: 700;
 }
 .inactive .circle {
-  background: #a1a1a1;
+  background: #c9c9c9;
 }
 .inactive .label {
   color: #a1a1a1;
@@ -156,5 +179,8 @@ function getIcon(key, isActive) {
 .rejected .label {
   color: #ff5252;
   font-weight: 700;
+}
+.bar.rejected {
+  background: #ff5252;
 }
 </style>

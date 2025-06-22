@@ -1,139 +1,177 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, computed, readonly } from "vue";
+import { useAuthStore } from "@/stores/auth";
+
+// 사용자별 삭제된 알림 ID를 관리하는 함수들
+const getDeletedIdsKey = () => {
+  const authStore = useAuthStore();
+  return authStore.userName ? `deleted_notifications_${authStore.userName}` : null;
+};
+
+const getDeletedIdsFromStorage = (key) => {
+  if (!key) return new Set();
+  try {
+    const storedIds = localStorage.getItem(key);
+    return storedIds ? new Set(JSON.parse(storedIds)) : new Set();
+  } catch (e) {
+    console.error("삭제된 알림 ID 파싱 실패:", e);
+    return new Set();
+  }
+};
+
+const saveDeletedIdsToStorage = (key, ids) => {
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(Array.from(ids)));
+  } catch (e) {
+    console.error("삭제된 알림 ID 저장 실패:", e);
+  }
+};
 
 export const useNotificationStore = defineStore("notification", () => {
-  // 상태
-  const notifications = ref([]);
-  const unreadCount = ref(0);
-  const isConnected = ref(false);
-  const eventSource = ref(null);
-  const showRealtimeNotifications = ref(true); // 실시간 알림 표시 여부
+  // --- STATE ---
+  const _notifications = ref([]);
+  const _unreadCount = ref(0);
+  const _isConnected = ref(false);
+  const _showRealtimeNotifications = ref(true);
+  const _deletedIds = ref(new Set());
 
-  // 게터
-  const hasUnreadNotifications = computed(() => unreadCount.value > 0);
-  
+  // --- GETTERS ---
+  const notifications = readonly(_notifications);
+  const unreadCount = readonly(_unreadCount);
+  const isConnected = readonly(_isConnected);
+  const showRealtimeNotifications = readonly(_showRealtimeNotifications);
+  const hasUnreadNotifications = computed(() => _unreadCount.value > 0);
+  const deletedIds = readonly(_deletedIds);
+
   const sortedNotifications = computed(() => {
-    return [...notifications.value].sort((a, b) => {
-      // 읽지 않은 알림을 먼저 표시
+    return [..._notifications.value].sort((a, b) => {
       if (a.readAt === null && b.readAt !== null) return -1;
       if (a.readAt !== null && b.readAt === null) return 1;
-      // 생성 시간 역순으로 정렬
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
   });
 
-  // 액션
-  const addNotification = (notification) => {
-    // 중복 알림 방지
-    const exists = notifications.value.some(n => n.id === notification.id);
-    if (!exists) {
-      notifications.value.unshift(notification);
-      if (!notification.readAt) {
-        unreadCount.value++;
-      }
-    }
+  // --- ACTIONS ---
+
+  const setNotifications = (freshNotifications) => {
+    // 현재 사용자의 삭제된 ID 목록 로드
+    const key = getDeletedIdsKey();
+    _deletedIds.value = getDeletedIdsFromStorage(key);
+    
+    console.log('삭제된 알림 ID 목록:', Array.from(_deletedIds.value));
+    console.log('서버에서 받은 알림 개수:', freshNotifications.length);
+    
+    // 삭제된 알림을 제외하고 필터링
+    const validNotifications = freshNotifications.filter(
+      (n) => !_deletedIds.value.has(n.id)
+    );
+    
+    console.log('필터링된 알림 개수:', validNotifications.length);
+    
+    _notifications.value = validNotifications;
+    _unreadCount.value = validNotifications.filter((n) => !n.readAt).length;
   };
 
-  const updateNotification = (notificationId, updates) => {
-    const index = notifications.value.findIndex(n => n.id === notificationId);
-    if (index !== -1) {
-      const notification = notifications.value[index];
-      const wasUnread = !notification.readAt;
-      
-      Object.assign(notification, updates);
-      
-      // 읽음 상태가 변경된 경우 카운트 업데이트
-      if (wasUnread && notification.readAt) {
-        unreadCount.value = Math.max(0, unreadCount.value - 1);
-      } else if (!wasUnread && !notification.readAt) {
-        unreadCount.value++;
-      }
+  const addNotification = (notification) => {
+    // 이미 존재하는 알림이거나 삭제된 알림인지 확인
+    const existingNotification = _notifications.value.find(n => n.id === notification.id);
+    if (existingNotification || _deletedIds.value.has(notification.id)) {
+      console.log('중복 또는 삭제된 알림 무시:', notification.id);
+      return;
+    }
+    
+    console.log('새 알림 추가:', notification.id, notification.content);
+    _notifications.value.unshift(notification);
+    if (!notification.readAt) {
+      _unreadCount.value++;
     }
   };
 
   const removeNotification = (notificationId) => {
-    const index = notifications.value.findIndex(n => n.id === notificationId);
+    // 삭제된 ID 목록에 추가하고 저장
+    _deletedIds.value.add(notificationId);
+    const key = getDeletedIdsKey();
+    saveDeletedIdsToStorage(key, _deletedIds.value);
+    
+    console.log('알림 삭제됨:', notificationId);
+
+    const index = _notifications.value.findIndex(
+      (n) => n.id === notificationId
+    );
     if (index !== -1) {
-      const notification = notifications.value[index];
-      if (!notification.readAt) {
-        unreadCount.value = Math.max(0, unreadCount.value - 1);
+      if (!_notifications.value[index].readAt) {
+        _unreadCount.value = Math.max(0, _unreadCount.value - 1);
       }
-      notifications.value.splice(index, 1);
+      _notifications.value.splice(index, 1);
     }
   };
 
-  const setNotifications = (newNotifications) => {
-    notifications.value = newNotifications;
-    unreadCount.value = newNotifications.filter(n => !n.readAt).length;
+  const clearReadNotifications = () => {
+    const readNotifications = _notifications.value.filter(n => n.readAt);
+    if (readNotifications.length === 0) return;
+    
+    // 읽은 알림들을 삭제된 ID 목록에 추가
+    readNotifications.forEach(n => _deletedIds.value.add(n.id));
+    const key = getDeletedIdsKey();
+    saveDeletedIdsToStorage(key, _deletedIds.value);
+    
+    console.log('읽은 알림들 삭제됨:', readNotifications.length, '개');
+
+    _notifications.value = _notifications.value.filter(n => !n.readAt);
   };
 
   const markAsRead = (notificationId) => {
-    updateNotification(notificationId, {
-      readAt: new Date().toISOString()
-    });
+    const notification = _notifications.value.find(
+      (n) => n.id === notificationId
+    );
+    if (notification && !notification.readAt) {
+      notification.readAt = new Date().toISOString();
+      _unreadCount.value = Math.max(0, _unreadCount.value - 1);
+    }
   };
 
   const markAllAsRead = () => {
-    notifications.value.forEach(notification => {
+    _notifications.value.forEach((notification) => {
       if (!notification.readAt) {
         notification.readAt = new Date().toISOString();
       }
     });
-    unreadCount.value = 0;
-  };
-
-  const clearReadNotifications = () => {
-    notifications.value = notifications.value.filter(n => !n.readAt);
-  };
-
-  const setConnectionStatus = (status) => {
-    isConnected.value = status;
-  };
-
-  const setEventSource = (source) => {
-    eventSource.value = source;
-  };
-
-  const toggleRealtimeNotifications = () => {
-    showRealtimeNotifications.value = !showRealtimeNotifications.value;
-  };
-
-  const setRealtimeNotificationsEnabled = (enabled) => {
-    showRealtimeNotifications.value = enabled;
+    _unreadCount.value = 0;
   };
 
   const reset = () => {
-    notifications.value = [];
-    unreadCount.value = 0;
-    isConnected.value = false;
-    eventSource.value = null;
-    showRealtimeNotifications.value = true;
+    _notifications.value = [];
+    _unreadCount.value = 0;
+    _isConnected.value = false;
+    _showRealtimeNotifications.value = true;
+    // 삭제된 ID 목록은 유지 (사용자별로 영구 저장)
+  };
+
+  const setConnectionStatus = (status) => {
+    _isConnected.value = status;
+  };
+  
+  const toggleRealtimeNotifications = () => {
+    _showRealtimeNotifications.value = !_showRealtimeNotifications.value;
   };
 
   return {
-    // 상태
     notifications,
     unreadCount,
     isConnected,
-    eventSource,
     showRealtimeNotifications,
-    
-    // 게터
     hasUnreadNotifications,
     sortedNotifications,
-    
-    // 액션
-    addNotification,
-    updateNotification,
-    removeNotification,
+    deletedIds,
     setNotifications,
+    addNotification,
+    removeNotification,
     markAsRead,
     markAllAsRead,
     clearReadNotifications,
     setConnectionStatus,
-    setEventSource,
     toggleRealtimeNotifications,
-    setRealtimeNotificationsEnabled,
-    reset
+    reset,
   };
 }); 

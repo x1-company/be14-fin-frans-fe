@@ -23,12 +23,13 @@
             v-if="activeTabSwitch == 1 && !isRegistrationMode"
             :approvalList="approvalList"
             :activeTab="activeTab"
+            :activeMenu="activeMenu"
             @tab-change="handleTabChange"
           />
 
           <!-- 결재 등록 -->
           <ApprovalRegistration
-            v-if="activeTabSwitch == 1 && isRegistrationMode"
+            v-if="activeTabSwitch === 1 && isRegistrationMode"
             :selectedTemplate="props.selectedTemplate"
             @cancel="(value) => handleToggleRegistrationMode(value)"
           />
@@ -81,6 +82,7 @@ const props = defineProps({
   approvalList: Array,
   selectedTemplate: { type: Object, default: null },
   activeTab: String,
+  activeMenu: String,
   handleTabChange: Function,
   isRegistrationMode: Boolean,
   reorderChanges: Array,
@@ -105,7 +107,7 @@ const title = computed(() => tabInfo.value[activeTabSwitch.value].title);
 const desc = computed(() => tabInfo.value[activeTabSwitch.value].desc);
 
 const emit = defineEmits([
-  "update:activeTab",
+  // "update:activeTab",
   "tab-change",
   "active-tab-change",
   "toggle-registration-mode",
@@ -113,13 +115,13 @@ const emit = defineEmits([
   "template-updated",
   "reorder-mode-changed",
   "reorder-complete",
-  "reorder-cancel"
+  "reorder-cancel",
 ]);
 
 const updateTab = (newTabIndex) => {
   activeTabSwitch.value = newTabIndex;
   updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
-  emit("update:activeTab", newTabIndex);
+  // emit("update:activeTab", newTabIndex);
   emit("active-tab-change", newTabIndex); // 부모에게 현재 탭 인덱스 전달
 
   // 전자결재 탭을 선택할 때 기본값으로 "전체" 설정
@@ -135,7 +137,7 @@ const handleToggleRegistrationMode = (value) => {
     // 결재 등록 모드로 전환할 때만 전자결재 탭으로 이동
     activeTabSwitch.value = 1;
     updateBreadcrumb(["HOME", "결재관리", "전자결재"]);
-    emit("update:activeTab", 1);
+    // emit("update:activeTab", 1);
     emit("active-tab-change", 1);
   }
   emit("toggle-registration-mode", value);
@@ -277,7 +279,6 @@ const handleReorderCancel = () => {
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
-
 .section-title {
   margin: 0 0 20px 0;
   color: #212529;

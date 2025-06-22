@@ -5,20 +5,24 @@
       <ul class="navbar__menu">
         <li @click="selectMenuItem('대시보드')">대시보드</li>
         <li @click="selectMenuItem('가맹점관리')">가맹점관리</li>
-        <li @click="selectMenuItem('공급처관리')">공급처관리</li>
+        <li @click="navigateToSupplier">공급처관리</li>
         <li @click="selectMenuItem('구매관리')">구매관리</li>
         <li @click="navigateToWarehouse">창고관리</li>
-        <li @click="selectMenuItem('결재관리')">결재관리</li>
+        <li @click="navigateToApproval">결재관리</li>
       </ul>
-      <div class="notification-wrapper" @click="toggleNotificationBell">
+      <div class="notification-wrapper" ref="notificationWrapper">
         <img
           src="@/assets/notification.png"
           alt="알림"
           class="notification-icon"
+          @click="toggleNotificationBell"
+        />
+        <NotificationBell
+          :isOpen="isNotificationBellOpen"
+          @close="isNotificationBellOpen = false"
         />
       </div>
-      <NotificationBell :isOpen="isNotificationBellOpen" @close="isNotificationBellOpen = false" />
-      <UserInfo 
+      <UserInfo
         :userName="auth.userName"
         :positionName="auth.positionName"
         :userProfileUrl="auth.userProfileUrl"
@@ -29,32 +33,58 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
-import UserInfo from './UserInfo.vue';
-import NotificationBell from '@/components/NotificationBell.vue';
+import { ref, onMounted, onUnmounted } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
+import UserInfo from "./UserInfo.vue";
+import NotificationBell from "@/components/NotificationBell.vue";
 
-const auth = useAuthStore()
-const router = useRouter()
+const auth = useAuthStore();
+const router = useRouter();
 const emit = defineEmits(["update-breadcrumb"]);
 
 const isNotificationBellOpen = ref(false);
+const notificationWrapper = ref(null);
 
 const selectMenuItem = (itemText) => {
   emit("update-breadcrumb", ["HOME", itemText]);
 };
 
-
 const navigateToWarehouse = () => {
-  router.push('/warehouse');
+  router.push("/warehouse");
   emit("update-breadcrumb", ["HOME", "창고관리"]);
-}
-  
-const toggleNotificationBell = (e) => {
-  e.stopPropagation();
+};
+
+const navigateToApproval = () => {
+  router.push("/approval");
+  emit("update-breadcrumb", ["HOME", "결재관리"]);
+};
+
+const navigateToSupplier = () => {
+  router.push("/supplier");
+  emit("update-breadcrumb", ["HOME", "공급처관리"]);
+};
+
+const toggleNotificationBell = () => {
   isNotificationBellOpen.value = !isNotificationBellOpen.value;
 };
+
+const handleClickOutside = (event) => {
+  if (
+    notificationWrapper.value &&
+    !notificationWrapper.value.contains(event.target)
+  ) {
+    isNotificationBellOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <style scoped>
@@ -155,7 +185,7 @@ const toggleNotificationBell = (e) => {
   background: #fff;
   border: 1.5px solid #e0e0e0;
   border-radius: 14px;
-  box-shadow: 0 6px 24px 0 rgba(0,0,0,0.13);
+  box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.13);
   z-index: 1000;
   overflow: hidden;
   margin-top: 12px;
@@ -225,12 +255,12 @@ const toggleNotificationBell = (e) => {
   background: #fff;
   border-radius: 10px;
   margin: 8px 12px;
-  box-shadow: 0 2px 8px 0 rgba(64,102,250,0.07);
+  box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.07);
 }
 
 .notification-item:hover {
   background-color: #f0f4ff;
-  box-shadow: 0 4px 16px 0 rgba(64,102,250,0.10);
+  box-shadow: 0 4px 16px 0 rgba(64, 102, 250, 0.1);
 }
 
 .notification-item.unread {

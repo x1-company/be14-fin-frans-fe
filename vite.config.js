@@ -15,4 +15,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    port: 5173, // 개발용 서버
+  },
+  define: {
+    'process.env': process.env
+  }  
 })

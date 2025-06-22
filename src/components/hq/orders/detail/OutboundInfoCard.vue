@@ -44,6 +44,8 @@
     margin: 20px 0 10px 60px;
     margin-bottom: 24px;
     background: #fff;
+    max-width: 100%;
+    width: 100%;
   }
   
   .card-title {
@@ -69,11 +71,11 @@
   
   .label {
     color: #6b7280;
-    font-size: 14px;
+    font-size: 15px;
   }
   
   .value {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     margin: 0 30px;
     text-align: right;

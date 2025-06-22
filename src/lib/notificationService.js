@@ -24,8 +24,8 @@ class NotificationService {
       return;
     }
 
-    // 토큰이 없으면 연결하지 않음
-    if (!authStore.accessToken) {
+    // 토큰이 없거나 유효하지 않으면 연결하지 않음
+    if (!authStore.accessToken || !authStore.decodedToken) {
       return;
     }
 
@@ -93,6 +93,7 @@ class NotificationService {
   async processStream(reader, decoder, notificationStore) {
     try {
       let buffer = '';
+      const authStore = useAuthStore();
       
       while (true) {
         const { done, value } = await reader.read();
@@ -126,8 +127,34 @@ class NotificationService {
                 try {
                   const parsedData = JSON.parse(data);
                   
-                  // 알림 데이터 처리
+                  // 알림 데이터 처리 - 현재 사용자의 알림인지 확인
                   if (parsedData.id && parsedData.content) {
+                    // 먼저 삭제된 알림인지 확인
+                    const notificationStore = useNotificationStore();
+                    if (notificationStore.deletedIds.has(parsedData.id)) {
+                      console.log('삭제된 알림 무시 (SSE):', parsedData.id);
+                      continue;
+                    }
+                    
+                    // 사용자 ID가 포함되어 있다면 현재 사용자의 것인지 확인
+                    if (parsedData.userId && authStore.decodedToken) {
+                      const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
+                      if (parsedData.userId !== currentUserId) {
+                        console.log('다른 사용자의 알림 무시:', parsedData.userId, '현재:', currentUserId);
+                        continue;
+                      }
+                    }
+                    
+                    // 이미 존재하는 알림인지 확인
+                    const existingNotifications = notificationStore.notifications;
+                    const isDuplicate = existingNotifications.some(n => n.id === parsedData.id);
+                    if (isDuplicate) {
+                      console.log('중복 알림 무시 (SSE):', parsedData.id);
+                      continue;
+                    }
+                    
+                    // 사용자 ID가 없거나 현재 사용자의 것이라면 처리
+                    console.log('새 알림 추가 (SSE):', parsedData.id, parsedData.content);
                     notificationStore.addNotification(parsedData);
                   }
                 } catch (error) {
@@ -154,8 +181,34 @@ class NotificationService {
             try {
               const parsedData = JSON.parse(line.trim());
               
-              // 알림 데이터 처리
+              // 알림 데이터 처리 - 현재 사용자의 알림인지 확인
               if (parsedData.id && parsedData.content) {
+                // 먼저 삭제된 알림인지 확인
+                const notificationStore = useNotificationStore();
+                if (notificationStore.deletedIds.has(parsedData.id)) {
+                  console.log('삭제된 알림 무시 (SSE):', parsedData.id);
+                  continue;
+                }
+                
+                // 사용자 ID가 포함되어 있다면 현재 사용자의 것인지 확인
+                if (parsedData.userId && authStore.decodedToken) {
+                  const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
+                  if (parsedData.userId !== currentUserId) {
+                    console.log('다른 사용자의 알림 무시 (별도 라인):', parsedData.userId, '현재:', currentUserId);
+                    continue;
+                  }
+                }
+                
+                // 이미 존재하는 알림인지 확인
+                const existingNotifications = notificationStore.notifications;
+                const isDuplicate = existingNotifications.some(n => n.id === parsedData.id);
+                if (isDuplicate) {
+                  console.log('중복 알림 무시 (SSE, 별도 라인):', parsedData.id);
+                  continue;
+                }
+                
+                // 사용자 ID가 없거나 현재 사용자의 것이라면 처리
+                console.log('새 알림 추가 (SSE, 별도 라인):', parsedData.id, parsedData.content);
                 notificationStore.addNotification(parsedData);
               }
             } catch (error) {
@@ -244,6 +297,8 @@ class NotificationService {
   async fetchNotifications() {
     try {
       const response = await api.get('/api/notification/list');
+      console.log('서버에서 받은 알림 목록:', response.data);
+      
       const notificationStore = useNotificationStore();
       notificationStore.setNotifications(response.data);
       return response.data;

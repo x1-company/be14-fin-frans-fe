@@ -11,6 +11,7 @@ const userCode = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
@@ -19,7 +20,7 @@ const togglePasswordVisibility = () => {
 const handleLogin = async () => {
 
   try {
-    const response = await fetch('http://localhost:8080/login', {
+    const response = await fetch(`${BASE_URL}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -59,10 +60,10 @@ const handleLogin = async () => {
           }
         } else if (result.userType === 'FRANCHISE') {
           // 가맹점주 메인 페이지로
-          // TODO: 실제 경로로 변경 필요
+          router.push('/franchise')
         } else if (result.userType === 'SUPPLIER') {
           // 공급처 메인 페이지로
-          // TODO: 실제 경로로 변경 필요
+          router.push('/supplier')
         } else {
           // 기본 페이지
           // TODO: 기본 경로로 변경 필요

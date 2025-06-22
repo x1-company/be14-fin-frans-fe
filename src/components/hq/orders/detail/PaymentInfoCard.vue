@@ -15,9 +15,7 @@
       <div class="value">{{ order.approvalRequestedAt || '-' }}</div>
 
       <div class="label">결재 상태</div>
-      <div class="value">
-        <span :class="['status-tag', statusClass]">{{ approvalStatusText }}</span>
-      </div>
+      <div class="value">{{ approvalStatusText || '-'}}</div>
 
       <div class="label">결재 완료 일시</div>
       <div class="value">{{ order.approvalCompletedAt || '-' }}</div>
@@ -41,7 +39,7 @@ const approvalStatusText = computed(() => {
     case 'REJECTED':
       return '반려됨';
     default:
-      return '-';
+      return '결재 전';
   }
 });
 
@@ -54,7 +52,7 @@ const statusClass = computed(() => {
     case 'REJECTED':
       return 'rejected';
     default:
-      return '';
+      return '결재 전';
   }
 });
 </script>
@@ -67,6 +65,8 @@ const statusClass = computed(() => {
   padding: 32px 24px;
   margin: 20px 0 100px 60px;
   background: #fff;
+  max-width: 100%;
+  width: 100%;
 }
 
 .card-title {
@@ -92,21 +92,14 @@ const statusClass = computed(() => {
 
 .label {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .value {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   margin: 0 30px;
   text-align: right;
-}
-
-.status-tag {
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
 }
 
 .pending {

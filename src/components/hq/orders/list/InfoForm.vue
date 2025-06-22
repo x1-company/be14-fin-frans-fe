@@ -15,11 +15,21 @@
       <!-- 검색창 및 필터 -->
       <div class="order-form__header">
         <div class="order-form__search-group">
+          <Datepicker
+            v-model="searchDate"
+            :format="'yyyy-MM-dd'"
+            placeholder="주문 날짜"
+            :clearable="true"
+            input-class-name="custom-datepicker-input"
+            style="width: 150px"
+            locale="ko"
+            :enable-time-picker="false"
+            auto-apply
+          />
           <input v-model="search" placeholder="검색어를 입력해주세요" />
           <select v-model="filter">
             <option value="itemName">품목명</option>
             <option value="status">주문 상태</option>
-            <option value="orderDate">주문 날짜</option>
             <option value="orderNo">주문 번호</option>
           </select>
         </div>
@@ -55,34 +65,35 @@
         </table>
       </div>
       <div class="order-form__pagination">
-        <button :disabled="page === 1" @click="page--">이전</button>
-        <span v-for="p in totalPages" :key="p" :class="['page-btn', {active: p === page}]" @click="page = p">{{ p }}</span>
-        <button :disabled="page === totalPages" @click="page++">다음</button>
+        <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
+        <span
+          v-for="p in paginationPages"
+          :key="p"
+          :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
+          @click="typeof p === 'number' && (page = p)"
+        >
+          {{ p }}
+        </span>
+        <button class="page-arrow" :disabled="page === totalPages" @click="page++">&gt;</button>
       </div>
       <div class="order-form__total">총 {{ filteredOrders.length }}개 항목</div>
     </div>
   </template>
   
   <script setup>
-  import api from '@/lib/api'
-  import { ref, computed, watch, onMounted } from 'vue';
+  import { ref, computed, watch } from 'vue';
   import { RouterLink } from 'vue-router';
+  import Datepicker from '@vuepic/vue-datepicker';
+  import '@vuepic/vue-datepicker/dist/main.css';
+  
   const props = defineProps({
-    orders: Array,
-    franchiseId: {
-      type: [Number, String],
-      required: true
-    }
+    orders: Array
   });
   const search = ref('');
+  const searchDate = ref('');
   const filter = ref('itemName');
   const page = ref(1);
   const pageSize = 10;
-  
-  // API에서 받아온 orders
-  const orders = ref([]);
-  const totalCount = ref(0);
-  const totalPages = ref(1);
   
   // 탭 관련
   const tabs = [
@@ -93,19 +104,11 @@
   ];
   const activeTab = ref(0);
 
-  onMounted(() => {
-    activeTab.value = 0;
-    page.value = 1;
-    fetchOrders();
-  });
-
   function selectTab(idx) {
     activeTab.value = idx;
     page.value = 1;
-    fetchOrders();
   }
   
-  // status 한글 변환
   function statusText(status) {
     switch(status) {
       case 'REJECTED': return '반려';
@@ -118,20 +121,26 @@
     }
   }
   
-  // 탭별 상태 필터 기준
   function tabStatusFilter(order) {
     if (activeTab.value === 1) {
       return order.status === 'REVIEWING';
     } else if (activeTab.value === 2) {
       return order.status === 'REVIEW_COMPLETED' || order.status === 'DELIVERING';
     } else if (activeTab.value === 3) {
-      return order.status === 'DELIVERED';
+      return order.status === 'DELIVERED' || order.status === 'REJECTED';
     }
     return true; // 전체
   }
   
   const filteredOrders = computed(() => {
-    let result = orders.value || [];
+    let result = props.orders || [];
+    // 날짜 필터
+    if (searchDate.value) {
+      const dateStr = typeof searchDate.value === 'string'
+        ? searchDate.value
+        : searchDate.value?.toISOString().slice(0, 10);
+      result = result.filter(order => order.createdAt.slice(0, 10) === dateStr);
+    }
     // 탭 필터링
     result = result.filter(tabStatusFilter);
     // 검색/필터
@@ -140,55 +149,46 @@
         if (filter.value === 'orderNo') return order.orderCode.includes(search.value);
         if (filter.value === 'itemName') return order.productSummary.includes(search.value);
         if (filter.value === 'status') return statusText(order.status).includes(search.value);
-        if (filter.value === 'orderDate') return order.createdAt.includes(search.value);
         return true;
       });
     }
     return result;
   });
   const pagedOrders = computed(() => filteredOrders.value.slice((page.value-1)*pageSize, page.value*pageSize));
-  function onSearch() {
-    page.value = 1;
-  }
-  
+
   function orderStatusClass(status) {
     switch(status) {
-      case '접수 대기': return 'status-pending';
-      case '결품 완료': return 'status-done';
-      case '반려': return 'status-reject';
-      case '배송 완료': return 'status-complete';
+      case 'REJECTED': return 'status-reject';
+      case 'REVIEWING': return 'status-reviewing';
+      case 'REVIEW_COMPLETED': return 'status-reviewed';
+      case 'APPROVED': return 'status-approved';
+      case 'DELIVERING': return 'status-delivering';
+      case 'DELIVERED': return 'status-delivered';
       default: return '';
     }
   }
-  watch([search, filter], () => {
-  page.value = 1;
-});
 
-watch(page, () => {
-  fetchOrders();
-});
+  const totalPages = computed(() => Math.ceil(filteredOrders.value.length / pageSize));
 
-
-  // API 연동
-  async function fetchOrders() {
-  try {
-    const res = await api.get('/api/hq/orders', {
-      params: {
-        page: page.value,
-        size: pageSize,
-        franchiseId: props.franchiseId
+  const paginationPages = computed(() => {
+    const pages = [];
+    if (totalPages.value <= 7) {
+      for (let i = 1; i <= totalPages.value; i++) pages.push(i);
+    } else {
+      if (page.value <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages.value);
+      } else if (page.value >= totalPages.value - 3) {
+        pages.push(1, '...', totalPages.value - 4, totalPages.value - 3, totalPages.value - 2, totalPages.value - 1, totalPages.value);
+      } else {
+        pages.push(1, '...', page.value - 1, page.value, page.value + 1, '...', totalPages.value);
       }
-    });
+    }
+    return pages;
+  });
 
-    const data = res.data;
-    orders.value = data.content;
-    totalCount.value = data.totalCount;
-    totalPages.value = data.totalPages;
-  } catch (err) {
-    console.error('주문 목록을 불러오는 중 오류 발생:', err);
-    alert('주문 목록을 불러오는 데 실패했습니다.');
-  }
-}
+  watch([search, searchDate, filter, activeTab], () => {
+    page.value = 1;
+  });
 
   </script>
   
@@ -295,51 +295,107 @@ watch(page, () => {
   }
   .order-status {
     display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    font-weight: 500;
-  }
-  .status-pending {
-    background: #ffe9b3;
-    color: #b88a00;
-  }
-  .status-done {
-    background: #d2f8d2;
-    color: #1a7f37;
+    min-width: 80px;
+    text-align: center;
+    padding: 4px 10px;
+    border-radius: 24px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 4px 0;
+    background: #fff;
+    letter-spacing: 1px;
+    box-sizing: border-box;
+    border: none;
   }
   .status-reject {
-    background: #ffd6d6;
-    color: #d32f2f;
+    color: #ff2222;
+    background: #ffebeb;
   }
-  .status-complete {
-    background: #e3eaff;
-    color: #4066fa;
+  .status-reviewing {
+    background: #f3e8ff;
+    color: #9333ea;
+  }
+  .status-reviewed {
+    color: #179a2b;
+    background: #e6ffe6;
+  }
+  .status-approved {
+    background: #e6f9ed;
+    color: #16a34a;
+  }
+  .status-delivering,
+  .status-delivered {
+    background: #e0f0ff;
+    color: #2563eb;
   }
   .order-form__pagination {
     display: flex;
-    gap: 4px;
+    gap: 8px;
     align-items: center;
     justify-content: center;
     margin: 16px 0;
   }
   .page-btn {
-    padding: 4px 10px;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
+    min-width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e4ea;
     background: #fff;
+    color: #222;
+    font-size: 1.1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    margin: 0 2px;
+    transition: border 0.2s, color 0.2s;
+    user-select: none;
   }
   .page-btn.active {
-    background: #4066fa;
-    color: #fff;
-    border-color: #4066fa;
+    border: 2px solid #6c47ff;
+    color: #6c47ff;
+    font-weight: 700;
+    background: #f8f6ff;
+  }
+  .page-btn.ellipsis {
+    cursor: default;
+    color: #bdbdbd;
+    border: none;
+    background: transparent;
+    pointer-events: none;
+  }
+  .page-arrow {
+    min-width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e4ea;
+    background: #f5f6fa;
+    color: #bdbdbd;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .page-arrow:disabled {
+    background: #e2e4ea;
+    color: #bdbdbd;
+    cursor: not-allowed;
   }
   .order-form__total {
     text-align: right;
     color: #888;
     margin-top: 8px;
     font-size: 0.98rem;
+  }
+  .custom-datepicker-input {
+    height: 36px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 1rem;
+    width: 130px;
   }
   </style> 
