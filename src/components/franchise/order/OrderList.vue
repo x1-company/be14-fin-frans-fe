@@ -14,7 +14,6 @@
       </div>
       <!-- 검색창 및 필터 -->
       <div class="order-form__header">
-        <button class="order-register-btn" @click="goToOrderRegister">주문 등록</button>
         <div class="order-form__search-group">
           <Datepicker
             v-model="searchDate"
@@ -35,6 +34,7 @@
             <option value="orderNo">주문 번호</option>
           </select>
         </div>
+        <OrderRegisterButton @click="$emit('show-register-view')" />
       </div>
       <div class="order-form__table-wrapper">
         <table class="order-form__table">
@@ -88,12 +88,9 @@
   import Datepicker from '@vuepic/vue-datepicker';
   import '@vuepic/vue-datepicker/dist/main.css';
   import api from '@/lib/api';
+  import OrderRegisterButton from './button/OrderRegisterButton.vue';
   
   const emit = defineEmits(['show-register-view']);
-  
-  const goToOrderRegister = () => {
-    emit('show-register-view');
-  }
 
   const orders = ref([]);
   const search = ref('');
@@ -284,9 +281,10 @@
   }
   .order-form__header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     margin-bottom: 16px;
+    gap: 16px;
   }
   .order-form__search-group {
     display: flex;
@@ -459,18 +457,6 @@
     padding: 0 14px;
     font-size: 1rem;
     width: 220px;
-  }
-  .order-register-btn {
-    height: 36px;
-    background: #4066fa;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 0 22px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
   }
   .order-register-btn:hover {
     background: #2746b6;
