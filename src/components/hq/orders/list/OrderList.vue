@@ -34,49 +34,63 @@
           </select>
         </div>
       </div>
-      <div class="order-form__table-wrapper">
-        <table class="order-form__table">
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>주문 번호</th>
-              <th>품목명</th>
-              <th>주문 상태</th>
-              <th>주문일</th>
-              <th>총 주문 금액</th>
-              <th>가맹점 명</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(order, idx) in orders" :key="order.orderId">
-              <td>{{ idx + 1 + (page-1)*pageSize }}</td>
-              <td>
-                <router-link :to="`/hq/franchise/orders/${order.orderId}`" class="order-link">
-                  {{ order.orderCode }}
-                </router-link>
-              </td>
-              <td>{{ order.productSummary }}</td>
-              <td><span :class="['order-status', orderStatusClass(order.status)]">{{ statusText(order.status) }}</span></td>
-              <td>{{ order.createdAt.slice(0, 10) }}</td>
-              <td>{{ order.totalAmount.toLocaleString() }}원</td>
-              <td>{{ order.franchiseName }}</td>
-            </tr>
-          </tbody>
-        </table>
+
+      <!-- 가맹점 선택 안내 메시지 (selectedFranchiseId가 null일 때) -->
+      <div v-if="!props.selectedFranchiseId" class="franchise-select-message">
+        <div class="franchise-select-icon">🏪</div>
+        <h3 class="franchise-select-title">가맹점을 선택해주세요</h3>
+        <p class="franchise-select-description">
+          왼쪽 사이드바에서 가맹점을 선택하시면<br>
+          해당 가맹점의 주문 목록을 확인할 수 있습니다.
+        </p>
       </div>
-      <div class="order-form__pagination">
-        <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
-        <span
-          v-for="p in paginationPages"
-          :key="p"
-          :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
-          @click="typeof p === 'number' && (page = p)"
-        >
-          {{ p }}
-        </span>
-        <button class="page-arrow" :disabled="page === totalPages" @click="page++">&gt;</button>
+
+      <!-- 기존 테이블 (selectedFranchiseId가 있을 때만 표시) -->
+      <div v-else>
+        <div class="order-form__table-wrapper">
+          <table class="order-form__table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>주문 번호</th>
+                <th>품목명</th>
+                <th>주문 상태</th>
+                <th>주문일</th>
+                <th>총 주문 금액</th>
+                <th>가맹점 명</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(order, idx) in orders" :key="order.orderId">
+                <td>{{ idx + 1 + (page-1)*pageSize }}</td>
+                <td>
+                  <router-link :to="`/hq/franchise/orders/${order.orderId}`" class="order-link">
+                    {{ order.orderCode }}
+                  </router-link>
+                </td>
+                <td>{{ order.productSummary }}</td>
+                <td><span :class="['order-status', orderStatusClass(order.status)]">{{ statusText(order.status) }}</span></td>
+                <td>{{ order.createdAt.slice(0, 10) }}</td>
+                <td>{{ order.totalAmount.toLocaleString() }}원</td>
+                <td>{{ order.franchiseName }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="order-form__pagination">
+          <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
+          <span
+            v-for="p in paginationPages"
+            :key="p"
+            :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
+            @click="typeof p === 'number' && (page = p)"
+          >
+            {{ p }}
+          </span>
+          <button class="page-arrow" :disabled="page === totalPages" @click="page++">&gt;</button>
+        </div>
+        <div class="order-form__total">총 {{ totalCount }}개 항목</div>
       </div>
-      <div class="order-form__total">총 {{ totalCount }}개 항목</div>
     </div>
   </template>
   
@@ -87,7 +101,11 @@
     import '@vuepic/vue-datepicker/dist/main.css';
     import api from '@/lib/api';
 
-    const emit = defineEmits(['show-register-view']);
+    const emit = defineEmits(['show-register-view', 'franchise-deselect']);
+
+    const props = defineProps({
+      selectedFranchiseId: [String, Number]
+    });
 
     const orders = ref([]);
     const search = ref('');
@@ -146,11 +164,13 @@
     }
 
     async function fetchOrders() {
+    if (props.selectedFranchiseId == null) return;
     loading.value = true;
     try {
         const params = new URLSearchParams();
         params.append('page', page.value);
         params.append('size', pageSize);
+        params.append('franchiseId', props.selectedFranchiseId)
 
         // ✅ 로컬 기준 날짜 필터
         if (Array.isArray(searchDate.value) && searchDate.value.length === 2) {
@@ -192,12 +212,64 @@
     }
     }
 
+    // 기존 watchers
     watch([search, searchDate, filter], () => {
     page.value = 1;
     fetchOrders();
     });
 
     watch(page, fetchOrders);
+
+    // ✅ selectedFranchiseId prop 변경 시 fetchOrders 호출
+    watch(() => props.selectedFranchiseId, (newValue, oldValue) => {
+      if (newValue !== oldValue) {
+        page.value = 1; // 페이지를 1로 리셋
+        fetchOrders();
+      }
+    });
+
+    // 기존 computed 속성들 다음에 추가
+    const paginationPages = computed(() => {
+      const pages = [];
+      const current = page.value;
+      const total = totalPages.value;
+      
+      if (total <= 7) {
+        // 총 페이지가 7개 이하면 모든 페이지 표시
+        for (let i = 1; i <= total; i++) {
+          pages.push(i);
+        }
+      } else {
+        // 총 페이지가 7개 초과면 생략 표시 포함
+        if (current <= 4) {
+          // 현재 페이지가 앞쪽에 있을 때
+          for (let i = 1; i <= 5; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(total);
+        } else if (current >= total - 3) {
+          // 현재 페이지가 뒤쪽에 있을 때
+          pages.push(1);
+          pages.push('...');
+          for (let i = total - 4; i <= total; i++) {
+            pages.push(i);
+          }
+        } else {
+          // 현재 페이지가 중간에 있을 때
+          pages.push(1);
+          pages.push('...');
+          for (let i = current - 1; i <= current + 1; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(total);
+        }
+      }
+      
+      return pages;
+    });
+
     onMounted(fetchOrders);
 </script>
 
@@ -421,4 +493,36 @@
   .order-register-btn:hover {
     background: #2746b6;
   }
-  </style> 
+
+  .franchise-select-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+    background: #fafbfc;
+    border-radius: 12px;
+    margin: 40px 0;
+  }
+
+  .franchise-select-icon {
+    font-size: 4rem;
+    margin-bottom: 24px;
+    opacity: 0.7;
+  }
+
+  .franchise-select-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 12px;
+  }
+
+  .franchise-select-description {
+    font-size: 1rem;
+    color: #666;
+    line-height: 1.6;
+    margin: 0;
+  }
+  </style>
