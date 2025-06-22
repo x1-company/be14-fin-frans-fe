@@ -29,9 +29,13 @@ jobs:
       run: |
         rm -rf node_modules package-lock.json
         npm install
+      env:
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
     - name: Build project
       run: npm run build
+      env:
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
     - name: Install AWS CLI
       run: |
