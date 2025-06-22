@@ -15,9 +15,7 @@
       <div class="value">{{ order.approvalRequestedAt || '-' }}</div>
 
       <div class="label">결재 상태</div>
-      <div class="value">
-        <span :class="['status-tag', statusClass]">{{ approvalStatusText }}</span>
-      </div>
+      <div class="value">{{ approvalStatusText || '-'}}</div>
 
       <div class="label">결재 완료 일시</div>
       <div class="value">{{ order.approvalCompletedAt || '-' }}</div>
@@ -94,21 +92,14 @@ const statusClass = computed(() => {
 
 .label {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .value {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   margin: 0 30px;
   text-align: right;
-}
-
-.status-tag {
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
 }
 
 .pending {

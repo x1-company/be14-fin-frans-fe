@@ -71,11 +71,11 @@
   
   .label {
     color: #6b7280;
-    font-size: 14px;
+    font-size: 15px;
   }
   
   .value {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     margin: 0 30px;
     text-align: right;

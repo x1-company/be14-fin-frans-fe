@@ -18,21 +18,22 @@
           <Datepicker
             v-model="searchDate"
             :format="'yyyy-MM-dd'"
-            placeholder="주문 날짜"
+            placeholder="주문 날짜 범위 선택"
             :clearable="true"
             input-class-name="custom-datepicker-input"
-            style="width: 150px"
+            style="width: 270px"
             locale="ko"
             :enable-time-picker="false"
             auto-apply
+            range
           />
           <input v-model="search" placeholder="검색어를 입력해주세요" />
           <select v-model="filter">
             <option value="itemName">품목명</option>
-            <option value="status">주문 상태</option>
             <option value="orderNo">주문 번호</option>
           </select>
         </div>
+        <OrderRegisterButton @click="$emit('show-register-view')" />
       </div>
       <div class="order-form__table-wrapper">
         <table class="order-form__table">
@@ -67,8 +68,8 @@
       <div class="order-form__pagination">
         <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
         <span
-          v-for="(p, index) in paginationPages"
-          :key="index"
+          v-for="p in paginationPages"
+          :key="p"
           :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
           @click="typeof p === 'number' && (page = p)"
         >
@@ -86,10 +87,13 @@
   import Datepicker from '@vuepic/vue-datepicker';
   import '@vuepic/vue-datepicker/dist/main.css';
   import api from '@/lib/api';
+  import OrderRegisterButton from './button/OrderRegisterButton.vue';
   
+  const emit = defineEmits(['show-register-view']);
+
   const orders = ref([]);
   const search = ref('');
-  const searchDate = ref('');
+  const searchDate = ref(null);
   const filter = ref('itemName');
   const page = ref(1);
   const pageSize = 10;
@@ -142,7 +146,7 @@
       default: return status;
     }
   }
-  
+
   function orderStatusClass(status) {
     switch(status) {
       case 'WAITING_FOR_RECEIPT': return 'status-waiting';
@@ -157,44 +161,53 @@
     }
   }
   
-  function toKSTDateString(date) {
-    if (!date) return '';
-    const d = typeof date === 'string' ? new Date(date) : date;
-    const offset = d.getTimezoneOffset() * 60000;
-    const kst = new Date(d.getTime() - offset + 9 * 60 * 60000);
-    return kst.toISOString().slice(0, 10);
-  }
-
   async function fetchOrders() {
     loading.value = true;
     try {
-      const params = { page: page.value, size: pageSize };
-      // 탭별 status 파라미터
-      if (activeTab.value === 1) params.status = 'WAITING_FOR_RECEIPT';
-      else if (activeTab.value === 2) params.status = 'REVIEW_COMPLETED';
-      else if (activeTab.value === 3) params.status = 'DELIVERED';
-      // 날짜 파라미터 (KST 변환)
-      if (searchDate.value) {
-        const dateStr = toKSTDateString(searchDate.value);
-        params.startDate = dateStr;
-        params.endDate = dateStr;
+      const params = new URLSearchParams();
+      params.append('page', page.value);
+      params.append('size', pageSize);
+
+      // 날짜 필터
+      if (searchDate.value && searchDate.value.length === 2) {
+        const [start, end] = searchDate.value;
+        if (start) params.append('startDate', start.toISOString().slice(0, 10));
+        if (end) params.append('endDate', end.toISOString().slice(0, 10));
       }
-      // 검색/필터 파라미터
+
+      // 검색어 필터 (품목명, 주문번호)
       if (search.value) {
-        if (filter.value === 'orderNo') params.orderCode = search.value;
-        if (filter.value === 'itemName') params.productSummary = search.value;
-        if (filter.value === 'status') params.status = statusKorToCode(search.value);
+        if (filter.value === 'orderNo') {
+          params.append('code', search.value);
+        } else if (filter.value === 'itemName') {
+          params.append('product', search.value);
+        }
       }
+
+      // 상태 필터 (탭)
+      const tab = tabs[activeTab.value].value;
+      const statusMap = {
+        pending: ['WAITING_FOR_RECEIPT'],
+        progress: ['REVIEWING', 'REVIEW_COMPLETED', 'APPROVED', 'DELIVERING'],
+        complete: ['DELIVERED', 'REJECTED', 'RECEIPT_CANCELED'],
+      };
+      if (statusMap[tab]) {
+        statusMap[tab].forEach(s => params.append('statusList', s));
+      }
+      
       const { data } = await api.get('/api/franchise/orders', { params });
       orders.value = data.content;
       totalPages.value = data.totalPages;
-      totalCount.value = data.totalCount;
-    } finally {
+      totalCount.value = data.totalElements;
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+    finally {
       loading.value = false;
     }
   }
 
-  watch([search, searchDate, filter, activeTab], () => {
+  watch([search, searchDate, filter], () => {
     page.value = 1;
     fetchOrders();
   });
@@ -244,7 +257,9 @@
   .order-form__header {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
     margin-bottom: 16px;
+    gap: 16px;
   }
   .order-form__search-group {
     display: flex;
@@ -324,7 +339,7 @@
     background: #ffebeb;
   }
   .status-waiting {
-    background: #fff9bd;
+    background: #fffcc4;
     color: #d97706;
   }
   .status-canceled {
@@ -416,6 +431,9 @@
     border-radius: 8px;
     padding: 0 14px;
     font-size: 1rem;
-    width: 130px;
+    width: 250px;
+  }
+  .order-register-btn:hover {
+    background: #2746b6;
   }
   </style> 

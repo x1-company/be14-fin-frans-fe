@@ -85,7 +85,7 @@ import { computed } from 'vue';
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 16px;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .product-table th {
@@ -111,7 +111,7 @@ import { computed } from 'vue';
 
 .badge {
   padding: 4px 10px;
-  font-size: 13px;
+  font-size: 14px;
   border-radius: 12px;
   font-weight: 700;
 }
