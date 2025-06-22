@@ -131,6 +131,12 @@
                   수정하기
                 </button>
                 <button
+                  v-else-if="
+                    !(
+                      activeTab === '협조대기' ||
+                      (activeTab === '전체' && canCooperate(document))
+                    )
+                  "
                   class="action-btn detail-btn"
                   @click.stop="viewDocument(document)"
                 >
@@ -292,11 +298,12 @@ const editDocument = (document) => {
 };
 
 const canCooperate = (document) => {
-  // 협조 진행중이고 협조선이 있는 경우
-  return (
-    document.status === "PENDING" &&
-    document.lines &&
-    document.lines.some((line) => line.type === "COOPERATOR")
+  // 현재 로그인한 사용자가 이 문서의 협조선에 'COOPERATOR'로 있고 상태가 'WAITING'인 경우
+  return document.lines?.some(
+    (line) =>
+      line.id === auth.userId &&
+      line.type === "COOPERATOR" &&
+      line.status === "WAITING"
   );
 };
 
@@ -593,12 +600,13 @@ const getEmptyMessage = () => {
 }
 
 .detail-btn {
-  background: #6c757d;
-  color: white;
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
 }
 
 .detail-btn:hover {
-  background: #5a6268;
+  background: #e9ecef;
 }
 
 /* 빈 상태 */

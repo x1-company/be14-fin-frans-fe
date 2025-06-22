@@ -281,12 +281,8 @@ const editDocument = (document) => {
 };
 
 const canApprove = (document) => {
-  // 결재 진행중이고 결재선이 있는 경우
-  return (
-    document.status === "IN_PROGRESS" &&
-    document.lines &&
-    document.lines.some((line) => line.type === "APPROVER")
-  );
+  // 수신자는 결재 권한이 없으므로 항상 false를 반환합니다.
+  return false;
 };
 
 const canEdit = (document) => {
@@ -580,12 +576,13 @@ const getEmptyMessage = () => {
 }
 
 .detail-btn {
-  background: #6c757d;
-  color: white;
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
 }
 
 .detail-btn:hover {
-  background: #5a6268;
+  background: #e9ecef;
 }
 
 /* 빈 상태 */
