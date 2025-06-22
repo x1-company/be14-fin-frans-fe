@@ -21,7 +21,7 @@
             placeholder="주문 날짜 범위 선택"
             :clearable="true"
             input-class-name="custom-datepicker-input"
-            style="width: 240px"
+            style="width: 270px"
             locale="ko"
             :enable-time-picker="false"
             auto-apply
@@ -30,7 +30,6 @@
           <input v-model="search" placeholder="검색어를 입력해주세요" />
           <select v-model="filter">
             <option value="itemName">품목명</option>
-            <option value="status">주문 상태</option>
             <option value="orderNo">주문 번호</option>
           </select>
         </div>
@@ -148,25 +147,6 @@
     }
   }
 
-  function statusKorToCode(kor) {
-    const map = {
-        '접수 대기': 'WAITING_FOR_RECEIPT',
-        '접수 취소': 'RECEIPT_CANCELED',
-        '반려': 'REJECTED',
-        '검토 중': 'REVIEWING',
-        '검토 완료': 'REVIEW_COMPLETED',
-        '결재 완료': 'APPROVED',
-        '배송 중': 'DELIVERING',
-        '배송 완료': 'DELIVERED',
-    };
-    for (const key in map) {
-        if (key.includes(kor)) {
-            return map[key];
-        }
-    }
-    return null;
-  }
-
   function orderStatusClass(status) {
     switch(status) {
       case 'WAITING_FOR_RECEIPT': return 'status-waiting';
@@ -188,36 +168,31 @@
       params.append('page', page.value);
       params.append('size', pageSize);
 
-      // 검색어가 있는 경우 검색 필터를 우선 적용
-      if (search.value) {
-        if (filter.value === 'orderNo') {
-          params.append('orderCode', search.value);
-        } else if (filter.value === 'itemName') {
-          params.append('product', search.value);
-        } else if (filter.value === 'status') {
-          const statusCode = statusKorToCode(search.value);
-          if (statusCode) {
-            params.append('statusList', statusCode);
-          }
-        }
-      } else {
-        // 검색어가 없는 경우에만 탭 필터를 적용
-        const tab = tabs[activeTab.value].value;
-        const statusMap = {
-          pending: ['WAITING_FOR_RECEIPT'],
-          progress: ['REVIEWING', 'REVIEW_COMPLETED', 'APPROVED', 'DELIVERING'],
-          complete: ['DELIVERED', 'REJECTED', 'RECEIPT_CANCELED'],
-        };
-        if (statusMap[tab]) {
-          statusMap[tab].forEach(s => params.append('statusList', s));
-        }
-      }
-
-      // 날짜 필터는 항상 적용
+      // 날짜 필터
       if (searchDate.value && searchDate.value.length === 2) {
         const [start, end] = searchDate.value;
         if (start) params.append('startDate', start.toISOString().slice(0, 10));
         if (end) params.append('endDate', end.toISOString().slice(0, 10));
+      }
+
+      // 검색어 필터 (품목명, 주문번호)
+      if (search.value) {
+        if (filter.value === 'orderNo') {
+          params.append('code', search.value);
+        } else if (filter.value === 'itemName') {
+          params.append('product', search.value);
+        }
+      }
+
+      // 상태 필터 (탭)
+      const tab = tabs[activeTab.value].value;
+      const statusMap = {
+        pending: ['WAITING_FOR_RECEIPT'],
+        progress: ['REVIEWING', 'REVIEW_COMPLETED', 'APPROVED', 'DELIVERING'],
+        complete: ['DELIVERED', 'REJECTED', 'RECEIPT_CANCELED'],
+      };
+      if (statusMap[tab]) {
+        statusMap[tab].forEach(s => params.append('statusList', s));
       }
       
       const { data } = await api.get('/api/franchise/orders', { params });
@@ -456,7 +431,7 @@
     border-radius: 8px;
     padding: 0 14px;
     font-size: 1rem;
-    width: 220px;
+    width: 250px;
   }
   .order-register-btn:hover {
     background: #2746b6;
