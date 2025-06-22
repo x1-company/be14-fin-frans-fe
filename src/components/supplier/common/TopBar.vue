@@ -6,17 +6,17 @@
                 <li>납품관리</li>
             </ul>
             {{ auth.supplierName || '' }}
-            <div class="notification-wrapper" @click="toggleNotificationBell">
-                <img src="@/assets/notification.png" alt="알림" class="notification-icon" />
+            <div class="notification-wrapper" ref="notificationWrapper">
+                <img src="@/assets/notification.png" alt="알림" class="notification-icon" @click="toggleNotificationBell" />
+                <NotificationBell :isOpen="isNotificationBellOpen" @close="isNotificationBellOpen = false" />
             </div>
-            <NotificationBell :isOpen="isNotificationBellOpen" @close="isNotificationBellOpen = false" />
             <UserInfo :userName="auth.userName" :userProfileUrl="auth.userProfileUrl" />
         </div>
     </nav>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth'
 import UserInfo from './UserInfo.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
@@ -24,11 +24,25 @@ import NotificationBell from '@/components/NotificationBell.vue';
 const auth = useAuthStore();
 
 const isNotificationBellOpen = ref(false);
+const notificationWrapper = ref(null);
 
-const toggleNotificationBell = (e) => {
-    e.stopPropagation();
+const toggleNotificationBell = () => {
     isNotificationBellOpen.value = !isNotificationBellOpen.value;
 };
+
+const handleClickOutside = (event) => {
+    if (notificationWrapper.value && !notificationWrapper.value.contains(event.target)) {
+        isNotificationBellOpen.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <style scoped>

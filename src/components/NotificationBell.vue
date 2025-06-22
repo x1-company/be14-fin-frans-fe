@@ -1,86 +1,3 @@
-<template>
-  <!-- 알림 드롭다운 오버레이 -->
-  <div v-if="isOpen" class="notification-overlay" @click="closeDropdown">
-    <div class="notification-dropdown-container" @click.stop>
-      <!-- 알림 드롭다운 -->
-      <div class="notification-dropdown">
-        <div class="dropdown-header">
-          <h3>알림</h3>
-          <div class="header-actions">
-            <button 
-              @click="toggleRealtimeNotifications" 
-              class="action-btn realtime-toggle"
-              :class="{ 'active': showRealtimeNotifications }"
-              :title="showRealtimeNotifications ? '실시간 알림 끄기' : '실시간 알림 켜기'"
-            >
-              {{ showRealtimeNotifications ? '실시간 ON' : '실시간 OFF' }}
-            </button>
-            <button 
-              v-if="hasUnreadNotifications"
-              @click="markAllAsRead" 
-              class="action-btn"
-              title="모두 읽음 처리"
-            >
-              모두 읽음
-            </button>
-            <button 
-              v-if="notifications.length > 0"
-              @click="deleteAllRead" 
-              class="action-btn"
-              title="읽은 알림 삭제"
-            >
-              읽은 알림 삭제
-            </button>
-          </div>
-        </div>
-
-        <!-- 알림 목록 -->
-        <div class="notification-list">
-          <div v-if="notifications.length === 0" class="empty-state">
-            <p>새로운 알림이 없습니다.</p>
-          </div>
-          
-          <div 
-            v-for="notification in sortedNotifications" 
-            :key="notification.id"
-            class="notification-item"
-            :class="{ 'unread': !notification.readAt }"
-            @click="handleNotificationClick(notification)"
-          >
-            <div class="notification-content">
-              <p class="notification-text">{{ notification.content }}</p>
-              <div class="notification-meta">
-                <span class="notification-type">{{ getNotificationTypeText(notification.type) }}</span>
-                <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
-              </div>
-            </div>
-            
-            <!-- 읽음 처리 버튼 -->
-            <button 
-              v-if="!notification.readAt"
-              @click.stop="markAsRead(notification.id)"
-              class="mark-read-btn"
-              title="읽음 처리"
-            >
-              ✓
-            </button>
-            
-            <!-- 삭제 버튼 -->
-            <button 
-              v-if="notification.readAt"
-              @click.stop="deleteNotification(notification.id)"
-              class="delete-btn"
-              title="삭제"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { computed, onMounted, onUnmounted } from 'vue';
 import { useNotificationStore } from '@/stores/notification';
@@ -109,6 +26,11 @@ const closeDropdown = () => {
   emit('close');
 };
 
+// 실시간 알림 토글
+const toggleRealtimeNotifications = () => {
+  notificationStore.toggleRealtimeNotifications();
+};
+
 // ESC 키로 닫기
 const onEsc = (e) => {
   if (e.key === 'Escape') {
@@ -130,7 +52,6 @@ const handleNotificationClick = (notification) => {
     markAsRead(notification.id);
   }
   
-  // 알림 타입에 따른 네비게이션 처리
   handleNotificationNavigation(notification);
 };
 
@@ -138,15 +59,12 @@ const handleNotificationNavigation = (notification) => {
   // 알림 타입에 따라 적절한 페이지로 이동
   switch (notification.type) {
     case 'ORDER_RESPONSE':
-      // 주문 관련 페이지로 이동
       console.log('주문 페이지로 이동');
       break;
     case 'APPROVAL_REQUEST':
-      // 결재 관련 페이지로 이동
       console.log('결재 페이지로 이동');
       break;
     case 'LOW_STOCK':
-      // 재고 관련 페이지로 이동
       console.log('재고 페이지로 이동');
       break;
     default:
@@ -217,12 +135,110 @@ const formatTime = (dateString) => {
   
   return date.toLocaleDateString();
 };
-
-// 실시간 알림 토글
-const toggleRealtimeNotifications = () => {
-  notificationStore.toggleRealtimeNotifications();
-};
 </script>
+
+<template>
+  <!-- 알림 드롭다운 오버레이 -->
+  <div v-if="isOpen" class="notification-overlay" @click="closeDropdown">
+    <div class="notification-dropdown-container" @click.stop>
+      <!-- 알림 드롭다운 -->
+      <div class="notification-dropdown">
+        <div class="dropdown-header">
+          <!-- 실시간 알림 토글 스위치 (레이블이 위로 가는 구조) -->
+          <div class="realtime-toggle-wrapper">
+            <span class="toggle-label">실시간 알림</span>
+            <div
+              class="toggle-switch"
+              :class="{ active: showRealtimeNotifications }"
+              @click="toggleRealtimeNotifications"
+              :title="
+                showRealtimeNotifications
+                  ? '실시간 알림 끄기'
+                  : '실시간 알림 켜기'
+              "
+            >
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+
+          <!-- 텍스트 액션 버튼 -->
+          <div class="text-actions-wrapper">
+            <span
+              v-if="hasUnreadNotifications"
+              @click="markAllAsRead"
+              class="text-action"
+              title="모두 읽음 처리"
+            >
+              모두 읽음
+            </span>
+            <span
+              v-if="notifications.length > 0"
+              @click="deleteAllRead"
+              class="text-action"
+              title="읽은 알림 삭제"
+            >
+              읽은 알림 삭제
+            </span>
+          </div>
+        </div>
+
+        <!-- 알림 목록 -->
+        <div class="notification-list">
+          <div v-if="notifications.length === 0" class="empty-state">
+            <p>새로운 알림이 없습니다.</p>
+          </div>
+
+          <div
+            v-for="notification in sortedNotifications"
+            :key="notification.id"
+            class="notification-item"
+            :class="{ unread: !notification.readAt }"
+            @click="handleNotificationClick(notification)"
+          >
+            <div class="card-border"></div>
+            <div class="card-icon">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="12" cy="12" r="10" fill="#FF4D4F" />
+                <path
+                  d="M12 7V13"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+                <circle cx="12" cy="17" r="1" fill="white" />
+              </svg>
+            </div>
+            <div class="card-main-content">
+              <div class="card-header">
+                <span class="notification-time">{{
+                  formatTime(notification.createdAt)
+                }}</span>
+              </div>
+              <div class="card-body">
+                <p class="notification-text">{{ notification.content }}</p>
+              </div>
+            </div>
+            <!-- 삭제 버튼 (읽은 알림에만 표시) -->
+            <button
+              v-if="notification.readAt"
+              @click.stop="deleteNotification(notification.id)"
+              class="delete-btn"
+              title="삭제"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 /* 오버레이 스타일 */
@@ -261,72 +277,94 @@ const toggleRealtimeNotifications = () => {
 
 .dropdown-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; /* 왼쪽 정렬로 변경 */
   align-items: center;
-  padding: 18px 20px 12px 20px;
-  border-bottom: 1px solid #e0e0e0;
-  background: #f8f9fa;
+  padding: 16px;
+  gap: 24px; /* 요소 간 간격 */
+  border-bottom: 1px solid #e9ecef;
 }
 
-.dropdown-header h3 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-  color: #4066fa;
-}
-
-.header-actions {
+/* 토글 스위치 */
+.realtime-toggle-wrapper {
   display: flex;
-  gap: 8px;
+  flex-direction: column; /* 라벨을 위로 올림 */
+  align-items: center;
+  gap: 4px;
 }
 
-.action-btn {
-  background: none;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
+.toggle-label {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+  white-space: nowrap; /* 텍스트가 세로로 깨지는 현상 방지 */
+}
+
+.toggle-switch {
+  position: relative;
+  width: 44px; /* 크기 줄임 */
+  height: 24px; /* 크기 줄임 */
+  background-color: #e9e9eb;
+  border-radius: 12px; /* 반지름도 비율에 맞게 */
   cursor: pointer;
-  transition: background-color 0.2s;
-  color: #4066fa;
-  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+  flex-shrink: 0;
 }
 
-.action-btn:hover {
-  background-color: #e6eaff;
+.toggle-switch.active {
+  background-color: #ff4d4f; /* 요청하신 빨간색으로 변경 */
 }
 
-.realtime-toggle {
-  background-color: #f8f9fa;
-  border-color: #4066fa;
-  color: #4066fa;
-  font-weight: 600;
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px; /* 크기 줄임 */
+  height: 20px; /* 크기 줄임 */
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease-in-out;
 }
 
-.realtime-toggle.active {
-  background-color: #4066fa;
-  color: white;
+.toggle-switch.active .toggle-thumb {
+  transform: translateX(20px); /* 이동 거리도 맞게 수정 */
 }
 
-.realtime-toggle:hover {
-  background-color: #3658d9;
-  color: white;
+/* 텍스트 액션 */
+.text-actions-wrapper {
+  display: flex;
+  gap: 16px;
+  margin-left: auto; /* 오른쪽으로 밀어냄 */
+}
+
+.text-action {
+  font-size: 14px;
+  font-weight: 500;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: font-weight 0.2s, color 0.2s;
+}
+
+.text-action:hover {
+  font-weight: 700; /* 볼드체로 변경 */
+  color: #000;
 }
 
 .notification-list {
   flex: 1;
-  max-height: 340px;
+  max-height: 400px;
   overflow-y: auto;
-  background: #f7f9fb;
-  padding: 0 0 8px 0;
+  background: #fdfdff;
+  padding: 8px;
 }
 
 .empty-state {
-  padding: 40px 20px;
+  padding: 40px 16px;
   text-align: center;
-  color: #666;
-  font-size: 14px;
-  font-weight: 500;
+  color: #888;
 }
 
 .empty-state p {
@@ -337,110 +375,105 @@ const toggleRealtimeNotifications = () => {
 .notification-item {
   display: flex;
   align-items: flex-start;
-  padding: 14px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  background: #ffffff;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  margin-bottom: 8px;
+  position: relative;
   cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
-  background: #fff;
-  border-radius: 10px;
-  margin: 8px 12px;
-  box-shadow: 0 2px 8px 0 rgba(64,102,250,0.07);
+  transition: all 0.2s ease;
 }
 
 .notification-item:hover {
-  background-color: #f0f4ff;
-  box-shadow: 0 4px 16px 0 rgba(64,102,250,0.10);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.notification-item.unread {
-  border-left: 4px solid #4066fa;
-  background-color: #f0f8ff;
+.notification-item:last-child {
+  margin-bottom: 0;
 }
 
-.notification-item.unread:hover {
-  background-color: #e6f3ff;
+.card-border {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background-color: #ffccc7;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
 }
 
-.notification-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.notification-text {
-  margin: 0 0 4px 0;
-  font-size: 15px;
-  line-height: 1.5;
-  color: #222;
-  font-weight: 500;
-}
-
-.notification-meta {
+.card-icon {
+  padding: 16px 12px 16px 18px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 12px;
-  color: #666;
 }
 
-.notification-type {
-  background-color: #e9ecef;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #4066fa;
-  font-weight: 600;
+.card-main-content {
+  flex-grow: 1;
+  padding: 16px 16px 16px 0;
+  padding-right: 30px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .notification-time {
-  color: #999;
   font-size: 12px;
+  color: #888;
+  margin-left: 8px;
+  white-space: nowrap;
 }
 
-.mark-read-btn,
+.card-body .notification-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #555;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notification-item.unread {
+  border-color: #ff8a80;
+}
+
+.notification-item.unread .card-border {
+  background-color: #ff4d4f;
+}
+
+.notification-item.unread .notification-time {
+  color: #000;
+  font-weight: 700;
+}
+
 .delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   background: none;
   border: none;
+  font-size: 18px;
+  color: #aaa;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  font-size: 15px;
-  margin-left: 8px;
-  transition: background-color 0.2s;
-}
-
-.mark-read-btn {
-  color: #28a745;
-}
-
-.mark-read-btn:hover {
-  background-color: #d4edda;
-}
-
-.delete-btn {
-  color: #dc3545;
+  padding: 2px;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
 }
 
 .delete-btn:hover {
-  background-color: #f8d7da;
-}
-
-/* 스크롤바 항상 보이게 */
-.notification-list {
-  scrollbar-width: thin;
-  scrollbar-color: #b3b3b3 #f1f1f1;
-}
-.notification-list::-webkit-scrollbar {
-  width: 8px;
-  background: #f1f1f1;
-}
-.notification-list::-webkit-scrollbar-thumb {
-  background: #b3b3b3;
-  border-radius: 4px;
-}
-.notification-list::-webkit-scrollbar-thumb:hover {
-  background: #888;
-}
-.notification-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background-color: #f0f0f0;
+  color: #333;
 }
 </style> 

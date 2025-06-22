@@ -8,7 +8,7 @@
             <Pencil :size="16" color="white" />
             <span>수정</span>
           </button>
-          <button class="btn-blue">재고 확인</button>
+        <button class="btn-blue">재고 확인</button>
         </template>
         <template v-else>
           <button class="btn-outline" @click="cancelEditing">취소</button>
@@ -145,8 +145,8 @@ function attrLabel(val) {
 const fetchProductDetail = async () => {
   if (!props.productId) return;
   try {
-    const { data } = await api.get(`/api/hq/products/details/${props.productId}`);
-    detail.value = data;
+  const { data } = await api.get(`/api/hq/products/details/${props.productId}`);
+  detail.value = data;
   } catch (error) {
     console.error('Failed to fetch product details:', error);
     alert('자재 정보를 불러오는 데 실패했습니다.');
