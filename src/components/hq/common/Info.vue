@@ -17,11 +17,7 @@
                         <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
                     </div>
 
-                    <div v-if="activeTabSwitch === 1" class="content-section">
-                        <h3>가맹점 정보 컨텐츠</h3>
-                        <p>반품 관리 내용이 여기에 표시됩니다.</p>
-                        <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
-                    </div>
+                    <FranchiseInfo v-if="activeTabSwitch === 1" :selectedFranchiseId="selectedFranchiseId"/>
 
                     <div v-if="activeTabSwitch === 2" class="content-section">
                         <OrderList />
@@ -43,10 +39,12 @@ import { ref, computed, watch } from 'vue'
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from '../orders/InfoHeader.vue'
 import OrderList from '../orders/list/OrderList.vue'
+import FranchiseInfo from '../franchise/FranchiseInfo.vue'
 
 
 const props = defineProps({
-    activeTab: String
+    activeTab: String,
+    selectedFranchiseId: [String, Number]
 })
 
 const emit = defineEmits(['tab-change', "select-tab"])
