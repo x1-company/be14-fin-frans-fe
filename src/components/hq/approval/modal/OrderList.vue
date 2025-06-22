@@ -40,9 +40,7 @@
             </div>
             <div class="col-code">{{ item.code }}</div>
             <div class="col-date">{{ formatDate(item.createdAt) }}</div>
-            <div class="col-store">{{
-              item.franchiseName || dummyFranchise(index)
-            }}</div>
+            <div class="col-store">{{ item.franchiseName }}</div>
             <div class="col-amount">₩{{ formatAmount(item.totalAmount) }}</div>
           </div>
         </div>
@@ -86,10 +84,7 @@ const fetchOrderData = async () => {
   error.value = null;
   try {
     const { data } = await api.get("/api/hq/orders/reviewCompleted");
-    orderData.value = data.map((item, idx) => ({
-      ...item,
-      franchiseName: dummyFranchise(idx),
-    }));
+    orderData.value = data;
   } catch (err) {
     error.value = err.message;
     orderData.value = [];

@@ -14,29 +14,20 @@
           <thead>
             <tr>
               <th>No.</th>
-              <th>문서명</th>
+              <th>문서번호</th>
+              <th>가맹점명</th>
               <th>작성일</th>
               <th>금액</th>
-              <th>코드</th>
-              <th>액션</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(doc, index) in filteredDocuments" :key="doc.id">
               <td>{{ index + 1 }}</td>
+              <td>{{ doc.code }}</td>
               <td>{{ doc.name }}</td>
               <td>{{ doc.date }}</td>
               <td>{{ formatCurrency(doc.amount) }}</td>
-              <td>{{ doc.code }}</td>
-              <td>
-                <button
-                  class="approve-button"
-                  @click="handleApproveDocument(doc)"
-                >
-                  결재하기
-                </button>
-              </td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
                   ×
@@ -284,11 +275,8 @@ const formData = ref({
 });
 
 const fileInput = ref(null);
-
-// 문서 목록
 const documents = ref([]);
 
-// 계산된 속성
 const filteredDocuments = computed(() => {
   if (!searchQuery.value) return documents.value;
   return documents.value.filter((doc) =>
@@ -296,7 +284,6 @@ const filteredDocuments = computed(() => {
   );
 });
 
-// 메서드
 const formatCurrency = (amount) => {
   return `₩${amount.toLocaleString()}`;
 };
@@ -309,32 +296,8 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
-const getApproverTypeLabel = (type) => {
-  const labels = {
-    APPROVER: "결재자",
-    COLLABORATOR: "협조자",
-    VIEWER: "참조자",
-  };
-  return labels[type] || "결재자";
-};
-
 const addApprover = () => {
   showApprovalLineModal.value = true;
-};
-
-const handleAddApprover = (approvalLineData) => {
-  // 결재선에 추가
-  formData.value.approvalLines.push({
-    userId: approvalLineData.userId,
-    userName: approvalLineData.userName,
-    userEmail: approvalLineData.userEmail,
-    department: approvalLineData.department,
-    seq: formData.value.approvalLines.length + 1,
-    type: approvalLineData.type,
-  });
-
-  showApprovalLineModal.value = false;
-  emitFormData();
 };
 
 const removeApprover = (id) => {
@@ -345,13 +308,11 @@ const removeApprover = (id) => {
 };
 
 const removeDocument = (docId) => {
-  // documents 배열에서 삭제
   const docIndex = documents.value.findIndex((doc) => doc.id === docId);
   if (docIndex > -1) {
     documents.value.splice(docIndex, 1);
   }
 
-  // approvalDocuments에서 삭제
   const index = formData.value.approvalDocuments.documentIds.indexOf(docId);
   if (index > -1) {
     formData.value.approvalDocuments.documentIds.splice(index, 1);
@@ -359,16 +320,46 @@ const removeDocument = (docId) => {
   emitFormData();
 };
 
-const handleFileSelect = (event) => {
-  const files = Array.from(event.target.files);
-  files.forEach((file) => {
-    formData.value.files.push({
-      name: file.name,
-      size: file.size,
-      file: file,
-      url: "",
+const uploadFiles = async (files) => {
+  try {
+    const formData = new FormData();
+
+    files.forEach((file) => {
+      formData.append("files", file);
     });
-  });
+
+    formData.append("type", "approval");
+
+    const response = await api.post("/api/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error("파일 업로드 실패:", error);
+    throw new Error("파일 업로드에 실패했습니다.");
+  }
+};
+
+const handleFileSelect = async (event) => {
+  const files = Array.from(event.target.files);
+  try {
+    const uploadedFiles = await uploadFiles(files);
+    uploadedFiles.forEach((uploadedFile) => {
+      formData.value.files.push({
+        name: uploadedFile.originalName || uploadedFile.name,
+        size: uploadedFile.size,
+        url: uploadedFile.url,
+        uuid: uploadedFile.uuid,
+      });
+    });
+  } catch (error) {
+    console.error("파일 업로드 실패:", error);
+    alert("파일 업로드에 실패했습니다. 다시 시도해주세요.");
+  }
   emitFormData();
 };
 
@@ -383,31 +374,25 @@ const handleAddDocument = () => {
 
 const handleSelectDocuments = (selectedDocuments) => {
   selectedDocuments.forEach((doc) => {
-    // 이미 존재하는 문서인지 확인
     const existingDoc = documents.value.find(
-      (existing) => existing.id === doc.id
+      (existing) => existing.id === (doc.id || doc.code)
     );
     if (!existingDoc) {
-      // 주문 코드를 문서명으로 사용하고, 매장명을 추가
-      const documentName = `${doc.franchiseName} - ${doc.code}`;
-
-      // 새로운 문서를 배열의 맨 앞에 추가
       documents.value.unshift({
-        id: doc.id,
-        name: documentName,
+        id: doc.id || doc.code,
+        code: doc.code,
+        name: doc.franchiseName,
         date: formatDate(doc.createdAt),
         amount: doc.totalAmount,
       });
 
-      // approvalDocuments에 추가
-      formData.value.approvalDocuments.documentIds.push(doc.id);
+      formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
     }
   });
   showOrderListModal.value = false;
   emitFormData();
 };
 
-// 날짜 포맷팅 함수 추가
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   const year = date.getFullYear();
@@ -416,18 +401,13 @@ const formatDate = (dateString) => {
   return `${year}.${month}.${day}`;
 };
 
-// 부모로부터 선택된 문서 받기
 const addSelectedDocuments = (selectedDocuments) => {
   selectedDocuments.forEach((doc) => {
-    // 이미 존재하는 문서인지 확인
     const existingDoc = documents.value.find(
       (existing) => existing.id === doc.id
     );
     if (!existingDoc) {
-      // 주문 코드를 문서명으로 사용하고, 매장명을 추가
       const documentName = `${doc.franchiseName} - ${doc.code}`;
-
-      // 새로운 문서를 배열의 맨 앞에 추가
       documents.value.unshift({
         id: doc.id,
         name: documentName,
@@ -435,7 +415,6 @@ const addSelectedDocuments = (selectedDocuments) => {
         amount: doc.totalAmount,
       });
 
-      // approvalDocuments에 추가
       formData.value.approvalDocuments.documentIds.push(doc.id);
     }
   });
@@ -446,7 +425,6 @@ const emitFormData = () => {
   emit("form-data-updated", formData.value);
 };
 
-// 폼 데이터 변경 감지
 watch(
   formData,
   () => {
@@ -455,13 +433,11 @@ watch(
   { deep: true }
 );
 
-// 초기화
 const initializeForm = () => {
   formData.value.approvalDocuments.documentIds = [1, 2];
   emitFormData();
 };
 
-// 부모로부터 데이터 받기
 const updateFormData = (data) => {
   formData.value = { ...data };
 };
@@ -473,16 +449,16 @@ const handleApprovalLineConfirm = ({
 }) => {
   const receiverList = receivers.map((u) => ({
     ...u,
-    type: "RECEIVER",
+    type: "RECIPIENT",
     userId: u.id || u.userId,
   }));
+
   const referenceList = references.map((u) => ({
     ...u,
     type: "REFERENCE",
     userId: u.id || u.userId,
   }));
 
-  // approvalAndCollaboratorLines에도 userId 추가
   const approvalAndCollaboratorList = approvalAndCollaboratorLines.map((u) => ({
     ...u,
     userId: u.id || u.userId,
@@ -499,31 +475,27 @@ const handleApprovalLineConfirm = ({
 
 const approvalAndCollaboratorLines = computed(() =>
   formData.value.approvalLines.filter(
-    (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
+    (line) => line.type === "APPROVER" || line.type === "COOPERATOR"
   )
 );
 
 const receiverLines = computed(() =>
-  formData.value.approvalLines.filter((line) => line.type === "RECEIVER")
+  formData.value.approvalLines.filter((line) => line.type === "RECIPIENT")
 );
 
 const referenceLines = computed(() =>
   formData.value.approvalLines.filter((line) => line.type === "REFERENCE")
 );
 
-const approvalTab = ref("APPROVER");
-const sideTab = ref("RECEIVER");
-
 const handleSelectTemplate = async (template) => {
-  // 템플릿 상세 결재선 정보 조회
   try {
     const { data } = await api.get(
       `/api/hq/approvals/templates/${template.id}`
     );
-    // data가 결재선 배열(approvalLines)이라고 가정
+
     formData.value.approvalLines = data.map((line) => ({
       ...line,
-      id: line.userId || line.id, // 내부 일관성 위해 id 필드 보장
+      id: line.userId || line.id,
       name: line.userName || line.name,
       position: line.positionName || line.position,
       dept: line.departmentName || line.dept,
@@ -537,6 +509,7 @@ const handleSelectTemplate = async (template) => {
 };
 
 const remarksLength = computed(() => formData.value.remarks.length);
+
 const updateRemarksCount = () => {
   if (formData.value.remarks.length > 255) {
     formData.value.remarks = formData.value.remarks.slice(0, 255);
@@ -561,27 +534,23 @@ const handleTempSave = async () => {
   try {
     isSubmitting.value = true;
 
-    // 결재선 데이터 변환
     const approvalLines = formData.value.approvalLines
-      .filter(
-        (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
-      )
+      .filter((line) => line.type === "APPROVER" || line.type === "COOPERATOR")
       .map((line, index) => ({
-        userId: line.userId || line.id || 1, // 기본값 설정
+        userId: line.userId || line.id || 1,
         seq: index + 1,
         type: line.type,
       }));
 
-    // 파일 데이터 변환 (실제로는 파일 업로드 후 URL을 받아야 함)
     const files = formData.value.files.map((file) => ({
       name: file.name,
-      url: file.url || "https://files.company.com/docs/temp-file.pdf", // 임시 URL
+      url: file.url,
     }));
 
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,
-      isRequest: false, // 임시저장
+      isRequest: false,
       approvalLines: approvalLines,
       files: files,
       approvalDocuments: formData.value.approvalDocuments,
@@ -603,7 +572,6 @@ const handleTempSave = async () => {
 const handleSubmit = async () => {
   if (isSubmitting.value) return;
 
-  // 필수 필드 검증
   if (!formData.value.title.trim()) {
     alert("제목을 입력해주세요.");
     return;
@@ -627,27 +595,23 @@ const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
 
-    // 결재선 데이터 변환
     const approvalLines = formData.value.approvalLines
-      .filter(
-        (line) => line.type === "APPROVER" || line.type === "COLLABORATOR"
-      )
+      .filter((line) => line.type === "APPROVER" || line.type === "COOPERATOR")
       .map((line, index) => ({
-        userId: line.userId || line.id || 1, // 기본값 설정
+        userId: line.userId || line.id || 1,
         seq: index + 1,
         type: line.type,
       }));
 
-    // 파일 데이터 변환 (실제로는 파일 업로드 후 URL을 받아야 함)
     const files = formData.value.files.map((file) => ({
       name: file.name,
-      url: file.url || "https://files.company.com/docs/temp-file.pdf", // 임시 URL
+      url: file.url,
     }));
 
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,
-      isRequest: true, // 결재 등록
+      isRequest: true,
       approvalLines: approvalLines,
       files: files,
       approvalDocuments: formData.value.approvalDocuments,
@@ -657,7 +621,6 @@ const handleSubmit = async () => {
 
     if (response.status === 200 || response.status === 201) {
       alert("결재가 등록되었습니다.");
-      // 성공 후 폼 초기화 또는 다른 페이지로 이동
       emit("approval-submitted", response.data);
     }
   } catch (error) {
@@ -668,7 +631,6 @@ const handleSubmit = async () => {
   }
 };
 
-// 결재하기 버튼 클릭 핸들러
 const handleApproveDocument = (document) => {
   emit("document-approve", document);
 };
@@ -878,100 +840,11 @@ defineExpose({
   margin-right: 2px;
 }
 
-.textarea-wrapper,
-.char-count-box {
-  all: unset;
-}
-
 /* 결재선 */
 .approval-line-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.approval-line-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.approver-name {
-}
-
-/* 파일 업로드 */
-.file-upload-area {
-  margin-bottom: 20px;
-}
-
-.file-upload-button {
-  padding: 8px 16px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.file-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.file-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.file-icon {
-  font-size: 20px;
-}
-
-.file-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.file-name {
-  font-weight: 500;
-  color: #374151;
-}
-
-.file-size {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.file-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.file-status {
-  font-size: 12px;
-  color: #10b981;
-}
-
-.remove-file {
-  background: none;
-  border: none;
-  color: #ef4444;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 4px;
 }
 
 .approval-line-row {
@@ -980,10 +853,12 @@ defineExpose({
   gap: 32px;
   align-items: flex-start;
 }
+
 .approval-line-left {
   flex: 2;
   min-width: 0;
 }
+
 .approval-line-right {
   flex: 1;
   min-width: 220px;
@@ -991,9 +866,11 @@ defineExpose({
   flex-direction: column;
   gap: 16px;
 }
+
 .approval-side-section {
   margin-bottom: 12px;
 }
+
 .approval-card {
   display: flex;
   align-items: center;
@@ -1005,17 +882,21 @@ defineExpose({
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   position: relative;
 }
+
 .order-num {
   font-size: 16px;
   font-weight: 600;
   width: 24px;
 }
+
 .order-num.approver {
   color: #3b82f6;
 }
-.order-num.collaborator {
+
+.order-num.cooperator {
   color: #ec4899;
 }
+
 .circle-initial {
   width: 36px;
   height: 36px;
@@ -1028,47 +909,58 @@ defineExpose({
   font-weight: 600;
   margin: 0 16px;
 }
+
 .circle-initial.approver {
   background-color: #3b82f6;
 }
-.circle-initial.collaborator {
+
+.circle-initial.cooperator {
   background-color: #ec4899;
 }
+
 .circle-initial.receiver {
   background-color: #f59e0b;
 }
+
 .circle-initial.reference {
   background-color: #8b5cf6;
 }
+
 .user-info {
   flex: 1;
 }
+
 .user-name {
   font-size: 15px;
   font-weight: 600;
   color: #111827;
 }
+
 .user-meta {
   font-size: 13px;
   color: #6b7280;
   margin-top: 2px;
 }
+
 .badge {
   font-size: 12px;
   font-weight: 500;
   padding: 4px 8px;
   border-radius: 6px;
   margin-left: 16px;
-  display: none; /* 기본적으로 숨김 */
+  display: none; /* 기본 숨김 */
 }
+
 .badge-approver {
   background-color: #eff6ff;
   color: #3b82f6;
 }
-.badge-collaborator {
+
+.badge-cooperator {
   background-color: #fdf2f8;
   color: #ec4899;
 }
+
 .remove-approver {
   background: none;
   border: none;
@@ -1077,15 +969,18 @@ defineExpose({
   cursor: pointer;
   padding: 0 8px;
 }
+
 .side-section-title {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 8px;
   color: #8b5cf6;
 }
+
 .side-section-title.receiver {
   color: #fbbf24;
 }
+
 .side-section-title.reference {
   color: #a78bfa;
 }
@@ -1098,6 +993,7 @@ defineExpose({
   border-radius: 8px;
   margin-top: 16px;
 }
+
 .no-approval-line p:first-child {
   font-weight: 600;
   margin-bottom: 8px;
@@ -1137,6 +1033,7 @@ defineExpose({
   border-color: #3b82f6;
   font-weight: 600;
 }
+
 .submit-button:hover:not(:disabled) {
   background: #2563eb;
   border-color: #2563eb;
@@ -1146,6 +1043,7 @@ defineExpose({
   background: #f3f4f6;
   color: #374151;
 }
+
 .temp-save-button:hover:not(:disabled) {
   background: #e5e7eb;
   border-color: #9ca3af;
