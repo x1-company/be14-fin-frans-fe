@@ -113,7 +113,13 @@ const emit = defineEmits([
 const updateTab = (newTabIndex) => {
   activeTabSwitch.value = newTabIndex;
   updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
-  emit("active-tab-change", newTabIndex);
+
+  // 결재템플릿 탭(인덱스 1)일 때는 currentTabIndex를 2로 설정
+  if (newTabIndex === 1) {
+    emit("active-tab-change", 2);
+  } else {
+    emit("active-tab-change", newTabIndex);
+  }
 
   if (newTabIndex === 0) {
     emit("tab-change", "상신-전체");
