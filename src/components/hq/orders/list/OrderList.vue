@@ -35,18 +35,8 @@
         </div>
       </div>
 
-      <!-- 가맹점 선택 안내 메시지 (selectedFranchiseId가 null일 때) -->
-      <div v-if="!props.selectedFranchiseId" class="franchise-select-message">
-        <div class="franchise-select-icon">🏪</div>
-        <h3 class="franchise-select-title">가맹점을 선택해주세요</h3>
-        <p class="franchise-select-description">
-          왼쪽 사이드바에서 가맹점을 선택하시면<br>
-          해당 가맹점의 주문 목록을 확인할 수 있습니다.
-        </p>
-      </div>
-
-      <!-- 기존 테이블 (selectedFranchiseId가 있을 때만 표시) -->
-      <div v-else>
+      <!-- 주문 목록 테이블 -->
+      <div>
         <div class="order-form__table-wrapper">
           <table class="order-form__table">
             <thead>
@@ -164,14 +154,15 @@
     }
 
     async function fetchOrders() {
-    if (props.selectedFranchiseId == null) return;
     loading.value = true;
     try {
         const params = new URLSearchParams();
         params.append('page', page.value);
         params.append('size', pageSize);
-        params.append('franchiseId', props.selectedFranchiseId)
-
+        if (props.selectedFranchiseId) {
+          params.append('franchiseId', props.selectedFranchiseId)
+        }
+        
         // ✅ 로컬 기준 날짜 필터
         if (Array.isArray(searchDate.value) && searchDate.value.length === 2) {
         const [start, end] = searchDate.value.map(d => new Date(d));
@@ -492,37 +483,5 @@
   }
   .order-register-btn:hover {
     background: #2746b6;
-  }
-
-  .franchise-select-message {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 20px;
-    text-align: center;
-    background: #fafbfc;
-    border-radius: 12px;
-    margin: 40px 0;
-  }
-
-  .franchise-select-icon {
-    font-size: 4rem;
-    margin-bottom: 24px;
-    opacity: 0.7;
-  }
-
-  .franchise-select-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 12px;
-  }
-
-  .franchise-select-description {
-    font-size: 1rem;
-    color: #666;
-    line-height: 1.6;
-    margin: 0;
   }
   </style>
