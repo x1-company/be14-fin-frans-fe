@@ -11,6 +11,7 @@ const userCode = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
