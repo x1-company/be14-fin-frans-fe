@@ -76,6 +76,12 @@ const router = createRouter({
       component: ApprovalListView,
     },
     {
+      path: "/approval/:approvalId",
+      name: "approval-detail",
+      component: ApprovalListView,
+      props: true,
+    },
+    {
       path: "/warehouse",
       name: "warehouse",
       component: WarehouseInfoView,
