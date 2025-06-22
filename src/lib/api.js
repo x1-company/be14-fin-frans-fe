@@ -2,9 +2,12 @@ import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
 import router from "@/router";
 
+// 환경변수에서 API URL 가져오기
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 // Axios 인스턴스 생성
 const api = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: API_BASE_URL,
   withCredentials: true, // refreshToken HttpOnly 쿠키 전달을 위해 필요
 });
 
@@ -34,7 +37,7 @@ api.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          "http://localhost:8080/api/auth/reissue",
+          `${API_BASE_URL}/api/auth/reissue`,
           null, // refreshToken은 HttpOnly 쿠키에 있으므로 body 필요 없음
           { withCredentials: true }
         );
