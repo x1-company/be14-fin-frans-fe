@@ -328,8 +328,8 @@ const canApprove = (document) => {
 };
 
 const canEdit = (document) => {
-  // 임시저장 탭에서만 수정하기 버튼 표시
-  return activeTab.value === "임시저장" && document.status === "DRAFT";
+  // 임시저장 상태이면 수정하기 버튼 표시 (전체 탭에서도)
+  return document.status === "DRAFT";
 };
 
 const canCollaborate = (document) => {
