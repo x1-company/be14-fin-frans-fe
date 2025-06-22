@@ -198,7 +198,7 @@
       const { data } = await api.get('/api/franchise/orders', { params });
       orders.value = data.content;
       totalPages.value = data.totalPages;
-      totalCount.value = data.totalElements;
+      totalCount.value = data.totalCount;
     } catch (error) {
       console.error('Error fetching orders:', error);
     }
