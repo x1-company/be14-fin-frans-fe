@@ -44,6 +44,8 @@ const props = defineProps({
 
 const statusText = computed(() => {
   switch(props.order.status) {
+    case 'WAITING_FOR_RECEIPT': return '접수 대기';
+    case 'RECEIPT_CANCELED': return '접수 취소';
     case 'REJECTED': return '반려';
     case 'REVIEWING': return '검토 중';
     case 'REVIEW_COMPLETED': return '검토 완료';
@@ -126,12 +128,12 @@ const statusText = computed(() => {
 
 .info-grid .label {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
 }
 
 .info-grid .value {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   margin: 0 30px;
   text-align: right;

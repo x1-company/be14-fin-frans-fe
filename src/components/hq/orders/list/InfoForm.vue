@@ -127,7 +127,7 @@
     } else if (activeTab.value === 2) {
       return order.status === 'REVIEW_COMPLETED' || order.status === 'DELIVERING';
     } else if (activeTab.value === 3) {
-      return order.status === 'DELIVERED';
+      return order.status === 'DELIVERED' || order.status === 'REJECTED';
     }
     return true; // 전체
   }
