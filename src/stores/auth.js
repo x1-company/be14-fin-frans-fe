@@ -28,6 +28,9 @@ export const useAuthStore = defineStore("auth", {
     userSignUrl() {
       return this.decodedToken?.userSignUrl || "";
     },
+    userEmail() {
+      return this.decodedToken?.userEmail || "";
+    },
     departmentId() {
       return this.decodedToken?.departmentId || null;
     },
@@ -96,7 +99,7 @@ export const useAuthStore = defineStore("auth", {
       }
 
       this.accessToken = "";
-      
+
       // 사용자 계정에 귀속되지 않는 accessToken과 팝업 기록만 지웁니다.
       // 사용자별 삭제 기록(localStorage)은 보존됩니다.
       localStorage.removeItem("accessToken");
@@ -108,7 +111,7 @@ export const useAuthStore = defineStore("auth", {
     },
     forceLogoutAndClear() {
       console.warn("--- 강제 로그아웃 및 전체 데이터 클리어 실행 ---");
-      
+
       // 이 함수는 모든 localStorage와 sessionStorage를 지우므로,
       // 사용자별 삭제 기록까지 완벽하게 초기화합니다.
       const notificationService = require('@/lib/notificationService').default;
