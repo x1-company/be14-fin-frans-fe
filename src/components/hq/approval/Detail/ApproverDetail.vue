@@ -213,7 +213,7 @@ import ApprovalLineDetail from "./ApprovalLineDetail.vue";
 // 본문ㅡ결재선 탭 선택
 const activeTab = ref("document"); // 'document' or 'approvalLine'
 
-const emit = defineEmits(["close-detail", "approve", "reject", "refresh-list"]);
+const emit = defineEmits(["close-detail", "approve", "reject"]);
 
 const props = defineProps({
   document: {
@@ -256,54 +256,16 @@ const goBack = () => {
   emit("close-detail");
 };
 
-const approveDocument = async () => {
+const approveDocument = () => {
   if (confirm("이 문서를 승인하시겠습니까?")) {
-    try {
-      const response = await api.post(
-        `/api/hq/approvals/${props.document.approvalId}/approve`,
-        {
-          approvalId: props.document.approvalId,
-          status: "APPROVED",
-          remarks: "승인 처리되었습니다.",
-        }
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        alert("문서가 승인되었습니다.");
-        emit("approve", props.document);
-        emit("refresh-list");
-        goBack();
-      }
-    } catch (error) {
-      console.error("승인 처리 실패:", error);
-      alert("승인 처리에 실패했습니다. 다시 시도해주세요.");
-    }
+    emit("approve", props.document);
   }
 };
 
-const rejectDocument = async () => {
+const rejectDocument = () => {
   const reason = prompt("반려 사유를 입력해주세요:");
   if (reason) {
-    try {
-      const response = await api.post(
-        `/api/hq/approvals/${props.document.approvalId}/reject`,
-        {
-          approvalId: props.document.approvalId,
-          status: "REJECTED",
-          remarks: reason,
-        }
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        alert("문서가 반려되었습니다.");
-        emit("reject", { document: props.document, reason });
-        emit("refresh-list");
-        goBack();
-      }
-    } catch (error) {
-      console.error("반려 처리 실패:", error);
-      alert("반려 처리에 실패했습니다. 다시 시도해주세요.");
-    }
+    emit("reject", { document: props.document, reason });
   }
 };
 

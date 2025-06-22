@@ -9,6 +9,24 @@
           selectedDocument.value = null;
         }
       "
+      @approve="handleDocumentApprove"
+      @reject="handleDocumentReject"
+      @refresh-list="handleRefreshList"
+    />
+
+    <!-- ApproverDetail 모달 -->
+    <ApproverDetail
+      v-if="isApproverDetailMode"
+      :document="selectedDocument"
+      @close-detail="
+        () => {
+          isApproverDetailMode.value = false;
+          selectedDocument.value = null;
+        }
+      "
+      @approve="handleDocumentApprove"
+      @reject="handleDocumentReject"
+      @refresh-list="handleRefreshList"
     />
     <div v-else>
       <!-- 탭 메뉴 -->
@@ -163,6 +181,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+import ApproverDetail from "@/components/hq/approval/Detail/ApproverDetail.vue";
 
 const emit = defineEmits([
   "tab-change",
@@ -170,6 +189,8 @@ const emit = defineEmits([
   "document-view",
   "document-approve",
   "document-edit",
+  "document-reject",
+  "refresh-list",
 ]);
 
 const props = defineProps({
@@ -186,6 +207,7 @@ const searchQuery = ref("");
 
 // 상세 보기 모드 상태 관리
 const isDetailViewMode = ref(false);
+const isApproverDetailMode = ref(false);
 const selectedDocument = ref(null);
 
 // 탭 설정
@@ -279,13 +301,15 @@ const openDocument = (document) => {
 };
 
 const viewDocument = (document) => {
-  emit("document-view", document);
+  // emit("document-view", document);
+  selectedDocument.value = document;
+  isDetailViewMode.value = true;
 };
 
 const approveDocument = (document) => {
   // emit("document-approve", document);
   selectedDocument.value = document;
-  isDetailViewMode.value = true;
+  isApproverDetailMode.value = true;
 };
 
 const collaborateDocument = (document) => {
@@ -371,6 +395,24 @@ const getEmptyMessage = () => {
     default:
       return "등록된 결재 문서가 없습니다.";
   }
+};
+
+const handleDocumentApprove = (document) => {
+  console.log("문서 승인됨:", document);
+  // 부모 컴포넌트에 승인 이벤트 전달
+  emit("document-approve", document);
+};
+
+const handleDocumentReject = (data) => {
+  console.log("문서 반려됨:", data);
+  // 부모 컴포넌트에 반려 이벤트 전달
+  emit("document-reject", data);
+};
+
+const handleRefreshList = () => {
+  console.log("목록 새로고침 요청");
+  // 부모 컴포넌트에 목록 새로고침 이벤트 전달
+  emit("refresh-list");
 };
 </script>
 
