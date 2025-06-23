@@ -350,7 +350,7 @@ const getTypeByTab = (tab) => {
     case "협조":
       return "COOPERATOR";
     case "수신":
-      return "RECEIVER";
+      return "RECIPIENT";
     case "참조":
       return "REFERENCE";
     default:
@@ -385,7 +385,7 @@ const getListByType = (type) => {
     case "APPROVER":
     case "COOPERATOR":
       return approvalList;
-    case "RECEIVER":
+    case "RECIPIENT":
       return receiverList;
     case "REFERENCE":
       return referenceList;
