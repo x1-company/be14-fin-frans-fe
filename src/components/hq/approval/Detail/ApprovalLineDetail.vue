@@ -1,42 +1,5 @@
 <template>
   <div class="approval-line-view">
-    <!-- Header -->
-    <div class="header-section">
-      <div class="tab-navigation">
-        <button
-          :class="['tab-btn', { active: activeTab === 'document' }]"
-          @click="$emit('tab-change', 'document')"
-        >
-          결재문서
-        </button>
-        <button
-          :class="['tab-btn', { active: activeTab === 'approvalLine' }]"
-          @click="$emit('tab-change', 'approvalLine')"
-        >
-          결재선
-        </button>
-      </div>
-      <div class="header-actions">
-        <button class="action-btn print-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <polyline points="6,9 6,2 18,2 18,9" />
-            <path
-              d="M6,18H4a2,2,0,0,1-2-2V11a2,2,0,0,1,2-2H20a2,2,0,0,1,2,2v5a2,2,0,0,1-2,2H18"
-            />
-            <polyline points="6,14 6,22 18,22 18,14" />
-          </svg>
-          결재서 출력
-        </button>
-        <button class="action-btn close-btn" @click="$emit('close')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-          닫기
-        </button>
-      </div>
-    </div>
-
     <!-- Content -->
     <div class="content-section">
       <!-- Title -->
@@ -45,281 +8,87 @@
         <h2 class="sub-title">결재 진행 상황</h2>
       </div>
 
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-section">
+        <div class="loading-spinner"></div>
+        <p>결재선 정보를 불러오는 중...</p>
+      </div>
+
       <!-- Approval Progress Flow (결재자 + 협조자 순서) -->
-      <div class="approval-flow">
+      <div v-else-if="approvalSequence.length > 0" class="approval-flow">
         <div class="flow-container">
-          <div
+          <ApprovalFlowItem
             v-for="(person, index) in approvalSequence"
             :key="person.id"
-            class="flow-item"
-          >
-            <!-- Status Icon -->
-            <div :class="['status-icon', getStatusIconClass(person.status)]">
-              <svg
-                v-if="person.status === 'completed'"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <polyline points="20,6 9,17 4,12" />
-              </svg>
-              <svg
-                v-else-if="person.status === 'pending'"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12,6 12,12 16,14" />
-              </svg>
-            </div>
-
-            <!-- Person Info -->
-            <div class="person-info">
-              <div class="person-name">{{ person.name }}</div>
-              <div class="person-position">{{ person.position }}</div>
-              <div class="person-department">{{ person.department }}</div>
-              <div v-if="person.processedAt" class="process-time">
-                {{ formatDateTime(person.processedAt) }}
-              </div>
-            </div>
-
-            <!-- Connection Line -->
-            <div
-              v-if="index < approvalSequence.length - 1"
-              class="connection-line"
-            ></div>
-          </div>
+            :person="person"
+            :isLast="index === approvalSequence.length - 1"
+          />
         </div>
       </div>
 
-      <!-- Approvers Section (결재자) -->
-      <div class="section-container">
-        <div class="section-header">
-          <svg
-            class="section-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
-            <path d="M9 12l2 2 4-4" />
-            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
-            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
-            <path d="M12 3v6" />
-            <path d="M12 15v6" />
+      <!-- No Data State -->
+      <div v-else class="no-data-section">
+        <p>결재선 정보가 없습니다.</p>
+      </div>
+
+      <ApprovalPersonSection title="결재자" :people="approvers" type="approver">
+        <template #icon>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10" />
           </svg>
-          <h3 class="section-title">결재자</h3>
-        </div>
-
-        <div class="person-list">
-          <div
-            v-for="approver in approvers"
-            :key="approver.id"
-            class="person-item"
-          >
-            <div class="person-main">
-              <svg
-                class="person-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path d="M9 12l2 2 4-4" />
-                <circle cx="12" cy="12" r="10" />
-              </svg>
-              <div class="person-info">
-                <div class="person-name-role">
-                  {{ approver.name }} {{ approver.position }}
-                </div>
-                <div class="person-department">{{ approver.department }}</div>
-                <div v-if="approver.processedAt" class="process-time">
-                  처리: {{ formatDateTime(approver.processedAt) }}
-                </div>
-              </div>
-              <div
-                :class="['status-badge', getStatusBadgeClass(approver.status)]"
-              >
-                {{ getApproverStatusText(approver.status) }}
-              </div>
-            </div>
-
-            <div v-if="approver.comment" class="person-comment">
-              <div class="comment-text">{{ approver.comment }}</div>
-              <div class="comment-time">{{
-                formatDateTime(approver.commentTime)
-              }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Collaborators Section -->
-      <div class="section-container">
-        <div class="section-header">
-          <svg
-            class="section-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
+        </template>
+      </ApprovalPersonSection>
+      <ApprovalPersonSection
+        title="협조자"
+        :people="collaborators"
+        type="collaborator"
+      >
+        <template #icon>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
-          <h3 class="section-title">협조자</h3>
-        </div>
-
-        <div class="person-list">
-          <div
-            v-for="collaborator in collaborators"
-            :key="collaborator.id"
-            class="person-item"
-          >
-            <div class="person-main">
-              <svg
-                class="person-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              <div class="person-info">
-                <div class="person-name-role">
-                  {{ collaborator.name }} {{ collaborator.position }}
-                </div>
-                <div class="person-department">{{
-                  collaborator.department
-                }}</div>
-              </div>
-              <div
-                :class="[
-                  'status-badge',
-                  getStatusBadgeClass(collaborator.status),
-                ]"
-              >
-                {{ getStatusText(collaborator.status) }}
-              </div>
-            </div>
-
-            <div v-if="collaborator.comment" class="person-comment">
-              <div class="comment-text">{{ collaborator.comment }}</div>
-              <div class="comment-time">{{
-                formatDateTime(collaborator.commentTime)
-              }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reference Section -->
-      <div class="section-container">
-        <div class="section-header">
-          <svg
-            class="section-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
+        </template>
+      </ApprovalPersonSection>
+      <ApprovalPersonSection
+        title="참조자"
+        :people="references"
+        type="reference"
+      >
+        <template #icon>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
             <circle cx="12" cy="12" r="3" />
           </svg>
-          <h3 class="section-title">참조자</h3>
-        </div>
-
-        <div class="person-list">
-          <div
-            v-for="reference in references"
-            :key="reference.id"
-            class="person-item"
-          >
-            <div class="person-main">
-              <svg
-                class="person-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-              <div class="person-info">
-                <div class="person-name-role">
-                  {{ reference.name }} {{ reference.position }}
-                </div>
-                <div class="person-department">{{ reference.department }}</div>
-                <div v-if="reference.readTime" class="read-time">
-                  열람: {{ formatDateTime(reference.readTime) }}
-                </div>
-              </div>
-              <div
-                :class="['status-badge', getStatusBadgeClass(reference.status)]"
-              >
-                {{ getStatusText(reference.status) }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recipients Section -->
-      <div class="section-container">
-        <div class="section-header">
-          <svg
-            class="section-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
+        </template>
+      </ApprovalPersonSection>
+      <ApprovalPersonSection
+        title="수신자"
+        :people="recipients"
+        type="recipient"
+      >
+        <template #icon>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
-          <h3 class="section-title">수신자</h3>
-        </div>
-
-        <div class="person-list">
-          <div
-            v-for="recipient in recipients"
-            :key="recipient.id"
-            class="person-item"
-          >
-            <div class="person-main">
-              <svg
-                class="person-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-              </svg>
-              <div class="person-info">
-                <div class="person-name-role">
-                  {{ recipient.name }} {{ recipient.position }}
-                </div>
-                <div class="person-department">{{ recipient.department }}</div>
-              </div>
-              <div
-                :class="['status-badge', getStatusBadgeClass(recipient.status)]"
-              >
-                {{ getStatusText(recipient.status) }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+      </ApprovalPersonSection>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import api from "@/lib/api";
+import ApprovalFlowItem from "./ApprovalFlowItem.vue";
+import ApprovalPersonSection from "./ApprovalPersonSection.vue";
 
 const props = defineProps({
+  approvalId: {
+    type: [String, Number],
+    required: true,
+  },
   activeTab: {
     type: String,
     default: "approvalLine",
@@ -328,105 +97,135 @@ const props = defineProps({
 
 const emit = defineEmits(["tab-change", "close"]);
 
-// 결재자 데이터
-const approvers = ref([
-  {
-    id: 1,
-    name: "신민철",
-    position: "사원",
-    department: "영업팀",
-    status: "completed",
-    processedAt: "2025-05-30T15:35:00",
-    comment: null,
-    commentTime: null,
-  },
-  {
-    id: 2,
-    name: "김영희",
-    position: "주임",
-    department: "영업팀",
-    status: "completed",
-    processedAt: "2025-05-30T16:20:00",
-    comment: null,
-    commentTime: null,
-  },
-  {
-    id: 3,
-    name: "황수민",
-    position: "대리",
-    department: "영업팀",
-    status: "pending",
-    processedAt: null,
-    comment: null,
-    commentTime: null,
-  },
-]);
+// 상태 관리
+const loading = ref(true);
+const error = ref(null);
 
-// 협조자 데이터
-const collaborators = ref([
-  {
-    id: 1,
-    name: "이지민",
-    position: "과장",
-    department: "재무팀",
-    status: "waiting",
-    comment: null,
-    commentTime: null,
-  },
-  {
-    id: 2,
-    name: "박서연",
-    position: "대리",
-    department: "법무팀",
-    status: "completed",
-    comment: "계약 조건 및 법적 검토 완료하였습니다. 특별한 문제점은 없습니다.",
-    commentTime: "2025-05-30T17:15:00",
-  },
-]);
+// 결재선 데이터
+const approvalLines = ref([]);
 
-const references = ref([
-  {
-    id: 1,
-    name: "최민수",
-    position: "팀장",
-    department: "총무팀",
-    status: "read",
-    readTime: "2025-05-30T18:30:00",
-  },
-  {
-    id: 2,
-    name: "정하영",
-    position: "사원",
-    department: "구매팀",
-    status: "unread",
-    readTime: null,
-  },
-]);
-
-const recipients = ref([
-  {
-    id: 1,
-    name: "김태현",
-    position: "과장",
-    department: "총고관리팀",
-    status: "waiting",
-  },
-]);
+// 결재자, 협조자, 참조자, 수신자 데이터
+const approvers = ref([]);
+const collaborators = ref([]);
+const references = ref([]);
+const recipients = ref([]);
 
 // 결재 순서 (결재자 + 협조자가 순서대로 진행)
 const approvalSequence = computed(() => {
-  // 결재자들을 먼저 추가하고, 그 다음에 협조자들을 추가
-  const sequence = [...approvers.value];
+  const sequence = [];
 
-  // 협조자 중에서 순서가 있는 경우 추가 (예: 특정 협조자가 결재 플로우에 포함되는 경우)
-  // 여기서는 예시로 박서연 대리를 결재 플로우에 포함
-  const flowCollaborators = collaborators.value.filter(
-    (c) => c.name === "박서연"
+  // 결재자들을 먼저 추가
+  sequence.push(...approvers.value.map((p) => ({ ...p, type: "approver" })));
+
+  // 협조자들을 추가 (플로우에 포함되는 협조자들)
+  sequence.push(
+    ...collaborators.value.map((c) => ({ ...c, type: "collaborator" }))
   );
-  sequence.push(...flowCollaborators);
 
   return sequence;
 });
+
+// API에서 결재선 데이터 가져오기
+const fetchApprovalLines = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    console.log("approvalId:", props.approvalId); // approvalId 확인
+
+    const response = await api.get(
+      `/api/hq/approvals/detail/${props.approvalId}/lines`
+    );
+    console.log("API 응답:", response.data); // 실제 데이터 구조 확인
+
+    // line 배열만 저장
+    approvalLines.value = response.data.line || [];
+
+    // 타입별로 데이터 분류
+    approvers.value = approvalLines.value
+      .filter((line) => line.type === "APPROVER")
+      .map((line) => ({
+        id: line.id,
+        name: line.userName,
+        position: line.userPosition,
+        department: line.userDepartment,
+        status: mapBackendStatus(line.status),
+        processedAt: line.processedAt,
+        comment: line.comment,
+        commentTime: line.commentTime,
+      }));
+
+    collaborators.value = approvalLines.value
+      .filter((line) => line.type === "COLLABORATOR")
+      .map((line) => ({
+        id: line.id,
+        name: line.userName,
+        position: line.userPosition,
+        department: line.userDepartment,
+        status: mapBackendStatus(line.status),
+        comment: line.comment,
+        commentTime: line.commentTime,
+      }));
+
+    references.value = approvalLines.value
+      .filter((line) => line.type === "REFERENCE")
+      .map((line) => ({
+        id: line.id,
+        name: line.userName,
+        position: line.userPosition,
+        department: line.userDepartment,
+        status: mapBackendStatus(line.status),
+        readTime: line.readTime,
+      }));
+
+    recipients.value = approvalLines.value
+      .filter((line) => line.type === "RECIPIENT")
+      .map((line) => ({
+        id: line.id,
+        name: line.userName,
+        position: line.userPosition,
+        department: line.userDepartment,
+        status: mapBackendStatus(line.status),
+      }));
+  } catch (err) {
+    console.error("결재선 데이터 조회 실패:", err);
+    error.value =
+      err.response?.data?.message || "결재선 데이터를 불러오는데 실패했습니다.";
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 백엔드 상태를 프론트엔드 상태로 매핑
+const mapBackendStatus = (backendStatus) => {
+  const statusMap = {
+    WAITING: "waiting",
+    EXPECTED: "waiting",
+    COMPLETED: "completed",
+    APPROVED: "completed",
+    REJECTED: "rejected",
+    READ: "read",
+    UNREAD: "unread",
+  };
+  return statusMap[backendStatus] || "waiting";
+};
+
+// 컴포넌트 마운트 시 데이터 로드
+onMounted(() => {
+  if (props.approvalId) {
+    fetchApprovalLines();
+  }
+});
+
+// approvalId가 변경될 때 데이터 다시 로드
+const watchApprovalId = () => {
+  if (props.approvalId) {
+    fetchApprovalLines();
+  }
+};
+
+// approvalId 변경 감지
+import { watch } from "vue";
+watch(() => props.approvalId, watchApprovalId);
 
 const getStatusIconClass = (status) => {
   switch (status) {
@@ -493,14 +292,53 @@ const formatDateTime = (dateString) => {
 <style scoped>
 .approval-line-view {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f8f9fa;
+  background: white;
   min-height: 100vh;
+}
+
+/* Loading State */
+.loading-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #6f42c1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.no-data-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 16px;
 }
 
 /* Header */
 .header-section {
   background: white;
-  border-bottom: 1px solid #e9ecef;
+  /* border-bottom: 1px solid #e9ecef; */
   padding: 16px 24px;
   display: flex;
   justify-content: space-between;
@@ -559,7 +397,8 @@ const formatDateTime = (dateString) => {
 
 /* Content */
 .content-section {
-  padding: 32px;
+  background-color: white;
+  padding: 0 32px;
   max-width: 1000px;
   margin: 0 auto;
 }
@@ -593,7 +432,7 @@ const formatDateTime = (dateString) => {
 
 .flow-container {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 40px;
 }
@@ -602,17 +441,19 @@ const formatDateTime = (dateString) => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1 1 0;
+  min-width: 120px;
   position: relative;
 }
 
 .status-icon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .status-icon.completed {
@@ -631,36 +472,42 @@ const formatDateTime = (dateString) => {
 }
 
 .person-info {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 110px;
+  justify-content: flex-start;
 }
 
 .person-name {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: #212529;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .person-position,
 .person-department {
-  font-size: 14px;
+  font-size: 15px;
   color: #6c757d;
   margin-bottom: 2px;
 }
 
 .process-time {
-  font-size: 12px;
+  font-size: 13px;
   color: #6c757d;
   margin-top: 8px;
 }
 
 .connection-line {
   position: absolute;
-  top: 24px;
+  top: 50%;
   left: 100%;
   width: 40px;
   height: 2px;
   background: #dee2e6;
+  transform: translateY(-50%);
+  z-index: 1;
 }
 
 /* Sections */

@@ -86,7 +86,7 @@ const isSentMenu = computed(() => {
 const isReceivedMenu = computed(() => {
   const receivedMenus = [
     "수신",
-    "결재대기",
+    "결재요청",
     "결재예정",
     "내결재 승인",
     "내결재 반려",
