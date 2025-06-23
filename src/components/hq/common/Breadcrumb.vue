@@ -22,7 +22,7 @@ const props = defineProps({
 .breadcrumb {
   display: flex;
   align-items: center;
-  font-size: 1.1rem;
+  font-size: 0.5rem;
   color: #888;
   padding-left: 10px;
   background: #fafbff;
@@ -33,11 +33,11 @@ const props = defineProps({
   align-items: center;
   color: #888;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.8rem;
 }
 .breadcrumb__divider {
   margin: 0 8px;
   color: #bdbdbd;
-  font-size: 1.1rem;
+  font-size: 0.8rem;
 }
 </style>

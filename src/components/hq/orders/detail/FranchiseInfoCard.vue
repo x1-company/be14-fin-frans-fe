@@ -45,7 +45,7 @@ const props = defineProps({
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
   padding: 32px 24px;
-  margin: 20px 0 0 -20px;     /* 위치 변경 */
+  margin-top: 20px;
   background: #fff;
   max-width: 100%;
   width: 100%;
@@ -53,7 +53,7 @@ const props = defineProps({
 
 .card-title {
   font-weight: bold;
-  font-size: 18px;
+  font-size: 15px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -74,11 +74,11 @@ const props = defineProps({
 
 .label {
   color: #6b7280;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .value {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   margin: 0 30px;
   text-align: right;

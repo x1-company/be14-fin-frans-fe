@@ -107,17 +107,16 @@ function getIcon(key, isActive) {
 <style scoped>
 .progress-bar {
   border: 1px solid #e9ecef;
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  margin: 100px 0 10px 60px;
+  margin: 20px 0 10px 0;
   background: #fff;
-  padding: 32px 0 16px 0;
+  padding: 16px 0 8px 0;
   max-width: 100%;
   width: 100%;
-  margin-left: -50px;       /* 위치 변경 */
 }
 
 .step {
@@ -128,24 +127,24 @@ function getIcon(key, isActive) {
   flex: 1;
 }
 .circle {
-  width: 58px;
-  height: 58px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   background: #e9ecef;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   transition: background 0.2s;
   position: relative;
   z-index: 1;
 }
 .icon {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
 }
 .label {
-  font-size: 14px;
+  font-size: 11px;
   color: #b0b8c1;
   font-weight: 500;
   margin-bottom: 0;
@@ -156,8 +155,8 @@ function getIcon(key, isActive) {
   position: absolute;
   top: 40%;
   left: 50%;
-  width: calc(100% - 28px);
-  height: 3px;
+  width: calc(100% - 16px);
+  height: 2px;
   background: #e9ecef;
   z-index: 0;
   border-radius: 2px;

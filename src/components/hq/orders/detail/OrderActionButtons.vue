@@ -207,9 +207,6 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
   }
 }
 
-// function handleClose() {
-//   router.push({ path: '/hq/franchise', query: { tab: '주문관리' } });
-// }
 
 </script>
 
@@ -218,14 +215,14 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
-  margin: 40px 55px -70px 0;
+  /* margin: 40px 55px -70px 0; */
 }
 .btn {
-  padding: 8px 18px;
+  padding: 6px 13px;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   background: #fff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border 0.15s;
@@ -255,7 +252,7 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
   background: #f5faff;
 }
 .icon {
-  font-size: 18px;
+  font-size: 15px;
   vertical-align: middle;
 }
 .btn.delivery {
