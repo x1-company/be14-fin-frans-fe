@@ -554,6 +554,7 @@ const handleTempSave = async () => {
     const approvalLines = [];
     let seq = 1;
 
+    // 결재/협조자 순서대로 seq 부여
     approvalAndCollaboratorLines.value.forEach((line) => {
       approvalLines.push({
         userId: line.userId || line.id,
@@ -562,6 +563,7 @@ const handleTempSave = async () => {
       });
     });
 
+    // 수신/참조자는 seq: 0
     formData.value.approvalLines
       .filter((line) => line.type === "RECIPIENT" || line.type === "REFERENCE")
       .forEach((line) => {
@@ -633,6 +635,7 @@ const handleSubmit = async () => {
     const approvalLines = [];
     let seq = 1;
 
+    // 결재/협조자 순서대로 seq 부여
     approvalAndCollaboratorLines.value.forEach((line) => {
       approvalLines.push({
         userId: line.userId || line.id,
@@ -641,6 +644,7 @@ const handleSubmit = async () => {
       });
     });
 
+    // 수신/참조자는 seq: 0
     formData.value.approvalLines
       .filter((line) => line.type === "RECIPIENT" || line.type === "REFERENCE")
       .forEach((line) => {

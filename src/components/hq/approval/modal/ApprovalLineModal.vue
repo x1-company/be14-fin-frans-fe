@@ -109,7 +109,6 @@
                     </div>
                   </div>
                   <div v-else class="no-results">
-                    <div class="no-results-icon">🔍</div>
                     <p>검색 결과가 없습니다</p>
                   </div>
                 </div>
