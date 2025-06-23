@@ -188,8 +188,6 @@ const confirmReject = async () => {
 const confirmApprove = async () => {
   isProcessing.value = true;
   try {
-<<<<<<< Updated upstream
-=======
     const currentUserLine = props.document.lines.find(
       (line) => line.id === authStore.userId && line.status === "WAITING"
     );
@@ -206,8 +204,6 @@ const confirmApprove = async () => {
       `/api/hq/approvals/${props.document.approvalId}/approve`,
       payload
     );
-
->>>>>>> Stashed changes
     emit("approve", {
       documentId: props.document.approvalId,
       comment: approveComment.value.trim(),
