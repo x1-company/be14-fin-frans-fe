@@ -91,7 +91,11 @@
       <div v-if="activeTab === '수신'" class="tab-panel">
         <!-- 결재문서 -->
         <div class="accordion-section">
-          <div class="accordion-header" @click="handleApprovalDocsClick">
+          <div
+            class="accordion-header"
+            :class="{ active: computedActiveItem === '결재-전체' }"
+            @click="handleApprovalDocsClick"
+          >
             <div class="accordion-title">
               <span>결재문서</span>
             </div>
@@ -161,7 +165,11 @@
 
         <!-- 협조문서 -->
         <div class="accordion-section">
-          <div class="accordion-header" @click="handleCollaborationDocsClick">
+          <div
+            class="accordion-header"
+            :class="{ active: computedActiveItem === '협조-전체' }"
+            @click="handleCollaborationDocsClick"
+          >
             <div class="accordion-title">
               <span>협조문서</span>
             </div>
@@ -231,7 +239,11 @@
 
         <!-- 참조문서 -->
         <div class="accordion-section">
-          <div class="accordion-header" @click="selectMenu('참조문서')">
+          <div
+            class="accordion-header"
+            :class="{ active: computedActiveItem === '참조문서' }"
+            @click="selectMenu('참조문서')"
+          >
             <div class="accordion-title">
               <span>참조문서</span>
             </div>
@@ -243,7 +255,11 @@
 
         <!-- 수신문서 -->
         <div class="accordion-section">
-          <div class="accordion-header" @click="selectMenu('수신문서')">
+          <div
+            class="accordion-header"
+            :class="{ active: computedActiveItem === '수신문서' }"
+            @click="selectMenu('수신문서')"
+          >
             <div class="accordion-title">
               <span>수신문서</span>
             </div>
@@ -553,6 +569,12 @@ const handleCollaborationDocsClick = () => {
 
 .accordion-header:hover {
   background: #e9ecef;
+}
+
+.accordion-header.active {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 500;
 }
 
 .accordion-title {
