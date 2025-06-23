@@ -58,7 +58,6 @@ import { ref, onMounted, nextTick } from "vue";
 import ApprovalTypeSelector from "./ApprovalTypeSelector.vue";
 import OrderApprovalForm from "./OrderApprovalForm.vue";
 import api from "@/lib/api";
-
 const emit = defineEmits(["submit", "cancel", "approval-submitted"]);
 const props = defineProps({
   selectedTemplate: { type: Object, default: null },
