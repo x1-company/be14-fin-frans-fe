@@ -4,13 +4,11 @@ import SupplierInfoView from "@/views/hq/supplier/InfoView.vue";
 import PasswordChange from "@/views/auth/PasswordChange.vue";
 import ApprovalListView from "@/views/hq/approval/InfoView.vue";
 import WarehouseInfoView from "@/views/hq/warehouse/InfoView.vue";
-import OrderInfoView from "@/views/hq/orders/OrderInfoView.vue";
 import OrderDetailPage from "@/views/hq/orders/OrderDetailPage.vue";
 import HRMView from "@/views/hq/user/InfoView.vue";
 import PurchaseInfoView from "@/views/hq/purchase/InfoView.vue";
 import FranchisePage from "@/views/franchise/FranchisePage.vue";
 import FrOrderDetailPage from "@/views/franchise/orders/FrOrderDetailPage.vue";
-import SupplierPage from "@/views/auth/supplier/SupplierPage.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useNotificationStore } from "@/stores/notification";
 import notificationService from "@/lib/notificationService";
@@ -103,14 +101,8 @@ const router = createRouter({
       name: 'FranchiseManagement',
       component: FranchiseManagePage,
     },
-    
-    // {
-    //   path: "/orders",
-    //   name: "orders",
-    //   component: OrderInfoView,
-    // },
     {
-      path: "/orders/:orderId",
+      path: "/hq/franchise/orders/:orderId",
       name: "OrderDetail",
       component: OrderDetailPage,
       props: true,
@@ -144,7 +136,12 @@ const router = createRouter({
     {
       path: "/supplier",
       name: "supplier",
-      component: SupplierPage,
+      component: () => import('@/views/auth/supplier/SupplierEntryPoint.vue'),
+    },
+    {
+      path: '/hq/user/info',
+      name: 'HqUserInfo',
+      component: () => import('@/views/hq/user/InfoView.vue')
     },
     ...(import.meta.env.DEV ? [{
       path: "/test-notification",

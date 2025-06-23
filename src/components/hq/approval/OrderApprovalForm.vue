@@ -92,12 +92,11 @@
         <div class="approval-line-left">
           <div class="side-section-title main">결재 / 협조</div>
           <draggable
-            :list="approvalAndCollaboratorLines"
+            v-model="approvalAndCollaboratorLines"
             group="people"
             item-key="id"
             class="approval-draggable-list"
             :animation="200"
-            @end="onDragEnd"
           >
             <template #item="{ element, index }">
               <div class="approval-card" :class="element.type.toLowerCase()">
@@ -178,42 +177,24 @@
     <div class="form-section">
       <div class="section-header">
         <h3 class="section-title">첨부파일</h3>
-        <div class="header-buttons">
-          <button class="add-file-button" @click="openFilePicker"
-            >파일 추가</button
+        <button class="add-file-button" @click="$emit('add-file')">
+          파일 추가
+        </button>
+      </div>
+      <div v-if="files.length > 0" class="file-list">
+        <div v-for="(file, index) in files" :key="index" class="file-item">
+          <span class="file-name">{{ file.name }}</span>
+          <span class="file-size">{{ formatFileSize(file.size) }}</span>
+          <button
+            class="remove-file-button"
+            @click="$emit('remove-file', index)"
           >
-          <input
-            type="file"
-            ref="fileInput"
-            multiple
-            @change="handleFileSelect"
-            style="display: none"
-          />
+            ×
+          </button>
         </div>
       </div>
-
-      <div v-if="formData.files.length === 0" class="no-files-attached">
+      <div v-else class="no-files">
         <p>첨부된 파일이 없습니다.</p>
-      </div>
-
-      <div v-else class="file-list">
-        <div
-          v-for="(file, index) in formData.files"
-          :key="index"
-          class="file-item"
-        >
-          <div class="file-info">
-            <div class="file-icon">📄</div>
-            <div class="file-details">
-              <div class="file-name">{{ file.name }}</div>
-              <div class="file-size">{{ formatFileSize(file.size) }}</div>
-            </div>
-          </div>
-          <div class="file-actions">
-            <span class="file-status">완료</span>
-            <button class="remove-file" @click="removeFile(index)">×</button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -250,17 +231,27 @@ import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
 import api from "@/lib/api";
 
-const showModal = ref(false);
-const showOrderListModal = ref(false);
-const showApprovalLineModal = ref(false);
-const showTemplateModal = ref(false);
-const isSubmitting = ref(false);
+const props = defineProps({
+  type: String,
+  files: {
+    type: Array,
+    default: () => [],
+  },
+});
 
 const emit = defineEmits([
   "form-data-updated",
   "approval-submitted",
   "document-approve",
+  "add-file",
+  "remove-file",
 ]);
+
+const showModal = ref(false);
+const showOrderListModal = ref(false);
+const showApprovalLineModal = ref(false);
+const showTemplateModal = ref(false);
+const isSubmitting = ref(false);
 
 const searchQuery = ref("");
 const formData = ref({
@@ -274,7 +265,6 @@ const formData = ref({
   },
 });
 
-const fileInput = ref(null);
 const documents = ref([]);
 
 const filteredDocuments = computed(() => {
@@ -294,6 +284,10 @@ const formatFileSize = (bytes) => {
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
+const isImage = (file) => {
+  return file.name && file.name.match(/\.(jpeg|jpg|gif|png|bmp|webp)$/i);
 };
 
 const addApprover = () => {
@@ -350,7 +344,10 @@ const handleFileSelect = async (event) => {
     const uploadedFiles = await uploadFiles(files);
     uploadedFiles.forEach((uploadedFile) => {
       formData.value.files.push({
-        name: uploadedFile.originalName || uploadedFile.name,
+        name:
+          uploadedFile.originalName ||
+          uploadedFile.name ||
+          extractFilenameFromUrl(uploadedFile.url),
         size: uploadedFile.size,
         url: uploadedFile.url,
         uuid: uploadedFile.uuid,
@@ -363,9 +360,10 @@ const handleFileSelect = async (event) => {
   emitFormData();
 };
 
-const removeFile = (index) => {
-  formData.value.files.splice(index, 1);
-  emitFormData();
+const extractFilenameFromUrl = (url) => {
+  if (!url) return "파일명없음";
+  const matches = url.match(/\/([^\/?#]+)(?:\?|#|$)/);
+  return matches ? matches[1] : "파일명없음";
 };
 
 const handleAddDocument = () => {
@@ -450,19 +448,19 @@ const handleApprovalLineConfirm = ({
   const approvalAndCollaboratorList = approvalAndCollaboratorLines.map((u) => ({
     ...u,
     userId: u.id || u.userId,
-    type: u.type || (u.approverType ? u.approverType : "APPROVER"), // fallback 처리
+    type: u.type || (u.approverType ? u.approverType : "APPROVER"),
   }));
 
   const receiverList = receivers.map((u) => ({
     ...u,
     userId: u.id || u.userId,
-    type: u.type || "RECIPIENT", // fallback 처리
+    type: u.type || "RECIPIENT",
   }));
 
   const referenceList = references.map((u) => ({
     ...u,
     userId: u.id || u.userId,
-    type: u.type || "REFERENCE", // fallback 처리
+    type: u.type || "REFERENCE",
   }));
 
   formData.value.approvalLines = [
@@ -474,11 +472,19 @@ const handleApprovalLineConfirm = ({
   showApprovalLineModal.value = false;
 };
 
-const approvalAndCollaboratorLines = computed(() =>
-  formData.value.approvalLines.filter(
-    (line) => line.type === "APPROVER" || line.type === "COOPERATOR"
-  )
-);
+const approvalAndCollaboratorLines = computed({
+  get() {
+    return formData.value.approvalLines.filter(
+      (line) => line.type === "APPROVER" || line.type === "COOPERATOR"
+    );
+  },
+  set(newValue) {
+    const otherLines = formData.value.approvalLines.filter(
+      (line) => line.type !== "APPROVER" && line.type !== "COOPERATOR"
+    );
+    formData.value.approvalLines = [...newValue, ...otherLines];
+  },
+});
 
 const receiverLines = computed(() =>
   formData.value.approvalLines.filter((line) => line.type === "RECIPIENT")
@@ -517,59 +523,32 @@ const updateRemarksCount = () => {
   }
 };
 
-const onDragEnd = (event) => {
-  // approvalAndCollaboratorLines 배열은 드래그앤드롭 라이브러리에 의해 자동으로 순서가 변경됩니다.
-  // 이 변경된 순서를 기반으로 formData.approvalLines를 재구성합니다.
-  const newApprovalLines = approvalAndCollaboratorLines.value.map((line) => {
-    // approvalAndCollaboratorLines에 있는 요소들은 순서를 유지해야 합니다.
-    return formData.value.approvalLines.find(
-      (original) => original.id === line.id
-    );
-  });
-
-  const otherLines = formData.value.approvalLines.filter(
-    (line) => line.type !== "APPROVER" && line.type !== "COOPERATOR"
-  );
-
-  formData.value.approvalLines = [...newApprovalLines, ...otherLines];
-};
-
-const openFilePicker = () => {
-  fileInput.value.click();
-};
-
 const handleTempSave = async () => {
   if (isSubmitting.value) return;
 
   try {
     isSubmitting.value = true;
 
-    // ✅ 수정된 approvalLines 처리
     const approvalLines = [];
-    let approverSeq = 1;
-    let cooperatorSeq = 1;
+    let seq = 1;
 
-    formData.value.approvalLines.forEach((line) => {
-      if (line.type === "APPROVER") {
-        approvalLines.push({
-          userId: line.userId || line.id,
-          seq: approverSeq++,
-          type: line.type,
-        });
-      } else if (line.type === "COOPERATOR") {
-        approvalLines.push({
-          userId: line.userId || line.id,
-          seq: cooperatorSeq++,
-          type: line.type,
-        });
-      } else {
+    approvalAndCollaboratorLines.value.forEach((line) => {
+      approvalLines.push({
+        userId: line.userId || line.id,
+        seq: seq++,
+        type: line.type,
+      });
+    });
+
+    formData.value.approvalLines
+      .filter((line) => line.type === "RECIPIENT" || line.type === "REFERENCE")
+      .forEach((line) => {
         approvalLines.push({
           userId: line.userId || line.id,
           seq: 0,
           type: line.type,
         });
-      }
-    });
+      });
 
     const files = formData.value.files.map((file) => ({
       name: file.name,
@@ -626,40 +605,32 @@ const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
 
-    // ✅ 수정된 approvalLines 처리
     const approvalLines = [];
-    let approverSeq = 1;
-    let cooperatorSeq = 1;
+    let seq = 1;
 
-    formData.value.approvalLines.forEach((line) => {
-      if (line.type === "APPROVER") {
-        approvalLines.push({
-          userId: line.userId || line.id,
-          seq: approverSeq++,
-          type: line.type,
-        });
-      } else if (line.type === "COOPERATOR") {
-        approvalLines.push({
-          userId: line.userId || line.id,
-          seq: cooperatorSeq++,
-          type: line.type,
-        });
-      } else {
+    approvalAndCollaboratorLines.value.forEach((line) => {
+      approvalLines.push({
+        userId: line.userId || line.id,
+        seq: seq++,
+        type: line.type,
+      });
+    });
+
+    formData.value.approvalLines
+      .filter((line) => line.type === "RECIPIENT" || line.type === "REFERENCE")
+      .forEach((line) => {
         approvalLines.push({
           userId: line.userId || line.id,
           seq: 0,
-          type: line.type, // REFERENCE or RECIPIENT
+          type: line.type,
         });
-      }
-    });
+      });
 
-    // 파일도 기존 그대로
     const files = formData.value.files.map((file) => ({
       name: file.name,
       url: file.url,
     }));
 
-    // 최종 전송 데이터
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,

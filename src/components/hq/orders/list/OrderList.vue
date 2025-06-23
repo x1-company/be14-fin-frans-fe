@@ -34,182 +34,236 @@
           </select>
         </div>
       </div>
-      <div class="order-form__table-wrapper">
-        <table class="order-form__table">
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>주문 번호</th>
-              <th>품목명</th>
-              <th>주문 상태</th>
-              <th>주문일</th>
-              <th>총 주문 금액</th>
-              <th>가맹점 명</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(order, idx) in orders" :key="order.orderId">
-              <td>{{ idx + 1 + (page-1)*pageSize }}</td>
-              <td>
-                <router-link :to="`/franchise/orders/${order.orderId}`" class="order-link">
-                  {{ order.orderCode }}
-                </router-link>
-              </td>
-              <td>{{ order.productSummary }}</td>
-              <td><span :class="['order-status', orderStatusClass(order.status)]">{{ statusText(order.status) }}</span></td>
-              <td>{{ order.createdAt.slice(0, 10) }}</td>
-              <td>{{ order.totalAmount.toLocaleString() }}원</td>
-              <td>{{ order.franchiseName }}</td>
-            </tr>
-          </tbody>
-        </table>
+
+      <!-- 주문 목록 테이블 -->
+      <div>
+        <div class="order-form__table-wrapper">
+          <table class="order-form__table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>주문 번호</th>
+                <th>품목명</th>
+                <th>주문 상태</th>
+                <th>주문일</th>
+                <th>총 주문 금액</th>
+                <th>가맹점 명</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(order, idx) in orders" :key="order.orderId">
+                <td>{{ idx + 1 + (page-1)*pageSize }}</td>
+                <td>
+                  <router-link :to="`/hq/franchise/orders/${order.orderId}`" class="order-link">
+                    {{ order.orderCode }}
+                  </router-link>
+                </td>
+                <td>{{ order.productSummary }}</td>
+                <td><span :class="['order-status', orderStatusClass(order.status)]">{{ statusText(order.status) }}</span></td>
+                <td>{{ order.createdAt.slice(0, 10) }}</td>
+                <td>{{ order.totalAmount.toLocaleString() }}원</td>
+                <td>{{ order.franchiseName }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="order-form__pagination">
+          <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
+          <span
+            v-for="p in paginationPages"
+            :key="p"
+            :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
+            @click="typeof p === 'number' && (page = p)"
+          >
+            {{ p }}
+          </span>
+          <button class="page-arrow" :disabled="page === totalPages" @click="page++">&gt;</button>
+        </div>
+        <div class="order-form__total">총 {{ totalCount }}개 항목</div>
       </div>
-      <div class="order-form__pagination">
-        <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
-        <span
-          v-for="p in paginationPages"
-          :key="p"
-          :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
-          @click="typeof p === 'number' && (page = p)"
-        >
-          {{ p }}
-        </span>
-        <button class="page-arrow" :disabled="page === totalPages" @click="page++">&gt;</button>
-      </div>
-      <div class="order-form__total">총 {{ totalCount }}개 항목</div>
     </div>
   </template>
   
   <script setup>
-  import { ref, computed, watch, onMounted } from 'vue';
-  import { RouterLink } from 'vue-router';
-  import Datepicker from '@vuepic/vue-datepicker';
-  import '@vuepic/vue-datepicker/dist/main.css';
-  import api from '@/lib/api';
-  
-  const emit = defineEmits(['show-register-view']);
+    import { ref, computed, watch, onMounted } from 'vue';
+    import { RouterLink } from 'vue-router';
+    import Datepicker from '@vuepic/vue-datepicker';
+    import '@vuepic/vue-datepicker/dist/main.css';
+    import api from '@/lib/api';
 
-  const orders = ref([]);
-  const search = ref('');
-  const searchDate = ref(null);
-  const filter = ref('itemName');
-  const page = ref(1);
-  const pageSize = 10;
-  const totalPages = ref(1);
-  const totalCount = ref(0);
-  const loading = ref(false);
-  
-  const paginationPages = computed(() => {
-    const C = page.value;
-    const T = totalPages.value;
+    const emit = defineEmits(['show-register-view', 'franchise-deselect']);
 
-    if (T <= 1) return [];
-    if (T <= 7) {
-      return Array.from({ length: T }, (_, i) => i + 1);
-    }
-    if (C < 5) {
-      return [1, 2, 3, 4, 5, '...', T];
-    }
-    if (C > T - 4) {
-      return [1, '...', T - 4, T - 3, T - 2, T - 1, T];
-    }
-    return [1, '...', C - 1, C, C + 1, '...', T];
-  });
+    const props = defineProps({
+      selectedFranchiseId: [String, Number]
+    });
 
-  // 탭 관련
-  const tabs = [
+    const orders = ref([]);
+    const search = ref('');
+    const searchDate = ref(null);
+    const filter = ref('itemName');
+    const page = ref(1);
+    const pageSize = 10;
+    const totalPages = ref(1);
+    const totalCount = ref(0);
+    const loading = ref(false);
+
+    const tabs = [
     { label: '전체', value: 'all' },
     { label: '승인 대기중인 주문 목록', value: 'pending' },
     { label: '진행중인 주문 목록', value: 'progress' },
     { label: '완료된 주문 목록', value: 'complete' },
-  ];
-  const activeTab = ref(0);
+    ];
+    const activeTab = ref(0);
 
-  function selectTab(idx) {
+    function selectTab(idx) {
     activeTab.value = idx;
     page.value = 1;
     fetchOrders();
-  }
-  
-  function statusText(status) {
-    switch(status) {
-      case 'REJECTED': return '반려';
-      case 'REVIEWING': return '검토 중';
-      case 'REVIEW_COMPLETED': return '검토 완료';
-      case 'APPROVED': return '결재 완료';
-      case 'DELIVERING': return '배송 중';
-      case 'DELIVERED': return '배송 완료';
-      default: return status;
     }
-  }
 
-  function orderStatusClass(status) {
-    switch(status) {
-      case 'REJECTED': return 'status-reject';
-      case 'REVIEWING': return 'status-reviewing';
-      case 'REVIEW_COMPLETED': return 'status-reviewed';
-      case 'APPROVED': return 'status-approved';
-      case 'DELIVERING': return 'status-delivering';
-      case 'DELIVERED': return 'status-delivered';
-      default: return '';
+    function statusText(status) {
+    switch (status) {
+        case 'REJECTED': return '반려';
+        case 'REVIEWING': return '검토 중';
+        case 'REVIEW_COMPLETED': return '검토 완료';
+        case 'APPROVED': return '결재 완료';
+        case 'DELIVERING': return '배송 중';
+        case 'DELIVERED': return '배송 완료';
+        default: return status;
     }
-  }
-  
-  async function fetchOrders() {
+    }
+
+    function orderStatusClass(status) {
+    switch (status) {
+        case 'REJECTED': return 'status-reject';
+        case 'REVIEWING': return 'status-reviewing';
+        case 'REVIEW_COMPLETED': return 'status-reviewed';
+        case 'APPROVED': return 'status-approved';
+        case 'DELIVERING': return 'status-delivering';
+        case 'DELIVERED': return 'status-delivered';
+        default: return '';
+    }
+    }
+
+    // ✅ 날짜 포맷 유틸 (UTC 밀림 방지)
+    function formatDateToYYYYMMDD(date) {
+    const year = date.getFullYear();
+    const month = (`0${date.getMonth() + 1}`).slice(-2);
+    const day = (`0${date.getDate()}`).slice(-2);
+    return `${year}-${month}-${day}`;
+    }
+
+    async function fetchOrders() {
     loading.value = true;
     try {
-      const params = new URLSearchParams();
-      params.append('page', page.value);
-      params.append('size', pageSize);
-
-      // 날짜 필터
-      if (searchDate.value && searchDate.value.length === 2) {
-        const [start, end] = searchDate.value;
-        if (start) params.append('startDate', start.toISOString().slice(0, 10));
-        if (end) params.append('endDate', end.toISOString().slice(0, 10));
-      }
-
-      // 검색어 필터 (품목명, 주문번호)
-      if (search.value) {
-        if (filter.value === 'orderNo') {
-          params.append('code', search.value);
-        } else if (filter.value === 'itemName') {
-          params.append('product', search.value);
+        const params = new URLSearchParams();
+        params.append('page', page.value);
+        params.append('size', pageSize);
+        if (props.selectedFranchiseId) {
+          params.append('franchiseId', props.selectedFranchiseId)
         }
-      }
+        
+        // ✅ 로컬 기준 날짜 필터
+        if (Array.isArray(searchDate.value) && searchDate.value.length === 2) {
+        const [start, end] = searchDate.value.map(d => new Date(d));
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+            params.append('startDate', formatDateToYYYYMMDD(start));
+            params.append('endDate', formatDateToYYYYMMDD(end));
+        }
+        }
 
-      // 상태 필터 (탭)
-      const tab = tabs[activeTab.value].value;
-      const statusMap = {
+        // 검색어 필터 (품목명, 주문번호)
+        if (search.value) {
+        if (filter.value === 'orderNo') {
+            params.append('code', search.value);
+        } else if (filter.value === 'itemName') {
+            params.append('product', search.value);
+        }
+        }
+
+        // 상태 필터 (탭)
+        const tab = tabs[activeTab.value].value;
+        const statusMap = {
         pending: ['REVIEWING'],
         progress: ['REVIEW_COMPLETED', 'APPROVED', 'DELIVERING'],
         complete: ['DELIVERED', 'REJECTED'],
-      };
-      if (statusMap[tab]) {
+        };
+        if (statusMap[tab]) {
         statusMap[tab].forEach(s => params.append('statusList', s));
-      }
-      
-      const { data } = await api.get('/api/hq/orders', { params });
-      orders.value = data.content;
-      totalPages.value = data.totalPages;
-      totalCount.value = data.totalCount;
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    }
-    finally {
-      loading.value = false;
-    }
-  }
+        }
 
-  watch([search, searchDate, filter], () => {
+        const { data } = await api.get('/api/hq/orders', { params });
+        orders.value = data.content;
+        totalPages.value = data.totalPages;
+        totalCount.value = data.totalCount;
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+    } finally {
+        loading.value = false;
+    }
+    }
+
+    // 기존 watchers
+    watch([search, searchDate, filter], () => {
     page.value = 1;
     fetchOrders();
-  });
+    });
 
-  watch(page, fetchOrders);
-  onMounted(fetchOrders);
+    watch(page, fetchOrders);
 
+    // ✅ selectedFranchiseId prop 변경 시 fetchOrders 호출
+    watch(() => props.selectedFranchiseId, (newValue, oldValue) => {
+      if (newValue !== oldValue) {
+        page.value = 1; // 페이지를 1로 리셋
+        fetchOrders();
+      }
+    });
+
+    // 기존 computed 속성들 다음에 추가
+    const paginationPages = computed(() => {
+      const pages = [];
+      const current = page.value;
+      const total = totalPages.value;
+      
+      if (total <= 7) {
+        // 총 페이지가 7개 이하면 모든 페이지 표시
+        for (let i = 1; i <= total; i++) {
+          pages.push(i);
+        }
+      } else {
+        // 총 페이지가 7개 초과면 생략 표시 포함
+        if (current <= 4) {
+          // 현재 페이지가 앞쪽에 있을 때
+          for (let i = 1; i <= 5; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(total);
+        } else if (current >= total - 3) {
+          // 현재 페이지가 뒤쪽에 있을 때
+          pages.push(1);
+          pages.push('...');
+          for (let i = total - 4; i <= total; i++) {
+            pages.push(i);
+          }
+        } else {
+          // 현재 페이지가 중간에 있을 때
+          pages.push(1);
+          pages.push('...');
+          for (let i = current - 1; i <= current + 1; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(total);
+        }
+      }
+      
+      return pages;
+    });
+
+    onMounted(fetchOrders);
 </script>
+
   
   <style scoped>
   .order-form {
@@ -430,4 +484,4 @@
   .order-register-btn:hover {
     background: #2746b6;
   }
-  </style> 
+  </style>

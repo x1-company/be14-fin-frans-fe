@@ -3,6 +3,7 @@
     <ApprovalDetail
       v-if="isDetailViewMode"
       :document="selectedDocument"
+      :is-current-user-turn="canApprove(selectedDocument)"
       @close-detail="
         () => {
           isDetailViewMode.value = false;
@@ -10,6 +11,7 @@
         }
       "
     />
+
     <div v-else>
       <!-- 탭 메뉴 -->
       <div class="tab-container">
@@ -171,6 +173,7 @@ const emit = defineEmits([
   "document-view",
   "document-approve",
   "document-edit",
+  "select-menu",
 ]);
 
 const props = defineProps({
@@ -193,7 +196,7 @@ const selectedDocument = ref(null);
 const tabs = [
   { label: "전체", value: "전체" },
   { label: "결재대기", value: "결재대기" },
-  { label: "결재요청", value: "결재요청" },
+  { label: "결재예정", value: "결재예정" },
   { label: "내 결재 승인", value: "내 결재 승인" },
   { label: "내 결재 반려", value: "내 결재 반려" },
 ];
@@ -201,7 +204,7 @@ const tabs = [
 // 상태 매핑
 const statusMap = {
   WAITING: "결재대기",
-  REQUESTED: "결재요청",
+  REQUESTED: "결재예정",
   APPROVED: "내 결재 승인",
   REJECTED: "내 결재 반려",
 };
@@ -274,6 +277,20 @@ const groupedDocuments = computed(() => {
 // 메서드
 const selectTab = (tabValue) => {
   emit("tab-change", tabValue);
+
+  // 사이드바 메뉴 선택을 위한 이벤트 전달
+  const menuMapping = {
+    전체: "결재-전체",
+    결재대기: "결재대기",
+    결재예정: "결재예정",
+    "내 결재 승인": "내 결재 승인",
+    "내 결재 반려": "내 결재 반려",
+  };
+
+  const menuToSelect = menuMapping[tabValue];
+  if (menuToSelect) {
+    emit("select-menu", menuToSelect);
+  }
 };
 
 const handleSearch = () => {
@@ -361,8 +378,8 @@ const getEmptyMessage = () => {
   switch (activeTab.value) {
     case "결재대기":
       return "결재 대기중인 문서가 없습니다.";
-    case "결재요청":
-      return "결재 요청된 문서가 없습니다.";
+    case "결재예정":
+      return "결재 예정된 문서가 없습니다.";
     case "내 결재 승인":
       return "내가 승인한 문서가 없습니다.";
     case "내 결재 반려":

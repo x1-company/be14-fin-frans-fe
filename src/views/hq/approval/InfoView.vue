@@ -23,22 +23,16 @@
         ref="templateSidebarRef"
       />
 
-      <!-- 상세 라우트면 ApprovalDetail만 -->
-      <ApprovalDetail
-        v-if="approvalId && approvalDetail"
-        :document="approvalDetail"
-        @close-detail="$router.push('/approval')"
-      />
-
-      <!-- 아니면 기존 Info -->
+      <!-- 상세 정보와 목록을 모두 Info 컴포넌트에서 관리 -->
       <Info
-        v-else
         :approvalList="approvalList"
         :activeTab="activeTab.toString()"
         :activeMenu="activeMenu"
         :isRegistrationMode="isRegistrationMode"
         :reorderChanges="reorderChanges"
         :selectedTemplate="selectedTemplate"
+        :approvalId="approvalId"
+        :approvalDetail="approvalDetail"
         @active-tab-change="handleActiveTabChange"
         @toggle-registration-mode="handleToggleRegistrationMode"
         @template-deleted="handleTemplateDeleted"
@@ -47,6 +41,10 @@
         @reorder-complete="handleReorderComplete"
         @reorder-cancel="handleReorderCancel"
         @tab-change="handleTabChange"
+        @select-menu="handleSelectMenu"
+        @refresh-list="handleRefreshList"
+        @approval-submitted="handleApprovalSubmitted"
+        @close-detail="$router.push('/approval')"
       />
     </div>
   </div>
@@ -54,12 +52,11 @@
 
 <script setup>
 import { ref, watch, nextTick, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import NavBar from "@/components/hq/common/NavBar.vue";
 import SideBar from "@/components/hq/approval/SideBar.vue";
 import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
 import Info from "@/components/hq/approval/Info.vue";
-import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
 import api from "@/lib/api";
 
 const approvalList = ref([]);
@@ -76,6 +73,7 @@ const templateSidebarRef = ref(null); // 결재템플릿 사이드바 참조
 const reorderChanges = ref([]); // 순서 변경 정보 저장
 
 const route = useRoute();
+const router = useRouter();
 const approvalId = ref(route.params.approvalId);
 const approvalDetail = ref(null);
 
@@ -255,22 +253,26 @@ const fetchCounts = async () => {
 
 onMounted(fetchCounts);
 
-// approvalId가 있을 때 상세 fetch
-const fetchApprovalDetail = async (id) => {
-  if (!id) return;
-  try {
-    const { data } = await api.get(`/api/hq/approvals/detail/${id}/content`);
-    approvalDetail.value = data[0] || null;
-  } catch (e) {
-    approvalDetail.value = null;
-  }
-};
-
 watch(
   () => route.params.approvalId,
-  (newId) => {
+  async (newId) => {
     approvalId.value = newId;
-    if (newId) fetchApprovalDetail(newId);
+    if (newId) {
+      try {
+        const response = await api.get(
+          `/api/hq/approvals/detail/${newId}/content`
+        );
+        // API 응답이 배열 형태일 수 있으므로 첫 번째 항목을 사용합니다.
+        approvalDetail.value = Array.isArray(response.data)
+          ? response.data[0]
+          : response.data;
+      } catch (error) {
+        console.error("결재 상세 정보 조회 실패:", error);
+        approvalDetail.value = null;
+      }
+    } else {
+      approvalDetail.value = null;
+    }
   },
   { immediate: true }
 );
@@ -290,7 +292,7 @@ watch(
         "수신-전체": "/api/hq/approvals/list/received/all",
         "결재-전체": "/api/hq/approvals/list/received/all",
         결재대기: "/api/hq/approvals/list/received/pending",
-        결재요청: "/api/hq/approvals/list/received/upcoming",
+        결재예정: "/api/hq/approvals/list/received/upcoming",
         결재중: "/api/hq/approvals/list/received/in-progress",
         결재완료: "/api/hq/approvals/list/received/approved",
         결재반려: "/api/hq/approvals/list/received/rejected",
@@ -326,7 +328,7 @@ watch(
         const is결재Category = [
           "결재-전체",
           "결재대기",
-          "결재요청",
+          "결재예정",
           "내 결재 승인",
           "내 결재 반려",
         ].includes(menu);
@@ -372,6 +374,25 @@ watch(
   },
   { immediate: true }
 );
+
+const handleRefreshList = () => {
+  fetchCounts();
+  fetchApprovalList();
+};
+
+const handleApprovalSubmitted = (approvalData) => {
+  // 결재 요청 성공 시 해당 결재의 상세 페이지로 이동
+  console.log("결재 제출 완료, 데이터:", approvalData);
+  if (approvalData && approvalData.id) {
+    console.log(
+      "결재 상세 페이지로 이동 시도:",
+      `/approval/${approvalData.id}`
+    );
+    router.push(`/approval/${approvalData.id}`);
+  } else {
+    console.log("결재 ID가 없어서 이동하지 않음");
+  }
+};
 </script>
 
 <style scoped>

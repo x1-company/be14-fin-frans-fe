@@ -4,6 +4,10 @@ import api from "@/lib/api";
 
 const emit = defineEmits(["select-franchise"]);
 
+const props = defineProps({
+  selectedFranchiseId: [String, Number]
+});
+
 const searchQuery = ref("");
 const totalCount = ref(0);
 const tab = ref('mine');    // 디폴트는 직원 담당으로 
@@ -38,8 +42,19 @@ const filteredFranchises = computed(() => {
 });
 
 function handleFranchiseClick(franchise) {
-  selectedFranchise.value = franchise;
-  emit("select-franchise", franchise.id);
+  console.log("hi")
+  console.log(franchise.id)
+  
+  // Toggle logic: if the same franchise is clicked, deselect it
+  if (selectedFranchise.value && selectedFranchise.value.id === franchise.id) {
+    selectedFranchise.value = null;
+    emit("select-franchise", null);
+    console.log("가맹점 선택 해제됨");
+  } else {
+    selectedFranchise.value = franchise;
+    emit("select-franchise", franchise.id);
+    console.log("선택된 가맹점 ID:", franchise.id);
+  }
 }
 </script>
 
@@ -272,4 +287,4 @@ function handleFranchiseClick(franchise) {
   font-size: 13px;
   color: #6c757d;
 }
-</style> 
+</style>

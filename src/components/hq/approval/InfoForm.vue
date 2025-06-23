@@ -6,6 +6,7 @@
       :approvalList="approvalList"
       :activeTab="activeTab"
       @tab-change="handleTabChange"
+      @select-menu="handleSelectMenu"
     />
 
     <!-- 수신 관련 메뉴일 때 ReceptionList 표시 -->
@@ -22,6 +23,7 @@
       :approvalList="approvalList"
       :activeTab="activeTab"
       @tab-change="handleTabChange"
+      @select-menu="handleSelectMenu"
     />
 
     <!-- 협조문서 관련 메뉴일 때 ReceptionCooperatorList 표시 -->
@@ -30,6 +32,7 @@
       :approvalList="approvalList"
       :activeTab="activeTab"
       @tab-change="handleTabChange"
+      @select-menu="handleSelectMenu"
     />
 
     <!-- 참조문서 관련 메뉴일 때 ReferenceList 표시 -->
@@ -59,7 +62,10 @@ import NotificationList from "@/components/hq/approval/sidebarReception/Notifica
 const handleTabChange = (tabValue) => {
   emit("tab-change", tabValue); // Info.vue 로 전달
 };
-const emit = defineEmits(["tab-change"]);
+const handleSelectMenu = (menuValue) => {
+  emit("select-menu", menuValue); // Info.vue 로 전달
+};
+const emit = defineEmits(["tab-change", "select-menu"]);
 
 const props = defineProps({
   approvalList: {
@@ -93,7 +99,7 @@ const isApproverMenu = computed(() => {
   const approverMenus = [
     "결재-전체",
     "결재대기",
-    "결재요청",
+    "결재예정",
     "내 결재 승인",
     "내 결재 반려",
   ];
