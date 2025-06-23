@@ -14,10 +14,11 @@
       @refresh-list="handleRefreshList"
     />
 
-    <!-- ApproverDetail 모달 -->
-    <ApproverDetail
+    <!-- ApprovalDetail 모달 (결재자용) -->
+    <ApprovalDetail
       v-if="isApproverDetailMode"
       :document="selectedDocument"
+      :is-current-user-turn="canApprove(selectedDocument)"
       @close-detail="
         () => {
           isApproverDetailMode.value = false;
@@ -181,7 +182,6 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
-import ApproverDetail from "@/components/hq/approval/Detail/ApproverDetail.vue";
 
 const emit = defineEmits([
   "tab-change",
