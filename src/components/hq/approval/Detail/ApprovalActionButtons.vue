@@ -188,6 +188,26 @@ const confirmReject = async () => {
 const confirmApprove = async () => {
   isProcessing.value = true;
   try {
+<<<<<<< Updated upstream
+=======
+    const currentUserLine = props.document.lines.find(
+      (line) => line.id === authStore.userId && line.status === "WAITING"
+    );
+    const approvalType = currentUserLine?.type === "APPROVER" ? "결재" : "협조";
+
+    const payload = {
+      approvalType: approvalType,
+      status: "승인",
+      opinion:
+        approveComment.value.trim() || "내용 확인하였습니다. 승인합니다.",
+    };
+
+    await api.post(
+      `/api/hq/approvals/${props.document.approvalId}/approve`,
+      payload
+    );
+
+>>>>>>> Stashed changes
     emit("approve", {
       documentId: props.document.approvalId,
       comment: approveComment.value.trim(),

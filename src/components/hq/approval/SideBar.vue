@@ -123,12 +123,12 @@
             <div
               class="menu-item"
               :class="{
-                active: computedActiveItem === '결재요청',
+                active: computedActiveItem === '결재예정',
               }"
-              @click="selectMenu('결재요청')"
+              @click="selectMenu('결재예정')"
             >
               <div class="menu-content">
-                <span class="menu-title">결재요청</span>
+                <span class="menu-title">결재예정</span>
               </div>
               <span class="count-badge">{{ props.counts.결재예정 }}</span>
             </div>

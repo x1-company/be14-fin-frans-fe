@@ -93,7 +93,7 @@ const isApproverMenu = computed(() => {
   const approverMenus = [
     "결재-전체",
     "결재대기",
-    "결재요청",
+    "결재예정",
     "내 결재 승인",
     "내 결재 반려",
   ];

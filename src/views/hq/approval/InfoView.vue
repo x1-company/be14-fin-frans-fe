@@ -291,7 +291,7 @@ watch(
         "수신-전체": "/api/hq/approvals/list/received/all",
         "결재-전체": "/api/hq/approvals/list/received/all",
         결재대기: "/api/hq/approvals/list/received/pending",
-        결재요청: "/api/hq/approvals/list/received/upcoming",
+        결재예정: "/api/hq/approvals/list/received/upcoming",
         결재중: "/api/hq/approvals/list/received/in-progress",
         결재완료: "/api/hq/approvals/list/received/approved",
         결재반려: "/api/hq/approvals/list/received/rejected",
@@ -327,7 +327,7 @@ watch(
         const is결재Category = [
           "결재-전체",
           "결재대기",
-          "결재요청",
+          "결재예정",
           "내 결재 승인",
           "내 결재 반려",
         ].includes(menu);

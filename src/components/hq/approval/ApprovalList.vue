@@ -324,7 +324,7 @@ const editDocument = (document) => {
 };
 
 const canApprove = (document) => {
-  // 상신 탭에서는 결재하기 버튼을 표시하지 않음
+  // 결재예정 탭에서는 결재하기 버튼을 표시하지 않음
   return false;
 };
 
@@ -334,7 +334,7 @@ const canEdit = (document) => {
 };
 
 const canCollaborate = (document) => {
-  // 상신 탭에서는 협조하기 버튼을 표시하지 않음
+  // 결재예정 탭에서는 협조하기 버튼을 표시하지 않음
   return false;
 };
 
