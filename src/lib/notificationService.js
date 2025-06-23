@@ -138,12 +138,12 @@ class NotificationService {
                   
                   // 알림 데이터 처리 - 현재 사용자의 알림인지 확인
                   if (parsedData.id && parsedData.content) {
-                    // 먼저 삭제된 알림인지 확인
-                    const notificationStore = useNotificationStore();
-                    if (notificationStore.deletedIds.has(parsedData.id)) {
-                      console.log('삭제된 알림 무시 (SSE):', parsedData.id);
-                      continue;
-                    }
+                    // 🚀 하드 삭제 방식: 삭제된 ID 체크 제거
+                    // const notificationStore = useNotificationStore();
+                    // if (notificationStore.deletedIds.has(parsedData.id)) {
+                    //   console.log('삭제된 알림 무시 (SSE):', parsedData.id);
+                    //   continue;
+                    // }
                     
                     // 사용자 ID가 포함되어 있다면 현재 사용자의 것인지 확인
                     if (parsedData.userId && authStore.decodedToken) {
@@ -196,12 +196,12 @@ class NotificationService {
               
               // 알림 데이터 처리 - 현재 사용자의 알림인지 확인
               if (parsedData.id && parsedData.content) {
-                // 먼저 삭제된 알림인지 확인
-                const notificationStore = useNotificationStore();
-                if (notificationStore.deletedIds.has(parsedData.id)) {
-                  console.log('삭제된 알림 무시 (SSE):', parsedData.id);
-                  continue;
-                }
+                // 🚀 하드 삭제 방식: 삭제된 ID 체크 제거
+                // const notificationStore = useNotificationStore();
+                // if (notificationStore.deletedIds.has(parsedData.id)) {
+                //   console.log('삭제된 알림 무시 (SSE):', parsedData.id);
+                //   continue;
+                // }
                 
                 // 사용자 ID가 포함되어 있다면 현재 사용자의 것인지 확인
                 if (parsedData.userId && authStore.decodedToken) {
