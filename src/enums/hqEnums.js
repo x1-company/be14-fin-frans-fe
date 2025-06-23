@@ -61,3 +61,26 @@ export const getTopDepartmentNameById = (id) => {
     const dept = departmentMap.find(d => d.id === id);
     return dept ? dept.name : '';
 };
+
+export const PRODUCT_TYPE_MAP = {
+    1: '원재료',
+    2: '상품',
+    3: '저장품',
+    4: '소모품',
+    5: '시설소모품',
+    6: '경품',
+    7: '기타',
+};
+
+export const PRODUCT_GROUP_MAP = {
+    1: '상온',
+    2: '냉장',
+    3: '냉동',
+    4: '기타',
+};
+
+export const PRODUCT_ATTRIBUTE_MAP = {
+    1: '신선식품',
+    2: '비신선식품',
+    3: '비식품',
+};

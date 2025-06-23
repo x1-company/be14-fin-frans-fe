@@ -62,12 +62,7 @@ api.interceptors.response.use(
       }
     }
 
-    const message =
-      error.response?.data?.message ||
-      "요청이 실패했습니다. 잠시 후 다시 시도해주세요.";
-
-    alert(message);
-
+    // 전역 alert 대신, 각 컴포넌트에서 오류를 처리하도록 Promise.reject를 그대로 반환합니다.
     return Promise.reject(error);
   }
 );
