@@ -91,7 +91,11 @@
       <div v-if="activeTab === '수신'" class="tab-panel">
         <!-- 결재문서 -->
         <div class="accordion-section">
-          <div class="accordion-header" @click="handleApprovalDocsClick">
+          <div
+            class="accordion-header"
+            :class="{ active: computedActiveItem === '결재-전체' }"
+            @click="handleApprovalDocsClick"
+          >
             <div class="accordion-title">
               <span>결재문서</span>
             </div>
@@ -123,12 +127,12 @@
             <div
               class="menu-item"
               :class="{
-                active: computedActiveItem === '결재요청',
+                active: computedActiveItem === '결재예정',
               }"
-              @click="selectMenu('결재요청')"
+              @click="selectMenu('결재예정')"
             >
               <div class="menu-content">
-                <span class="menu-title">결재요청</span>
+                <span class="menu-title">결재예정</span>
               </div>
               <span class="count-badge">{{ props.counts.결재예정 }}</span>
             </div>
@@ -161,7 +165,11 @@
 
         <!-- 협조문서 -->
         <div class="accordion-section">
-          <div class="accordion-header" @click="handleCollaborationDocsClick">
+          <div
+            class="accordion-header"
+            :class="{ active: computedActiveItem === '협조-전체' }"
+            @click="handleCollaborationDocsClick"
+          >
             <div class="accordion-title">
               <span>협조문서</span>
             </div>
@@ -231,7 +239,11 @@
 
         <!-- 참조문서 -->
         <div class="accordion-section">
-          <div class="accordion-header" @click="selectMenu('참조문서')">
+          <div
+            class="accordion-header"
+            :class="{ active: computedActiveItem === '참조문서' }"
+            @click="selectMenu('참조문서')"
+          >
             <div class="accordion-title">
               <span>참조문서</span>
             </div>
@@ -243,131 +255,16 @@
 
         <!-- 수신문서 -->
         <div class="accordion-section">
-          <div class="accordion-header" @click="selectMenu('수신문서')">
+          <div
+            class="accordion-header"
+            :class="{ active: computedActiveItem === '수신문서' }"
+            @click="selectMenu('수신문서')"
+          >
             <div class="accordion-title">
               <span>수신문서</span>
             </div>
             <div class="accordion-controls">
               <span class="count-badge">{{ props.counts.수신문서 }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 종료된 문서 -->
-        <div class="accordion-section">
-          <div
-            class="accordion-header"
-            @click="toggleAccordion('completed-docs')"
-          >
-            <div class="accordion-title">
-              <span>종료된 문서</span>
-            </div>
-            <div class="accordion-controls">
-              <span class="count-badge">5</span>
-            </div>
-          </div>
-          <div
-            v-if="openAccordions.includes('completed-docs')"
-            class="accordion-content"
-          >
-            <!-- 결재 -->
-            <div class="nested-accordion">
-              <div
-                class="nested-header"
-                @click="toggleAccordion('completed-approval')"
-              >
-                <span>결재</span>
-                <div class="nested-controls">
-                  <span class="count-badge">3</span>
-                </div>
-              </div>
-              <div
-                v-if="openAccordions.includes('completed-approval')"
-                class="nested-content"
-              >
-                <div
-                  class="menu-item nested"
-                  :class="{
-                    active:
-                      activeItem ===
-                      '/approval/incoming/completed/approval/approved',
-                  }"
-                  @click="
-                    setActiveItem(
-                      '/approval/incoming/completed/approval/approved'
-                    )
-                  "
-                >
-                  <span class="menu-title">승인</span>
-                  <span class="count-badge">2</span>
-                </div>
-                <div
-                  class="menu-item nested"
-                  :class="{
-                    active:
-                      activeItem ===
-                      '/approval/incoming/completed/approval/rejected',
-                  }"
-                  @click="
-                    setActiveItem(
-                      '/approval/incoming/completed/approval/rejected'
-                    )
-                  "
-                >
-                  <span class="menu-title">반려</span>
-                  <span class="count-badge">1</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 협조 -->
-            <div class="nested-accordion">
-              <div
-                class="nested-header"
-                @click="toggleAccordion('completed-collaboration')"
-              >
-                <span>협조</span>
-                <div class="nested-controls">
-                  <span class="count-badge">2</span>
-                </div>
-              </div>
-              <div
-                v-if="openAccordions.includes('completed-collaboration')"
-                class="nested-content"
-              >
-                <div
-                  class="menu-item nested"
-                  :class="{
-                    active:
-                      activeItem ===
-                      '/approval/incoming/completed/collaboration/approved',
-                  }"
-                  @click="
-                    setActiveItem(
-                      '/approval/incoming/completed/collaboration/approved'
-                    )
-                  "
-                >
-                  <span class="menu-title">승인</span>
-                  <span class="count-badge">1</span>
-                </div>
-                <div
-                  class="menu-item nested"
-                  :class="{
-                    active:
-                      activeItem ===
-                      '/approval/incoming/completed/collaboration/rejected',
-                  }"
-                  @click="
-                    setActiveItem(
-                      '/approval/incoming/completed/collaboration/rejected'
-                    )
-                  "
-                >
-                  <span class="menu-title">반려</span>
-                  <span class="count-badge">1</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -674,6 +571,12 @@ const handleCollaborationDocsClick = () => {
   background: #e9ecef;
 }
 
+.accordion-header.active {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 500;
+}
+
 .accordion-title {
   display: flex;
   align-items: center;
@@ -694,35 +597,6 @@ const handleCollaborationDocsClick = () => {
 
 .accordion-content {
   padding: 4px 8px 8px 8px;
-}
-
-/* 중첩 아코디언 */
-.nested-accordion {
-  margin-left: 8px;
-}
-
-.nested-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  font-size: 14px;
-}
-
-.nested-header:hover {
-  background: #e9ecef;
-}
-
-.nested-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nested-content {
-  padding: 4px 0;
 }
 
 /* 카운트 배지 */

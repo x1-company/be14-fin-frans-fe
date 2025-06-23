@@ -30,6 +30,7 @@
             :activeTab="activeTab"
             :activeMenu="activeMenu"
             @tab-change="handleTabChange"
+            @select-menu="handleSelectMenu"
             @refresh-list="$emit('refresh-list')"
           />
 
@@ -124,6 +125,7 @@ const emit = defineEmits([
   "refresh-list",
   "approval-submitted",
   "close-detail",
+  "select-menu",
 ]);
 
 const updateTab = (newTabIndex) => {
@@ -175,6 +177,10 @@ const handleReorderCancel = () => {
 
 const handleApprovalSubmitted = (approvalData) => {
   emit("approval-submitted", approvalData);
+};
+
+const handleSelectMenu = (menu) => {
+  emit("select-menu", menu);
 };
 </script>
 

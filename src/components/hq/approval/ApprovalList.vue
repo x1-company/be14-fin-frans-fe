@@ -191,6 +191,7 @@ const emit = defineEmits([
   "document-edit",
   "document-reject",
   "refresh-list",
+  "select-menu",
 ]);
 
 const props = defineProps({
@@ -291,6 +292,20 @@ const groupedDocuments = computed(() => {
 const selectTab = (tabValue) => {
   // 부모 컴포넌트로 이벤트를 전달하지 않고 로컬 상태만 변경
   localActiveTab.value = tabValue;
+
+  // 사이드바 메뉴 선택을 위한 이벤트 전달
+  const menuMapping = {
+    전체: "상신-전체",
+    임시저장: "임시저장",
+    결재중: "결재중",
+    결재완료: "결재완료",
+    결재반려: "결재반려",
+  };
+
+  const menuToSelect = menuMapping[tabValue];
+  if (menuToSelect) {
+    emit("select-menu", menuToSelect);
+  }
 };
 
 const handleSearch = () => {
@@ -324,7 +339,7 @@ const editDocument = (document) => {
 };
 
 const canApprove = (document) => {
-  // 상신 탭에서는 결재하기 버튼을 표시하지 않음
+  // 결재예정 탭에서는 결재하기 버튼을 표시하지 않음
   return false;
 };
 
@@ -334,7 +349,7 @@ const canEdit = (document) => {
 };
 
 const canCollaborate = (document) => {
-  // 상신 탭에서는 협조하기 버튼을 표시하지 않음
+  // 결재예정 탭에서는 협조하기 버튼을 표시하지 않음
   return false;
 };
 

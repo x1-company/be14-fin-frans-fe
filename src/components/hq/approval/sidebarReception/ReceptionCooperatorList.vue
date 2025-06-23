@@ -171,6 +171,7 @@ const emit = defineEmits([
   "document-view",
   "document-cooperate",
   "document-edit",
+  "select-menu",
 ]);
 
 const props = defineProps({
@@ -193,7 +194,7 @@ const selectedDocument = ref(null);
 const tabs = [
   { label: "전체", value: "전체" },
   { label: "협조대기", value: "협조대기" },
-  { label: "협조요청", value: "협조요청" },
+  { label: "협조예정", value: "협조예정" },
   { label: "내 협조 승인", value: "내 협조 승인" },
   { label: "내 협조 반려", value: "내 협조 반려" },
 ];
@@ -201,7 +202,7 @@ const tabs = [
 // 상태 매핑
 const statusMap = {
   WAITING: "협조대기",
-  REQUESTED: "협조요청",
+  REQUESTED: "협조예정",
   APPROVED: "내 협조 승인",
   REJECTED: "내 협조 반려",
 };
@@ -274,6 +275,20 @@ const groupedDocuments = computed(() => {
 // 메서드
 const selectTab = (tabValue) => {
   emit("tab-change", tabValue);
+
+  // 사이드바 메뉴 선택을 위한 이벤트 전달
+  const menuMapping = {
+    전체: "협조-전체",
+    협조대기: "협조대기",
+    협조예정: "협조예정",
+    "내 협조 승인": "내 협조 승인",
+    "내 협조 반려": "내 협조 반려",
+  };
+
+  const menuToSelect = menuMapping[tabValue];
+  if (menuToSelect) {
+    emit("select-menu", menuToSelect);
+  }
 };
 
 const handleSearch = () => {
@@ -361,8 +376,8 @@ const getEmptyMessage = () => {
   switch (activeTab.value) {
     case "협조대기":
       return "협조 대기중인 문서가 없습니다.";
-    case "협조요청":
-      return "협조 요청인 문서가 없습니다.";
+    case "협조예정":
+      return "협조 예정된 문서가 없습니다.";
     case "내 협조 승인":
       return "내가 승인한 협조 문서가 없습니다.";
     case "내 협조 반려":
