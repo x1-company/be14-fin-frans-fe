@@ -64,16 +64,15 @@ import { computed } from 'vue';
   border: 1px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
-  padding: 32px 24px;
-  margin: 20px 0 10px -20px;     /* 위치 변경 */
-  margin-bottom: 24px;
+  padding: 25px 24px;
+  margin-top: 20px;
   background: #fff;
   max-width: 100%;
   width: 100%;
 }
 
 .card-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   margin-bottom: 20px;
   display: flex;
@@ -85,7 +84,7 @@ import { computed } from 'vue';
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 16px;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .product-table th {
@@ -111,7 +110,7 @@ import { computed } from 'vue';
 
 .badge {
   padding: 4px 10px;
-  font-size: 14px;
+  font-size: 12px;
   border-radius: 12px;
   font-weight: 700;
 }
@@ -137,13 +136,14 @@ import { computed } from 'vue';
   padding: 16px;
   background: #f9f9f9;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .total-amount {
   color: #15803d;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
+  margin-right: 20px;
 }
   </style>
