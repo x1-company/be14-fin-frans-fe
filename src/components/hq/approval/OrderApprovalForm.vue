@@ -3,7 +3,7 @@
     <!-- 결재문서 선택 -->
     <div class="form-section">
       <div class="section-header">
-        <h3 class="section-title">결재문서</h3>
+        <h3 class="section-title">{{ sectionTitle }}</h3>
         <button class="add-document-button" @click="handleAddDocument"
           >문서 추가</button
         >
@@ -13,11 +13,9 @@
         <table>
           <thead>
             <tr>
-              <th>No.</th>
-              <th>문서번호</th>
-              <th>가맹점명</th>
-              <th>작성일</th>
-              <th>금액</th>
+              <th v-for="header in documentTableHeaders" :key="header">{{
+                header
+              }}</th>
               <th></th>
             </tr>
           </thead>
@@ -25,8 +23,10 @@
             <tr v-for="(doc, index) in filteredDocuments" :key="doc.id">
               <td>{{ index + 1 }}</td>
               <td>{{ doc.code }}</td>
-              <td>{{ doc.name }}</td>
+              <td v-if="type === 'RETURN'">{{ doc.name }}</td>
               <td>{{ doc.date }}</td>
+              <td v-if="type === 'RETURN'">{{ doc.description }}</td>
+              <td v-else-if="type !== 'RETURN'">{{ doc.name }}</td>
               <td>{{ formatCurrency(doc.amount) }}</td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
@@ -198,25 +198,10 @@
       </div>
     </div>
 
-    <!-- OrderList 모달 -->
-    <OrderList
-      v-if="showOrderListModal && type === 'ORDER'"
-      :isVisible="showOrderListModal"
-      @close="showOrderListModal = false"
-      @select-documents="handleSelectDocuments"
-    />
-
-    <!-- ReturnList 모달 -->
-    <ReturnList
-      v-if="showOrderListModal && type === 'RETURN'"
-      :isVisible="showOrderListModal"
-      @close="showOrderListModal = false"
-      @select-documents="handleSelectDocuments"
-    />
-
-    <!-- PurchaseOrderList 모달 -->
-    <PurchaseOrderList
-      v-if="showOrderListModal && type === 'PURCHASE'"
+    <!-- 통합 문서 선택 모달 -->
+    <UnifiedDocumentList
+      v-if="showOrderListModal"
+      :type="type"
       :isVisible="showOrderListModal"
       @close="showOrderListModal = false"
       @select-documents="handleSelectDocuments"
@@ -241,9 +226,7 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import OrderList from "./modal/OrderList.vue";
-import ReturnList from "./modal/ReturnList.vue";
-import PurchaseOrderList from "./modal/PurchaseOrderList.vue";
+import UnifiedDocumentList from "./modal/UnifiedDocumentList.vue";
 import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
 import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
@@ -278,9 +261,15 @@ const formData = ref({
   approvalLines: [],
   files: [],
   approvalDocuments: {
-    categoryType: "ORDER",
     documentIds: [],
   },
+});
+
+const categoryType = computed(() => {
+  if (props.type === "PURCHASE_ORDER") {
+    return "PURCHASE_ORDER";
+  }
+  return props.type;
 });
 
 const documents = ref([]);
@@ -394,14 +383,30 @@ const handleSelectDocuments = (selectedDocuments) => {
       (existing) => existing.id === (doc.id || doc.code)
     );
     if (!existingDoc) {
-      documents.value.unshift({
+      let documentData = {
         id: doc.id || doc.code,
         code: doc.code,
-        name: doc.franchiseName,
         date: formatDate(doc.createdAt),
         amount: doc.totalAmount,
-      });
+      };
 
+      // 결재 유형에 따라 다른 필드 매핑
+      switch (props.type) {
+        case "ORDER":
+          documentData.name = doc.franchiseName;
+          break;
+        case "RETURN":
+          documentData.name = doc.name; // franchiseName -> name 으로 수정
+          documentData.description = doc.description;
+          break;
+        case "PURCHASE_ORDER":
+          documentData.name = doc.supplierName;
+          break;
+        default:
+          documentData.name = doc.franchiseName || doc.name;
+      }
+
+      documents.value.unshift(documentData);
       formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
     }
   });
@@ -450,7 +455,6 @@ watch(
 );
 
 const initializeForm = () => {
-  formData.value.approvalDocuments.documentIds = [1, 2];
   emitFormData();
 };
 
@@ -579,7 +583,10 @@ const handleTempSave = async () => {
       isRequest: false,
       approvalLines: approvalLines,
       files: files,
-      approvalDocuments: formData.value.approvalDocuments,
+      approvalDocuments: {
+        ...formData.value.approvalDocuments,
+        categoryType: categoryType.value,
+      },
     };
 
     console.log("임시저장 전송 데이터 확인:", requestData);
@@ -655,7 +662,10 @@ const handleSubmit = async () => {
       isRequest: true,
       approvalLines: approvalLines,
       files: files,
-      approvalDocuments: formData.value.approvalDocuments,
+      approvalDocuments: {
+        ...formData.value.approvalDocuments,
+        categoryType: categoryType.value,
+      },
     };
 
     console.log("전송 데이터 확인:", requestData);
@@ -677,6 +687,78 @@ const handleSubmit = async () => {
 const handleApproveDocument = (document) => {
   emit("document-approve", document);
 };
+
+// 결재 유형에 따른 동적 컬럼 헤더
+const tableHeaders = computed(() => {
+  switch (props.type) {
+    case "ORDER":
+      return ["No.", "문서번호", "주문일", "가맹점명", "금액"];
+    case "RETURN":
+      return ["No.", "문서번호", "반품일", "반품사유", "금액"];
+    case "PURCHASE_ORDER":
+      return ["No.", "문서번호", "발주일", "공급처명", "금액"];
+    default:
+      return ["No.", "문서번호", "작성일", "작성자", "금액"];
+  }
+});
+
+// 결재 유형에 따른 동적 필드명
+const fieldNames = computed(() => {
+  switch (props.type) {
+    case "ORDER":
+      return {
+        dateField: "createdAt",
+        nameField: "franchiseName",
+        amountField: "totalAmount",
+      };
+    case "RETURN":
+      return {
+        dateField: "createdAt",
+        nameField: "description",
+        amountField: "totalAmount",
+      };
+    case "PURCHASE_ORDER":
+      return {
+        dateField: "createdAt",
+        nameField: "supplierName",
+        amountField: "totalAmount",
+      };
+    default:
+      return {
+        dateField: "createdAt",
+        nameField: "name",
+        amountField: "amount",
+      };
+  }
+});
+
+// 결재 유형에 따른 섹션 제목
+const sectionTitle = computed(() => {
+  switch (props.type) {
+    case "ORDER":
+      return "주문 문서";
+    case "RETURN":
+      return "반품 문서";
+    case "PURCHASE_ORDER":
+      return "발주 문서";
+    default:
+      return "결재 문서";
+  }
+});
+
+// 결재 유형에 따른 문서 테이블 헤더
+const documentTableHeaders = computed(() => {
+  switch (props.type) {
+    case "ORDER":
+      return ["No.", "문서번호", "작성일", "가맹점명", "금액"];
+    case "RETURN":
+      return ["No.", "문서번호", "가맹점명", "작성일", "반품사유", "금액"];
+    case "PURCHASE_ORDER":
+      return ["No.", "문서번호", "작성일", "공급처명", "금액"];
+    default:
+      return ["No.", "문서번호", "작성일", "작성자", "금액"];
+  }
+});
 
 defineExpose({
   initializeForm,

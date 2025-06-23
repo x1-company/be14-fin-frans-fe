@@ -23,7 +23,7 @@
 
       <OrderApprovalForm
         v-if="selectedType === 'PURCHASE'"
-        type="PURCHASE"
+        type="PURCHASE_ORDER"
         ref="purchaseFormRef"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
@@ -241,7 +241,10 @@ const processAndSubmit = async (isRequest) => {
       })(),
       files: uploadedFiles,
       approvalDocuments: {
-        categoryType: selectedType.value,
+        categoryType:
+          selectedType.value === "PURCHASE"
+            ? "PURCHASE_ORDER"
+            : selectedType.value,
         documentIds: formData.value.approvalDocuments.documentIds,
       },
       returnReason: formData.value.returnReason,
