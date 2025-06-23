@@ -55,29 +55,32 @@ export const useNotificationStore = defineStore("notification", () => {
   // --- ACTIONS ---
 
   const setNotifications = (freshNotifications) => {
-    // 현재 사용자의 삭제된 ID 목록 로드
-    const key = getDeletedIdsKey();
-    _deletedIds.value = getDeletedIdsFromStorage(key);
+    // 🚀 하드 삭제 방식: localStorage 관련 로직 제거
+    // const key = getDeletedIdsKey();
+    // _deletedIds.value = getDeletedIdsFromStorage(key);
     
-    console.log('삭제된 알림 ID 목록:', Array.from(_deletedIds.value));
-    console.log('서버에서 받은 알림 개수:', freshNotifications.length);
+    // 개발 환경에서만 로그 출력
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📥 서버에서 받은 알림 개수:', freshNotifications.length);
+    }
     
-    // 삭제된 알림을 제외하고 필터링
-    const validNotifications = freshNotifications.filter(
-      (n) => !_deletedIds.value.has(n.id)
-    );
+    // 서버에서 이미 삭제된 알림은 반환되지 않으므로 필터링 불필요
+    const validNotifications = freshNotifications;
     
-    console.log('필터링된 알림 개수:', validNotifications.length);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ 표시할 알림 개수:', validNotifications.length);
+    }
     
     _notifications.value = validNotifications;
     _unreadCount.value = validNotifications.filter((n) => !n.readAt).length;
   };
 
   const addNotification = (notification) => {
-    // 이미 존재하는 알림이거나 삭제된 알림인지 확인
+    // 🚀 하드 삭제 방식: 삭제된 ID 체크 제거
+    // 이미 존재하는 알림인지 확인만
     const existingNotification = _notifications.value.find(n => n.id === notification.id);
-    if (existingNotification || _deletedIds.value.has(notification.id)) {
-      console.log('중복 또는 삭제된 알림 무시:', notification.id);
+    if (existingNotification) {
+      console.log('중복 알림 무시:', notification.id);
       return;
     }
     
@@ -89,10 +92,10 @@ export const useNotificationStore = defineStore("notification", () => {
   };
 
   const removeNotification = (notificationId) => {
-    // 삭제된 ID 목록에 추가하고 저장
-    _deletedIds.value.add(notificationId);
-    const key = getDeletedIdsKey();
-    saveDeletedIdsToStorage(key, _deletedIds.value);
+    // 🚀 하드 삭제 방식: localStorage 저장 제거
+    // _deletedIds.value.add(notificationId);
+    // const key = getDeletedIdsKey();
+    // saveDeletedIdsToStorage(key, _deletedIds.value);
     
     console.log('알림 삭제됨:', notificationId);
 
@@ -111,10 +114,10 @@ export const useNotificationStore = defineStore("notification", () => {
     const readNotifications = _notifications.value.filter(n => n.readAt);
     if (readNotifications.length === 0) return;
     
-    // 읽은 알림들을 삭제된 ID 목록에 추가
-    readNotifications.forEach(n => _deletedIds.value.add(n.id));
-    const key = getDeletedIdsKey();
-    saveDeletedIdsToStorage(key, _deletedIds.value);
+    // 🚀 하드 삭제 방식: localStorage 저장 제거
+    // readNotifications.forEach(n => _deletedIds.value.add(n.id));
+    // const key = getDeletedIdsKey();
+    // saveDeletedIdsToStorage(key, _deletedIds.value);
     
     console.log('읽은 알림들 삭제됨:', readNotifications.length, '개');
 
