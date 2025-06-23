@@ -125,15 +125,13 @@ function handleFranchiseClick(franchise) {
 
 <style scoped>
 .sidebar {
-  min-width: 260px;      /* 최소 너비 추가 */
-  max-width: 340px;      /* 필요시 최대 너비도 지정 */
-  width: 300px;
+  width: 230px;      /* 최소 너비 추가 */
   flex-shrink: 0;        /* 줄어들지 않게 */
   background: #ffffff;
   border-right: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
-  height: 100vh;         /* 화면 전체 높이로 고정 */
+  height: 100%;         /* 화면 전체 높이로 고정 */
   overflow-x: hidden;    /* 가로 스크롤 방지 */
   position: relative;    /* 겹침 방지 */
   z-index: 2;
@@ -153,23 +151,25 @@ function handleFranchiseClick(franchise) {
 
 .sidebar-toggle button {
   flex: 1;
-  padding: 8px 0;
+  padding: 5px 0;
   border: none;
   background: #f3f3f3;
   color: #888;
   border-radius: 8px 8px 0 0;
-  font-size: 1rem;
+  font-size: 13px;
   cursor: pointer;
   font-weight: 500;
   transition: background 0.2s, color 0.2s;
 }
 .sidebar-toggle button.active {
+  font-size: 13px;
   background: #ece6ff;
   color: #222;
 }
 
 .header-item {
   font-weight: 500;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -177,8 +177,8 @@ function handleFranchiseClick(franchise) {
 }
 
 .sidebar__icon {
-  width: 26px;
-  height: 23px;
+  width: 21px;
+  height: 18px;
 }
 
 .add-btn {
@@ -191,12 +191,12 @@ function handleFranchiseClick(franchise) {
 }
 
 .franchise-icon {
-  width: 28px;
-  height: 27px;
+  width: 23px;
+  height: 22px;
 }
 
 .sidebar-total {
-  font-size: 1rem;
+  font-size: 0.85rem;
   margin-bottom: 8px;
   margin-left: 5px;
 }
@@ -212,10 +212,10 @@ function handleFranchiseClick(franchise) {
 
 .search-input {
   width: 100%;
-  padding: 8px 32px 8px 12px;
+  padding: 6px 25px 5px 10px;
   border: 1px solid #dee2e6;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 12px;
   box-sizing: border-box;
 }
 
@@ -261,6 +261,7 @@ function handleFranchiseClick(franchise) {
 }
 
 .company-name {
+  font-size: 13px;
   font-weight: 600;
   color: #212529;
 }
@@ -268,9 +269,10 @@ function handleFranchiseClick(franchise) {
 .company-category {
   background-color: #7daff0;
   color: white;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 10px;
+  font-weight: 650;
   margin-left: auto;
 }
 
