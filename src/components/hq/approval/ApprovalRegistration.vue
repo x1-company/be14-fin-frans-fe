@@ -13,15 +13,17 @@
         @add-document="handleAddDocument"
       />
 
-      <ReturnApprovalForm
+      <OrderApprovalForm
         v-if="selectedType === 'RETURN'"
+        type="RETURN"
         ref="returnFormRef"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
       />
 
-      <PurchaseApprovalForm
+      <OrderApprovalForm
         v-if="selectedType === 'PURCHASE'"
+        type="PURCHASE"
         ref="purchaseFormRef"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
@@ -49,29 +51,12 @@
       </div>
     </div>
   </div>
-
-  <!-- ReturnList 모달 -->
-  <div
-    v-if="showReturnListModal"
-    class="modal-overlay"
-    @click="handleCloseReturnList"
-  >
-    <div class="modal-content" @click.stop>
-      <ReturnList
-        @close="handleCloseReturnList"
-        @select-documents="handleDocumentSelection"
-      />
-    </div>
-  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
-import ReturnList from "./modal/ReturnList.vue";
 import ApprovalTypeSelector from "./ApprovalTypeSelector.vue";
 import OrderApprovalForm from "./OrderApprovalForm.vue";
-import ReturnApprovalForm from "./ReturnApprovalForm.vue";
-import PurchaseApprovalForm from "./PurchaseApprovalForm.vue";
 import api from "@/lib/api";
 
 const emit = defineEmits(["submit", "cancel", "approval-submitted"]);
@@ -82,7 +67,6 @@ const props = defineProps({
 // 상태 관리
 const selectedType = ref("ORDER");
 const isSubmitting = ref(false);
-const showReturnListModal = ref(false);
 
 // 폼 참조
 const orderFormRef = ref(null);
@@ -155,22 +139,11 @@ const handleFormDataUpdated = (data) => {
 
 // 문서 추가 핸들러
 const handleAddDocument = () => {
-  showReturnListModal.value = true;
-};
-
-// ReturnList에서 문서 선택 완료 핸들러
-const handleDocumentSelection = (selectedDocuments) => {
-  // 선택된 문서들을 현재 폼의 documents 배열에 추가
+  // 현재 활성화된 폼 컴포넌트의 문서 추가 기능 호출
   const currentFormRef = getCurrentFormRef();
-  if (currentFormRef && currentFormRef.addSelectedDocuments) {
-    currentFormRef.addSelectedDocuments(selectedDocuments);
+  if (currentFormRef && currentFormRef.handleAddDocument) {
+    currentFormRef.handleAddDocument();
   }
-  showReturnListModal.value = false;
-};
-
-// ReturnList 모달 닫기 핸들러
-const handleCloseReturnList = () => {
-  showReturnListModal.value = false;
 };
 
 // 폼 데이터 초기화
@@ -419,28 +392,5 @@ onMounted(() => {
   background: #e5e7eb;
   border-color: #d1d5db;
   cursor: not-allowed;
-}
-
-/* 모달 스타일 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  max-width: 90%;
-  max-height: 90%;
-  overflow: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 </style>

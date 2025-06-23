@@ -200,7 +200,23 @@
 
     <!-- OrderList 모달 -->
     <OrderList
-      v-if="showOrderListModal"
+      v-if="showOrderListModal && type === 'ORDER'"
+      :isVisible="showOrderListModal"
+      @close="showOrderListModal = false"
+      @select-documents="handleSelectDocuments"
+    />
+
+    <!-- ReturnList 모달 -->
+    <ReturnList
+      v-if="showOrderListModal && type === 'RETURN'"
+      :isVisible="showOrderListModal"
+      @close="showOrderListModal = false"
+      @select-documents="handleSelectDocuments"
+    />
+
+    <!-- PurchaseOrderList 모달 -->
+    <PurchaseOrderList
+      v-if="showOrderListModal && type === 'PURCHASE'"
       :isVisible="showOrderListModal"
       @close="showOrderListModal = false"
       @select-documents="handleSelectDocuments"
@@ -226,6 +242,8 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import OrderList from "./modal/OrderList.vue";
+import ReturnList from "./modal/ReturnList.vue";
+import PurchaseOrderList from "./modal/PurchaseOrderList.vue";
 import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
 import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
@@ -1080,5 +1098,66 @@ defineExpose({
   color: #9ca3af;
   cursor: not-allowed;
   border-color: #d1d5db;
+}
+
+/* 발주 모달 플레이스홀더 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.modal-header button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-header button:hover {
+  color: #374151;
+}
+
+.modal-body {
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
 }
 </style>

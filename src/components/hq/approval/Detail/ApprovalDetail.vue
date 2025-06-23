@@ -1,8 +1,9 @@
 <template>
   <div class="approval-detail">
-    <!-- Header -->
+    <!-- 헤더 영역 -->
     <div class="detail-header">
       <div class="header-top">
+        <!-- 탭 메뉴 (결재문서 / 결재선) -->
         <div class="header-tabs">
           <button
             :class="['tab-button', { active: activeTab === 'document' }]"
@@ -17,6 +18,7 @@
             결재선
           </button>
         </div>
+        <!-- 헤더 액션 버튼들 -->
         <div class="header-actions">
           <button class="print-button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -39,10 +41,10 @@
       </div>
     </div>
 
-    <!-- Content -->
+    <!-- 결재문서 탭 내용 -->
     <div v-if="activeTab === 'document'" class="detail-content">
       <div v-if="document">
-        <!-- Notice -->
+        <!-- 결재 요청 알림 섹션 (현재 사용자 차례일 때만 표시) -->
         <div v-if="noticeInfo" class="notice-section">
           <div class="notice-icon">ℹ️</div>
           <div class="notice-text">
@@ -53,7 +55,7 @@
           </div>
         </div>
 
-        <!-- Document Title -->
+        <!-- 문서 제목 섹션 -->
         <div class="document-title-section">
           <h1 class="document-title">{{ document.title }}</h1>
           <div class="status-badges">
@@ -65,7 +67,7 @@
           </div>
         </div>
 
-        <!-- Document Info -->
+        <!-- 문서 기본 정보 -->
         <div class="document-info">
           <div class="info-grid">
             <div class="info-item">
@@ -93,7 +95,7 @@
           </div>
         </div>
 
-        <!-- Order Details -->
+        <!-- 주문 내역 테이블 -->
         <div
           v-if="
             (documentContent?.history && documentContent.history.length > 0) ||
@@ -146,7 +148,7 @@
           </div>
         </div>
 
-        <!-- Remarks -->
+        <!-- 비고 섹션 -->
         <div
           v-if="documentContent?.remarks || document.remarks"
           class="notes-section"
@@ -157,7 +159,7 @@
           </div>
         </div>
 
-        <!-- Attachments -->
+        <!-- 첨부파일 섹션 -->
         <div
           v-if="
             (documentContent?.files && documentContent.files.length > 0) ||
@@ -197,11 +199,12 @@
       <div v-else class="loading-state"> 문서 내용을 불러오는 중입니다... </div>
     </div>
 
+    <!-- 결재선 탭 내용 -->
     <div v-if="activeTab === 'approvalLine'" class="detail-content">
       <ApprovalLineDetail :approval-line="approvalLine" />
     </div>
 
-    <!-- Action Buttons -->
+    <!-- 결재 액션 버튼들 (현재 사용자 차례일 때만 표시) -->
     <ApprovalActionButtons
       v-if="isCurrentUserTurn"
       :document="document"
@@ -218,7 +221,7 @@ import ApprovalLineDetail from "./ApprovalLineDetail.vue";
 import ApprovalActionButtons from "./ApprovalActionButtons.vue";
 import { useAuthStore } from "@/stores/auth";
 
-// 본문ㅡ결재선 탭 선택
+// 결재문서/결재선 탭 선택 상태
 const activeTab = ref("document"); // 'document' or 'approvalLine'
 
 const emit = defineEmits(["close-detail", "approve", "reject", "refresh-list"]);
@@ -228,16 +231,29 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  isCurrentUserTurn: {
+    type: Boolean,
+    default: null, // null이면 내부에서 계산, 값이 있으면 그 값을 사용
+  },
 });
 
+// 결재선 정보와 문서 상세 내용
 const approvalLine = ref(null);
 const documentContent = ref(null);
 const authStore = useAuthStore();
+
+// 현재 사용자 정보
 const currentUserId = computed(() => authStore.userId);
 const currentUserName = computed(() => authStore.userName);
 const currentUserDutyName = computed(() => authStore.dutyName);
 
+// 현재 사용자가 결재 차례인지 확인
 const isCurrentUserTurn = computed(() => {
+  // prop이 제공되면 그것을 사용하고, 없으면 내부에서 계산
+  if (props.isCurrentUserTurn !== null) {
+    return props.isCurrentUserTurn;
+  }
+
   if (!props.document || !currentUserId.value) {
     return false;
   }
@@ -246,6 +262,7 @@ const isCurrentUserTurn = computed(() => {
   );
 });
 
+// 결재 요청 알림 정보 (현재 사용자 차례일 때만 표시)
 const noticeInfo = computed(() => {
   if (!isCurrentUserTurn.value) {
     return null;
@@ -263,6 +280,7 @@ const noticeInfo = computed(() => {
   };
 });
 
+// 결재선 정보 가져오기
 const fetchApprovalLine = async () => {
   if (!props.document?.approvalId) return;
   try {
@@ -275,6 +293,7 @@ const fetchApprovalLine = async () => {
   }
 };
 
+// 문서 상세 내용 가져오기
 const fetchDocumentContent = async () => {
   if (!props.document?.approvalId) return;
   try {
@@ -289,10 +308,12 @@ const fetchDocumentContent = async () => {
   }
 };
 
+// 뒤로가기
 const goBack = () => {
   emit("close-detail");
 };
 
+// 날짜 포맷팅
 const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -302,16 +323,19 @@ const formatDate = (dateString) => {
   )}월 ${String(date.getDate()).padStart(2, "0")}일`;
 };
 
+// 금액 포맷팅
 const formatAmount = (amount) => {
   if (!amount) return "₩0";
   return `₩${amount.toLocaleString()}`;
 };
 
+// 총 금액 계산
 const calculateTotalAmount = (history) => {
   if (!history) return 0;
   return history.reduce((sum, item) => sum + item.quantity * item.salePrice, 0);
 };
 
+// 문서 상태 텍스트 변환
 const getDocumentStatusText = (status) => {
   const statusMap = {
     DRAFT: "임시저장",
@@ -322,6 +346,7 @@ const getDocumentStatusText = (status) => {
   return statusMap[status] || status;
 };
 
+// 문서 상태 CSS 클래스 변환
 const getDocumentStatusClass = (status) => {
   const classMap = {
     DRAFT: "status-draft",
@@ -332,6 +357,7 @@ const getDocumentStatusClass = (status) => {
   return classMap[status] || "status-unknown";
 };
 
+// 컴포넌트 마운트 시 데이터 로드
 onMounted(() => {
   fetchApprovalLine();
   fetchDocumentContent();
