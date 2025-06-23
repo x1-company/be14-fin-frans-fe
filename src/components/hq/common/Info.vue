@@ -44,10 +44,10 @@
                         />
                         <OrderProgressBar :status="order?.status" />
                         <FranchiseInfoCard :order="order" />
-                        <DeliveryInfoCard :order="order" />
                         <OrderInfoCard :order="order" />
-                        <PaymentInfoCard :order="order" />
                         <ProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
+                        <DeliveryInfoCard :order="order" />
+                        <PaymentInfoCard :order="order" />
                     </div>
                 </div>
            

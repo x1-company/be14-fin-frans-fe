@@ -62,16 +62,15 @@ const statusText = computed(() => {
   border: 1px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
-  padding: 32px 24px;
-  margin: 20px 0 10px -20px;      /* 위치 변경 */
-  margin-bottom: 24px;
+  padding: 25px 24px;
+  margin-top: 20px;
   background: #fff;
   max-width: 100%;
   width: 100%;
 }
 
 .order-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   margin-bottom: 24px;
   display: flex;
@@ -94,7 +93,7 @@ const statusText = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .info-box .label {
@@ -104,7 +103,7 @@ const statusText = computed(() => {
 
 .info-box .value {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .info-box.blue {
@@ -128,12 +127,13 @@ const statusText = computed(() => {
 
 .info-grid .label {
   color: #6b7280;
-  font-size: 15px;
+  margin-left: 5px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .info-grid .value {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   margin: 0 30px;
   text-align: right;
@@ -160,17 +160,20 @@ const statusText = computed(() => {
 .reject-box {
   background-color: #f8f9fa;
   border-radius: 8px;
+  margin-left: -10px;
   padding: 16px;
   color: #333;
 }
 
 .reject-title {
   font-weight: 600;
+  font-size: 13px;
   margin-bottom: 8px;
   color: #666;
 }
 
 .reject-reason {
+  font-size: 13px;
   color: #444;
 }
 

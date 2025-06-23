@@ -40,7 +40,7 @@ function formatDate(dateStr) {
   border: 1px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
-  padding: 32px 24px;
+  padding: 25px 24px;
   margin-top: 20px;
   margin-bottom: 24px;
   background: #fff;
