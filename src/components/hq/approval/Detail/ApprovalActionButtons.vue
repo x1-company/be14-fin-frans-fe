@@ -186,6 +186,8 @@ const confirmReject = async () => {
 };
 
 const confirmApprove = async () => {
+  if (!props.document) return;
+
   isProcessing.value = true;
   try {
     const currentUserLine = props.document.lines.find(
@@ -196,14 +198,14 @@ const confirmApprove = async () => {
     const payload = {
       approvalType: approvalType,
       status: "승인",
-      opinion:
-        approveComment.value.trim() || "내용 확인하였습니다. 승인합니다.",
+      opinion: approveComment.value.trim() || "내용 확인하였습니다. 승인합니다.",
     };
 
     await api.post(
       `/api/hq/approvals/${props.document.approvalId}/approve`,
       payload
     );
+
     emit("approve", {
       documentId: props.document.approvalId,
       comment: approveComment.value.trim(),
@@ -211,6 +213,7 @@ const confirmApprove = async () => {
     closeApproveModal();
   } catch (error) {
     console.error("승인 처리 중 오류가 발생했습니다:", error);
+    alert("승인 처리에 실패했습니다. 다시 시도해주세요.");
   } finally {
     isProcessing.value = false;
   }
