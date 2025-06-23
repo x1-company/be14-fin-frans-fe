@@ -19,7 +19,15 @@
 
                     <FranchiseInfo v-if="activeTabSwitch === 1" :selectedFranchiseId="selectedFranchiseId"/>
 
-                    <OrderList v-if="activeTabSwitch === 2" :franchiseId="franchiseId" :selectedFranchiseId="selectedFranchiseId"/>
+                    <OrderList 
+                        v-if="activeTabSwitch === 2 && !orderDetailId" 
+                        :franchiseId="franchiseId" 
+                        :selectedFranchiseId="selectedFranchiseId"
+                        @show-order-detail="handleShowOrderDetail"/>
+                    <OrderDetailPage 
+                        v-if="activeTabSwitch === 2 && orderDetailId" 
+                        :orderId="orderDetailId" 
+                        @back-to-list="handleBackToList"/>
                     
                     <div v-if="activeTabSwitch === 3" class="content-section">
                         <h3>반품관리 컨텐츠</h3>
@@ -38,6 +46,7 @@ import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from '../orders/InfoHeader.vue'
 import OrderList from '../orders/list/OrderList.vue'
 import FranchiseInfo from '../franchise/FranchiseInfo.vue'
+import OrderDetailPage from '@/views/hq/orders/OrderDetailPage.vue'
 
 
 const props = defineProps({
@@ -112,6 +121,15 @@ const updateTab = (newTabIndex) => {
     activeTabSwitch.value = newTabIndex
     const selectedTab = tabs[newTabIndex]
     emit('tab-change', selectedTab)
+}
+
+const orderDetailId = ref(null)
+
+function handleShowOrderDetail(orderId) {
+  orderDetailId.value = orderId;
+}
+function handleBackToList() {
+  orderDetailId.value = null;
 }
 </script>
 

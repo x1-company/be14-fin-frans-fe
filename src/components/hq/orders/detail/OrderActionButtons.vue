@@ -120,7 +120,11 @@ const isDelivering = computed(() => props.status === 'DELIVERING');
 // 최초 상태를 부모에서 받아오고 싶으면 watch/props로 동기화
 // 예: const isReviewed = computed(() => props.status === 'REVIEW_COMPLETED');
 
-const emits = defineEmits(['refreshOrder']); 
+const emits = defineEmits(['refreshOrder', 'close']);
+
+function handleClose() {
+  emits('close');
+}
 
 const router = useRouter();
 
@@ -203,9 +207,9 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
   }
 }
 
-function handleClose() {
-  router.push({ path: '/hq/franchise', query: { tab: '주문관리' } });
-}
+// function handleClose() {
+//   router.push({ path: '/hq/franchise', query: { tab: '주문관리' } });
+// }
 
 </script>
 
