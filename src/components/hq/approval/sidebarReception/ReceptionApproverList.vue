@@ -173,6 +173,7 @@ const emit = defineEmits([
   "document-view",
   "document-approve",
   "document-edit",
+  "select-menu",
 ]);
 
 const props = defineProps({
@@ -276,6 +277,20 @@ const groupedDocuments = computed(() => {
 // 메서드
 const selectTab = (tabValue) => {
   emit("tab-change", tabValue);
+
+  // 사이드바 메뉴 선택을 위한 이벤트 전달
+  const menuMapping = {
+    전체: "결재-전체",
+    결재대기: "결재대기",
+    결재예정: "결재예정",
+    "내 결재 승인": "내 결재 승인",
+    "내 결재 반려": "내 결재 반려",
+  };
+
+  const menuToSelect = menuMapping[tabValue];
+  if (menuToSelect) {
+    emit("select-menu", menuToSelect);
+  }
 };
 
 const handleSearch = () => {

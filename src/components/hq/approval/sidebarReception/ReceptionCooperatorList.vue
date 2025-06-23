@@ -171,6 +171,7 @@ const emit = defineEmits([
   "document-view",
   "document-cooperate",
   "document-edit",
+  "select-menu",
 ]);
 
 const props = defineProps({
@@ -274,6 +275,20 @@ const groupedDocuments = computed(() => {
 // 메서드
 const selectTab = (tabValue) => {
   emit("tab-change", tabValue);
+
+  // 사이드바 메뉴 선택을 위한 이벤트 전달
+  const menuMapping = {
+    전체: "협조-전체",
+    협조대기: "협조대기",
+    협조예정: "협조예정",
+    "내 협조 승인": "내 협조 승인",
+    "내 협조 반려": "내 협조 반려",
+  };
+
+  const menuToSelect = menuMapping[tabValue];
+  if (menuToSelect) {
+    emit("select-menu", menuToSelect);
+  }
 };
 
 const handleSearch = () => {

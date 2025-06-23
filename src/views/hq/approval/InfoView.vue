@@ -41,6 +41,7 @@
         @reorder-complete="handleReorderComplete"
         @reorder-cancel="handleReorderCancel"
         @tab-change="handleTabChange"
+        @select-menu="handleSelectMenu"
         @refresh-list="handleRefreshList"
         @approval-submitted="handleApprovalSubmitted"
         @close-detail="$router.push('/approval')"
