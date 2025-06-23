@@ -905,13 +905,13 @@ const toggleUserSelection = (user) => {
   border-left-color: #f59e0b;
 }
 .user-card.receiver .user-initial {
-  background-color: #f59e0b;
+  background: #f59e0b;
 }
 .user-card.reference {
   border-left-color: #8b5cf6;
 }
 .user-card.reference .user-initial {
-  background-color: #8b5cf6;
+  background: #8b5cf6;
 }
 .user-initial {
   width: 32px;

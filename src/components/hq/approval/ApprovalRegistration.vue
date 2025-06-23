@@ -304,16 +304,17 @@ const handleTempSave = async () => {
 
 const uploadFile = async (file) => {
   const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await api.post("/api/files/upload", formData, {
+  formData.append("files", file);
+  formData.append("type", "approval");
+  // formData.append("type", "HQ");
+  const response = await api.post("/api/upload", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
 
   if (response.status === 200 || response.status === 201) {
-    return response.data.url;
+    return response.data[0];
   } else {
     throw new Error("파일 업로드에 실패했습니다.");
   }

@@ -177,24 +177,40 @@
     <div class="form-section">
       <div class="section-header">
         <h3 class="section-title">첨부파일</h3>
-        <button class="add-file-button" @click="$emit('add-file')">
-          파일 추가
-        </button>
-      </div>
-      <div v-if="files.length > 0" class="file-list">
-        <div v-for="(file, index) in files" :key="index" class="file-item">
-          <span class="file-name">{{ file.name }}</span>
-          <span class="file-size">{{ formatFileSize(file.size) }}</span>
-          <button
-            class="remove-file-button"
-            @click="$emit('remove-file', index)"
-          >
-            ×
+        <div class="header-buttons">
+          <button class="add-file-button" @click="openFilePicker">
+            파일 추가
           </button>
+          <input
+            type="file"
+            ref="fileInput"
+            multiple
+            @change="handleFileSelect"
+            style="display: none"
+          />
         </div>
       </div>
-      <div v-else class="no-files">
+      <div v-if="formData.files.length === 0" class="no-files-attached">
         <p>첨부된 파일이 없습니다.</p>
+      </div>
+      <div v-else class="file-list">
+        <div
+          v-for="(file, index) in formData.files"
+          :key="index"
+          class="file-item"
+        >
+          <div class="file-info">
+            <div class="file-icon">📄</div>
+            <div class="file-details">
+              <div class="file-name">{{ file.name }}</div>
+              <div class="file-size">{{ formatFileSize(file.size) }}</div>
+            </div>
+          </div>
+          <div class="file-actions">
+            <span class="file-status">완료</span>
+            <button class="remove-file" @click="removeFile(index)">×</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -253,6 +269,9 @@ const showOrderListModal = ref(false);
 const showApprovalLineModal = ref(false);
 const showTemplateModal = ref(false);
 const isSubmitting = ref(false);
+
+// 파일 입력을 위한 ref 추가
+const fileInput = ref(null);
 
 const searchQuery = ref("");
 const formData = ref({
@@ -345,25 +364,16 @@ const uploadFiles = async (files) => {
   }
 };
 
-const handleFileSelect = async (event) => {
+const handleFileSelect = (event) => {
   const files = Array.from(event.target.files);
-  try {
-    const uploadedFiles = await uploadFiles(files);
-    uploadedFiles.forEach((uploadedFile) => {
-      formData.value.files.push({
-        name:
-          uploadedFile.originalName ||
-          uploadedFile.name ||
-          extractFilenameFromUrl(uploadedFile.url),
-        size: uploadedFile.size,
-        url: uploadedFile.url,
-        uuid: uploadedFile.uuid,
-      });
+  files.forEach((file) => {
+    formData.value.files.push({
+      name: file.name,
+      size: file.size,
+      file: file,
+      url: "",
     });
-  } catch (error) {
-    console.error("파일 업로드 실패:", error);
-    alert("파일 업로드에 실패했습니다. 다시 시도해주세요.");
-  }
+  });
   emitFormData();
 };
 
@@ -763,6 +773,17 @@ const documentTableHeaders = computed(() => {
       return ["No.", "문서번호", "작성일", "작성자", "금액"];
   }
 });
+
+// 파일 선택 창 열기
+const openFilePicker = () => {
+  fileInput.value.click();
+};
+
+// 파일 제거
+const removeFile = (index) => {
+  formData.value.files.splice(index, 1);
+  emitFormData();
+};
 
 defineExpose({
   initializeForm,
@@ -1245,5 +1266,68 @@ defineExpose({
   padding: 24px;
   text-align: center;
   color: #6b7280;
+}
+
+/* 파일 첨부 */
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: #f9fafb;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.file-icon {
+  font-size: 24px;
+  margin-right: 12px;
+}
+
+.file-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px; /* ← 길이 제한 */
+}
+
+.file-size {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.file-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-status {
+  font-size: 12px;
+  color: #10b981; /* green */
+  font-weight: 600;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 16px;
 }
 </style>
