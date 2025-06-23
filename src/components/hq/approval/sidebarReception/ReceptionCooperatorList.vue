@@ -202,7 +202,7 @@ const tabs = [
 // 상태 매핑
 const statusMap = {
   WAITING: "협조대기",
-  REQUESTED: "협조예정",
+  EXPECTED: "협조예정",
   APPROVED: "내 협조 승인",
   REJECTED: "내 협조 반려",
 };

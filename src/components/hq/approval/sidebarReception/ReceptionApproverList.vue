@@ -204,7 +204,7 @@ const tabs = [
 // 상태 매핑
 const statusMap = {
   WAITING: "결재대기",
-  REQUESTED: "결재예정",
+  EXPECTED: "결재예정",
   APPROVED: "내 결재 승인",
   REJECTED: "내 결재 반려",
 };
