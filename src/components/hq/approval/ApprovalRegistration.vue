@@ -58,7 +58,9 @@ import { ref, onMounted, nextTick } from "vue";
 import ApprovalTypeSelector from "./ApprovalTypeSelector.vue";
 import OrderApprovalForm from "./OrderApprovalForm.vue";
 import api from "@/lib/api";
-const emit = defineEmits(["submit", "cancel", "approval-submitted"]);
+
+const emit = defineEmits(["submit", "cancel", "approval-submitted", "counts-refresh"]);
+
 const props = defineProps({
   selectedTemplate: { type: Object, default: null },
 });
@@ -213,28 +215,13 @@ const processAndSubmit = async (isRequest) => {
       isRequest: isRequest,
       approvalLines: (() => {
         const approvalLines = [];
-        let approverSeq = 1;
-        let cooperatorSeq = 1;
+        let seq = 1;
         formData.value.approvalLines.forEach((line) => {
-          if (line.type === "APPROVER") {
-            approvalLines.push({
+          approvalLines.push({
               userId: line.userId || line.id,
-              seq: approverSeq++,
+              seq: seq++,
               type: line.type,
             });
-          } else if (line.type === "COOPERATOR") {
-            approvalLines.push({
-              userId: line.userId || line.id,
-              seq: cooperatorSeq++,
-              type: line.type,
-            });
-          } else {
-            approvalLines.push({
-              userId: line.userId || line.id,
-              seq: 0,
-              type: line.type, // RECIPIENT, REFERENCE 등
-            });
-          }
         });
         return approvalLines;
       })(),
@@ -266,6 +253,9 @@ const processAndSubmit = async (isRequest) => {
           : "임시저장되었습니다."
       );
       resetFormData();
+
+      // 카운트 새로고침 이벤트 발생
+      emit("counts-refresh");
 
       if (isRequest && response.data?.data?.id) {
         // 결재 요청 성공 시 생성된 결재 ID를 전달

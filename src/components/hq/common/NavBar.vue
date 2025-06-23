@@ -105,11 +105,11 @@ onUnmounted(() => {
   background: #4066fa;
   color: #fff;
   padding: 0 32px;
-  height: 48px;
+  height: 38px;
   font-family: "NanumSquareOTF", sans-serif;
 }
 .navbar__logo {
-  font-size: 1.3rem;
+  font-size: 1.0rem;
   font-weight: bold;
   letter-spacing: 2px;
   min-width: 120px;
@@ -131,7 +131,7 @@ onUnmounted(() => {
 }
 .navbar__menu li {
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 400;
   color: #e6eaff;
   padding: 0 12px;
@@ -143,7 +143,7 @@ onUnmounted(() => {
 }
 .notification-icon {
   width: 23px;
-  height: 20px;
+  height: 19px;
   object-fit: contain;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -171,7 +171,7 @@ onUnmounted(() => {
   border-radius: 50%;
   min-width: 18px;
   height: 18px;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -215,7 +215,7 @@ onUnmounted(() => {
 
 .dropdown-header h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 700;
   color: #4066fa;
 }
@@ -289,7 +289,7 @@ onUnmounted(() => {
 
 .notification-text {
   margin: 0 0 4px 0;
-  font-size: 15px;
+  font-size: 12px;
   line-height: 1.5;
   color: #222;
   font-weight: 500;
@@ -299,7 +299,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 10px;
   color: #666;
 }
 
@@ -307,14 +307,14 @@ onUnmounted(() => {
   background-color: #e9ecef;
   padding: 2px 8px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 10px;
   color: #4066fa;
   font-weight: 600;
 }
 
 .notification-time {
   color: #999;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .mark-read-btn,
@@ -324,7 +324,7 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  font-size: 15px;
+  font-size: 8px;
   margin-left: 8px;
   transition: background-color 0.2s;
 }

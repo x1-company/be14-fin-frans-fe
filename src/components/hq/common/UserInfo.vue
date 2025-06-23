@@ -174,14 +174,14 @@ onUnmounted(() => {
 }
 
 .navbar__username {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #fff;
-  font-weight: 400;
+  font-weight: 1000;
 }
 
 .navbar__user {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   background: #e6f0ff;
   border-radius: 50%;
   display: inline-block;
@@ -205,12 +205,12 @@ onUnmounted(() => {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 130px;
+  width: 100px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 1px solid #e5e7eb;
-  padding: 8px 0;
+  padding: 4px 0;
   z-index: 1000;
 }
 
@@ -218,7 +218,7 @@ onUnmounted(() => {
   padding: 12px 16px;
   color: #374151;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: background-color 0.2s;
 }
 

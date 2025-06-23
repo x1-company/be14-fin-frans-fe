@@ -40,6 +40,7 @@
             :selectedTemplate="props.selectedTemplate"
             @cancel="(value) => handleToggleRegistrationMode(value)"
             @approval-submitted="handleApprovalSubmitted"
+            @counts-refresh="handleCountsRefresh"
           />
 
           <!-- 결재템플릿 -->
@@ -126,6 +127,7 @@ const emit = defineEmits([
   "approval-submitted",
   "close-detail",
   "select-menu",
+  "counts-refresh", // 새로 추가된 이벤트
 ]);
 
 const updateTab = (newTabIndex) => {
@@ -181,6 +183,11 @@ const handleApprovalSubmitted = (approvalData) => {
 
 const handleSelectMenu = (menu) => {
   emit("select-menu", menu);
+};
+
+// 카운트 새로고침 이벤트 핸들러 추가
+const handleCountsRefresh = () => {
+  emit("counts-refresh");
 };
 </script>
 
