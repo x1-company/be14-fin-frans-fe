@@ -94,9 +94,10 @@
               <label>총 금액:</label>
               <span class="amount">{{
                 formatAmount(
-                  calculateTotalAmount(
-                    documentContent?.history || document.history
-                  )
+                  props.document?.totalAmount ??
+                    calculateTotalAmount(
+                      documentContent?.history || document.history
+                    )
                 )
               }}</span>
             </div>
@@ -136,8 +137,18 @@
                   <td>{{ item.spec }}</td>
                   <td>{{ item.purchaseUnit }}</td>
                   <td>{{ item.quantity }}</td>
-                  <td>{{ formatAmount(item.salePrice) }}</td>
-                  <td>{{ formatAmount(item.quantity * item.salePrice) }}</td>
+                  <td>{{
+                    formatAmount(
+                      item.amount ??
+                        item.quantity * (item.salePrice || item.purchasePrice)
+                    )
+                  }}</td>
+                  <td>{{
+                    formatAmount(
+                      item.amount ??
+                        item.quantity * (item.salePrice || item.purchasePrice)
+                    )
+                  }}</td>
                 </tr>
               </tbody>
               <tfoot>
@@ -145,9 +156,10 @@
                   <td colspan="6" class="total-label">합 계</td>
                   <td class="total-amount">{{
                     formatAmount(
-                      calculateTotalAmount(
-                        documentContent?.history || document.history
-                      )
+                      props.document?.totalAmount ??
+                        calculateTotalAmount(
+                          documentContent?.history || document.history
+                        )
                     )
                   }}</td>
                 </tr>

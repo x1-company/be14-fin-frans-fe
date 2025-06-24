@@ -27,7 +27,12 @@
               <td>{{ doc.date }}</td>
               <td v-if="type === 'RETURN'">{{ doc.description }}</td>
               <td v-else-if="type !== 'RETURN'">{{ doc.name }}</td>
-              <td>{{ formatCurrency(doc.amount) }}</td>
+              <td>{{
+                formatCurrency(
+                  doc.amount ??
+                    doc.quantity * (doc.salePrice || doc.purchasePrice)
+                )
+              }}</td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
                   ×
