@@ -3,12 +3,7 @@
     <ApprovalDetail
       v-if="isDetailViewMode"
       :document="selectedDocument"
-      @close-detail="
-        () => {
-          isDetailViewMode.value = false;
-          selectedDocument.value = null;
-        }
-      "
+      @close-detail="goBack"
     />
     <div v-else>
       <!-- 탭 메뉴 -->
@@ -162,6 +157,7 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
+import { useRouter } from "vue-router";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
 import { useAuthStore } from "@/stores/auth";
 
@@ -182,6 +178,7 @@ const props = defineProps({
 });
 
 const auth = useAuthStore();
+const router = useRouter();
 
 // 반응형 데이터
 const localActiveTab = ref(props.activeTab);
@@ -281,17 +278,15 @@ const openDocument = (document) => {
 };
 
 const viewDocument = (document) => {
-  emit("document-view", document);
+  router.push(`/approval/${document.approvalId}`);
 };
 
 const approveDocument = (document) => {
-  selectedDocument.value = document;
-  isDetailViewMode.value = true;
+  router.push(`/approval/${document.approvalId}`);
 };
 
 const cooperateDocument = (document) => {
-  selectedDocument.value = document;
-  isDetailViewMode.value = true;
+  router.push(`/approval/${document.approvalId}`);
 };
 
 const editDocument = (document) => {
@@ -379,6 +374,10 @@ const getEmptyMessage = () => {
     default:
       return "수신된 결재 문서가 없습니다.";
   }
+};
+
+const goBack = () => {
+  router.back();
 };
 
 // props.activeTab이 변경될 때 localActiveTab 업데이트

@@ -5,7 +5,9 @@
             <ul class="navbar__menu">
                 <li>매장관리</li>
             </ul>
-            {{ auth.franchiseName || '' }}
+            <ul class="franchise_name">
+                <li>{{ auth.franchiseName || '' }}</li>
+            </ul>
             <div class="notification-wrapper" ref="notificationWrapper">
                 <img src="@/assets/notification.png" alt="알림" class="notification-icon" @click="toggleNotificationBell" />
                 <NotificationBell :isOpen="isNotificationBellOpen" @close="isNotificationBellOpen = false" />
@@ -47,52 +49,56 @@ onUnmounted(() => {
 
 <style scoped>
 .navbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #4066fa;
-    color: #fff;
-    padding: 0 32px;
-    height: 48px;
-    font-family: "NanumSquareOTF", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #4066fa;
+  color: #fff;
+  padding: 0 32px;
+  height: 38px;
+  font-family: "NanumSquareOTF", sans-serif;
 }
 
 .navbar__logo {
-    font-size: 1.3rem;
-    font-weight: bold;
-    letter-spacing: 2px;
-    min-width: 120px;
+  font-size: 1.0rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  min-width: 120px;
 }
 
 .navbar__right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    min-width: 200px;
-    justify-content: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 200px;
+  justify-content: flex-end;
+}
+
+.franchise_name{
+    cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ffffff;
+  padding: 0 12px;
+    list-style: none;
 }
 
 .navbar__menu {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .navbar__menu li {
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 400;
-    color: #e6eaff;
-    padding: 0 12px;
-    transition: color 0.2s, font-weight 0.2s;
-}
-
-.navbar__menu li:hover {
-    color: #fff;
-    font-weight: bold;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ffffff;
+  padding: 0 12px;
+  /* transition: color 0.2s; */
 }
 
 .notification-icon {
@@ -117,21 +123,21 @@ onUnmounted(() => {
 }
 
 .notification-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background-color: #ff6b6b;
-    color: white;
-    border-radius: 50%;
-    min-width: 18px;
-    height: 18px;
-    font-size: 11px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 4px;
-    border: 2px solid #4066fa;
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ff6b6b;
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  font-size: 9px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #4066fa;
 }
 
 /* 알림 드롭다운 스타일 */
@@ -169,7 +175,7 @@ onUnmounted(() => {
 
 .dropdown-header h3 {
     margin: 0;
-    font-size: 17px;
+    font-size: 13px;
     font-weight: 700;
     color: #4066fa;
 }

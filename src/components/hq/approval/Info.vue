@@ -19,6 +19,7 @@
           <ApprovalDetail
             v-if="approvalId && approvalDetail"
             :document="approvalDetail"
+            :approvalId="approvalId"
             @close-detail="$emit('close-detail')"
             @refresh-list="$emit('refresh-list')"
           />

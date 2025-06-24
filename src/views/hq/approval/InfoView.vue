@@ -97,6 +97,13 @@ const handleSelectMenu = (menuValue) => {
 
   currentTabIndex.value = 1;
   isRegistrationMode.value = false;
+
+  // 상세보기 모드일 때 사이드바 클릭하면 상세보기 종료
+  if (approvalId.value) {
+    approvalId.value = null;
+    approvalDetail.value = null;
+    router.push("/approval");
+  }
 };
 
 const handleTabChange = (tab) => {
@@ -379,13 +386,27 @@ watch(
     approvalId.value = newId;
     if (newId) {
       try {
-        const response = await api.get(
-          `/api/hq/approvals/detail/${newId}/content`
-        );
-        // API 응답이 배열 형태일 수 있으므로 첫 번째 항목을 사용합니다.
-        approvalDetail.value = Array.isArray(response.data)
-          ? response.data[0]
-          : response.data;
+        // 문서 내용과 결재선 정보를 모두 가져오기
+        const [contentResponse, linesResponse] = await Promise.all([
+          api.get(`/api/hq/approvals/detail/${newId}/content`),
+          api.get(`/api/hq/approvals/detail/${newId}/lines`),
+        ]);
+
+        // 문서 내용
+        const documentContent = Array.isArray(contentResponse.data)
+          ? contentResponse.data[0]
+          : contentResponse.data;
+
+        // 결재선 정보
+        const approvalLines = linesResponse.data;
+
+        // 두 정보를 합쳐서 approvalDetail 생성
+        approvalDetail.value = {
+          ...documentContent,
+          lines: Array.isArray(approvalLines)
+            ? approvalLines
+            : approvalLines.line, // 객체면 .line을 사용
+        };
       } catch (error) {
         console.error("결재 상세 정보 조회 실패:", error);
         approvalDetail.value = null;

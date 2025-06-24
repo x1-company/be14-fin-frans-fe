@@ -1,35 +1,8 @@
 <template>
   <div class="info-form">
-    <ApprovalDetail
-      v-if="isDetailViewMode"
-      :document="selectedDocument"
-      @close-detail="
-        () => {
-          isDetailViewMode.value = false;
-          selectedDocument.value = null;
-        }
-      "
-      @approve="handleDocumentApprove"
-      @reject="handleDocumentReject"
-      @refresh-list="handleRefreshList"
-    />
-
-    <!-- ApprovalDetail 모달 (결재자용) -->
-    <ApprovalDetail
-      v-if="isApproverDetailMode"
-      :document="selectedDocument"
-      :is-current-user-turn="canApprove(selectedDocument)"
-      @close-detail="
-        () => {
-          isApproverDetailMode.value = false;
-          selectedDocument.value = null;
-        }
-      "
-      @approve="handleDocumentApprove"
-      @reject="handleDocumentReject"
-      @refresh-list="handleRefreshList"
-    />
-    <div v-else>
+    <!-- ApprovalDetail 모달 제거됨 -->
+    <!-- 문서 목록 및 탭 항상 렌더링 -->
+    <div>
       <!-- 탭 메뉴 -->
       <div class="tab-container">
         <div class="tab-list">
@@ -159,7 +132,12 @@
                 <button
                   v-else-if="!canEdit(document)"
                   class="action-btn detail-btn"
-                  @click.stop="viewDocument(document)"
+                  @click.stop="
+                    () => {
+                      console.log('상세보기 클릭!');
+                      viewDocument(document);
+                    }
+                  "
                 >
                   상세보기
                 </button>
@@ -181,7 +159,7 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+import { useRouter } from "vue-router";
 
 const emit = defineEmits([
   "tab-change",
@@ -206,11 +184,6 @@ const props = defineProps({
 const localActiveTab = ref(props.activeTab);
 const activeTab = computed(() => localActiveTab.value);
 const searchQuery = ref("");
-
-// 상세 보기 모드 상태 관리
-const isDetailViewMode = ref(false);
-const isApproverDetailMode = ref(false);
-const selectedDocument = ref(null);
 
 // 탭 설정
 const tabs = [
@@ -316,22 +289,28 @@ const openDocument = (document) => {
   emit("document-click", document);
 };
 
+const router = useRouter();
 const viewDocument = (document) => {
-  // emit("document-view", document);
-  selectedDocument.value = document;
-  isDetailViewMode.value = true;
+  alert("viewDocument 호출");
+  if (document && document.approvalId) {
+    router.push(`/approval/${document.approvalId}`);
+  } else {
+    console.warn("approvalId가 없습니다:", document);
+  }
 };
 
 const approveDocument = (document) => {
-  // emit("document-approve", document);
-  selectedDocument.value = document;
-  isApproverDetailMode.value = true;
+  if (document && document.approvalId) {
+    router.push(`/approval/${document.approvalId}`);
+  } else {
+    console.warn("approvalId가 없습니다:", document);
+  }
 };
 
 const collaborateDocument = (document) => {
   // emit("document-collaborate", document);
-  selectedDocument.value = document;
-  isDetailViewMode.value = true;
+  // selectedDocument.value = document;
+  // isDetailViewMode.value = true;
 };
 
 const editDocument = (document) => {

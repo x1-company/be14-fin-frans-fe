@@ -17,7 +17,9 @@
               <div class="purchase-detail-container">
                 <div class="action-buttons">
                   <button class="btn-outline" @click="printRequest">구매 요청서 출력</button>
-                  <button class="btn-primary" @click="closeDetail">닫기</button>
+                  <button class="btn-outline" @click="editRequest">수정</button>
+                  <button class="btn-outline" @click="deleteRequest">삭제</button>
+                  <button class="btn-outline" @click="closeDetail">닫기</button>
                 </div>
                 <!-- 구매 요청 정보 -->
                 <div class="section">
@@ -26,20 +28,20 @@
                     <tr>
                       <th>요청일</th>
                       <td>{{ requestInfo.requestDate }}</td>
-                      <th>구매 요청 상태</th>
-                      <td>{{ requestInfo.status }}</td>
-                    </tr>
-                    <tr>
-                      <th>납기희망일</th>
-                      <td>{{ requestInfo.deliveryDate }}</td>
                       <th>구매번호</th>
                       <td>{{ requestInfo.purchaseNumber }}</td>
                     </tr>
                     <tr>
+                      <th>납기희망일</th>
+                      <td>{{ requestInfo.deliveryDate }}</td>
                       <th>담당자</th>
                       <td>{{ requestInfo.manager }}</td>
+                    </tr>
+                    <tr>
                       <th>담당자 이메일</th>
                       <td>{{ requestInfo.managerEmail }}</td>
+                      <th></th>
+                      <td></td>
                     </tr>
                   </table>
                 </div>
@@ -106,20 +108,20 @@
                     <tr>
                       <th>결재 코드</th>
                       <td>{{ approvalInfo.code }}</td>
-                      <th>결재 상태</th>
-                      <td>{{ approvalInfo.status }}</td>
-                    </tr>
-                    <tr>
                       <th>결재 요청자</th>
                       <td>{{ approvalInfo.requester }}</td>
-                      <th>결재 담당자</th>
-                      <td>{{ approvalInfo.approver }}</td>
                     </tr>
                     <tr>
+                      <th>결재 담당자</th>
+                      <td>{{ approvalInfo.approver }}</td>
                       <th>기안 일시</th>
                       <td>{{ approvalInfo.requestDate }}</td>
+                    </tr>
+                    <tr>
                       <th>결재 완료 일시</th>
                       <td>{{ approvalInfo.approvalDate }}</td>
+                      <th></th>
+                      <td></td>
                     </tr>
                   </table>
                 </div>
@@ -148,7 +150,6 @@ const requestInfo = ref({
   requestDate: '',
   deliveryDate: '',
   manager: '',
-  status: '',
   purchaseNumber: '',
   managerEmail: '',
   title: '',
@@ -157,7 +158,6 @@ const requestInfo = ref({
 const materials = ref([]);
 const approvalInfo = ref({
   code: '',
-  status: '',
   requester: '',
   approver: '',
   requestDate: '',
@@ -183,7 +183,6 @@ async function fetchDetail() {
     requestDate: data.createdAt?.split('T')[0] || '',
     deliveryDate: data.requestedDeliveryDate || '',
     manager: data.userName || '',
-    status: data.status || '',
     purchaseNumber: data.code || '',
     managerEmail: data.userEmail || '',
     title: data.title || '',
@@ -206,7 +205,6 @@ async function fetchDetail() {
       const approvalRes = await api.get(`/api/hq/approvals/purchase/${id}`);
       approvalInfo.value = {
         code: approvalRes.data.code,
-        status: approvalRes.data.status,
         requester: approvalRes.data.requester,
         approver: approvalRes.data.approver,
         requestDate: approvalRes.data.requestDate,
@@ -214,12 +212,12 @@ async function fetchDetail() {
       };
     } catch (e) {
       approvalInfo.value = {
-        code: '', status: '', requester: '', approver: '', requestDate: '', approvalDate: ''
+        code: '', requester: '', approver: '', requestDate: '', approvalDate: ''
       };
     }
   } else {
     approvalInfo.value = {
-      code: '', status: '', requester: '', approver: '', requestDate: '', approvalDate: ''
+      code: '', requester: '', approver: '', requestDate: '', approvalDate: ''
     };
   }
 }
@@ -231,6 +229,13 @@ const totalAmount = computed(() => {
     return sum + price * quantity;
   }, 0);
 });
+
+function editRequest() {
+  // TODO: 수정 기능 구현
+}
+function deleteRequest() {
+  // TODO: 삭제 기능 구현
+}
 
 onMounted(fetchDetail);
 </script>
