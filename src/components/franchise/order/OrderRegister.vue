@@ -128,9 +128,11 @@ import { useAuthStore } from "@/stores/auth.js"
 import Outbutton from './button/Outbutton.vue'
 import OrderTemplateModal from './OrderTemplateModal.vue'
 import api from "@/lib/api"
+import { useToast } from "@/composables/useToast"
 
 const emit = defineEmits(['back-to-list'])
 const auth = useAuthStore()
+const toast = useToast();
 
 // 상태 관리
 const searchQuery = ref('')
@@ -169,7 +171,7 @@ const addToOrderList = (product) => {
     if (existingItem) {
         existingItem.quantity += 1
         updateAmount(existingItem)
-        alert('이미 추가된 상품입니다. 수량을 1 증가시켰습니다.')
+        toast.error('이미 추가된 상품입니다. 수량을 1 증가시켰습니다.')
     } else {
         const orderItem = {
             ...product,
@@ -202,17 +204,17 @@ const totalAmount = computed(() => {
 // 주문 등록
 const submitOrder = async () => {
     if (orderList.value.length === 0) {
-        alert('주문할 상품을 추가해주세요.')
+        toast.error('주문할 상품을 추가해주세요.')
         return
     }
 
     if (orderList.value.some(item => !item.id)) {
-        alert('주문 목록에 유효하지 않은 상품이 있습니다. 다시 시도해주세요.');
+        toast.error('주문 목록에 유효하지 않은 상품이 있습니다. 다시 시도해주세요.');
         return;
     }
 
     if (!auth.franchiseId) {
-        alert('가맹점 정보를 찾을 수 없습니다.')
+        toast.error('가맹점 정보를 찾을 수 없습니다.')
         return
     }
 
@@ -227,7 +229,7 @@ const submitOrder = async () => {
         }
 
         await api.post('/api/franchise/orders', orderData)
-        alert('주문이 성공적으로 등록되었습니다.')
+        toast.success('주문이 성공적으로 등록되었습니다.')
 
         // 주문 목록 초기화
         orderList.value = []
@@ -235,7 +237,7 @@ const submitOrder = async () => {
 
     } catch (error) {
         console.error('주문 등록 실패:', error)
-        alert('주문 등록에 실패했습니다. 다시 시도해주세요.')
+        toast.error('주문 등록에 실패했습니다. 다시 시도해주세요.')
     } finally {
         isSubmitting.value = false
     }
@@ -279,15 +281,15 @@ const handleSelectTemplate = async (templateId) => {
         const fullProductDetails = (await Promise.all(productPromises)).filter(p => p !== null);
 
         if (fullProductDetails.length !== templateProducts.length) {
-            alert('일부 자재 정보를 불러오지 못했습니다. 목록을 확인해주세요.');
+            toast.error('일부 자재 정보를 불러오지 못했습니다. 목록을 확인해주세요.');
         }
 
         orderList.value = fullProductDetails;
-        alert('템플릿을 성공적으로 불러왔습니다. 주문 목록을 확인해주세요.');
+        toast.success('템플릿을 성공적으로 불러왔습니다. 주문 목록을 확인해주세요.');
 
     } catch (error) {
         console.error(`Failed to fetch template details for id ${templateId}:`, error);
-        alert('템플릿 상세 정보를 불러오는 데 실패했습니다.');
+        toast.error('템플릿 상세 정보를 불러오는 데 실패했습니다.');
     } finally {
         isLoading.value = false;
     }
