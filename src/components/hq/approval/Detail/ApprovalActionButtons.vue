@@ -52,7 +52,7 @@
         <div class="modal-body">
           <textarea
             v-model="rejectReason"
-            placeholder="{{ rejectPlaceholder }}"
+            :placeholder="rejectPlaceholder"
             rows="4"
             class="reason-textarea"
           ></textarea>
@@ -92,7 +92,7 @@
           <p>{{ approveModalContent }}</p>
           <textarea
             v-model="approveComment"
-            placeholder="{{ approvePlaceholder }}"
+            :placeholder="approvePlaceholder"
             rows="3"
             class="reason-textarea"
           ></textarea>
@@ -140,46 +140,59 @@ const currentUserLine = computed(() => {
   );
 });
 
+// 디버깅을 위한 콘솔 로그 추가
+console.log("ApprovalActionButtons - currentUserLine:", currentUserLine.value);
+console.log("ApprovalActionButtons - authStore.userId:", authStore.userId);
+console.log("ApprovalActionButtons - document lines:", props.document?.lines);
+
 // 사용자 타입 (결재자/협조자)
 const userType = computed(() => {
-  return currentUserLine.value?.userType === "APPROVER" ? "결재" : "협조";
+  const line = currentUserLine.value;
+  if (!line) return "결재"; // 기본값
+
+  console.log("ApprovalActionButtons - line.type:", line.type);
+
+  // userType이 명확하게 COOPERATOR인 경우에만 협조로 설정
+  if (line.type === "COOPERATOR") {
+    return "협조";
+  } else if (line.type === "APPROVER") {
+    return "결재";
+  } else {
+    // userType이 없거나 다른 값인 경우 기본값
+    console.warn("ApprovalActionButtons - Unknown userType:", line.type);
+    return "결재";
+  }
 });
 
 // 버튼 텍스트
 const approveButtonText = computed(() => {
-  return userType.value === "결재" ? "승인" : "협조승인";
+  return "승인";
 });
 
 const rejectButtonText = computed(() => {
-  return userType.value === "결재" ? "반려" : "협조반려";
+  return "반려";
 });
 
 // 모달 제목
 const approveModalTitle = computed(() => {
-  return userType.value === "결재" ? "승인 확인" : "협조 승인 확인";
+  return "승인 확인";
 });
 
 const rejectModalTitle = computed(() => {
-  return userType.value === "결재" ? "반려 사유 입력" : "협조 반려 사유 입력";
+  return "반려 사유 입력";
 });
 
 // 모달 내용
 const approveModalContent = computed(() => {
-  return userType.value === "결재"
-    ? "이 문서를 승인하시겠습니까?"
-    : "이 문서에 협조하시겠습니까?";
+  return "이 문서를 승인하시겠습니까?";
 });
 
 const approvePlaceholder = computed(() => {
-  return userType.value === "결재"
-    ? "승인 의견을 입력해주세요 (선택사항)"
-    : "협조 의견을 입력해주세요 (선택사항)";
+  return "승인 의견을 입력해주세요 (선택사항)";
 });
 
 const rejectPlaceholder = computed(() => {
-  return userType.value === "결재"
-    ? "반려 사유를 입력해주세요..."
-    : "협조 반려 사유를 입력해주세요...";
+  return "반려 사유를 입력해주세요...";
 });
 
 const handleReject = () => {
