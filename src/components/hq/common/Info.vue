@@ -25,7 +25,12 @@
                         :franchiseId="franchiseId" 
                         :selectedFranchiseId="selectedFranchiseId"
                         @show-order-detail="handleShowOrderDetail"/>
-                        <div v-if="activeTabSwitch === 2 && orderDetailId">                   <div v-if="loading"></div>
+
+                        <div v-if="activeTabSwitch === 2 && orderDetailId">
+                            <div v-if="loading">로딩 중...</div>
+
+                        <div v-if="activeTabSwitch === 2 && orderDetailId">                  
+                        <div v-if="loading"></div>
                             <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
                             <div v-else>
                                 <!-- 상세 컴포넌트들 -->
@@ -56,7 +61,7 @@
                         v-if="activeTabSwitch === 3 && !returnDetailId"
                         :franchiseId="franchiseId" 
                         :selectedFranchiseId="selectedFranchiseId"
-                        @selectReturn="handleShowReturnDetail"
+                        @select-return="handleShowReturnDetail"
                     />
                     <div v-if="activeTabSwitch === 3 && returnDetailId">
                         <div v-if="returnLoading"></div>
@@ -75,13 +80,13 @@
                                 }"
                                 @refreshReturn="fetchReturnDetail"
                                 @close="handleReturnBackToList"
-                            />
+                            />                                                                                                                                                                                                                                                                                 
                             <ReturnProgressBar :status="returnDetail?.status" />
                             <ReturnFranchiseInfoCard :returnData="returnDetail" />
                             <ReturnInfoCard :returnData="returnDetail" />
                             <ProductTable :products="returnDetail?.products" :totalAmount="returnDetail?.totalAmount" />
-                            <DeliveryInfoCard :returnData="returnDetail" />
-                            <ApprovalInfoCard :returnData="returnDetail" />
+                            <!-- <DeliveryInfoCard :returnData="returnDetail" />
+                            <ApprovalInfoCard :returnData="returnDetail" /> -->
                         </div>
                     </div>
                 </div>
@@ -219,6 +224,8 @@ watch(orderDetailId, fetchOrderDetail)
 function handleShowOrderDetail(orderId) {
     orderDetailId.value = orderId;
 }
+
+
 function handleBackToList() {
     orderDetailId.value = null;
 }

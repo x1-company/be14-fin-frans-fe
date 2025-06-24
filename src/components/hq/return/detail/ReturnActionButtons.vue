@@ -46,7 +46,7 @@
         @click="showEditDeliveryModal = true"
         >수정</button>
 
-        <button class="btn print"><span class="icon">&#128424;</span> 주문서 출력</button>
+        <button class="btn print"><span class="icon">&#128424;</span> 반품서 출력</button>
         <button class="btn close" @click="handleClose"><span class="icon">&#10005;</span> 닫기</button>
         <ConfirmModal
           :visible="showModal"
@@ -204,7 +204,8 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
 }
 
 function handleClose() {
-  router.push({ path: '/hq/franchise', query: { tab: '주문관리' } });
+  // router.push({ path: '/hq/franchise', query: { tab: '반품관리' } });
+  emits('close');
 }
 
 </script>
@@ -214,14 +215,14 @@ function handleClose() {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
-  margin: 40px 55px -70px 0;
+  /* margin: 40px 55px -70px 0; */
 }
 .btn {
-  padding: 8px 18px;
+  padding: 6px 13px;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   background: #fff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border 0.15s;
@@ -251,7 +252,7 @@ function handleClose() {
   background: #f5faff;
 }
 .icon {
-  font-size: 18px;
+  font-size: 15px;
   vertical-align: middle;
 }
 .btn.delivery {

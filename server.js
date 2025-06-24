@@ -15,6 +15,11 @@ app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
 });
 
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+  });
+  
+
 app.listen(port, '0.0.0.0', () => {
     console.log(`Server listening on http://0.0.0.0:${port}`);
 });

@@ -41,7 +41,7 @@
             <td>
               <span 
                 @click="handleReturnClick(ret.id)" 
-                @click.stop="handleReturnClick(ret.id)"
+                @cilck.stop = "handleReturnClick(ret.id)" 
                 class="return-link"
                 :data-return-id="ret.id"
                 style="cursor: pointer; color: #4066fa; text-decoration: underline;"
@@ -90,7 +90,7 @@ const props = defineProps({
 });
 
 // 이벤트 정의
-const emit = defineEmits(['selectReturn']);
+const emit = defineEmits(['select-return']);
 
 const search = ref('');
 const filter = ref('itemName');
@@ -166,23 +166,13 @@ function handleReturnClick(returnId) {
   console.log('emit 함수:', emit);
   console.log('props.onReturnSelect:', props.onReturnSelect);
   
-  // 방법 1: emit 사용
   try {
-    emit('selectReturn', returnId);
+    emit('select-return', returnId);
     console.log('selectReturn 이벤트 발생 완료');
   } catch (error) {
     console.error('이벤트 발생 실패:', error);
   }
   
-  // 방법 2: props 함수 직접 호출
-  if (props.onReturnSelect && typeof props.onReturnSelect === 'function') {
-    try {
-      props.onReturnSelect(returnId);
-      console.log('props 함수 호출 완료');
-    } catch (error) {
-      console.error('props 함수 호출 실패:', error);
-    }
-  }
 }
 
 async function fetchReturns() {
