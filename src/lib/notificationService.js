@@ -85,17 +85,37 @@ class NotificationService {
         this.reconnectAttempts = 0;
       };
 
-      // 메시지 수신 이벤트
-      this.eventSource.onmessage = (event) => {
+      // 'sse' 이벤트만 알림으로 처리
+      this.eventSource.addEventListener('sse', (event) => {
+        // lastEventId 저장
+        if (event.lastEventId) {
+          const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
+          const lastEventIdKey = `lastEventId_${currentUserId}`;
+          localStorage.setItem(lastEventIdKey, event.lastEventId);
+        }
+
         try {
-          if (event.data) {
+          // 데이터가 JSON 형식일 때만 파싱
+          if (event.data && event.data.startsWith('{')) {
             const parsedData = JSON.parse(event.data);
             this.handleNotificationMessage(parsedData, notificationStore, authStore);
+          } else {
+            // JSON이 아닌 데이터(예: "EventStream Created...")는 무시
+            console.log('SSE non-JSON data received:', event.data);
           }
         } catch (error) {
           console.error('SSE 메시지 파싱 오류:', error, '원본 데이터:', event.data);
         }
-      };
+      });
+
+      // 'heartbeat' 이벤트는 무시 (연결 유지용)
+      this.eventSource.addEventListener('heartbeat', (event) => {
+        // 아무 처리도 하지 않음
+        // console.log('heartbeat', event);
+      });
+
+      // 기존 onmessage는 최소화 또는 제거
+      this.eventSource.onmessage = null;
 
       // 에러 처리
       this.eventSource.onerror = (event) => {
@@ -103,10 +123,11 @@ class NotificationService {
         this.isConnected = false;
         this.isConnecting = false;
         notificationStore.setConnectionStatus(false);
-
-        // 401 에러인 경우 토큰 만료로 간주
-        if (event.status === 401) {
-          console.log('토큰 만료로 인한 SSE 연결 해제');
+      
+          // SSE 오류 발생 시 토큰 유효성 직접 검사
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (!authStore.accessToken || currentTime >= authStore.decodedToken?.exp) {
+          console.log('SSE 연결 실패: 액세스 토큰이 유효하지 않음 → 연결 해제');
           authStore.clearAccessToken();
           this.disconnect();
           return;

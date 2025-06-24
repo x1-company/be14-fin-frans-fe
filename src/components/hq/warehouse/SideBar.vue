@@ -78,9 +78,9 @@ onMounted(async () => {
   if (!authStore.accessToken) return;
   try {
     // 창고 목록 API 엔드포인트로 변경
-    const { data } = await api.get("/api/hq/warehouses/list");
-    warehouses.value = data;
-    totalCount.value = data.length;
+    // const { data } = await api.get("/api/hq/warehouses/list");
+    // warehouses.value = data;
+    // totalCount.value = data.length;
   } catch (error) {
     console.error("창고 목록 불러오기 실패", error);
   }

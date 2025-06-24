@@ -67,7 +67,7 @@ api.interceptors.response.use(
         // 토스트로 알림 표시
         toast.error("세션이 만료되었습니다. 다시 로그인해주세요.")
 
-        // router.push("/login")
+        router.push("/login")
         return Promise.reject(refreshError)
       }
     }
