@@ -5,10 +5,13 @@
         <component :is="iconComponent" />
       </span>
       <div class="person-info">
-        <div class="person-name-role"
-          >{{ person.name }} {{ person.position }}</div
-        >
-        <div class="person-department">{{ person.department }}</div>
+        <div class="person-name-role">
+          {{ person.name }}
+          <span v-if="person.position">{{ person.position }}</span>
+        </div>
+        <div v-if="person.department" class="person-department">{{
+          person.department
+        }}</div>
         <div v-if="type === 'reference' && person.readTime" class="read-time">
           열람: {{ formatDateTime(person.readTime) }}
         </div>
@@ -16,8 +19,10 @@
       <div class="status-badge" :class="badgeClass">{{ statusText }}</div>
     </div>
     <div v-if="person.comment" class="person-comment">
-      <div class="comment-text">{{ person.comment }}</div>
-      <div class="comment-time">{{ formatDateTime(person.commentTime) }}</div>
+      <div class="comment-text">의견: {{ person.comment }}</div>
+      <div v-if="person.commentTime" class="comment-time">{{
+        formatDateTime(person.commentTime)
+      }}</div>
     </div>
   </div>
 </template>

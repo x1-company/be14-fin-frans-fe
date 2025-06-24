@@ -25,8 +25,12 @@
                         :franchiseId="franchiseId" 
                         :selectedFranchiseId="selectedFranchiseId"
                         @show-order-detail="handleShowOrderDetail"/>
+
                         <div v-if="activeTabSwitch === 2 && orderDetailId">
                             <div v-if="loading">로딩 중...</div>
+
+                        <div v-if="activeTabSwitch === 2 && orderDetailId">                  
+                        <div v-if="loading"></div>
                             <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
                             <div v-else>
                                 <!-- 상세 컴포넌트들 -->
@@ -60,7 +64,7 @@
                         @select-return="handleShowReturnDetail"
                     />
                     <div v-if="activeTabSwitch === 3 && returnDetailId">
-                        <div v-if="returnLoading">로딩 중...</div>
+                        <div v-if="returnLoading"></div>
                         <div v-else-if="!returnDetail">반품 상세 데이터를 불러올 수 없습니다.</div>
                         <div v-else>
                             <!-- 반품 상세 컴포넌트들 -->
@@ -264,7 +268,7 @@ function handleReturnBackToList() {
 .breadcrumb-container {
     flex-shrink: 0;
     /* 브레드크럼은 고정 크기 */
-    padding: 20px 30px;
+    padding: 15px 30px;
     background: #f8f9fa;
 }
 
