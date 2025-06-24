@@ -3,12 +3,12 @@
     <div class="navbar__logo">FRANS</div>
     <div class="navbar__right">
       <ul class="navbar__menu">
-        <li @click="selectMenuItem('대시보드')">대시보드</li>
-        <li @click="navigateToHqFranchise">가맹점관리</li>
-        <li @click="navigateToSupplier">공급처관리</li>
-        <li @click="navigateToPurchase">구매관리</li>
-        <li @click="navigateToWarehouse">창고관리</li>
-        <li @click="navigateToApproval">결재관리</li>
+        <li :class="{ active: activeMenu === '대시보드' }" @click="selectMenuItem('대시보드')">대시보드</li>
+        <li :class="{ active: activeMenu === '가맹점관리' }" @click="navigateToHqFranchise">가맹점관리</li>
+        <li :class="{ active: activeMenu === '공급처관리' }" @click="navigateToSupplier">공급처관리</li>
+        <li :class="{ active: activeMenu === '구매관리' }" @click="navigateToPurchase">구매관리</li>
+        <li :class="{ active: activeMenu === '창고관리' }" @click="navigateToWarehouse">창고관리</li>
+        <li :class="{ active: activeMenu === '결재관리' }" @click="navigateToApproval">결재관리</li>
       </ul>
       <div class="notification-wrapper" ref="notificationWrapper">
         <img
@@ -33,20 +33,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useAuthStore } from "@/stores/auth";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import UserInfo from "./UserInfo.vue";
 import NotificationBell from "@/components/NotificationBell.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 const emit = defineEmits(["update-breadcrumb"]);
 
 const isNotificationBellOpen = ref(false);
 const notificationWrapper = ref(null);
 
+const activeMenu = computed(() => {
+  const path = route.path;
+  if (path === '/') return '대시보드';
+  if (path.startsWith('/hq/franchise')) return '가맹점관리';
+  if (path.startsWith('/hq-supplier')) return '공급처관리';
+  if (path.startsWith('/purchase')) return '구매관리';
+  if (path.startsWith('/warehouse')) return '창고관리';
+  if (path.startsWith('/approval')) return '결재관리';
+  return '';
+});
+
 const selectMenuItem = (itemText) => {
+  if (itemText === '대시보드') {
+    router.push('/');
+  }
   emit("update-breadcrumb", ["HOME", itemText]);
 };
 
@@ -133,13 +148,17 @@ onUnmounted(() => {
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #d2d2d2;
+  color: #b2c5ff;
   padding: 0 12px;
   /* transition: color 0.2s; */
 }
 .navbar__menu li:hover {
   color: #fff;
   font-weight: 1000;
+}
+.navbar__menu li.active {
+  color: #fff;
+  font-weight: bold;
 }
 .notification-icon {
   width: 23px;
