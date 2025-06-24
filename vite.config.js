@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173, // 개발용 서버
+    port: 8080,
   },
   define: {
     'process.env': process.env
