@@ -40,47 +40,47 @@
   </script>
   
   <style scoped>
-  .card {
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
-    padding: 32px 24px;
-    margin: 20px 0 0 -20px;     /* 위치 변경 */
-    background: #fff;
-    max-width: 100%;
-    width: 100%;
-  }
-  
-  .card-title {
-    font-weight: bold;
-    font-size: 18px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .icon {
-    font-size: 18px;
-  }
-  
-  .info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr; /* label-value × 2셋 */
-    row-gap: 12px;
-    column-gap: 16px;
-    align-items: center;
-  }
-  
-  .label {
-    color: #6b7280;
-    font-size: 15px;
-  }
-  
-  .value {
-    font-size: 15px;
-    font-weight: 500;
-    margin: 0 30px;
-    text-align: right;
-  }
-  </style>
+.card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
+  padding: 25px 24px;
+  margin-top: 20px;
+  background: #fff;
+  max-width: 100%;
+  width: 100%;
+}
+
+.card-title {
+  font-weight: bold;
+  font-size: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  font-size: 18px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr; /* label-value × 2셋 */
+  row-gap: 12px;
+  column-gap: 16px;
+  align-items: center;
+}
+
+.label {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.value {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 30px;
+  text-align: right;
+}
+</style>
