@@ -366,6 +366,7 @@ const getDocumentStatusClass = (status) => {
 
 // 컴포넌트 마운트 시 데이터 로드
 onMounted(() => {
+  activeTab.value = "document"; // Always show document tab first
   fetchApprovalLine();
   fetchDocumentContent();
 });

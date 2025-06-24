@@ -97,6 +97,13 @@ const handleSelectMenu = (menuValue) => {
 
   currentTabIndex.value = 1;
   isRegistrationMode.value = false;
+
+  // 상세보기 모드일 때 사이드바 클릭하면 상세보기 종료
+  if (approvalId.value) {
+    approvalId.value = null;
+    approvalDetail.value = null;
+    router.push("/approval");
+  }
 };
 
 const handleTabChange = (tab) => {
