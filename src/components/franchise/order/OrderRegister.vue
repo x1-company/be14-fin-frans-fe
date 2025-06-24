@@ -51,53 +51,49 @@
                 <span class="total-amount">총 금액: {{ formatPrice(totalAmount) }}원</span>
             </div>
 
-            <div class="table-container">
-                <table class="order-table">
-                    <thead>
-                        <tr>
-                            <th>No.</th>
-                            <th>자재 번호</th>
-                            <th>자재명</th>
-                            <th>구매 단가</th>
-                            <th>수량</th>
-                            <th>단위</th>
-                            <th>자재 분류</th>
-                            <th>자재 구분</th>
-                            <th>자재 속성</th>
-                            <th>금액</th>
-                            <th>협력 업체</th>
-                            <th>삭제</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-if="orderList.length === 0">
-                            <td colspan="12" class="empty-message">
-                                주문할 자재를 검색하여 추가해주세요
-                            </td>
-                        </tr>
-                        <tr v-for="(item, index) in orderList" :key="item.id" class="order-row">
-                            <td>{{ index + 1 }}</td>
-                            <td class="product-code-cell">{{ item.code }}</td>
-                            <td class="product-name-cell">{{ item.name }}</td>
-                            <td class="price-cell">{{ formatPrice(item.sale_price) }}</td>
-                            <td class="quantity-cell">
-                                <input v-model.number="item.quantity" @input="updateAmount(item)" type="number" min="1"
-                                    class="quantity-input" />
-                            </td>
-                            <td>{{ item.unit }}</td>
-                            <td>{{ getProductGroupName(item.productGroupId) }}</td>
-                            <td>{{ getProductTypeName(item.productTypeId) }}</td>
-                            <td>{{ getProductAttributeName(item.productAttributeId) }}</td>
-                            <td class="amount-cell">{{ formatPrice(item.totalAmount) }}</td>
-                            <td>{{ item.supplierName }}</td>
-                            <td class="action-cell">
-                                <button @click="removeFromOrderList(index)" class="remove-btn">
-                                    ❌
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="product-table">
+                <div class="product-table-header">
+                    <div class="col col-no">No.</div>
+                    <div class="col col-code">자재 번호</div>
+                    <div class="col col-name">자재명</div>
+                    <div class="col col-price">구매 단가</div>
+                    <div class="col col-quantity">수량</div>
+                    <div class="col col-unit">단위</div>
+                    <div class="col col-spec">규격</div>
+                    <div class="col col-group">자재 분류</div>
+                    <div class="col col-type">자재 구분</div>
+                    <div class="col col-attr">자재 속성</div>
+                    <div class="col col-amount">금액</div>
+                    <div class="col col-supplier">협력 업체</div>
+                    <div class="col col-delete">삭제</div>
+                </div>
+                <div class="product-table-body">
+                    <div v-if="orderList.length === 0" class="empty-message">
+                        주문할 자재를 검색하여 추가해주세요
+                    </div>
+                    <div v-for="(item, index) in orderList" :key="item.id" class="product-row">
+                        <div class="col col-no">{{ index + 1 }}</div>
+                        <div class="col col-code">{{ item.code }}</div>
+                        <div class="col col-name">{{ item.name }}</div>
+                        <div class="col col-price">{{ formatPrice(item.sale_price) }}</div>
+                        <div class="col col-quantity">
+                            <input v-model.number="item.quantity" @input="updateAmount(item)" type="number" min="1"
+                                class="quantity-input" />
+                        </div>
+                        <div class="col col-unit">{{ item.unit }}</div>
+                        <div class="col col-spec">{{ item.spec }}</div>
+                        <div class="col col-group"><span :class="getTagClass('group')">{{ getProductGroupName(item.productGroupId) }}</span></div>
+                        <div class="col col-type"><span :class="getTagClass('type')">{{ getProductTypeName(item.productTypeId) }}</span></div>
+                        <div class="col col-attr"><span :class="getTagClass('attr')">{{ getProductAttributeName(item.productAttributeId) }}</span></div>
+                        <div class="col col-amount">{{ formatPrice(item.totalAmount) }}</div>
+                        <div class="col col-supplier">{{ item.supplierName }}</div>
+                        <div class="col col-delete">
+                            <button @click="removeFromOrderList(index)" class="remove-btn">
+                                ❌
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -316,6 +312,16 @@ const getProductAttributeName = (id) => {
     return attributes[id] || '기타'
 }
 
+const getTagClass = (category) => {
+    const baseClass = 'product-tag';
+    const categoryMap = {
+        'group': 'tag-blue',
+        'type': 'tag-purple',
+        'attr': 'tag-green'
+    };
+    return `${baseClass} ${categoryMap[category] || ''}`;
+}
+
 // 컴포넌트 외부 클릭 시 검색 결과 숨기기
 onMounted(() => {
     document.addEventListener('click', (e) => {
@@ -530,68 +536,82 @@ onMounted(() => {
     color: #4066fa;
 }
 
-.table-container {
-    border: 1px solid #e9ecef;
+.product-table {
+    border: 1px solid #eef0f4;
     border-radius: 8px;
     overflow: hidden;
 }
 
-.order-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+.product-table-header, .product-row {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
 }
 
-.order-table th {
+.product-table-header {
     background: #f8f9fa;
-    padding: 12px 8px;
-    text-align: center;
-    font-weight: 600;
     color: #495057;
-    border-bottom: 1px solid #e9ecef;
+    font-size: 13px;
+    font-weight: 500;
+    height: 48px;
+    border-bottom: 1px solid #eef0f4;
+}
+
+.product-table-body .product-row {
+    border-bottom: 1px solid #eef0f4;
+}
+
+.product-table-body .product-row:last-child {
+    border-bottom: none;
+}
+
+.product-row {
+    height: 64px;
+    font-size: 14px;
+    background: #fff;
+}
+
+.product-row:hover {
+    background: #f8f9fa;
+}
+
+.col {
+    text-align: center;
+    padding: 0 8px;
     white-space: nowrap;
 }
 
-.order-table td {
-    padding: 12px 8px;
-    text-align: center;
-    border-bottom: 1px solid #f1f3f4;
-    vertical-align: middle;
+.col-no       { flex-basis: 4%; }
+.col-code     { flex-basis: 8%; font-family: monospace; color: #6c757d; }
+.col-name     { flex-basis: 12%; text-align: left; font-weight: 500; }
+.col-price    { flex-basis: 8%; text-align: right; }
+.col-quantity { flex-basis: 8%; }
+.col-unit     { flex-basis: 5%; }
+.col-spec     { flex-basis: 8%; }
+.col-group    { flex-basis: 8%; }
+.col-type     { flex-basis: 8%; }
+.col-attr     { flex-basis: 8%; }
+.col-amount   { flex-basis: 8%; text-align: right; font-weight: 500; }
+.col-supplier { flex-basis: 8%; }
+.col-delete   { flex-basis: 4%; }
+
+.product-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
 }
 
-.order-row:hover {
-    background: #f8f9fa;
-}
+.tag-blue { background-color: #e6f0ff; color: #4066fa; }
+.tag-purple { background-color: #f3e8ff; color: #9333ea; }
+.tag-green { background-color: #e6f9ed; color: #16a34a; }
 
 .empty-message {
+    text-align: center;
     color: #6c757d;
     font-style: italic;
-    padding: 40px !important;
-}
-
-.product-code-cell {
-    font-family: monospace;
-    font-size: 12px;
-    color: #6c757d;
-}
-
-.product-name-cell {
-    text-align: left !important;
-    font-weight: 500;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.price-cell,
-.amount-cell {
-    text-align: right !important;
-    font-weight: 500;
-}
-
-.quantity-cell {
-    padding: 8px !important;
+    padding: 40px;
 }
 
 .quantity-input {
@@ -605,10 +625,6 @@ onMounted(() => {
 .quantity-input:focus {
     outline: none;
     border-color: #4066fa;
-}
-
-.action-cell {
-    padding: 8px !important;
 }
 
 .remove-btn {
@@ -694,5 +710,10 @@ onMounted(() => {
     .order-table td {
         padding: 8px 4px;
     }
+}
+
+/* 기존 테이블 관련 스타일 제거 또는 주석 처리 */
+.table-container, .order-table {
+    display: none;
 }
 </style>
