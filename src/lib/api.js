@@ -72,13 +72,6 @@ api.interceptors.response.use(
       }
     }
 
-<<<<<<< HEAD
-    // 전역 alert 대신, 각 컴포넌트에서 오류를 처리하도록 Promise.reject를 그대로 반환합니다.
-    return Promise.reject(error);
-  }
-);
-=======
-    // 에러 메시지 처리
     const message = error.response?.data?.message || "요청이 실패했습니다. 잠시 후 다시 시도해주세요."
 
     // alert 대신 토스트 사용
@@ -93,6 +86,5 @@ api.interceptors.response.use(
     return Promise.reject(error)
   },
 )
->>>>>>> adaee9618821ae48d29d55ee2ceec94c6917e4c1
 
 export default api
