@@ -17,6 +17,7 @@
                         <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
                     </div>
 
+                    <div>
                     <FranchiseInfo v-if="activeTabSwitch === 1" :selectedFranchiseId="selectedFranchiseId"/>
 
                     <OrderList 
@@ -25,7 +26,7 @@
                         :selectedFranchiseId="selectedFranchiseId"
                         @show-order-detail="handleShowOrderDetail"/>
                         <div v-if="activeTabSwitch === 2 && orderDetailId">
-                            <div v-if="loading">로딩 중...</div>
+딩 중...                     <div v-if="loading">로딩 중...</div>
                             <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
                             <div v-else>
                                 <!-- 상세 컴포넌트들 -->
@@ -50,16 +51,44 @@
                         <PaymentInfoCard :order="order" />
                     </div>
                 </div>
-           
-                    
-                    <div v-if="activeTabSwitch === 3" class="content-section">
-                        <h3>반품관리 컨텐츠</h3>
-                        <p>반품 관리 내용이 여기에 표시됩니다.</p>
-                        <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
+                
+            
+                    <ReturnList
+                        v-if="activeTabSwitch === 3 && !returnDetailId"
+                        :franchiseId="franchiseId" 
+                        :selectedFranchiseId="selectedFranchiseId"
+                        @selectReturn="handleShowReturnDetail"
+                    />
+                    <div v-if="activeTabSwitch === 3 && returnDetailId">
+                        <div v-if="returnLoading">로딩 중...</div>
+                        <div v-else-if="!returnDetail">반품 상세 데이터를 불러올 수 없습니다.</div>
+                        <div v-else>
+                            <!-- 반품 상세 컴포넌트들 -->
+                            <ReturnActionButtons
+                                :returnId="returnDetailId"
+                                :rejectedReason="returnDetail?.rejectedReason"
+                                :status="returnDetail?.status"
+                                :delivery-info="{
+                                    deliveryCompany: returnDetail?.deliveryCompany,
+                                    name: returnDetail?.driverName,
+                                    phone: returnDetail?.driverPhone,
+                                    trackingNumber: returnDetail?.trackingNumber
+                                }"
+                                @refreshReturn="fetchReturnDetail"
+                                @close="handleReturnBackToList"
+                            />
+                            <ReturnProgressBar :status="returnDetail?.status" />
+                            <ReturnFranchiseInfoCard :returnData="returnDetail" />
+                            <ReturnInfoCard :returnData="returnDetail" />
+                            <ProductTable :products="returnDetail?.products" :totalAmount="returnDetail?.totalAmount" />
+                            <DeliveryInfoCard :returnData="returnDetail" />
+                            <ApprovalInfoCard :returnData="returnDetail" />
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 </template>
 
@@ -76,6 +105,14 @@ import OrderInfoCard from '../orders/detail/OrderInfoCard.vue'
 import PaymentInfoCard from '../orders/detail/PaymentInfoCard.vue'
 import ProductTable from '../orders/detail/ProductTable.vue'
 import OrderActionButtons from '../orders/detail/OrderActionButtons.vue'
+import ReturnList from '../return/list/ReturnList.vue'
+import ReturnActionButtons from '../return/detail/ReturnActionButtons.vue'
+import ReturnProgressBar from '../return/detail/ReturnProgressBar.vue'
+import ReturnInfoCard from '../return/detail/ReturnInfoCard.vue'
+import ApprovalInfoCard from '../return/detail/ApprovalInfoCard.vue'
+import ReturnFranchiseInfoCard from '../return/detail/FranchiseInfoCard.vue'
+
+
 import api from '@/lib/api'
 
 const props = defineProps({
@@ -155,6 +192,11 @@ const orderDetailId = ref(null)
 const order = ref(null)
 const loading = ref(false)
 
+// 반품 상세 관련 상태
+const returnDetailId = ref(null)
+const returnDetail = ref(null)
+const returnLoading = ref(false)
+
 async function fetchOrderDetail() {
   if (!orderDetailId.value) {
     order.value = null;
@@ -180,6 +222,29 @@ function handleShowOrderDetail(orderId) {
 }
 function handleBackToList() {
     orderDetailId.value = null;
+}
+
+function handleShowReturnDetail(returnId) {
+    returnDetailId.value = returnId;
+    fetchReturnDetail();
+}
+
+async function fetchReturnDetail() {
+    if (!returnDetailId.value) return;
+    returnLoading.value = true;
+    try {
+        const { data } = await api.get(`/api/hq/franchise/return/${returnDetailId.value}`);
+        returnDetail.value = data;
+    } catch (error) {
+        returnDetail.value = null;
+    } finally {
+        returnLoading.value = false;
+    }
+}
+
+function handleReturnBackToList() {
+    returnDetailId.value = null;
+    returnDetail.value = null;
 }
 </script>
 
@@ -225,9 +290,9 @@ function handleBackToList() {
 
 .content-section {
     background: #f8f9fa;
-    padding: 24px;
+    /* padding: 24px; */
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    /* border: 1px solid #e9ecef; */
 }
 
 .content-section h3 {
