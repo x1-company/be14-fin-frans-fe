@@ -10,12 +10,30 @@
                     @select-tab="updateTab" @update-breadcrumb="updateBreadcrumb" />
 
                 <!-- 탭별 컨텐츠 영역 -->
-                <div class="tab-content">
-                    <div v-if="activeTabSwitch === 0" class="content-section">
-                        <h3>대시보드 컨텐츠</h3>
-                        <p>대시보드 내용이 여기에 표시됩니다.</p>
-                        <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
+                <FranchiseDashboard
+                    v-if="activeTabSwitch === 0"
+                    :in-progress-order="dashboardCardData.inProgressOrder"
+                    :in-progress-approval="dashboardCardData.inProgressApproval"
+                    :completed-order="dashboardCardData.completedOrder"
+                />
+
+                <!-- 월별 주문금액 통계 그래프 (가맹점별/월별) -->
+                <div v-if="activeTabSwitch === 0" class="stats-graph-section">
+                    <div class="stats-graph-card">
+                        <h3>월별 주문 금액 총액</h3>
+                        <FranchiseOrderAmountBar 
+                            v-if="props.selectedFranchiseId"
+                            :chart-data="orderAmountChartData"
+                        />
+                        <OrderAmountBarChart 
+                            v-else
+                            :chart-data="orderAmountChartData" 
+                            :month="selectedMonth"
+                            :is-franchise-selected="false"
+                            @month-change="handleMonthChange"
+                        />
                     </div>
+                </div>
 
                     <div>
                     <FranchiseInfo v-if="activeTabSwitch === 1" :selectedFranchiseId="selectedFranchiseId"/>
@@ -90,12 +108,11 @@
             </div>
         </div>
     </div>
-    </div>
 
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from '../orders/InfoHeader.vue'
 import OrderList from '../orders/list/OrderList.vue'
@@ -113,14 +130,17 @@ import ReturnProgressBar from '../return/detail/ReturnProgressBar.vue'
 import ReturnInfoCard from '../return/detail/ReturnInfoCard.vue'
 import ApprovalInfoCard from '../return/detail/ApprovalInfoCard.vue'
 import ReturnFranchiseInfoCard from '../return/detail/FranchiseInfoCard.vue'
-
+import FranchiseDashboard from '@/components/hq/franchise/dashboard/FranchiseDashboard.vue'
+import OrderAmountBarChart from '@/components/hq/franchise/dashboard/OrderAmountBarChart.vue'
+import FranchiseOrderAmountBar from '@/components/hq/franchise/dashboard/FranchiseOrderAmountBar.vue'
 
 import api from '@/lib/api'
 
 const props = defineProps({
     activeTab: String,
     franchiseId: [String, Number],
-    selectedFranchiseId: [String, Number]
+    selectedFranchiseId: [String, Number],
+    sidebarTab: { type: String, default: 'mine' } // 'mine' or 'team', 필요시 부모에서 내려줌
 })
 
 const emit = defineEmits(['tab-change', "select-tab"])
@@ -185,6 +205,82 @@ const desc = computed(() => {
     return "주문의 상세 내역을 확인합니다.";
   }
     return tabInfo.value[activeTabSwitch.value]?.desc || '대시보드입니다.'
+})
+
+const dashboardCardData = ref({
+  inProgressOrder: { count: 3, diff: 2 },
+  inProgressApproval: { count: 1, diff: -1 },
+  completedOrder: { count: 200, diff: 15 }
+})
+
+const dashboardStats = ref({
+  todayOrder: 0,
+  monthSales: 0,
+  lowStock: 0,
+  returnRequest: 0,
+});
+
+const orderAmountChartData = ref([])
+
+const selectedYear = ref(new Date().getFullYear())
+const selectedMonth = ref(new Date().getMonth() + 1)
+
+function handleMonthChange(month) {
+  selectedMonth.value = month
+  fetchOrderAmountStats()
+}
+function handleYearChange(year) {
+  selectedYear.value = year
+  fetchOrderAmountStats()
+}
+
+async function fetchOrderAmountStats() {
+  try {
+    let url = ''
+    let params = { year: selectedYear.value, month: selectedMonth.value }
+    if (props.sidebarTab === 'team') {
+      url = '/api/hq/statistics/franchise/order-amount/department'
+    } else if (props.selectedFranchiseId) {
+      url = `/api/hq/statistics/franchise/order-amount/manager/${props.selectedFranchiseId}`
+      params = {}
+    } else {
+      url = '/api/hq/statistics/franchise/order-amount/manager'
+    }
+    const { data } = await api.get(url, { params })
+    if (props.selectedFranchiseId) {
+      orderAmountChartData.value = data || []
+    } else {
+      orderAmountChartData.value = (data || []).map(item => ({
+        franchiseName: item.franchiseName || item.name || item.franchise || item.franchise_id || '가맹점',
+        orderAmount: item.orderAmount || item.amount || 0
+      }))
+    }
+  } catch (e) {
+    orderAmountChartData.value = []
+    console.error('월별 주문금액 통계 조회 실패', e)
+  }
+}
+
+watch([
+  () => props.sidebarTab,
+  () => props.selectedFranchiseId,
+  selectedMonth,
+  selectedYear
+], fetchOrderAmountStats, { immediate: true })
+
+// 수정: 컴포넌트 마운트 시와 activeTabSwitch가 0일 때 fetch 호출
+onMounted(() => {
+  if (activeTabSwitch.value === 0) {
+    fetchDashboardStats()
+    fetchOrderAmountStats()
+  }
+})
+
+watch(activeTabSwitch, (newTab) => {
+  if (newTab === 0) {
+    fetchDashboardStats()
+    fetchOrderAmountStats()
+  }
 })
 
 const updateTab = (newTabIndex) => {
@@ -253,6 +349,34 @@ function handleReturnBackToList() {
     returnDetailId.value = null;
     returnDetail.value = null;
 }
+
+async function fetchDashboardStats() {
+  try {
+    // 담당 가맹점 월 주문 금액 통계 조회 API 호출
+    const orderAmountRes = await api.get('/api/hq/statistics/franchise/order-amount/manager')
+    const orderAmountData = orderAmountRes.data || []
+
+    // 담당 가맹점 월 자재별 반품량 통계 조회 API 호출
+    const returnProductRes = await api.get('/api/hq/statistics/franchise/return-product/manager')
+    const returnProductData = returnProductRes.data || []
+
+    // TODO: 재고 부족 수치는 별도 API 있을 가능성 있음. 임시로 0 처리
+    const lowStockCount = 0
+
+    // API 반환 데이터 구조에 맞게 값 계산 (아래는 예시)
+    const todayOrderCount = orderAmountData.reduce((sum, item) => sum + (item.todayOrderCount || 0), 0)
+    const totalMonthSales = orderAmountData.reduce((sum, item) => sum + (item.orderAmount || 0), 0)
+    const totalReturnRequest = returnProductData.reduce((sum, item) => sum + (item.returnQuantity || 0), 0)
+
+    dashboardStats.value.todayOrder = todayOrderCount
+    dashboardStats.value.monthSales = totalMonthSales
+    dashboardStats.value.lowStock = lowStockCount
+    dashboardStats.value.returnRequest = totalReturnRequest
+
+  } catch (error) {
+    console.error('대시보드 통계 데이터 조회 실패', error)
+  }
+}
 </script>
 
 <style scoped>
@@ -313,5 +437,19 @@ function handleReturnBackToList() {
     margin: 0;
     color: #6c757d;
     line-height: 1.5;
+}
+
+.stats-graph-section {
+    padding: 24px;
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.stats-graph-card {
+    background: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px 0 rgba(64, 102, 250, 0.06);
 }
 </style>
