@@ -391,7 +391,7 @@ onMounted(() => {
 }
 
 .recent-order-btn {
-    padding: 6px 13px;
+    padding: 7px 13px;
     border-radius: 6px;
     border: 1px solid #e0e0e0;
     background: #fff;
@@ -423,7 +423,7 @@ onMounted(() => {
 
 .search-input {
     flex: 1;
-    padding: 10px 12px;
+    padding: 8px 25px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
@@ -439,10 +439,10 @@ onMounted(() => {
     background: #4066fa;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     transition: background-color 0.2s;
 }
@@ -531,7 +531,7 @@ onMounted(() => {
 }
 
 .total-amount {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #4066fa;
 }
@@ -652,10 +652,10 @@ onMounted(() => {
     background: #4066fa;
     color: white;
     border: none;
-    padding: 12px 32px;
+    padding: 8px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     transition: background-color 0.2s;
 }
