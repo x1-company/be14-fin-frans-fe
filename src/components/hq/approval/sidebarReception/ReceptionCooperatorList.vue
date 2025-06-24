@@ -3,12 +3,7 @@
     <ApprovalDetail
       v-if="isDetailViewMode"
       :document="selectedDocument"
-      @close-detail="
-        () => {
-          isDetailViewMode.value = false;
-          selectedDocument.value = null;
-        }
-      "
+      @close-detail="goBack"
     />
     <div v-else>
       <!-- 탭 메뉴 -->
@@ -160,10 +155,12 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
 import { useAuthStore } from "@/stores/auth";
 
 const auth = useAuthStore();
+const router = useRouter();
 
 const emit = defineEmits([
   "tab-change",
@@ -304,8 +301,7 @@ const viewDocument = (document) => {
 };
 
 const cooperateDocument = (document) => {
-  selectedDocument.value = document;
-  isDetailViewMode.value = true;
+  router.push(`/approval/${document.approvalId}`);
 };
 
 const editDocument = (document) => {
@@ -385,6 +381,10 @@ const getEmptyMessage = () => {
     default:
       return "등록된 협조 문서가 없습니다.";
   }
+};
+
+const goBack = () => {
+  router.back();
 };
 </script>
 

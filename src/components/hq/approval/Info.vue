@@ -17,7 +17,7 @@
 
           <!-- 결재 상세 -->
           <ApprovalDetail
-            v-if="approvalId"
+            v-if="approvalId && approvalDetail"
             :document="approvalDetail"
             :approvalId="approvalId"
             @close-detail="$emit('close-detail')"
