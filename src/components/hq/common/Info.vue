@@ -184,6 +184,9 @@ const desc = computed(() => {
     if (activeTabSwitch.value === 2 && showOrderRegister.value) {
         return "주문할 자재를 등록할 수 있습니다."
     }
+    if (activeTabSwitch.value === 2 && orderDetailId.value) {
+    return "주문의 상세 내역을 확인합니다.";
+  }
     return tabInfo.value[activeTabSwitch.value]?.desc || '대시보드입니다.'
 })
 

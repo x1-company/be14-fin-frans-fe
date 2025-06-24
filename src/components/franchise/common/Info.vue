@@ -25,14 +25,45 @@
 
           <FranchiseInfo v-if="activeTabSwitch === 1" />
 
-                    <div v-if="activeTabSwitch === 2">
-                        <OrderRegister v-if="showOrderRegister" @back-to-list="showOrderRegister = false" />
-                        <OrderList v-else @show-register-view="showOrderRegister = true" />
-                    </div>
-                    
-                    <div v-if="activeTabSwitch === 3">
-                      
-                    </div>
+          <div v-if="activeTabSwitch === 2">
+            <OrderRegister v-if="showOrderRegister" @back-to-list="showOrderRegister = false" />
+            
+            <div v-else-if="orderDetailId">
+              <div v-if="loading">로딩 중...</div>
+              <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
+              <div v-else>
+                <FrOrderActionButtons
+                    :orderId="orderDetailId"
+                    :rejectedReason="order?.rejectedReason"
+                    :status="order?.status"
+                    :delivery-info="{
+                        deliveryCompany: order?.deliveryCompany,
+                        name: order?.driverName,
+                        phone: order?.driverPhone,
+                        trackingNumber: order?.trackingNumber
+                    }"
+                    @refreshOrder="fetchOrderDetail"
+                    @close="handleBackToList"
+                />
+                <OrderProgressBar :status="order?.status" />
+                <FranchiseInfoCard :order="order" />
+                <OrderInfoCard :order="order" />
+                <ProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
+                <DeliveryInfoCard :order="order" />
+              </div>
+            </div>
+
+            <OrderList 
+                v-else 
+                :franchiseId="franchiseId" 
+                :selectedFranchiseId="selectedFranchiseId"
+                @show-order-detail="handleShowOrderDetail"
+                @show-register-view="showOrderRegister = true" />
+          </div>
+          
+          <div v-if="activeTabSwitch === 3">
+            <ReturnList />
+          </div>
 
           <div v-if="activeTabSwitch === 4" class="content-section">
             <h3>매출관리 컨텐츠</h3>
@@ -58,10 +89,19 @@ import InfoHeader from './InfoHeader.vue'
 import FranchiseInfo from '@/components/franchise/info/FranchiseInfo.vue'
 import OrderList from '@/components/franchise/order/OrderList.vue'
 import OrderRegister from '@/components/franchise/order/OrderRegister.vue'
+import FrOrderActionButtons from '@/components/hq/orders/detail/OrderActionButtons.vue'
+import OrderProgressBar from '@/components/hq/orders/detail/OrderProgressBar.vue'
+import FranchiseInfoCard from '@/components/hq/orders/detail/FranchiseInfoCard.vue'
+import DeliveryInfoCard from '@/components/hq/orders/detail/DeliveryInfoCard.vue'
+import OrderInfoCard from '@/components/hq/orders/detail/OrderInfoCard.vue'
+import ProductTable from '@/components/hq/orders/detail/ProductTable.vue'
 import ReturnList from '@/components/hq/return/list/ReturnList.vue'
+import api from '@/lib/api'
 
 const props = defineProps({
   activeTab: String,
+  franchiseId: [String, Number],
+  selectedFranchiseId: [String, Number],
 });
 
 const emit = defineEmits(["tab-change"]);
@@ -91,6 +131,39 @@ const tabInfo = ref([
 ]);
 
 const activeTabSwitch = ref(0);
+const showOrderRegister = ref(false);
+const orderDetailId = ref(null);
+const order = ref(null);
+const loading = ref(false);
+
+const handleShowOrderDetail = (id) => {
+  orderDetailId.value = id;
+};
+
+const handleBackToList = () => {
+  orderDetailId.value = null;
+  order.value = null;
+};
+
+const fetchOrderDetail = async () => {
+  if (!orderDetailId.value) return;
+  loading.value = true;
+  try {
+    const response = await api.get(`/api/franchise/orders/${orderDetailId.value}`);
+    order.value = response.data;
+  } catch (error) {
+    console.error('Error fetching order details:', error);
+    order.value = null;
+  } finally {
+    loading.value = false;
+  }
+};
+
+watch(orderDetailId, (newId) => {
+  if (newId) {
+    fetchOrderDetail();
+  }
+});
 
 // props.activeTab 값이 변경될 때 activeTabSwitch 업데이트
 watch(
@@ -104,14 +177,13 @@ watch(
   { immediate: true }
 );
 
-const showOrderRegister = ref(false);
-
-// activeTab이 '주문관리'가 아니게 되면, 목록 뷰로 리셋
+// activeTab이 '주문관리'가 아니게 되면, 뷰 리셋
 watch(
   () => activeTabSwitch.value,
   (newTabIndex) => {
     if (newTabIndex !== 2) {
       showOrderRegister.value = false;
+      orderDetailId.value = null;
     }
   }
 );
@@ -120,11 +192,15 @@ const title = computed(() => {
   if (activeTabSwitch.value === 2 && showOrderRegister.value) {
     return "주문 등록";
   }
+  
   return tabInfo.value[activeTabSwitch.value]?.title || "대시보드";
 });
 const desc = computed(() => {
   if (activeTabSwitch.value === 2 && showOrderRegister.value) {
     return "주문할 자재를 등록할 수 있습니다.";
+  }
+  if (activeTabSwitch.value === 2 && orderDetailId.value) {
+    return "주문의 상세 내역을 확인합니다.";
   }
   return tabInfo.value[activeTabSwitch.value]?.desc || "대시보드입니다.";
 });
