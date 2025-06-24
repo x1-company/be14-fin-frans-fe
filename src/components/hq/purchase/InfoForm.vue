@@ -54,9 +54,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, idx) in purchaseList" :key="row.id">
+              <tr v-for="(row, idx) in purchaseList" :key="row.id" @click="goToDetail(row.id)" class="purchase-row">
                 <td>{{ (currentPage - 1) * 10 + idx + 1 }}</td>
-                <td><a href="#" class="purchase-link">{{ row.requestNo }}</a></td>
+                <td>
+                  <span class="purchase-link">{{ row.requestNo }}</span>
+                </td>
                 <td>{{ row.title }}</td>
                 <td>{{ row.manager }}</td>
                 <td>
@@ -208,6 +210,10 @@
   
   function goToRegister() {
     router.push('/purchase/register');
+  }
+  
+  function goToDetail(id) {
+    router.push(`/purchase/detail/${id}`);
   }
   
   watch(() => activeTab.value, () => {
@@ -481,5 +487,12 @@
     background-color: #6a7bff;
     color: white;
     border-color: #6a7bff;
+  }
+  
+  .purchase-row {
+    cursor: pointer;
+  }
+  .purchase-row:hover {
+    background: #f3f4f6;
   }
   </style>

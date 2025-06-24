@@ -97,8 +97,8 @@
               <td class="draft-name-cell">
                 <div class="draft-name">{{ draft.title }}</div>
               </td>
-              <td class="text-center">{{ draft.requesterName }}</td>
-              <td class="text-center">{{ formatDate(draft.requestDate) }}</td>
+              <td class="text-center">{{ draft.userName }}</td>
+              <td class="text-center">{{ formatDate(draft.createdAt) }}</td>
               <td class="text-center">{{ formatDate(draft.requestedDeliveryDate) }}</td>
             </tr>
           </tbody>
@@ -214,7 +214,9 @@ async function deleteSelected() {
 
   if (confirm(`선택한 ${idsToDelete.length}개의 임시저장을 삭제하시겠습니까?`)) {
     try {
-      await api.delete('/api/hq/purchase-requests', { data: idsToDelete });
+      for (const id of idsToDelete) {
+        await api.delete(`/api/hq/purchase/requests/${id}`);
+      }
       alert('선택한 항목이 삭제되었습니다.');
       await fetchDrafts();
     } catch (error) {

@@ -9,6 +9,10 @@
   
       <div class="form-section">
         <h3 class="section-title">구매 요청 정보</h3>
+        <div v-if="currentDraftId" class="draft-info">
+          <span class="draft-badge">임시저장 불러옴</span>
+          <span class="draft-text">임시저장 내용을 불러왔습니다. 수정 후 등록하시면 기존 임시저장이 삭제됩니다.</span>
+        </div>
         <div class="form-table">
           <div class="form-row">
             <div class="form-label-cell">납기희망일</div>
@@ -149,7 +153,7 @@
   </template>
   
   <script setup>
-  import { ref, computed } from 'vue';
+  import { ref, computed, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { useAuthStore } from '@/stores/auth';
   import { Calendar as CalendarIcon } from 'lucide-vue-next';
@@ -179,6 +183,7 @@
   const requestedProducts = ref([]);
   const isModalVisible = ref(false);
   const isDraftModalVisible = ref(false);
+  const currentDraftId = ref(null);
   
   const typeLabel = (val) => PRODUCT_TYPE_MAP[val] || val;
   const groupLabel = (val) => PRODUCT_GROUP_MAP[val] || val;
@@ -214,35 +219,62 @@
     isDraftModalVisible.value = true;
   }
 
+  function resetForm() {
+    purchaseRequest.value = {
+      title: '',
+      description: '',
+      requestDate: getTodayDate(),
+      requestedDeliveryDate: '',
+    };
+    requestedProducts.value = [];
+    currentDraftId.value = null; // draftId 초기화
+  }
+
   async function loadDraft(draft) {
     if (!draft || !draft.id) return;
 
     try {
       // 1. 선택한 임시저장 데이터의 상세 정보 조회
-      const response = await api.get(`/api/hq/purchase-requests/${draft.id}`);
+      const response = await api.get(`/api/hq/purchase/requests/draft/${draft.id}`);
       const draftDetail = response.data;
 
-      // 2. 폼 기본 정보 채우기
+      // 2. draftId 저장
+      currentDraftId.value = draft.id;
+
+      // 3. 폼 기본 정보 채우기
       purchaseRequest.value.title = draftDetail.title;
-      purchaseRequest.value.description = draftDetail.description;
+      purchaseRequest.value.description = draftDetail.description || draftDetail.desc || draftDetail.content || draftDetail.reason || '';
       purchaseRequest.value.requestedDeliveryDate = draftDetail.requestedDeliveryDate.split('T')[0];
 
-      // 3. 자재 목록 채우기 (각 자재의 상세정보를 다시 조회)
+      // 4. 자재 목록 채우기 (각 자재의 상세정보를 다시 조회)
       if (draftDetail.products && draftDetail.products.length > 0) {
         const productDetails = await Promise.all(
           draftDetail.products.map(async (p) => {
             try {
-              const detailRes = await api.get(`/api/hq/products/details/${p.productId}`);
+              const detailRes = await api.get(`/api/hq/products/details/${p.productId || p.id}`);
               return {
                 ...detailRes.data,
-                productId: p.productId,
+                productId: p.productId || p.id,
                 quantity: p.quantity,
                 remarks: p.remarks,
                 selected: false,
               };
             } catch (e) {
-              console.error(`Failed to fetch product details for ${p.productId}`, e);
-              return null;
+              console.error(`Failed to fetch product details for ${p.productId || p.id}`, e);
+              // Fallback: 최소 정보로 자재 추가
+              return {
+                productId: p.productId || p.id,
+                code: p.code,
+                name: p.name,
+                purchasePrice: p.purchasePrice || 0,
+                purchaseUnit: p.purchaseUnit || '',
+                productTypeId: p.productTypeId,
+                productGroupId: p.productGroupId,
+                productAttributeId: p.productAttributeId,
+                quantity: p.quantity,
+                remarks: p.remarks,
+                selected: false,
+              };
             }
           })
         );
@@ -307,6 +339,11 @@
         remarks: p.remarks,
       })),
     };
+
+    // 임시저장을 불러온 경우 draftId 포함
+    if (currentDraftId.value) {
+      payload.draftId = currentDraftId.value;
+    }
   
     try {
       await api.post('/api/hq/purchase/requests', payload);
@@ -317,6 +354,10 @@
       alert('요청 저장에 실패했습니다.');
     }
   }
+
+  onMounted(() => {
+    resetForm();
+  });
   </script>
   
   <style scoped>
@@ -550,5 +591,30 @@
     .purchase-register-container {
       padding: 16px;
     }
+  }
+
+  .draft-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background-color: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+
+  .draft-badge {
+    background-color: #f59e0b;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .draft-text {
+    color: #92400e;
+    font-size: 0.875rem;
   }
   </style>

@@ -123,6 +123,12 @@ const router = createRouter({
       component: () => import('@/views/hq/purchase/PurchaseRegisterView.vue')
     },
     {
+      path: "/purchase/detail/:id",
+      name: "PurchaseRequestDetail",
+      component: () => import('@/components/hq/purchase/PurchaseRequestDetail.vue'),
+      props: true
+    },
+    {
       path: "/franchise",
       name: "franchise",
       component: FranchisePage,
