@@ -33,6 +33,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/lib/api';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
   orderId: {
@@ -47,6 +48,7 @@ const props = defineProps({
 
 const router = useRouter();
 const showCancelModal = ref(false);
+const toast = useToast();
 
 function handleClose() {
   router.push({ path: '/franchise', query: { tab: '주문관리' } });
@@ -54,7 +56,7 @@ function handleClose() {
 
 function handlePrint() {
   // 주문서 출력 기능은 아직 구현되지 않았습니다.
-  alert('주문서 출력 기능은 준비 중입니다.');
+  toast.error('주문서 출력 기능은 준비 중입니다.');
 }
 
 function openCancelModal() {
@@ -64,12 +66,12 @@ function openCancelModal() {
 async function handleCancelConfirm() {
   try {
     await api.patch(`/api/franchise/orders/${props.orderId}/cancel`);
-    alert('주문이 취소되었습니다.');
+    toast.error('주문이 취소되었습니다.');
     showCancelModal.value = false;
     // 새로고침 또는 콜백
     window.location.reload();
   } catch (e) {
-    alert('주문 취소에 실패했습니다.');
+    toast.error('주문 취소에 실패했습니다.');
   }
 }
 

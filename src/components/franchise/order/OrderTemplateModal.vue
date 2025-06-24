@@ -24,6 +24,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import api from "@/lib/api";
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
   isVisible: Boolean,
@@ -33,6 +34,7 @@ const emit = defineEmits(['close', 'select-template']);
 
 const templates = ref([]);
 const isLoading = ref(false);
+const toast = useToast();
 
 const fetchTemplates = async () => {
   isLoading.value = true;
@@ -41,7 +43,7 @@ const fetchTemplates = async () => {
     templates.value = response.data;
   } catch (error) {
     console.error('Failed to fetch order templates:', error);
-    alert('주문 템플릿을 불러오는 데 실패했습니다.');
+    toast.error('주문 템플릿을 불러오는 데 실패했습니다.');
   } finally {
     isLoading.value = false;
   }

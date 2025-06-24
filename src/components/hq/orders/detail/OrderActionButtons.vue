@@ -135,7 +135,7 @@ async function handleConfirm() {
     isReviewed.value = true;
     emits('refreshOrder'); // 성공 시 부모에게 알림
   } catch (e) {
-    alert('검토 완료 처리에 실패했습니다.');
+    toast.error('검토 완료 처리에 실패했습니다.');
   }
 }
 
@@ -146,7 +146,7 @@ async function handleCancelReview() {
     isReviewed.value = false;
     emits('refreshOrder');
   } catch (e) {
-    alert('검토 취소 처리에 실패했습니다.');
+    toast.error('검토 취소 처리에 실패했습니다.');
   }
 }
 
@@ -157,7 +157,7 @@ async function handleReject(reason) {
     isRejected.value = true;
     emits('refreshOrder'); // 성공 시 부모에게 알림
   } catch (e) {
-    alert('반려 처리에 실패했습니다.');
+    toast.error('반려 처리에 실패했습니다.');
   }
 }
 
@@ -172,7 +172,7 @@ async function handleDeliveryConfirm(deliveryInfo) {
     showDeliveryModal.value = false;
     emits('refreshOrder');
   } catch (e) {
-    alert('배송 정보 등록에 실패했습니다.');
+    toast.error('배송 정보 등록에 실패했습니다.');
   }
 }
 
@@ -188,7 +188,7 @@ async function handleDeliveryComplete(deliveryInfo) {
     showDeliveryCompleteModal.value = false;
     emits('refreshOrder');
   } catch (e) {
-    alert('배송 완료 처리에 실패했습니다.');
+    toast.error('배송 완료 처리에 실패했습니다.');
   }
 }
 
@@ -203,7 +203,7 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
     showEditDeliveryModal.value = false;
     emits('refreshOrder');
   } catch (e) {
-    alert('배송 정보 수정에 실패했습니다.');
+    toast.error('배송 정보 수정에 실패했습니다.');
   }
 }
 
