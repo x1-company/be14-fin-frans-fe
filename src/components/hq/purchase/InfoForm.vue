@@ -48,7 +48,6 @@
                 <th>구매 요청 번호</th>
                 <th>제목</th>
                 <th>담당자</th>
-                <th>요청 상태</th>
                 <th>구매 요청일</th>
                 <th>납기 희망일</th>
               </tr>
@@ -61,9 +60,6 @@
                 </td>
                 <td>{{ row.title }}</td>
                 <td>{{ row.manager }}</td>
-                <td>
-                  <span :class="['status-badge', getStatusClass(row.status)]">{{ getStatusText(row.status) }}</span>
-                </td>
                 <td>{{ row.requestDate }}</td>
                 <td>{{ row.dueDate }}</td>
               </tr>
@@ -101,14 +97,6 @@
     '취소된 구매 요청 목록',
     '반려된 구매 요청 목록'
   ];
-  const statusMap = {
-    0: 'ALL',
-    1: 'REQUEST_PENDING',
-    2: 'REVIEWING',
-    3: 'APPROVED',
-    4: 'REQUEST_CANCEL',
-    5: 'REJECTED'
-  };
   const activeTab = ref(0);
   const dateFilter = ref('30');
   const searchType = ref('title');
@@ -149,7 +137,6 @@
         if (activeTab.value === 0) {
           url = '/api/hq/purchase/requests';
         } else {
-          params.status = statusMap[activeTab.value];
           url = '/api/hq/purchase/requests/status';
         }
       }
@@ -160,7 +147,6 @@
         requestNo: item.code,
         title: item.title,
         manager: item.userName,
-        status: item.status,
         requestDate: item.createdAt.split('T')[0].replace(/-/g, '.'),
         dueDate: item.requestedDeliveryDate.replace(/-/g, '.'),
       }));
@@ -170,29 +156,6 @@
       console.error("Error during fetchData:", err);
     } finally {
       loading.value = false;
-    }
-  }
-  
-  function getStatusText(status) {
-    switch (status) {
-        case 'DRAFT': return '임시저장';
-        case 'REQUEST_CANCEL': return '요청 취소';
-        case 'REQUEST_PENDING': return '요청 대기';
-        case 'REVIEWING': return '검토중';
-        case 'APPROVED': return '승인';
-        case 'REJECTED': return '반려';
-        default: return status;
-    }
-  }
-
-  function getStatusClass(status) {
-    switch (status) {
-      case 'APPROVED': return 'approved';
-      case 'REQUEST_PENDING': return 'pending';
-      case 'REVIEWING': return 'review';
-      case 'REJECTED': return 'rejected';
-      case 'REQUEST_CANCEL': return 'cancel';
-      default: return '';
     }
   }
   
@@ -427,38 +390,6 @@
   
   .purchase-link:hover {
     text-decoration: underline;
-  }
-  
-  .status-badge {
-    padding: 5px 12px;
-    border-radius: 16px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-  
-  .status-badge.approved {
-    background-color: #e6f7f0;
-    color: #27a36a;
-  }
-  
-  .status-badge.pending {
-    background-color: #fff4e6;
-    color: #f5a623;
-  }
-  
-  .status-badge.review {
-    background-color: #e9f3ff;
-    color: #4a90e2;
-  }
-  
-  .status-badge.rejected {
-    background-color: #fbe9e9;
-    color: #d0021b;
-  }
-  
-  .status-badge.cancel {
-    background-color: #f0f0f0;
-    color: #888;
   }
   
   .pagination {
