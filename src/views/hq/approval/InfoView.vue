@@ -383,6 +383,7 @@ onMounted(fetchCounts);
 watch(
   () => route.params.approvalId,
   async (newId) => {
+    console.log("라우터 파라미터 approvalId:", newId);
     approvalId.value = newId;
     if (newId) {
       try {
@@ -407,6 +408,7 @@ watch(
             ? approvalLines
             : approvalLines.line, // 객체면 .line을 사용
         };
+        console.log("approvalDetail 세팅:", approvalDetail.value);
       } catch (error) {
         console.error("결재 상세 정보 조회 실패:", error);
         approvalDetail.value = null;

@@ -20,6 +20,7 @@
             v-if="approvalId && approvalDetail"
             :document="approvalDetail"
             :approvalId="approvalId"
+            :currentUserId="authStore.userId"
             @close-detail="$emit('close-detail')"
             @refresh-list="$emit('refresh-list')"
           />
@@ -69,6 +70,8 @@ import InfoForm from "@/components/hq/approval/InfoForm.vue";
 import ApprovalTemplate from "@/components/hq/approval/ApprovalTemplate.vue";
 import ApprovalRegistration from "@/components/hq/approval/ApprovalRegistration.vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+import { useAuthStore } from "@/stores/auth";
+const authStore = useAuthStore();
 
 const handleTabChange = (tabValue) => {
   emit("tab-change", tabValue); // InfoView.vue 로 전달

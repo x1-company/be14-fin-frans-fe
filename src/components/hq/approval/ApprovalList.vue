@@ -285,11 +285,16 @@ const handleSearch = () => {
   // 검색 로직은 computed에서 처리됨
 };
 
+const router = useRouter();
 const openDocument = (document) => {
-  emit("document-click", document);
+  alert("openDocument! " + JSON.stringify(document));
+  if (document && document.approvalId) {
+    router.push(`/approval/${document.approvalId}`);
+  } else {
+    console.warn("approvalId가 없습니다:", document);
+  }
 };
 
-const router = useRouter();
 const viewDocument = (document) => {
   alert("viewDocument 호출");
   if (document && document.approvalId) {

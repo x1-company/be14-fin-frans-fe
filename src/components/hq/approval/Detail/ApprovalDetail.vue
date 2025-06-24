@@ -249,6 +249,10 @@ const props = defineProps({
     type: Boolean,
     default: null, // null이면 내부에서 계산, 값이 있으면 그 값을 사용
   },
+  currentUserId: {
+    type: [String, Number],
+    required: true,
+  },
 });
 
 // 결재선 정보와 문서 상세 내용
@@ -257,23 +261,30 @@ const documentContent = ref(null);
 const authStore = useAuthStore();
 
 // 현재 사용자 정보
-const currentUserId = computed(() => authStore.userId);
 const currentUserName = computed(() => authStore.userName);
 const currentUserDutyName = computed(() => authStore.dutyName);
 
 // 현재 사용자가 결재선에서 APPROVER/COOPERATOR + WAITING 인지 체크
 const currentUserLine = computed(() => {
-  if (!props.document?.lines || !currentUserId.value) return null;
+  if (!props.document?.lines || !props.currentUserId) return null;
   return props.document.lines.find(
     (line) =>
-      String(line.id) === String(currentUserId.value) &&
-      (line.userType === "APPROVER" || line.userType === "COOPERATOR") &&
+      String(line.id) === String(props.currentUserId) &&
+      (line.type === "APPROVER" || line.type === "COOPERATOR") &&
       line.status === "WAITING"
   );
 });
 
 // 알림 메시지 및 버튼 노출 여부
-const isCurrentUserTurn = computed(() => !!currentUserLine.value);
+const isCurrentUserTurn = computed(() => {
+  if (!props.document?.lines || !props.currentUserId) return false;
+  return props.document.lines.find(
+    (line) =>
+      String(line.id) === String(props.currentUserId) &&
+      (line.type === "APPROVER" || line.type === "COOPERATOR") &&
+      line.status === "WAITING"
+  );
+});
 
 // 알림 메시지 정보
 const noticeInfo = computed(() => {
@@ -368,11 +379,31 @@ onMounted(() => {
   activeTab.value = "document"; // Always show document tab first
   fetchApprovalLine();
   fetchDocumentContent();
-  console.log("ApprovalDetail 디버깅:", {
-    document: props.document,
-    userId: authStore.userId,
-    lines: props.document?.lines,
-  });
+
+  // 강력한 디버깅
+  console.log(
+    "currentUserId.value:",
+    props.currentUserId,
+    typeof props.currentUserId
+  );
+  console.log("lines:", props.document?.lines);
+  console.log("currentUserLine:", currentUserLine.value);
+  console.log("isCurrentUserTurn:", isCurrentUserTurn.value);
+  console.log("noticeInfo:", noticeInfo.value);
+  console.log(
+    "lines 전체 구조:",
+    JSON.stringify(props.document?.lines, null, 2)
+  );
+
+  // alert로 확인
+  alert(`디버깅 정보:
+userId: ${props.currentUserId}
+userName: ${authStore.userName}
+lines 개수: ${props.document?.lines?.length || 0}
+currentUserLine: ${currentUserLine.value ? "찾음" : "없음"}
+isCurrentUserTurn: ${isCurrentUserTurn.value}
+noticeInfo: ${noticeInfo.value ? "있음" : "없음"}
+  `);
 });
 </script>
 
