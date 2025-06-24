@@ -386,10 +386,12 @@ const getHistorySectionTitle = () => {
   console.log("document props:", props.document);
   console.log("approvalDocuments:", props.document?.approvalDocuments);
   console.log("categoryType:", props.document?.approvalDocuments?.categoryType);
+  let categoryType = props.document?.categoryType;
 
   // 결재 유형에 따라 다른 제목 반환
-  const categoryType = props.document?.approvalDocuments?.categoryType;
-
+  if (!categoryType && props.document?.approvalDocuments?.categoryType) {
+    categoryType = props.document.approvalDocuments.categoryType;
+  }
   switch (categoryType) {
     case "ORDER":
       return "주문 내역";
