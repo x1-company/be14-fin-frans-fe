@@ -228,7 +228,8 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
   transition: background 0.15s, color 0.15s, border 0.15s;
   display: flex;
   align-items: center;
-  gap: 6px;
+  margin-top: -10px;
+  gap: 7px;
 }
 .btn.reject {
   color: #d32f2f;
