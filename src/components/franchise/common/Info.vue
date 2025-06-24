@@ -25,19 +25,14 @@
 
           <FranchiseInfo v-if="activeTabSwitch === 1" />
 
-          <div v-if="activeTabSwitch === 2">
-            <OrderRegister
-              v-if="showOrderRegister"
-              @back-to-list="showOrderRegister = false"
-            />
-            <OrderList v-else @show-register-view="showOrderRegister = true" />
-          </div>
-
-          <div v-if="activeTabSwitch === 3" class="content-section">
-            <h3>반품관리 컨텐츠</h3>
-            <p>반품 관리 내용이 여기에 표시됩니다.</p>
-            <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
-          </div>
+                    <div v-if="activeTabSwitch === 2">
+                        <OrderRegister v-if="showOrderRegister" @back-to-list="showOrderRegister = false" />
+                        <OrderList v-else @show-register-view="showOrderRegister = true" />
+                    </div>
+                    
+                    <div v-if="activeTabSwitch === 3">
+                      
+                    </div>
 
           <div v-if="activeTabSwitch === 4" class="content-section">
             <h3>매출관리 컨텐츠</h3>
@@ -57,12 +52,13 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-import Breadcrumb from "@/components/hq/common/Breadcrumb.vue";
-import InfoHeader from "./InfoHeader.vue";
-import FranchiseInfo from "@/components/franchise/info/FranchiseInfo.vue";
-import OrderList from "@/components/franchise/order/OrderList.vue";
-import OrderRegister from "@/components/franchise/order/OrderRegister.vue";
+import { ref, computed, watch } from 'vue'
+import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
+import InfoHeader from './InfoHeader.vue'
+import FranchiseInfo from '@/components/franchise/info/FranchiseInfo.vue'
+import OrderList from '@/components/franchise/order/OrderList.vue'
+import OrderRegister from '@/components/franchise/order/OrderRegister.vue'
+import ReturnList from '@/components/hq/return/list/ReturnList.vue'
 
 const props = defineProps({
   activeTab: String,
