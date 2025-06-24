@@ -20,7 +20,7 @@ const handleAccountLocked = (code) => {
 const handleConfirmReset = async () => {
   isLoading.value = true
   try {
-    const response = await fetch('http://localhost:8080/api/auth/password/reset', {
+    const response = await fetch(`${BASE_URL}/api/auth/password/reset`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
@@ -59,18 +59,24 @@ const handleClose = () => {
 
     <div v-if="showModal" class="modal-overlay">
       <div class="modal">
-        <p>
-          <strong>{{ lockedUserCode }}</strong> 계정은 잠겼습니다.<br />
-          비밀번호 초기화를 진행하시겠습니까?
-        </p>
+        <div class="modal-header">
+          <h3>계정 잠금 알림</h3>
+        </div>
+        <div class="modal-content">
+          <p>
+            <strong class="user-code">{{ lockedUserCode }}</strong> 계정이 잠겼습니다.<br />
+            비밀번호 초기화를 진행하시겠습니까?
+          </p>
 
-        <!-- 로딩 중 -->
-        <div v-if="isLoading" class="spinner"></div>
+          <!-- 로딩 중 -->
+          <div v-if="isLoading" class="spinner"></div>
 
-        <!-- 결과 표시 -->
-        <div v-if="resetMessage && !isLoading" class="reset-info">
-          <p class="email">{{ resetEmail }}</p>
-          <p class="message">{{ resetMessage }}</p>
+          <!-- 결과 표시 -->
+          <div v-if="resetMessage && !isLoading" class="reset-info">
+            <div class="success-icon">✓</div>
+            <p class="email">{{ resetEmail }}</p>
+            <p class="message">{{ resetMessage }}</p>
+          </div>
         </div>
 
         <!-- 버튼 영역 -->
@@ -91,7 +97,7 @@ const handleClose = () => {
           </button>
           <button
             v-if="!isLoading && resetMessage"
-            class="confirm-button"
+            class="confirm-button full-width"
             @click="handleClose"
           >
             확인
@@ -113,7 +119,7 @@ const handleClose = () => {
 
 .app {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #4169e1 0%, #5a7ae4 100%);
 }
 
 .modal-overlay {
@@ -122,102 +128,144 @@ const handleClose = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(65, 105, 225, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
+  backdrop-filter: blur(4px);
 }
 
 .modal {
   background-color: #fff;
-  padding: 24px 28px;
-  border-radius: 12px;
+  border-radius: 16px;
   width: 90%;
-  max-width: 400px;
-  text-align: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  animation: fadeIn 0.2s ease-in-out;
+  max-width: 420px;
+  box-shadow: 0 20px 40px rgba(65, 105, 225, 0.3);
+  animation: fadeIn 0.3s ease-out;
+  overflow: hidden;
 }
 
-.modal p {
+.modal-header {
+  background: linear-gradient(135deg, #4169e1, #5a7ae4);
+  color: white;
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.modal-content {
+  padding: 24px;
+  text-align: center;
+}
+
+.modal-content p {
   font-size: 16px;
   color: #333;
-  line-height: 1.5;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.user-code {
+  color: #4169e1;
+  font-weight: bold;
 }
 
 .modal-actions {
   display: flex;
-  justify-content: space-between;
-  margin-top: 24px;
-  gap: 10px;
+  padding: 0 24px 24px;
+  gap: 12px;
 }
 
 .modal-actions button {
   flex: 1;
-  padding: 10px 0;
+  padding: 12px 0;
   font-size: 15px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 500;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .confirm-button {
-  background-color: #4169e1;
+  background: linear-gradient(135deg, #4169e1, #5a7ae4);
   color: white;
+  box-shadow: 0 4px 12px rgba(65, 105, 225, 0.3);
 }
 
 .confirm-button:hover {
-  background-color: #3657c5;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(65, 105, 225, 0.4);
+}
+
+.confirm-button.full-width {
+  flex: none;
+  width: 100%;
 }
 
 .cancel-button {
-  background-color: #999;
-  color: white;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 2px solid #e9ecef;
 }
 
 .cancel-button:hover {
-  background-color: #7a7a7a;
+  background-color: #e9ecef;
+  transform: translateY(-1px);
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-20px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .reset-info {
-  margin-top: 16px;
-  margin-bottom: 8px;
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9ff, #e8f0ff);
+  border-radius: 12px;
+  border: 2px solid #e3ebff;
+}
+
+.success-icon {
+  font-size: 32px;
+  color: #4169e1;
+  margin-bottom: 12px;
+  font-weight: bold;
 }
 
 .reset-info .email {
-  font-size: 14px;
+  font-size: 16px;
   color: #4169e1;
   font-weight: bold;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .reset-info .message {
   font-size: 14px;
-  color: #333;
+  color: #495057;
+  line-height: 1.5;
 }
 
 .spinner {
-  margin: 20px auto;
-  border: 4px solid #eee;
+  margin: 24px auto;
+  border: 4px solid #e3ebff;
   border-top: 4px solid #4169e1;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  animation: spin 0.8s linear infinite;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
