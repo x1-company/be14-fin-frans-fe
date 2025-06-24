@@ -69,7 +69,7 @@ const handleLogin = async () => {
           // TODO: 기본 경로로 변경 필요
         }
       }
-    
+
       
     } else {
       errorMessage.value = result.message || '로그인에 실패했습니다.'
@@ -88,25 +88,34 @@ const handleLogin = async () => {
 <template>
   <div class="login-container">
     <div class="login-box">
-      <h1>환영합니다</h1>
-      <form @submit.prevent="handleLogin">
+      <div class="login-header">
+        <h1>환영합니다</h1>
+        <p class="subtitle">FRANS 시스템에 로그인하세요</p>
+      </div>
+      
+      <form @submit.prevent="handleLogin" class="login-form">
         <div class="form-group">
           <label for="userCode">회원코드</label>
-          <input
-            type="text"
-            id="userCode"
-            v-model="userCode"
-            required
-          />
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="userCode"
+              v-model="userCode"
+              required
+              placeholder="회원코드를 입력하세요"
+            />
+          </div>
         </div>
+        
         <div class="form-group">
           <label for="password">비밀번호</label>
-          <div class="password-input">
+          <div class="input-wrapper password-input">
             <input
               :type="showPassword ? 'text' : 'password'"
               id="password"
               v-model="password"
               required
+              placeholder="비밀번호를 입력하세요"
             />
             <button 
               type="button" 
@@ -118,8 +127,15 @@ const handleLogin = async () => {
             </button>
           </div>
         </div>
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-        <button type="submit" class="login-button">로그인</button>
+        
+        <div v-if="errorMessage" class="error-message">
+          <span class="error-icon">⚠️</span>
+          {{ errorMessage }}
+        </div>
+        
+        <button type="submit" class="login-button">
+          <span>로그인</span>
+        </button>
       </form>
     </div>
   </div>
@@ -130,25 +146,42 @@ const handleLogin = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 50px);
+  min-height: calc(100vh - 53px);
   padding: 20px;
-  background-color: #f5f5f5;
+  background: #4169e1;
 }
 
 .login-box {
-  background-color: white;
-  border-radius: 5px;
-  padding: 50px 30px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 40px;
   width: 100%;
-  max-width: 600px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 480px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-h1 {
+.login-header {
   text-align: center;
-  margin-bottom: 40px;
-  font-size: 28px;
-  color: #333;
+  margin-bottom: 32px;
+}
+
+.login-header h1 {
+  font-size: 32px;
+  color: #4169e1;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.subtitle {
+  color: #6c757d;
+  font-size: 16px;
+  margin: 0;
+}
+
+.login-form {
+  width: 100%;
 }
 
 .form-group {
@@ -159,16 +192,34 @@ label {
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
-  color: #555;
+  color: #4169e1;
+  font-weight: 600;
+}
+
+.input-wrapper {
+  position: relative;
 }
 
 input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 18px;
+  padding: 16px 20px;
+  border: 2px solid #e3ebff;
+  border-radius: 12px;
+  font-size: 16px;
   box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+}
+
+input:focus {
+  outline: none;
+  border-color: #4169e1;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.1);
+}
+
+input::placeholder {
+  color: #adb5bd;
 }
 
 .password-input {
@@ -177,36 +228,63 @@ input {
 
 .toggle-password {
   position: absolute;
-  right: 10px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  color: #777;
+  color: #6c757d;
   font-size: 18px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+}
+
+.toggle-password:hover {
+  color: #4169e1;
 }
 
 .login-button {
   width: 100%;
-  padding: 14px;
-  background-color: #4169e1;
+  padding: 16px;
+  background: linear-gradient(135deg, #4169e1, #5a7ae4);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 12px;
   font-size: 18px;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(65, 105, 225, 0.3);
 }
 
 .login-button:hover {
-  background-color: #3a5ecc;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(65, 105, 225, 0.4);
+}
+
+.login-button:active {
+  transform: translateY(0);
 }
 
 .error-message {
-  color: red;
-  margin-bottom: 10px;
+  background: linear-gradient(135deg, #fff5f5, #fed7d7);
+  color: #c53030;
+  padding: 12px 16px;
+  border-radius: 8px;
   font-size: 14px;
   text-align: center;
+  margin-bottom: 16px;
+  border: 1px solid #feb2b2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.error-icon {
+  font-size: 16px;
 }
 </style>

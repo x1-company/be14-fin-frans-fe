@@ -19,7 +19,38 @@
 
                     <FranchiseInfo v-if="activeTabSwitch === 1" :selectedFranchiseId="selectedFranchiseId"/>
 
-                    <OrderList v-if="activeTabSwitch === 2" :franchiseId="franchiseId" :selectedFranchiseId="selectedFranchiseId"/>
+                    <OrderList 
+                        v-if="activeTabSwitch === 2 && !orderDetailId" 
+                        :franchiseId="franchiseId" 
+                        :selectedFranchiseId="selectedFranchiseId"
+                        @show-order-detail="handleShowOrderDetail"/>
+                        <div v-if="activeTabSwitch === 2 && orderDetailId">
+                            <div v-if="loading">로딩 중...</div>
+                            <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
+                            <div v-else>
+                                <!-- 상세 컴포넌트들 -->
+                        <OrderActionButtons
+                            :orderId="orderDetailId"
+                            :rejectedReason="order?.rejectedReason"
+                            :status="order?.status"
+                            :delivery-info="{
+                                deliveryCompany: order?.deliveryCompany,
+                                name: order?.driverName,
+                                phone: order?.driverPhone,
+                                trackingNumber: order?.trackingNumber
+                            }"
+                            @refreshOrder="fetchOrderDetail"
+                            @close="handleBackToList"
+                        />
+                        <OrderProgressBar :status="order?.status" />
+                        <FranchiseInfoCard :order="order" />
+                        <OrderInfoCard :order="order" />
+                        <ProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
+                        <DeliveryInfoCard :order="order" />
+                        <PaymentInfoCard :order="order" />
+                    </div>
+                </div>
+           
                     
                     <div v-if="activeTabSwitch === 3" class="content-section">
                         <h3>반품관리 컨텐츠</h3>
@@ -38,14 +69,20 @@ import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from '../orders/InfoHeader.vue'
 import OrderList from '../orders/list/OrderList.vue'
 import FranchiseInfo from '../franchise/FranchiseInfo.vue'
-
+import OrderProgressBar from '../orders/detail/OrderProgressBar.vue'
+import FranchiseInfoCard from '../orders/detail/FranchiseInfoCard.vue'
+import DeliveryInfoCard from '../orders/detail/DeliveryInfoCard.vue'
+import OrderInfoCard from '../orders/detail/OrderInfoCard.vue'
+import PaymentInfoCard from '../orders/detail/PaymentInfoCard.vue'
+import ProductTable from '../orders/detail/ProductTable.vue'
+import OrderActionButtons from '../orders/detail/OrderActionButtons.vue'
+import api from '@/lib/api'
 
 const props = defineProps({
     activeTab: String,
     franchiseId: [String, Number],
     selectedFranchiseId: [String, Number]
 })
-
 
 const emit = defineEmits(['tab-change', "select-tab"])
 
@@ -112,6 +149,37 @@ const updateTab = (newTabIndex) => {
     activeTabSwitch.value = newTabIndex
     const selectedTab = tabs[newTabIndex]
     emit('tab-change', selectedTab)
+}
+
+const orderDetailId = ref(null)
+const order = ref(null)
+const loading = ref(false)
+
+async function fetchOrderDetail() {
+  if (!orderDetailId.value) {
+    order.value = null;
+    return;
+  }
+  loading.value = true;
+  try {
+    const res = await api.get(`/api/hq/orders/${orderDetailId.value}`);
+    console.log('order detail api result:', res); // 이 로그로 실제 데이터 확인
+    order.value = res.data ? res.data : res;
+  } catch (e) {
+    order.value = null;
+    console.error('order detail fetch error', e);
+  } finally {
+    loading.value = false;
+  }
+}
+
+watch(orderDetailId, fetchOrderDetail)
+
+function handleShowOrderDetail(orderId) {
+    orderDetailId.value = orderId;
+}
+function handleBackToList() {
+    orderDetailId.value = null;
 }
 </script>
 

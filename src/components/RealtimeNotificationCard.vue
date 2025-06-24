@@ -115,7 +115,26 @@ const handleNotificationNavigation = (notification) => {
   if (notification.url) {
     router.push(notification.url);
   } else {
-    // 기존 타입별 분기 fallback
+    // 알림 타입에 따라 적절한 페이지로 이동 (fallback)
+    switch (notification.type) {
+      case 'ORDER_RESPONSE':
+        console.log('주문 페이지로 이동');
+        break;
+      case 'APPROVAL_REQUEST':
+        // 결재 요청 알림인 경우 해당 결재 상세 페이지로 이동
+        if (notification.approvalId) {
+          router.push(`/approval/${notification.approvalId}`);
+        } else {
+          // approvalId가 없는 경우 결재 목록 페이지로 이동
+          router.push('/approval');
+        }
+        break;
+      case 'LOW_STOCK':
+        console.log('재고 페이지로 이동');
+        break;
+      default:
+        console.log('기본 페이지로 이동');
+    }
   }
 };
 

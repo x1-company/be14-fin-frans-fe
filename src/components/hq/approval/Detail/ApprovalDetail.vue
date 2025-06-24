@@ -1,22 +1,26 @@
 <template>
   <div class="approval-detail">
-    <!-- Header -->
+    <!-- 헤더 영역 -->
     <div class="detail-header">
       <div class="header-top">
-        <div class="header-tabs">
-          <button
-            :class="['tab-button', { active: activeTab === 'document' }]"
+        <!-- 탭 메뉴 (결재문서 / 결재선) -->
+        <div class="tab-navigation">
+          <div
+            class="tab-item"
+            :class="{ active: activeTab === 'document' }"
             @click="activeTab = 'document'"
           >
             결재문서
-          </button>
-          <button
-            :class="['tab-button', { active: activeTab === 'approvalLine' }]"
+          </div>
+          <div
+            class="tab-item"
+            :class="{ active: activeTab === 'approvalLine' }"
             @click="activeTab = 'approvalLine'"
           >
             결재선
-          </button>
+          </div>
         </div>
+        <!-- 헤더 액션 버튼들 -->
         <div class="header-actions">
           <button class="print-button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -39,21 +43,27 @@
       </div>
     </div>
 
-    <!-- Content -->
+    <!-- 결재문서 탭 내용 -->
     <div v-if="activeTab === 'document'" class="detail-content">
       <div v-if="document">
-        <!-- Notice -->
-        <div v-if="noticeInfo" class="notice-section">
+        <!-- 결재 요청 알림 섹션 (현재 사용자 차례일 때만 표시) -->
+        <div
+          v-if="noticeInfo"
+          class="notice-section"
+          :class="
+            noticeInfo.typeText === '결재' ? 'notice-approve' : 'notice-coop'
+          "
+        >
           <div class="notice-icon">ℹ️</div>
           <div class="notice-text">
-            <strong>결재 요청</strong><br />
+            <strong>{{ noticeInfo.typeText }} 요청</strong><br />
             {{ currentUserName }} {{ currentUserDutyName }}님,
             {{ noticeInfo.line.seq }}차 {{ noticeInfo.typeText }}를 요청합니다.
             아래 문서를 검토하시고 승인 또는 반려 처리 부탁드립니다.
           </div>
         </div>
 
-        <!-- Document Title -->
+        <!-- 문서 제목 섹션 -->
         <div class="document-title-section">
           <h1 class="document-title">{{ document.title }}</h1>
           <div class="status-badges">
@@ -65,7 +75,7 @@
           </div>
         </div>
 
-        <!-- Document Info -->
+        <!-- 문서 기본 정보 -->
         <div class="document-info">
           <div class="info-grid">
             <div class="info-item">
@@ -93,7 +103,7 @@
           </div>
         </div>
 
-        <!-- Order Details -->
+        <!-- 주문 내역 테이블 -->
         <div
           v-if="
             (documentContent?.history && documentContent.history.length > 0) ||
@@ -146,7 +156,7 @@
           </div>
         </div>
 
-        <!-- Remarks -->
+        <!-- 비고 섹션 -->
         <div
           v-if="documentContent?.remarks || document.remarks"
           class="notes-section"
@@ -157,7 +167,7 @@
           </div>
         </div>
 
-        <!-- Attachments -->
+        <!-- 첨부파일 섹션 -->
         <div
           v-if="
             (documentContent?.files && documentContent.files.length > 0) ||
@@ -197,11 +207,12 @@
       <div v-else class="loading-state"> 문서 내용을 불러오는 중입니다... </div>
     </div>
 
+    <!-- 결재선 탭 내용 -->
     <div v-if="activeTab === 'approvalLine'" class="detail-content">
-      <ApprovalLineDetail :approval-line="approvalLine" />
+      <ApprovalLineDetail :approval-id="document.approvalId" />
     </div>
 
-    <!-- Action Buttons -->
+    <!-- 결재 액션 버튼들 (현재 사용자 차례일 때만 표시) -->
     <ApprovalActionButtons
       v-if="isCurrentUserTurn"
       :document="document"
@@ -218,7 +229,7 @@ import ApprovalLineDetail from "./ApprovalLineDetail.vue";
 import ApprovalActionButtons from "./ApprovalActionButtons.vue";
 import { useAuthStore } from "@/stores/auth";
 
-// 본문ㅡ결재선 탭 선택
+// 결재문서/결재선 탭 선택 상태
 const activeTab = ref("document"); // 'document' or 'approvalLine'
 
 const emit = defineEmits(["close-detail", "approve", "reject", "refresh-list"]);
@@ -228,16 +239,28 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  isCurrentUserTurn: {
+    type: Boolean,
+    default: null, // null이면 내부에서 계산, 값이 있으면 그 값을 사용
+  },
 });
 
+// 결재선 정보와 문서 상세 내용
 const approvalLine = ref(null);
 const documentContent = ref(null);
 const authStore = useAuthStore();
+
+// 현재 사용자 정보
 const currentUserId = computed(() => authStore.userId);
 const currentUserName = computed(() => authStore.userName);
 const currentUserDutyName = computed(() => authStore.dutyName);
 
-const isCurrentUserTurn = computed(() => {
+// 🚀 수정 포인트: computed 이름 변경
+const computedIsCurrentUserTurn = computed(() => {
+  if (props.isCurrentUserTurn !== null) {
+    return props.isCurrentUserTurn;
+  }
+
   if (!props.document || !currentUserId.value) {
     return false;
   }
@@ -246,8 +269,9 @@ const isCurrentUserTurn = computed(() => {
   );
 });
 
+// 결재 요청 알림 정보 (현재 사용자 차례일 때만 표시)
 const noticeInfo = computed(() => {
-  if (!isCurrentUserTurn.value) {
+  if (!computedIsCurrentUserTurn.value) {
     return null;
   }
   const userLine = props.document.lines?.find(
@@ -263,6 +287,7 @@ const noticeInfo = computed(() => {
   };
 });
 
+// 결재선 정보 가져오기
 const fetchApprovalLine = async () => {
   if (!props.document?.approvalId) return;
   try {
@@ -275,6 +300,7 @@ const fetchApprovalLine = async () => {
   }
 };
 
+// 문서 상세 내용 가져오기
 const fetchDocumentContent = async () => {
   if (!props.document?.approvalId) return;
   try {
@@ -289,10 +315,12 @@ const fetchDocumentContent = async () => {
   }
 };
 
+// 뒤로가기
 const goBack = () => {
   emit("close-detail");
 };
 
+// 날짜 포맷팅
 const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -302,16 +330,19 @@ const formatDate = (dateString) => {
   )}월 ${String(date.getDate()).padStart(2, "0")}일`;
 };
 
+// 금액 포맷팅
 const formatAmount = (amount) => {
   if (!amount) return "₩0";
   return `₩${amount.toLocaleString()}`;
 };
 
+// 총 금액 계산
 const calculateTotalAmount = (history) => {
   if (!history) return 0;
   return history.reduce((sum, item) => sum + item.quantity * item.salePrice, 0);
 };
 
+// 문서 상태 텍스트 변환
 const getDocumentStatusText = (status) => {
   const statusMap = {
     DRAFT: "임시저장",
@@ -322,6 +353,7 @@ const getDocumentStatusText = (status) => {
   return statusMap[status] || status;
 };
 
+// 문서 상태 CSS 클래스 변환
 const getDocumentStatusClass = (status) => {
   const classMap = {
     DRAFT: "status-draft",
@@ -332,6 +364,7 @@ const getDocumentStatusClass = (status) => {
   return classMap[status] || "status-unknown";
 };
 
+// 컴포넌트 마운트 시 데이터 로드
 onMounted(() => {
   fetchApprovalLine();
   fetchDocumentContent();
@@ -341,44 +374,70 @@ onMounted(() => {
 <style scoped>
 .approval-detail {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f8f9fa;
+  background: white;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  font-size: 15px;
+  padding: 16px;
 }
 
 /* Header */
 .detail-header {
   background: white;
-  border-bottom: 1px solid #e9ecef;
-  padding: 16px 24px;
+  padding: 12px 16px;
 }
 
 .header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 2px solid #e9ecef;
 }
 
-.header-tabs {
+.tab-navigation {
   display: flex;
-  gap: 8px;
+  margin-bottom: 0;
+  background: #fff;
+  align-items: flex-end;
+  height: 48px;
 }
 
-.tab-button {
-  padding: 8px 16px;
-  border: 1px solid #dee2e6;
-  background: white;
-  color: #495057;
-  border-radius: 6px;
+.tab-item {
+  padding: 0 32px 0 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: 16px;
+  color: #6b7280;
+  position: relative;
+  background: #fff;
+  transition: color 0.2s;
+  /* left: 32px; */
 }
 
-.tab-button.active {
-  background: #4066fa;
-  color: white;
+.tab-item.active {
+  color: #8b5cf6;
+  font-weight: 700;
+  padding-right: 32px;
+}
+
+.tab-item.active::after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: -13px;
+  right: 20px;
+  bottom: -1.5px;
+  height: 3px;
+  background: #8b5cf6;
+  border-radius: 2px 2px 0 0;
+  z-index: 2;
+}
+
+.tab-item:hover {
+  color: #8b5cf6;
 }
 
 .header-actions {
@@ -420,22 +479,32 @@ onMounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+  background-color: white;
 }
 
 /* Notice */
 .notice-section {
-  background: #e3f2fd;
-  border: 1px solid #bbdefb;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 24px;
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
 }
-
+.notice-approve {
+  background: #eaf1ff;
+  color: #2563eb;
+  border: 1.5px solid #2563eb;
+}
+.notice-coop {
+  background: #f5f0ff;
+  color: #8b5cf6;
+  border: 1.5px solid #8b5cf6;
+}
 .notice-icon {
-  font-size: 20px;
-  flex-shrink: 0;
+  font-size: 22px;
 }
 
 .notice-text {
@@ -448,13 +517,14 @@ onMounted(() => {
 .document-title-section {
   text-align: center;
   margin-bottom: 32px;
+  margin: 20px 16px 16px 16px;
 }
 
 .document-title {
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 700;
   color: #212529;
-  margin: 0 0 16px 0;
+  margin: 0 0 12px 0;
 }
 
 .status-badges {
@@ -492,8 +562,8 @@ onMounted(() => {
 .document-info {
   background: white;
   border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -536,16 +606,16 @@ onMounted(() => {
 .order-section {
   background: white;
   border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .section-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #212529;
-  margin: 0 0 20px 0;
+  margin: 0 0 12px 0;
 }
 
 .order-table-container {
@@ -559,7 +629,7 @@ onMounted(() => {
 }
 
 .order-table th {
-  padding: 12px 16px;
+  padding: 8px;
   background: #f8f9fa;
   font-weight: 500;
   text-align: left;
@@ -568,7 +638,7 @@ onMounted(() => {
 }
 
 .order-table td {
-  padding: 12px 16px;
+  padding: 8px;
   border-bottom: 1px solid #e9ecef;
   color: #212529;
 }
@@ -590,8 +660,8 @@ onMounted(() => {
 .notes-section {
   background: white;
   border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -620,8 +690,8 @@ onMounted(() => {
 .attachments-section {
   background: white;
   border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-top: 32px;
 }
@@ -709,14 +779,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 32px;
+  padding: 7px 10px;
   border: none;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 120px;
+  min-width: 60px;
   justify-content: center;
 }
 

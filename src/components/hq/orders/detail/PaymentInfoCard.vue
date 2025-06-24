@@ -62,8 +62,8 @@ const statusClass = computed(() => {
   border: 1px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
-  padding: 32px 24px;
-  margin: 20px 0 100px -20px;     /* 위치 변경 */
+  padding: 25px 24px;
+  margin-bottom: 20px;
   background: #fff;
   max-width: 100%;
   width: 100%;
@@ -71,7 +71,7 @@ const statusClass = computed(() => {
 
 .card-title {
   font-weight: bold;
-  font-size: 18px;
+  font-size: 15px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -92,11 +92,11 @@ const statusClass = computed(() => {
 
 .label {
   color: #6b7280;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .value {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   margin: 0 30px;
   text-align: right;

@@ -54,9 +54,9 @@
               <tr v-for="(order, idx) in orders" :key="order.orderId">
                 <td>{{ idx + 1 + (page-1)*pageSize }}</td>
                 <td>
-                  <router-link :to="`/hq/franchise/orders/${order.orderId}`" class="order-link">
+                  <a href="#" class="order-link" @click.prevent="emit('show-order-detail', order.orderId)">
                     {{ order.orderCode }}
-                  </router-link>
+                  </a>
                 </td>
                 <td>{{ order.productSummary }}</td>
                 <td><span :class="['order-status', orderStatusClass(order.status)]">{{ statusText(order.status) }}</span></td>
@@ -91,7 +91,7 @@
     import '@vuepic/vue-datepicker/dist/main.css';
     import api from '@/lib/api';
 
-    const emit = defineEmits(['show-register-view', 'franchise-deselect']);
+    const emit = defineEmits(['show-register-view', 'franchise-deselect', 'show-order-detail']);
 
     const props = defineProps({
       selectedFranchiseId: [String, Number]

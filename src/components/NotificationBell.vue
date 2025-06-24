@@ -67,7 +67,13 @@ const handleNotificationNavigation = (notification) => {
         console.log('주문 페이지로 이동');
         break;
       case 'APPROVAL_REQUEST':
-        console.log('결재 페이지로 이동');
+        // 결재 요청 알림인 경우 해당 결재 상세 페이지로 이동
+        if (notification.approvalId) {
+          router.push(`/approval/${notification.approvalId}`);
+        } else {
+          // approvalId가 없는 경우 결재 목록 페이지로 이동
+          router.push('/approval');
+        }
         break;
       case 'LOW_STOCK':
         console.log('재고 페이지로 이동');
@@ -299,7 +305,7 @@ const formatTime = (dateString) => {
 }
 
 .toggle-label {
-  font-size: 13px;
+  font-size: 12px;
   color: #333;
   font-weight: 500;
   white-space: nowrap; /* 텍스트가 세로로 깨지는 현상 방지 */
@@ -344,7 +350,7 @@ const formatTime = (dateString) => {
 }
 
 .text-action {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   color: #888;
   background: none;
@@ -375,6 +381,7 @@ const formatTime = (dateString) => {
 
 .empty-state p {
   margin: 0;
+  font-size: 14px;
   color: #888;
 }
 
@@ -430,14 +437,14 @@ const formatTime = (dateString) => {
 }
 
 .notification-time {
-  font-size: 12px;
+  font-size: 10px;
   color: #888;
   margin-left: 8px;
   white-space: nowrap;
 }
 
 .card-body .notification-text {
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.5;
   color: #555;
   margin: 0;
@@ -467,7 +474,7 @@ const formatTime = (dateString) => {
   right: 8px;
   background: none;
   border: none;
-  font-size: 18px;
+  font-size: 16px;
   color: #aaa;
   cursor: pointer;
   padding: 2px;

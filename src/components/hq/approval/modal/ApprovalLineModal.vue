@@ -109,7 +109,6 @@
                     </div>
                   </div>
                   <div v-else class="no-results">
-                    <div class="no-results-icon">🔍</div>
                     <p>검색 결과가 없습니다</p>
                   </div>
                 </div>
@@ -350,7 +349,7 @@ const getTypeByTab = (tab) => {
     case "협조":
       return "COOPERATOR";
     case "수신":
-      return "RECEIVER";
+      return "RECIPIENT";
     case "참조":
       return "REFERENCE";
     default:
@@ -385,7 +384,7 @@ const getListByType = (type) => {
     case "APPROVER":
     case "COOPERATOR":
       return approvalList;
-    case "RECEIVER":
+    case "RECIPIENT":
       return receiverList;
     case "REFERENCE":
       return referenceList;
@@ -906,13 +905,13 @@ const toggleUserSelection = (user) => {
   border-left-color: #f59e0b;
 }
 .user-card.receiver .user-initial {
-  background-color: #f59e0b;
+  background: #f59e0b;
 }
 .user-card.reference {
   border-left-color: #8b5cf6;
 }
 .user-card.reference .user-initial {
-  background-color: #8b5cf6;
+  background: #8b5cf6;
 }
 .user-initial {
   width: 32px;

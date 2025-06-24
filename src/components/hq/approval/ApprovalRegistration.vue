@@ -13,15 +13,17 @@
         @add-document="handleAddDocument"
       />
 
-      <ReturnApprovalForm
+      <OrderApprovalForm
         v-if="selectedType === 'RETURN'"
+        type="RETURN"
         ref="returnFormRef"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
       />
 
-      <PurchaseApprovalForm
+      <OrderApprovalForm
         v-if="selectedType === 'PURCHASE'"
+        type="PURCHASE_ORDER"
         ref="purchaseFormRef"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
@@ -49,32 +51,16 @@
       </div>
     </div>
   </div>
-
-  <!-- ReturnList 모달 -->
-  <div
-    v-if="showReturnListModal"
-    class="modal-overlay"
-    @click="handleCloseReturnList"
-  >
-    <div class="modal-content" @click.stop>
-      <ReturnList
-        @close="handleCloseReturnList"
-        @select-documents="handleDocumentSelection"
-      />
-    </div>
-  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
-import ReturnList from "./modal/ReturnList.vue";
 import ApprovalTypeSelector from "./ApprovalTypeSelector.vue";
 import OrderApprovalForm from "./OrderApprovalForm.vue";
-import ReturnApprovalForm from "./ReturnApprovalForm.vue";
-import PurchaseApprovalForm from "./PurchaseApprovalForm.vue";
 import api from "@/lib/api";
 
-const emit = defineEmits(["submit", "cancel", "approval-submitted"]);
+const emit = defineEmits(["submit", "cancel", "approval-submitted", "counts-refresh"]);
+
 const props = defineProps({
   selectedTemplate: { type: Object, default: null },
 });
@@ -82,7 +68,6 @@ const props = defineProps({
 // 상태 관리
 const selectedType = ref("ORDER");
 const isSubmitting = ref(false);
-const showReturnListModal = ref(false);
 
 // 폼 참조
 const orderFormRef = ref(null);
@@ -155,22 +140,11 @@ const handleFormDataUpdated = (data) => {
 
 // 문서 추가 핸들러
 const handleAddDocument = () => {
-  showReturnListModal.value = true;
-};
-
-// ReturnList에서 문서 선택 완료 핸들러
-const handleDocumentSelection = (selectedDocuments) => {
-  // 선택된 문서들을 현재 폼의 documents 배열에 추가
+  // 현재 활성화된 폼 컴포넌트의 문서 추가 기능 호출
   const currentFormRef = getCurrentFormRef();
-  if (currentFormRef && currentFormRef.addSelectedDocuments) {
-    currentFormRef.addSelectedDocuments(selectedDocuments);
+  if (currentFormRef && currentFormRef.handleAddDocument) {
+    currentFormRef.handleAddDocument();
   }
-  showReturnListModal.value = false;
-};
-
-// ReturnList 모달 닫기 핸들러
-const handleCloseReturnList = () => {
-  showReturnListModal.value = false;
 };
 
 // 폼 데이터 초기화
@@ -241,34 +215,22 @@ const processAndSubmit = async (isRequest) => {
       isRequest: isRequest,
       approvalLines: (() => {
         const approvalLines = [];
-        let approverSeq = 1;
-        let cooperatorSeq = 1;
+        let seq = 1;
         formData.value.approvalLines.forEach((line) => {
-          if (line.type === "APPROVER") {
-            approvalLines.push({
+          approvalLines.push({
               userId: line.userId || line.id,
-              seq: approverSeq++,
+              seq: seq++,
               type: line.type,
             });
-          } else if (line.type === "COOPERATOR") {
-            approvalLines.push({
-              userId: line.userId || line.id,
-              seq: cooperatorSeq++,
-              type: line.type,
-            });
-          } else {
-            approvalLines.push({
-              userId: line.userId || line.id,
-              seq: 0,
-              type: line.type, // RECIPIENT, REFERENCE 등
-            });
-          }
         });
         return approvalLines;
       })(),
       files: uploadedFiles,
       approvalDocuments: {
-        categoryType: selectedType.value,
+        categoryType:
+          selectedType.value === "PURCHASE"
+            ? "PURCHASE_ORDER"
+            : selectedType.value,
         documentIds: formData.value.approvalDocuments.documentIds,
       },
       returnReason: formData.value.returnReason,
@@ -291,6 +253,9 @@ const processAndSubmit = async (isRequest) => {
           : "임시저장되었습니다."
       );
       resetFormData();
+
+      // 카운트 새로고침 이벤트 발생
+      emit("counts-refresh");
 
       if (isRequest && response.data?.data?.id) {
         // 결재 요청 성공 시 생성된 결재 ID를 전달
@@ -328,16 +293,17 @@ const handleTempSave = async () => {
 
 const uploadFile = async (file) => {
   const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await api.post("/api/files/upload", formData, {
+  formData.append("files", file);
+  formData.append("type", "approval");
+  // formData.append("type", "HQ");
+  const response = await api.post("/api/upload", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
 
   if (response.status === 200 || response.status === 201) {
-    return response.data.url;
+    return response.data[0];
   } else {
     throw new Error("파일 업로드에 실패했습니다.");
   }
@@ -419,28 +385,5 @@ onMounted(() => {
   background: #e5e7eb;
   border-color: #d1d5db;
   cursor: not-allowed;
-}
-
-/* 모달 스타일 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  max-width: 90%;
-  max-height: 90%;
-  overflow: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 </style>

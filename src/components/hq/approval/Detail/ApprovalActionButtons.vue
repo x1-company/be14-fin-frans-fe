@@ -11,10 +11,10 @@
         fill="none"
         stroke="currentColor"
       >
-        <path d="M7 13l3 3 7-7" />
-        <path d="M7 13l3 3 7-7" transform="rotate(180 12 12)" />
-        <path d="M10 15l4-4" />
-        <path d="M14 15l-4-4" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
       </svg>
       <span class="button-text">반려</span>
     </button>
@@ -30,9 +30,9 @@
         fill="none"
         stroke="currentColor"
       >
-        <path d="M14 9V5a3 3 0 0 0-6 0v4" />
-        <rect x="2" y="9" width="20" height="12" rx="2" ry="2" />
-        <path d="M7 13l3 3 7-7" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <polyline points="20,6 9,17 4,12" />
+        </svg>
       </svg>
       <span class="button-text">승인</span>
     </button>
@@ -198,7 +198,8 @@ const confirmApprove = async () => {
     const payload = {
       approvalType: approvalType,
       status: "승인",
-      opinion: approveComment.value.trim() || "내용 확인하였습니다. 승인합니다.",
+      opinion:
+        approveComment.value.trim() || "내용 확인하였습니다. 승인합니다.",
     };
 
     await api.post(
@@ -226,6 +227,7 @@ const confirmApprove = async () => {
   gap: 16px;
   justify-content: center;
   padding: 20px;
+  background-color: white;
 }
 
 .action-button {
@@ -233,13 +235,13 @@ const confirmApprove = async () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 120px;
+  min-width: 72px;
   border: 2px solid;
 }
 
@@ -271,12 +273,12 @@ const confirmApprove = async () => {
 }
 
 .button-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .button-text {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 /* Modal Styles */

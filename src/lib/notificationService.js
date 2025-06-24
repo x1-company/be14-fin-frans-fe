@@ -1,6 +1,7 @@
 import api from './api';
 import { useNotificationStore } from '@/stores/notification';
 import { useAuthStore } from '@/stores/auth';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 
 class NotificationService {
   constructor() {
@@ -12,6 +13,7 @@ class NotificationService {
     this.isConnecting = false;
     this.isConnected = false;
     this.reconnectTimeout = null;
+    this.eventSource = null;
   }
 
   // SSE 연결 시작
@@ -21,12 +23,24 @@ class NotificationService {
 
     // 이미 연결 중이거나 연결되어 있으면 중단
     if (this.isConnecting || this.isConnected) {
+      console.log('SSE 이미 연결 중이거나 연결됨, 중단');
       return;
     }
 
     // 토큰이 없거나 유효하지 않으면 연결하지 않음
     if (!authStore.accessToken || !authStore.decodedToken) {
+      console.log('SSE 연결 실패: 토큰이 없거나 유효하지 않음');
       return;
+    }
+
+    // 토큰 만료 확인
+    if (authStore.decodedToken.exp) {
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (currentTime >= authStore.decodedToken.exp) {
+        console.log('SSE 연결 실패: 토큰이 만료됨');
+        authStore.clearAccessToken();
+        return;
+      }
     }
 
     this.isConnecting = true;
@@ -35,19 +49,21 @@ class NotificationService {
       // 기존 연결 해제
       this.disconnect();
 
-      // 마지막 이벤트 ID 가져오기 (로컬 스토리지에서)
-      const lastEventId = localStorage.getItem('lastEventId') || '';
+      // 마지막 이벤트 ID 가져오기 (사용자별로 구분)
+      const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
+      const lastEventIdKey = `lastEventId_${currentUserId}`;
+      const lastEventId = localStorage.getItem(lastEventIdKey) || '';
 
-      // AbortController 생성
-      this.abortController = new AbortController();
-
-      const url = `http://localhost:8080/api/notification/subscribe?lastEventId=${lastEventId}`;
+      // 환경변수에서 API URL 가져오기 (개발/배포 환경 구분)
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const url = `${API_BASE_URL}/api/notification/subscribe?lastEventId=${lastEventId}`;
 
       console.log('SSE 연결 시도:', url);
+      console.log('현재 사용자 ID:', currentUserId);
+      console.log('마지막 이벤트 ID:', lastEventId);
 
-      // fetch API를 사용한 SSE 연결
-      const response = await fetch(url, {
-        method: 'GET',
+      // EventSourcePolyfill을 사용한 SSE 연결
+      this.eventSource = new EventSourcePolyfill(url, {
         headers: {
           'Authorization': `Bearer ${authStore.accessToken}`,
           'Accept': 'text/event-stream',
@@ -55,35 +71,55 @@ class NotificationService {
           'Connection': 'keep-alive',
           'Last-Event-ID': lastEventId
         },
-        signal: this.abortController.signal
+        withCredentials: true,
+        heartbeatTimeout: 30000, // 30초
+        connectionTimeout: 10000  // 10초
       });
 
-      if (!response.ok) {
-        throw new Error(`SSE 연결 실패: ${response.status} ${response.statusText}`);
-      }
+      // 연결 성공 이벤트
+      this.eventSource.onopen = (event) => {
+        console.log('SSE 연결 성공');
+        this.isConnected = true;
+        this.isConnecting = false;
+        notificationStore.setConnectionStatus(true);
+        this.reconnectAttempts = 0;
+      };
 
-      console.log('SSE 연결 성공');
+      // 메시지 수신 이벤트
+      this.eventSource.onmessage = (event) => {
+        try {
+          if (event.data) {
+            const parsedData = JSON.parse(event.data);
+            this.handleNotificationMessage(parsedData, notificationStore, authStore);
+          }
+        } catch (error) {
+          console.error('SSE 메시지 파싱 오류:', error, '원본 데이터:', event.data);
+        }
+      };
 
-      this.isConnected = true;
-      this.isConnecting = false;
-      notificationStore.setConnectionStatus(true);
-      this.reconnectAttempts = 0;
+      // 에러 처리
+      this.eventSource.onerror = (event) => {
+        console.error('SSE 연결 오류:', event);
+        this.isConnected = false;
+        this.isConnecting = false;
+        notificationStore.setConnectionStatus(false);
 
-      // 스트림 읽기
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
+        // 401 에러인 경우 토큰 만료로 간주
+        if (event.status === 401) {
+          console.log('토큰 만료로 인한 SSE 연결 해제');
+          authStore.clearAccessToken();
+          this.disconnect();
+          return;
+        }
 
-      // 스트림 처리
-      this.processStream(reader, decoder, notificationStore);
+        // 네트워크 오류인 경우 재연결 시도
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.handleReconnect();
+        }
+      };
 
     } catch (error) {
       this.isConnecting = false;
-      
-      if (error.name === 'AbortError') {
-        console.log('SSE 연결이 의도적으로 중단됨');
-        return;
-      }
-      
       console.error('SSE 연결 생성 실패:', error);
       notificationStore.setConnectionStatus(false);
       
@@ -94,167 +130,30 @@ class NotificationService {
     }
   }
 
-  // 스트림 처리
-  async processStream(reader, decoder, notificationStore) {
-    try {
-      let buffer = '';
-      const authStore = useAuthStore();
-      
-      console.log('SSE 스트림 처리 시작');
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) {
-          console.log('SSE 스트림 정상 종료');
-          this.isConnected = false;
-          notificationStore.setConnectionStatus(false);
-          
-          // 스트림이 정상적으로 종료된 경우 재연결 시도
-          if (!this.abortController?.signal.aborted) {
-            console.log('SSE 재연결 시도 예정');
-            this.handleReconnect();
-          }
-          break;
-        }
-
-        const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
-        const lines = buffer.split('\n');
-        
-        // 마지막 라인은 완전하지 않을 수 있으므로 버퍼에 보관
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          // data: 라인 처리 (공백 제거 후 확인)
-          if (line.trim().startsWith('data:')) {
-            const data = line.substring(line.indexOf('data:') + 5).trim();
-            
-            if (data) {
-              // JSON 형식인지 확인 (중괄호로 시작하는지)
-              if (data.startsWith('{')) {
-                try {
-                  const parsedData = JSON.parse(data);
-                  
-                  // 알림 데이터 처리 - 현재 사용자의 알림인지 확인
-                  if (parsedData.id && parsedData.content) {
-                    // 🚀 하드 삭제 방식: 삭제된 ID 체크 제거
-                    // const notificationStore = useNotificationStore();
-                    // if (notificationStore.deletedIds.has(parsedData.id)) {
-                    //   console.log('삭제된 알림 무시 (SSE):', parsedData.id);
-                    //   continue;
-                    // }
-                    
-                    // 사용자 ID가 포함되어 있다면 현재 사용자의 것인지 확인
-                    if (parsedData.userId && authStore.decodedToken) {
-                      const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
-                      if (parsedData.userId !== currentUserId) {
-                        console.log('다른 사용자의 알림 무시:', parsedData.userId, '현재:', currentUserId);
-                        continue;
-                      }
-                    }
-                    
-                    // 이미 존재하는 알림인지 확인
-                    const existingNotifications = notificationStore.notifications;
-                    const isDuplicate = existingNotifications.some(n => n.id === parsedData.id);
-                    if (isDuplicate) {
-                      console.log('중복 알림 무시 (SSE):', parsedData.id);
-                      continue;
-                    }
-                    
-                    // 사용자 ID가 없거나 현재 사용자의 것이라면 처리
-                    console.log('새 알림 추가 (SSE):', parsedData.id, parsedData.content);
-                    notificationStore.addNotification(parsedData);
-                  }
-                } catch (error) {
-                  console.error('SSE 메시지 파싱 오류:', error, '원본 데이터:', data);
-                }
-              }
-            }
-          } 
-          // id: 라인 처리
-          else if (line.trim().startsWith('id:')) {
-            const eventId = line.substring(line.indexOf('id:') + 3).trim();
-            localStorage.setItem('lastEventId', eventId);
-          } 
-          // event: 라인 처리
-          else if (line.trim().startsWith('event:')) {
-            // 이벤트 타입 정보는 필요시 사용
-            const eventType = line.substring(line.indexOf('event:') + 6).trim();
-            if (eventType === 'heartbeat') {
-              console.log('Heartbeat 수신됨');
-            }
-          } 
-          // 빈 라인 처리
-          else if (line.trim() === '') {
-            // 빈 라인 무시
-          }
-          // JSON이 별도 라인으로 오는 경우 처리
-          else if (line.trim() && line.trim().startsWith('{')) {
-            try {
-              const parsedData = JSON.parse(line.trim());
-              
-              // 알림 데이터 처리 - 현재 사용자의 알림인지 확인
-              if (parsedData.id && parsedData.content) {
-                // 🚀 하드 삭제 방식: 삭제된 ID 체크 제거
-                // const notificationStore = useNotificationStore();
-                // if (notificationStore.deletedIds.has(parsedData.id)) {
-                //   console.log('삭제된 알림 무시 (SSE):', parsedData.id);
-                //   continue;
-                // }
-                
-                // 사용자 ID가 포함되어 있다면 현재 사용자의 것인지 확인
-                if (parsedData.userId && authStore.decodedToken) {
-                  const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
-                  if (parsedData.userId !== currentUserId) {
-                    console.log('다른 사용자의 알림 무시 (별도 라인):', parsedData.userId, '현재:', currentUserId);
-                    continue;
-                  }
-                }
-                
-                // 이미 존재하는 알림인지 확인
-                const existingNotifications = notificationStore.notifications;
-                const isDuplicate = existingNotifications.some(n => n.id === parsedData.id);
-                if (isDuplicate) {
-                  console.log('중복 알림 무시 (SSE, 별도 라인):', parsedData.id);
-                  continue;
-                }
-                
-                // 사용자 ID가 없거나 현재 사용자의 것이라면 처리
-                console.log('새 알림 추가 (SSE, 별도 라인):', parsedData.id, parsedData.content);
-                notificationStore.addNotification(parsedData);
-              }
-            } catch (error) {
-              console.error('SSE JSON 라인 파싱 오류:', error, '원본 라인:', line);
-            }
-          }
+  // 알림 메시지 처리
+  handleNotificationMessage(parsedData, notificationStore, authStore) {
+    // 알림 데이터 처리 - 현재 사용자의 알림인지 확인
+    if (parsedData.id && parsedData.content) {
+      // 사용자 ID가 포함되어 있다면 현재 사용자의 것인지 확인
+      if (parsedData.userId && authStore.decodedToken) {
+        const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
+        if (parsedData.userId !== currentUserId) {
+          console.log('다른 사용자의 알림 무시:', parsedData.userId, '현재:', currentUserId);
+          return;
         }
       }
-    } catch (error) {
-      console.error('SSE 스트림 처리 오류:', error);
-      console.error('오류 타입:', error.name);
-      console.error('오류 메시지:', error.message);
       
-      this.isConnected = false;
-      notificationStore.setConnectionStatus(false);
-      
-      // AbortError는 정상적인 연결 해제이므로 오류로 처리하지 않음
-      if (error.name === 'AbortError') {
-        console.log('SSE 스트림이 의도적으로 중단됨');
+      // 이미 존재하는 알림인지 확인
+      const existingNotifications = notificationStore.notifications;
+      const isDuplicate = existingNotifications.some(n => n.id === parsedData.id);
+      if (isDuplicate) {
+        console.log('중복 알림 무시:', parsedData.id);
         return;
       }
       
-      // 네트워크 오류인 경우 재연결 시도
-      if (error.name === 'TypeError' && error.message.includes('network error')) {
-        console.log('네트워크 오류로 인한 재연결 시도');
-        this.handleReconnect();
-      } else {
-        // AbortError가 아닌 경우에만 재연결 시도
-        if (error.name !== 'AbortError') {
-          console.log('일반 오류로 인한 재연결 시도');
-          this.handleReconnect();
-        }
-      }
+      // 사용자 ID가 없거나 현재 사용자의 것이라면 처리
+      console.log('새 알림 추가:', parsedData.id, parsedData.content);
+      notificationStore.addNotification(parsedData);
     }
   }
 
@@ -294,9 +193,9 @@ class NotificationService {
       this.reconnectTimeout = null;
     }
     
-    if (this.abortController) {
-      this.abortController.abort();
-      this.abortController = null;
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
     }
     
     this.isConnected = false;

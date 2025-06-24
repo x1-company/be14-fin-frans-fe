@@ -120,7 +120,11 @@ const isDelivering = computed(() => props.status === 'DELIVERING');
 // 최초 상태를 부모에서 받아오고 싶으면 watch/props로 동기화
 // 예: const isReviewed = computed(() => props.status === 'REVIEW_COMPLETED');
 
-const emits = defineEmits(['refreshOrder']); 
+const emits = defineEmits(['refreshOrder', 'close']);
+
+function handleClose() {
+  emits('close');
+}
 
 const router = useRouter();
 
@@ -203,9 +207,6 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
   }
 }
 
-function handleClose() {
-  router.push({ path: '/hq/franchise', query: { tab: '주문관리' } });
-}
 
 </script>
 
@@ -214,14 +215,14 @@ function handleClose() {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
-  margin: 40px 55px -70px 0;
+  /* margin: 40px 55px -70px 0; */
 }
 .btn {
-  padding: 8px 18px;
+  padding: 6px 13px;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   background: #fff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border 0.15s;
@@ -251,7 +252,7 @@ function handleClose() {
   background: #f5faff;
 }
 .icon {
-  font-size: 18px;
+  font-size: 15px;
   vertical-align: middle;
 }
 .btn.delivery {

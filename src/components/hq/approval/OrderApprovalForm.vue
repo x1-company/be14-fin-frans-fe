@@ -3,7 +3,7 @@
     <!-- 결재문서 선택 -->
     <div class="form-section">
       <div class="section-header">
-        <h3 class="section-title">결재문서</h3>
+        <h3 class="section-title">{{ sectionTitle }}</h3>
         <button class="add-document-button" @click="handleAddDocument"
           >문서 추가</button
         >
@@ -13,11 +13,9 @@
         <table>
           <thead>
             <tr>
-              <th>No.</th>
-              <th>문서번호</th>
-              <th>가맹점명</th>
-              <th>작성일</th>
-              <th>금액</th>
+              <th v-for="header in documentTableHeaders" :key="header">{{
+                header
+              }}</th>
               <th></th>
             </tr>
           </thead>
@@ -25,8 +23,10 @@
             <tr v-for="(doc, index) in filteredDocuments" :key="doc.id">
               <td>{{ index + 1 }}</td>
               <td>{{ doc.code }}</td>
-              <td>{{ doc.name }}</td>
+              <td v-if="type === 'RETURN'">{{ doc.name }}</td>
               <td>{{ doc.date }}</td>
+              <td v-if="type === 'RETURN'">{{ doc.description }}</td>
+              <td v-else-if="type !== 'RETURN'">{{ doc.name }}</td>
               <td>{{ formatCurrency(doc.amount) }}</td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
@@ -177,30 +177,47 @@
     <div class="form-section">
       <div class="section-header">
         <h3 class="section-title">첨부파일</h3>
-        <button class="add-file-button" @click="$emit('add-file')">
-          파일 추가
-        </button>
-      </div>
-      <div v-if="files.length > 0" class="file-list">
-        <div v-for="(file, index) in files" :key="index" class="file-item">
-          <span class="file-name">{{ file.name }}</span>
-          <span class="file-size">{{ formatFileSize(file.size) }}</span>
-          <button
-            class="remove-file-button"
-            @click="$emit('remove-file', index)"
-          >
-            ×
+        <div class="header-buttons">
+          <button class="add-file-button" @click="openFilePicker">
+            파일 추가
           </button>
+          <input
+            type="file"
+            ref="fileInput"
+            multiple
+            @change="handleFileSelect"
+            style="display: none"
+          />
         </div>
       </div>
-      <div v-else class="no-files">
+      <div v-if="formData.files.length === 0" class="no-files-attached">
         <p>첨부된 파일이 없습니다.</p>
+      </div>
+      <div v-else class="file-list">
+        <div
+          v-for="(file, index) in formData.files"
+          :key="index"
+          class="file-item"
+        >
+          <div class="file-info">
+            <div class="file-icon">📄</div>
+            <div class="file-details">
+              <div class="file-name">{{ file.name }}</div>
+              <div class="file-size">{{ formatFileSize(file.size) }}</div>
+            </div>
+          </div>
+          <div class="file-actions">
+            <span class="file-status">완료</span>
+            <button class="remove-file" @click="removeFile(index)">×</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- OrderList 모달 -->
-    <OrderList
+    <!-- 통합 문서 선택 모달 -->
+    <UnifiedDocumentList
       v-if="showOrderListModal"
+      :type="type"
       :isVisible="showOrderListModal"
       @close="showOrderListModal = false"
       @select-documents="handleSelectDocuments"
@@ -225,7 +242,7 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import OrderList from "./modal/OrderList.vue";
+import UnifiedDocumentList from "./modal/UnifiedDocumentList.vue";
 import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
 import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
@@ -253,6 +270,9 @@ const showApprovalLineModal = ref(false);
 const showTemplateModal = ref(false);
 const isSubmitting = ref(false);
 
+// 파일 입력을 위한 ref 추가
+const fileInput = ref(null);
+
 const searchQuery = ref("");
 const formData = ref({
   title: "",
@@ -260,9 +280,15 @@ const formData = ref({
   approvalLines: [],
   files: [],
   approvalDocuments: {
-    categoryType: "ORDER",
     documentIds: [],
   },
+});
+
+const categoryType = computed(() => {
+  if (props.type === "PURCHASE_ORDER") {
+    return "PURCHASE_ORDER";
+  }
+  return props.type;
 });
 
 const documents = ref([]);
@@ -338,25 +364,16 @@ const uploadFiles = async (files) => {
   }
 };
 
-const handleFileSelect = async (event) => {
+const handleFileSelect = (event) => {
   const files = Array.from(event.target.files);
-  try {
-    const uploadedFiles = await uploadFiles(files);
-    uploadedFiles.forEach((uploadedFile) => {
-      formData.value.files.push({
-        name:
-          uploadedFile.originalName ||
-          uploadedFile.name ||
-          extractFilenameFromUrl(uploadedFile.url),
-        size: uploadedFile.size,
-        url: uploadedFile.url,
-        uuid: uploadedFile.uuid,
-      });
+  files.forEach((file) => {
+    formData.value.files.push({
+      name: file.name,
+      size: file.size,
+      file: file,
+      url: "",
     });
-  } catch (error) {
-    console.error("파일 업로드 실패:", error);
-    alert("파일 업로드에 실패했습니다. 다시 시도해주세요.");
-  }
+  });
   emitFormData();
 };
 
@@ -376,14 +393,30 @@ const handleSelectDocuments = (selectedDocuments) => {
       (existing) => existing.id === (doc.id || doc.code)
     );
     if (!existingDoc) {
-      documents.value.unshift({
+      let documentData = {
         id: doc.id || doc.code,
         code: doc.code,
-        name: doc.franchiseName,
         date: formatDate(doc.createdAt),
         amount: doc.totalAmount,
-      });
+      };
 
+      // 결재 유형에 따라 다른 필드 매핑
+      switch (props.type) {
+        case "ORDER":
+          documentData.name = doc.franchiseName;
+          break;
+        case "RETURN":
+          documentData.name = doc.name; // franchiseName -> name 으로 수정
+          documentData.description = doc.description;
+          break;
+        case "PURCHASE_ORDER":
+          documentData.name = doc.supplierName;
+          break;
+        default:
+          documentData.name = doc.franchiseName || doc.name;
+      }
+
+      documents.value.unshift(documentData);
       formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
     }
   });
@@ -432,7 +465,6 @@ watch(
 );
 
 const initializeForm = () => {
-  formData.value.approvalDocuments.documentIds = [1, 2];
   emitFormData();
 };
 
@@ -532,6 +564,7 @@ const handleTempSave = async () => {
     const approvalLines = [];
     let seq = 1;
 
+    // 결재/협조자 순서대로 seq 부여
     approvalAndCollaboratorLines.value.forEach((line) => {
       approvalLines.push({
         userId: line.userId || line.id,
@@ -540,6 +573,7 @@ const handleTempSave = async () => {
       });
     });
 
+    // 수신/참조자는 seq: 0
     formData.value.approvalLines
       .filter((line) => line.type === "RECIPIENT" || line.type === "REFERENCE")
       .forEach((line) => {
@@ -561,7 +595,10 @@ const handleTempSave = async () => {
       isRequest: false,
       approvalLines: approvalLines,
       files: files,
-      approvalDocuments: formData.value.approvalDocuments,
+      approvalDocuments: {
+        ...formData.value.approvalDocuments,
+        categoryType: categoryType.value,
+      },
     };
 
     console.log("임시저장 전송 데이터 확인:", requestData);
@@ -608,6 +645,7 @@ const handleSubmit = async () => {
     const approvalLines = [];
     let seq = 1;
 
+    // 결재/협조자 순서대로 seq 부여
     approvalAndCollaboratorLines.value.forEach((line) => {
       approvalLines.push({
         userId: line.userId || line.id,
@@ -616,6 +654,7 @@ const handleSubmit = async () => {
       });
     });
 
+    // 수신/참조자는 seq: 0
     formData.value.approvalLines
       .filter((line) => line.type === "RECIPIENT" || line.type === "REFERENCE")
       .forEach((line) => {
@@ -637,7 +676,10 @@ const handleSubmit = async () => {
       isRequest: true,
       approvalLines: approvalLines,
       files: files,
-      approvalDocuments: formData.value.approvalDocuments,
+      approvalDocuments: {
+        ...formData.value.approvalDocuments,
+        categoryType: categoryType.value,
+      },
     };
 
     console.log("전송 데이터 확인:", requestData);
@@ -658,6 +700,89 @@ const handleSubmit = async () => {
 
 const handleApproveDocument = (document) => {
   emit("document-approve", document);
+};
+
+// 결재 유형에 따른 동적 컬럼 헤더
+const tableHeaders = computed(() => {
+  switch (props.type) {
+    case "ORDER":
+      return ["No.", "문서번호", "주문일", "가맹점명", "금액"];
+    case "RETURN":
+      return ["No.", "문서번호", "반품일", "반품사유", "금액"];
+    case "PURCHASE_ORDER":
+      return ["No.", "문서번호", "발주일", "공급처명", "금액"];
+    default:
+      return ["No.", "문서번호", "작성일", "작성자", "금액"];
+  }
+});
+
+// 결재 유형에 따른 동적 필드명
+const fieldNames = computed(() => {
+  switch (props.type) {
+    case "ORDER":
+      return {
+        dateField: "createdAt",
+        nameField: "franchiseName",
+        amountField: "totalAmount",
+      };
+    case "RETURN":
+      return {
+        dateField: "createdAt",
+        nameField: "description",
+        amountField: "totalAmount",
+      };
+    case "PURCHASE_ORDER":
+      return {
+        dateField: "createdAt",
+        nameField: "supplierName",
+        amountField: "totalAmount",
+      };
+    default:
+      return {
+        dateField: "createdAt",
+        nameField: "name",
+        amountField: "amount",
+      };
+  }
+});
+
+// 결재 유형에 따른 섹션 제목
+const sectionTitle = computed(() => {
+  switch (props.type) {
+    case "ORDER":
+      return "주문 문서";
+    case "RETURN":
+      return "반품 문서";
+    case "PURCHASE_ORDER":
+      return "발주 문서";
+    default:
+      return "결재 문서";
+  }
+});
+
+// 결재 유형에 따른 문서 테이블 헤더
+const documentTableHeaders = computed(() => {
+  switch (props.type) {
+    case "ORDER":
+      return ["No.", "문서번호", "작성일", "가맹점명", "금액"];
+    case "RETURN":
+      return ["No.", "문서번호", "가맹점명", "작성일", "반품사유", "금액"];
+    case "PURCHASE_ORDER":
+      return ["No.", "문서번호", "작성일", "공급처명", "금액"];
+    default:
+      return ["No.", "문서번호", "작성일", "작성자", "금액"];
+  }
+});
+
+// 파일 선택 창 열기
+const openFilePicker = () => {
+  fileInput.value.click();
+};
+
+// 파일 제거
+const removeFile = (index) => {
+  formData.value.files.splice(index, 1);
+  emitFormData();
 };
 
 defineExpose({
@@ -1080,5 +1205,129 @@ defineExpose({
   color: #9ca3af;
   cursor: not-allowed;
   border-color: #d1d5db;
+}
+
+/* 발주 모달 플레이스홀더 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.modal-header button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-header button:hover {
+  color: #374151;
+}
+
+.modal-body {
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* 파일 첨부 */
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: #f9fafb;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.file-icon {
+  font-size: 24px;
+  margin-right: 12px;
+}
+
+.file-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px; /* ← 길이 제한 */
+}
+
+.file-size {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.file-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-status {
+  font-size: 12px;
+  color: #10b981; /* green */
+  font-weight: 600;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 16px;
 }
 </style>
