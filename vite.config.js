@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 8080, // 배포용 포트번호
+    port: 5173,
   },
   define: {
     'process.env': process.env
