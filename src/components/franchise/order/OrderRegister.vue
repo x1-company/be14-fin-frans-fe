@@ -6,34 +6,41 @@
                 <h2 class="section-title">📦 자재 정보</h2>
             </div>
             <div class="header-right">
-                <button class="recent-order-btn" @click="loadRecentOrder">
-                    📋 최근 주문 불러오기
-                </button>
                 <Outbutton @close="$emit('back-to-list')" />
             </div>
         </div>
 
-        <!-- 검색 영역 -->
-        <div class="search-section">
-            <div class="search-container">
-                <input v-model="searchQuery" @keyup.enter="searchProducts" type="text" placeholder="자재명을 입력하세요"
-                    class="search-input" />
-                <button @click="searchProducts" class="search-btn">검색</button>
-            </div>
+        <div class="actions-container">
+            <!-- 검색 영역 -->
+            <div class="search-section">
+                <div class="search-container">
+                    <input v-model="searchQuery" @keyup.enter="searchProducts" type="text" placeholder="자재명을 입력하세요"
+                        class="search-input" />
+                    <button @click="searchProducts" class="search-btn">검색</button>
+                </div>
 
-            <!-- 검색 결과 드롭다운 -->
-            <div v-if="searchResults.length > 0" class="search-results">
-                <div v-for="product in searchResults" :key="product.id" @click="addToOrderList(product)"
-                    class="search-result-item">
-                    <div class="product-info">
-                        <span class="product-code">{{ product.code }}</span>
-                        <span class="product-name">{{ product.name }}</span>
-                        <span class="product-spec">{{ product.spec }}</span>
-                    </div>
-                    <div class="product-price">
-                        {{ formatPrice(product.sale_price) }}원/{{ product.unit }}
+                <!-- 검색 결과 드롭다운 -->
+                <div v-if="searchResults.length > 0" class="search-results">
+                    <div v-for="product in searchResults" :key="product.id" @click="addToOrderList(product)"
+                        class="search-result-item">
+                        <div class="product-info">
+                            <span class="product-code">{{ product.code }}</span>
+                            <span class="product-name">{{ product.name }}</span>
+                            <span class="product-spec">{{ product.spec }}</span>
+                        </div>
+                        <div class="product-price">
+                            {{ formatPrice(product.sale_price) }}원/{{ product.unit }}
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="right-actions">
+                <button class="recent-order-btn" @click="loadRecentOrder">
+                    📋 최근 주문 불러오기
+                </button>
+                <button class="recent-order-btn" @click="loadOrderTemplate">
+                    📄 주문 템플릿 불러오기
+                </button>
             </div>
         </div>
 
@@ -105,6 +112,13 @@
         <div v-if="isLoading" class="loading-overlay">
             <div class="loading-spinner"></div>
         </div>
+
+        <!-- 주문 템플릿 모달 -->
+        <OrderTemplateModal 
+            :isVisible="isTemplateModalVisible" 
+            @close="isTemplateModalVisible = false"
+            @select-template="handleSelectTemplate"
+        />
     </div>
 </template>
 
@@ -112,10 +126,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from "@/stores/auth.js"
 import Outbutton from './button/Outbutton.vue'
+import OrderTemplateModal from './OrderTemplateModal.vue'
 import api from "@/lib/api"
+import { useToast } from "@/composables/useToast"
 
 const emit = defineEmits(['back-to-list'])
 const auth = useAuthStore()
+const toast = useToast();
 
 // 상태 관리
 const searchQuery = ref('')
@@ -123,6 +140,7 @@ const searchResults = ref([])
 const orderList = ref([])
 const isLoading = ref(false)
 const isSubmitting = ref(false)
+const isTemplateModalVisible = ref(false)
 
 // 검색 디바운스를 위한 타이머
 let searchTimer = null
@@ -153,7 +171,7 @@ const addToOrderList = (product) => {
     if (existingItem) {
         existingItem.quantity += 1
         updateAmount(existingItem)
-        alert('이미 추가된 상품입니다. 수량을 1 증가시켰습니다.')
+        toast.error('이미 추가된 상품입니다. 수량을 1 증가시켰습니다.')
     } else {
         const orderItem = {
             ...product,
@@ -186,12 +204,17 @@ const totalAmount = computed(() => {
 // 주문 등록
 const submitOrder = async () => {
     if (orderList.value.length === 0) {
-        alert('주문할 상품을 추가해주세요.')
+        toast.error('주문할 상품을 추가해주세요.')
         return
     }
 
+    if (orderList.value.some(item => !item.id)) {
+        toast.error('주문 목록에 유효하지 않은 상품이 있습니다. 다시 시도해주세요.');
+        return;
+    }
+
     if (!auth.franchiseId) {
-        alert('가맹점 정보를 찾을 수 없습니다.')
+        toast.error('가맹점 정보를 찾을 수 없습니다.')
         return
     }
 
@@ -206,7 +229,7 @@ const submitOrder = async () => {
         }
 
         await api.post('/api/franchise/orders', orderData)
-        alert('주문이 성공적으로 등록되었습니다.')
+        toast.success('주문이 성공적으로 등록되었습니다.')
 
         // 주문 목록 초기화
         orderList.value = []
@@ -214,7 +237,7 @@ const submitOrder = async () => {
 
     } catch (error) {
         console.error('주문 등록 실패:', error)
-        alert('주문 등록에 실패했습니다. 다시 시도해주세요.')
+        toast.error('주문 등록에 실패했습니다. 다시 시도해주세요.')
     } finally {
         isSubmitting.value = false
     }
@@ -223,6 +246,53 @@ const submitOrder = async () => {
 // 최근 주문 불러오기 (임시)
 const loadRecentOrder = () => {
     alert('최근 주문 불러오기 기능은 준비 중입니다.')
+}
+
+const loadOrderTemplate = () => {
+    isTemplateModalVisible.value = true;
+}
+
+const handleSelectTemplate = async (templateId) => {
+    isTemplateModalVisible.value = false;
+    isLoading.value = true;
+    try {
+        const res = await api.get(`/api/franchise/orders/templates/${templateId}`);
+        const templateProducts = res.data.products;
+
+        const productPromises = templateProducts.map(async (p) => {
+            try {
+                const searchRes = await api.get(`/api/franchise/products/name/${encodeURIComponent(p.name)}`);
+                const matchedProduct = searchRes.data.find(sp => sp.code === p.code);
+                
+                if (matchedProduct) {
+                    return {
+                        ...matchedProduct,
+                        quantity: p.quantity,
+                        totalAmount: matchedProduct.sale_price * p.quantity,
+                    };
+                }
+                return null;
+            } catch (searchError) {
+                console.error(`Error fetching details for product ${p.name}:`, searchError);
+                return null;
+            }
+        });
+
+        const fullProductDetails = (await Promise.all(productPromises)).filter(p => p !== null);
+
+        if (fullProductDetails.length !== templateProducts.length) {
+            toast.error('일부 자재 정보를 불러오지 못했습니다. 목록을 확인해주세요.');
+        }
+
+        orderList.value = fullProductDetails;
+        toast.success('템플릿을 성공적으로 불러왔습니다. 주문 목록을 확인해주세요.');
+
+    } catch (error) {
+        console.error(`Failed to fetch template details for id ${templateId}:`, error);
+        toast.error('템플릿 상세 정보를 불러오는 데 실패했습니다.');
+    } finally {
+        isLoading.value = false;
+    }
 }
 
 // 가격 포맷팅
@@ -275,8 +345,9 @@ onMounted(() => {
 
 .section-title {
     margin: 0;
+    /* margin: -50px 0 0 -20px; */
     color: #212529;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
 }
 
@@ -289,10 +360,10 @@ onMounted(() => {
     background: #f8f9fa;
     color: #212529;
     border: 1px solid #dee2e6;
-    padding: 8px 16px;
+    padding: 6px 13px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     transition: background-color 0.2s;
 }
@@ -301,18 +372,30 @@ onMounted(() => {
     background: #e9ecef;
 }
 
+.actions-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.right-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .recent-order-btn {
-    padding: 8px 18px;
-    border-radius: 8px;
+    padding: 6px 13px;
+    border-radius: 6px;
     border: 1px solid #e0e0e0;
     background: #fff;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s, color 0.15s, border 0.15s;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     color: #1976d2;
     border-color: #bbdefb;
 }
@@ -323,7 +406,7 @@ onMounted(() => {
 
 .search-section {
     position: relative;
-    margin-bottom: 24px;
+    /* margin-bottom: 24px; */ /* actions-container로 이동 */
 }
 
 .search-container {
