@@ -38,7 +38,7 @@ const router = createRouter({
 
         // 토큰이 있지만 유효하지 않은 경우 정리
         if (authStore.accessToken && !authStore.decodedToken) {
-          console.log('유효하지 않은 토큰 발견, 정리 중...');
+          console.log("유효하지 않은 토큰 발견, 정리 중...");
           authStore.clearAccessToken();
           notificationStore.reset();
           notificationService.cleanup();
@@ -48,16 +48,16 @@ const router = createRouter({
         if (authStore.accessToken && authStore.decodedToken) {
           // 사용자 타입에 따라 리다이렉트
           if (authStore.franchiseId) {
-            next('/franchise');
+            next("/franchise");
           } else if (authStore.supplierId) {
-            next('/supplier');
+            next("/supplier");
           } else {
-            next('/approval'); // 추후 부서에 따라 수정 필요함
+            next("/approval"); // 추후 부서에 따라 수정 필요함
           }
         } else {
           next();
         }
-      }
+      },
     },
     {
       path: "/password-change",
@@ -81,6 +81,12 @@ const router = createRouter({
       props: true,
     },
     {
+      path: "/approval/register/:approvalId?",
+      name: "approval-register",
+      component: ApprovalListView,
+      props: true,
+    },
+    {
       path: "/warehouse",
       name: "warehouse",
       component: WarehouseInfoView,
@@ -97,8 +103,8 @@ const router = createRouter({
       component: WarehouseInfoView,
     },
     {
-      path: '/hq/franchise',
-      name: 'FranchiseManagement',
+      path: "/hq/franchise",
+      name: "FranchiseManagement",
       component: FranchiseManagePage,
     },
     {
@@ -120,13 +126,14 @@ const router = createRouter({
     {
       path: "/purchase/register",
       name: "PurchaseRegister",
-      component: () => import('@/views/hq/purchase/PurchaseRegisterView.vue')
+      component: () => import("@/views/hq/purchase/PurchaseRegisterView.vue"),
     },
     {
       path: "/purchase/detail/:id",
       name: "PurchaseRequestDetail",
-      component: () => import('@/components/hq/purchase/PurchaseRequestDetail.vue'),
-      props: true
+      component: () =>
+        import("@/components/hq/purchase/PurchaseRequestDetail.vue"),
+      props: true,
     },
     {
       path: "/franchise",
@@ -142,18 +149,22 @@ const router = createRouter({
     {
       path: "/supplier",
       name: "supplier",
-      component: () => import('@/views/auth/supplier/SupplierEntryPoint.vue'),
+      component: () => import("@/views/auth/supplier/SupplierEntryPoint.vue"),
     },
     {
-      path: '/hq/user/info',
-      name: 'HqUserInfo',
-      component: () => import('@/views/hq/user/InfoView.vue')
+      path: "/hq/user/info",
+      name: "HqUserInfo",
+      component: () => import("@/views/hq/user/InfoView.vue"),
     },
-    ...(import.meta.env.DEV ? [{
-      path: "/test-notification",
-      name: "test-notification",
-      component: TestNotificationView,
-    }] : [])
+    ...(import.meta.env.DEV
+      ? [
+          {
+            path: "/test-notification",
+            name: "test-notification",
+            component: TestNotificationView,
+          },
+        ]
+      : []),
   ],
 });
 
@@ -162,11 +173,11 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
 
   // 로그인 페이지가 아닌 경우에만 인증 확인
-  if (to.name !== 'login' && to.name !== 'password-change') {
+  if (to.name !== "login" && to.name !== "password-change") {
     // 토큰이 없거나 유효하지 않은 경우 로그인 페이지로 리다이렉트
     if (!authStore.accessToken || !authStore.decodedToken) {
-      console.log('인증되지 않은 접근, 로그인 페이지로 리다이렉트');
-      next('/login');
+      console.log("인증되지 않은 접근, 로그인 페이지로 리다이렉트");
+      next("/login");
       return;
     }
   }

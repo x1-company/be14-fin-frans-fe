@@ -2,13 +2,18 @@
   <div class="info-form">
     <div class="approval-form-container">
       <!-- 결재 유형 선택 컴포넌트 -->
-      <ApprovalTypeSelector @type-selected="handleTypeSelected" />
+      <ApprovalTypeSelector
+        @type-selected="handleTypeSelected"
+        :initial-type="selectedType"
+      />
 
       <!-- 선택된 유형에 따른 폼 컴포넌트 -->
       <OrderApprovalForm
         v-if="selectedType === 'ORDER'"
         type="ORDER"
         ref="orderFormRef"
+        :initial-data="editData"
+        :is-edit-mode="!!props.approvalId"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
       />
@@ -17,6 +22,8 @@
         v-if="selectedType === 'RETURN'"
         type="RETURN"
         ref="returnFormRef"
+        :initial-data="editData"
+        :is-edit-mode="!!props.approvalId"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
       />
@@ -25,6 +32,8 @@
         v-if="selectedType === 'PURCHASE'"
         type="PURCHASE_ORDER"
         ref="purchaseFormRef"
+        :initial-data="editData"
+        :is-edit-mode="!!props.approvalId"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
       />
@@ -73,11 +82,13 @@ const emit = defineEmits([
 
 const props = defineProps({
   selectedTemplate: { type: Object, default: null },
+  approvalId: { type: [String, Number], default: null },
 });
 
 // 상태 관리
 const selectedType = ref("ORDER");
 const isSubmitting = ref(false);
+const editData = ref(null);
 
 // 폼 참조
 const orderFormRef = ref(null);
@@ -95,6 +106,7 @@ const formData = ref({
     categoryType: "ORDER",
     documentIds: [],
   },
+  signUrl: "",
   // 추가 필드들
   returnReason: "",
   detailedReason: "",
@@ -169,6 +181,7 @@ const resetFormData = () => {
       categoryType: selectedType.value,
       documentIds: [],
     },
+    signUrl: "",
     returnReason: "",
     detailedReason: "",
     supplierName: "",
@@ -334,7 +347,26 @@ const handleCancel = () => {
 };
 
 // 컴포넌트 마운트 시 초기화
-onMounted(() => {
+onMounted(async () => {
+  if (props.approvalId) {
+    try {
+      const response = await api.get(
+        `/api/hq/approvals/draft/${props.approvalId}`
+      );
+      if (response.status === 200 && response.data?.data) {
+        editData.value = response.data.data;
+        // 결재 유형 동기화
+        const categoryType = editData.value.approvalDocuments?.categoryType;
+        if (categoryType) {
+          selectedType.value =
+            categoryType === "PURCHASE_ORDER" ? "PURCHASE" : categoryType;
+        }
+      }
+    } catch (error) {
+      showToast.error("임시저장 데이터를 불러오지 못했습니다.");
+    }
+  }
+
   // 초기 문서 ID 설정
   formData.value.approvalDocuments.documentIds = [1, 2];
 

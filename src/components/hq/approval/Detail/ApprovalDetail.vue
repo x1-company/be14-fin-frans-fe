@@ -111,7 +111,7 @@
           "
           class="order-section"
         >
-          <h2 class="section-title">주문 내역</h2>
+          <h2 class="section-title">{{ getHistorySectionTitle() }}</h2>
           <div class="order-table-container">
             <table class="order-table">
               <thead>
@@ -289,8 +289,7 @@ const isCurrentUserTurn = computed(() => {
 // 알림 메시지 정보
 const noticeInfo = computed(() => {
   if (!currentUserLine.value) return null;
-  const typeText =
-    currentUserLine.value.userType === "APPROVER" ? "결재" : "협조";
+  const typeText = currentUserLine.value.type === "APPROVER" ? "결재" : "협조";
   return {
     line: currentUserLine.value,
     typeText,
@@ -380,6 +379,29 @@ onMounted(() => {
   fetchApprovalLine();
   fetchDocumentContent();
 });
+
+// 주문 내역 섹션 제목 계산
+const getHistorySectionTitle = () => {
+  // 디버깅을 위한 로그 추가
+  console.log("document props:", props.document);
+  console.log("approvalDocuments:", props.document?.approvalDocuments);
+  console.log("categoryType:", props.document?.approvalDocuments?.categoryType);
+
+  // 결재 유형에 따라 다른 제목 반환
+  const categoryType = props.document?.approvalDocuments?.categoryType;
+
+  switch (categoryType) {
+    case "ORDER":
+      return "주문 내역";
+    case "RETURN":
+      return "반품 내역";
+    case "PURCHASE_ORDER":
+      return "발주 내역";
+    default:
+      console.log("기본값 '주문 내역' 반환, categoryType:", categoryType);
+      return "주문 내역";
+  }
+};
 </script>
 
 <style scoped>
