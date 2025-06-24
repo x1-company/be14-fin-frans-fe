@@ -3,7 +3,7 @@
       <div class="info-section">
         <div class="info-section__header purchase-header">
           <span class="purchase-title">구매 요청 목록</span>
-          <button class="register-btn">등록</button>
+          <button class="register-btn" @click="goToRegister">등록</button>
         </div>
         
         <div class="purchase-filters">
@@ -54,9 +54,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, idx) in purchaseList" :key="row.id">
+              <tr v-for="(row, idx) in purchaseList" :key="row.id" @click="goToDetail(row.id)" class="purchase-row">
                 <td>{{ (currentPage - 1) * 10 + idx + 1 }}</td>
-                <td><a href="#" class="purchase-link">{{ row.requestNo }}</a></td>
+                <td>
+                  <span class="purchase-link">{{ row.requestNo }}</span>
+                </td>
                 <td>{{ row.title }}</td>
                 <td>{{ row.manager }}</td>
                 <td>
@@ -89,6 +91,7 @@
   import { ref, onMounted, watch } from 'vue';
   import api from '@/lib/api';
   import { Search as SearchIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
+  import { useRouter } from 'vue-router';
   
   const tabLabels = [
     '전체',
@@ -115,6 +118,7 @@
   const error = ref(null);
   const currentPage = ref(1);
   const totalPages = ref(1);
+  const router = useRouter();
   
   function changeTab(idx) {
     activeTab.value = idx;
@@ -202,6 +206,14 @@
   function handleSearch() {
     currentPage.value = 1;
     fetchData();
+  }
+  
+  function goToRegister() {
+    router.push('/purchase/register');
+  }
+  
+  function goToDetail(id) {
+    router.push(`/purchase/detail/${id}`);
   }
   
   watch(() => activeTab.value, () => {
@@ -475,5 +487,12 @@
     background-color: #6a7bff;
     color: white;
     border-color: #6a7bff;
+  }
+  
+  .purchase-row {
+    cursor: pointer;
+  }
+  .purchase-row:hover {
+    background: #f3f4f6;
   }
   </style>
