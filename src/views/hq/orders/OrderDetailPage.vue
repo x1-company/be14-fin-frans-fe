@@ -29,7 +29,6 @@
   <!-- 로딩 상태 -->
   <div v-if="loading" class="loading-container">
     <div class="spinner"></div>
-    <p>로딩 중</p>
   </div>
 </template>
 
