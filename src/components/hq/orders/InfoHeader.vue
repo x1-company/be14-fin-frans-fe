@@ -36,15 +36,17 @@
     /* margin: 10px 30px 0px 30px; */
     background: #4066fa;
     border-radius: 12px 12px 0 0;
-    padding: 28px 0px 0 0px;
+    padding: 5px 0 0 0;
+    font-size: 0.9rem;
     color: #fff;
     position: relative;
   }
   .info-header__title {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     padding-left: 32px; /* info-form과 같은 패딩으로 정렬 */
     font-weight: bold;
-    margin-bottom: 24px;
+    margin-top: 17px;
+    margin-bottom: 20px;
   }
   .info-header__edit-button {
     background: none;
@@ -64,9 +66,8 @@
   }
   .info-header__desc {
     background: #3453c7;
-    padding: 12px 0 12px 30px;
-    border-radius: 0 0 0 0;
-    margin-bottom: 0;
+    padding: 8px 0 8px 30px;
+    margin-top: -5px;
   }
   .info-header__tabs {
     position: absolute;
@@ -81,7 +82,8 @@
   }
   .info-header__tab {
     color: #bfcfff;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
+    margin-top: 10px;
     cursor: pointer;
     font-weight: 500;
     transition: color 0.2s, font-weight 0.2s;
