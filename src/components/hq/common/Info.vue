@@ -20,10 +20,16 @@
                 <!-- 월별 주문금액 통계 그래프 (가맹점별/월별) -->
                 <div v-if="activeTabSwitch === 0" class="stats-graph-section">
                     <div class="stats-graph-card">
-                        <h3>월별 주문 금액 총액</h3>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <h3 style="margin:0;">월별 주문 금액 총액</h3>
+                            <button @click="toggleTrend" :class="['trend-btn', {active: trendVisible}]">
+                                {{ trendVisible ? '동향 닫기' : '동향 보기' }}
+                            </button>
+                        </div>
                         <FranchiseOrderAmountBar 
                             v-if="props.selectedFranchiseId"
                             :chart-data="orderAmountChartData"
+                            :trend-visible="trendVisible"
                         />
                         <OrderAmountBarChart 
                             v-else
@@ -224,6 +230,11 @@ const orderAmountChartData = ref([])
 
 const selectedYear = ref(new Date().getFullYear())
 const selectedMonth = ref(new Date().getMonth() + 1)
+
+const trendVisible = ref(false)
+function toggleTrend() {
+  trendVisible.value = !trendVisible.value
+}
 
 function handleMonthChange(month) {
   selectedMonth.value = month
@@ -451,5 +462,21 @@ async function fetchDashboardStats() {
     padding: 24px;
     border-radius: 8px;
     box-shadow: 0 2px 16px 0 rgba(64, 102, 250, 0.06);
+}
+
+.trend-btn {
+  background: #e6f0fa;
+  color: #1a6ed8;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 18px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.trend-btn.active {
+  background: #1a6ed8;
+  color: #fff;
 }
 </style>
