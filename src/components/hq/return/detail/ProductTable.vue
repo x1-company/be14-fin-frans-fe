@@ -17,20 +17,30 @@
           <th>자재 분류</th>
           <th>자재 구분</th>
           <th>자재 속성</th>
+          <th>반품 타입</th>
+          <th>반품 상태</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(p, idx) in products" :key="p.id">
+        <tr v-for="(p, idx) in returnProducts" :key="p.returnDetailId">
           <td>{{ idx + 1 }}</td>
-          <td class="link">{{ p.code }}</td>
-          <td>{{ p.name }}</td>
-          <td>{{ p.purchasePrice.toLocaleString() }}원</td>
-          <td>{{ p.quantity }}</td>
+          <td class="link">{{ p.productCode }}</td>
+          <td>{{ p.productName }}</td>
+          <td>{{ p.salePrice.toLocaleString() }}원</td>
+          <td>{{ p.returnQuantity }}</td>
           <td>{{ p.purchaseUnit }}</td>
           <td>{{ p.spec }}</td>
-          <td><span class="badge blue">{{ p.productTypeName }}</span></td>
-          <td><span class="badge purple">{{ p.productGroupName }}</span></td>
-          <td><span class="badge green">{{ p.productAttributeName }}</span></td>
+          <td><span class="badge blue">{{ getTypeName(p.productTypeId) }}</span></td>
+          <td><span class="badge purple">{{ getGroupName(p.productGroupId) }}</span></td>
+          <td><span class="badge green">{{ getAttributeName(p.productAttributeId) }}</span></td>
+          <td>{{ getReturnType(p.returnType) }}</td>
+          <td>
+            <select v-model="p.returnStatus" class="select">
+              <option disabled value="">선택</option>
+              <option value="APPROVED">승인</option>
+              <option value="REJECTED">반려</option>
+            </select>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -43,22 +53,73 @@
 
 <script setup>
 import { computed } from 'vue';
+
 const props = defineProps({
-  products: Array,
+  returnProducts: Array,
   totalAmount: Number
 });
+
 const totalQuantity = computed(() =>
-  props.products?.reduce((sum, p) => sum + p.quantity, 0) ?? 0
+  props.returnProducts?.reduce((sum, p) => sum + p.returnQuantity, 0) ?? 0
 );
+
+// 자재 분류
+const getTypeName = (id) => {
+  switch (id) {
+    case 1: return '원재료';
+    case 2: return '소모품';
+    case 3: return '상품';
+    default: return '-';
+  }
+};
+
+// 자재 구분
+const getGroupName = (id) => {
+  switch (id) {
+    case 1: return '상온';
+    case 2: return '냉장';
+    case 3: return '냉동';
+    default: return '-';
+  }
+};
+
+// 자재 속성
+const getAttributeName = (id) => {
+  switch (id) {
+    case 1: return '비신선식품';
+    case 2: return '신선식품';
+    case 3: return '비식품';
+    default: return '-';
+  }
+};
+
+// 반품 타입
+const getReturnType = (type) => {
+  switch (type) {
+    case 'BAD_QUALITY': return '품질 불량';
+    case 'OVER_QUANTITY': return '수량 이상';
+    case 'DAMAGED': return '파손';
+    case 'ETC': return '기타';
+    default: return '-';
+  }
+};
 </script>
 
 <style scoped>
+.select {
+  padding: 6px 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background-color: #fff;
+}
+
 .product-card {
   border: 1px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
   padding: 32px 24px;
-  margin: 20px 0 10px -20px;     /* 위치 변경 */
+  margin: 20px 0 10px -20px;
   margin-bottom: 24px;
   background: #fff;
   max-width: 100%;

@@ -25,8 +25,9 @@
                         :franchiseId="franchiseId" 
                         :selectedFranchiseId="selectedFranchiseId"
                         @show-order-detail="handleShowOrderDetail"/>
-                        <div v-if="activeTabSwitch === 2 && orderDetailId">
-딩 중...                     <div v-if="loading">로딩 중...</div>
+
+                        <div v-if="activeTabSwitch === 2 && orderDetailId">                  
+                        <div v-if="loading"></div>
                             <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
                             <div v-else>
                                 <!-- 상세 컴포넌트들 -->
@@ -57,10 +58,10 @@
                         v-if="activeTabSwitch === 3 && !returnDetailId"
                         :franchiseId="franchiseId" 
                         :selectedFranchiseId="selectedFranchiseId"
-                        @selectReturn="handleShowReturnDetail"
+                        @select-return="handleShowReturnDetail"
                     />
                     <div v-if="activeTabSwitch === 3 && returnDetailId">
-                        <div v-if="returnLoading">로딩 중...</div>
+                        <div v-if="returnLoading"></div>
                         <div v-else-if="!returnDetail">반품 상세 데이터를 불러올 수 없습니다.</div>
                         <div v-else>
                             <!-- 반품 상세 컴포넌트들 -->
@@ -76,13 +77,13 @@
                                 }"
                                 @refreshReturn="fetchReturnDetail"
                                 @close="handleReturnBackToList"
-                            />
+                            />                                                                                                                                                                                                                                                                                 
                             <ReturnProgressBar :status="returnDetail?.status" />
                             <ReturnFranchiseInfoCard :returnData="returnDetail" />
                             <ReturnInfoCard :returnData="returnDetail" />
                             <ProductTable :products="returnDetail?.products" :totalAmount="returnDetail?.totalAmount" />
-                            <DeliveryInfoCard :returnData="returnDetail" />
-                            <ApprovalInfoCard :returnData="returnDetail" />
+                            <!-- <DeliveryInfoCard :returnData="returnDetail" />
+                            <ApprovalInfoCard :returnData="returnDetail" /> -->
                         </div>
                     </div>
                 </div>
@@ -90,6 +91,7 @@
         </div>
     </div>
     </div>
+
 </template>
 
 <script setup>
@@ -179,6 +181,9 @@ const desc = computed(() => {
     if (activeTabSwitch.value === 2 && showOrderRegister.value) {
         return "주문할 자재를 등록할 수 있습니다."
     }
+    if (activeTabSwitch.value === 2 && orderDetailId.value) {
+    return "주문의 상세 내역을 확인합니다.";
+  }
     return tabInfo.value[activeTabSwitch.value]?.desc || '대시보드입니다.'
 })
 
@@ -220,6 +225,8 @@ watch(orderDetailId, fetchOrderDetail)
 function handleShowOrderDetail(orderId) {
     orderDetailId.value = orderId;
 }
+
+
 function handleBackToList() {
     orderDetailId.value = null;
 }

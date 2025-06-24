@@ -1,6 +1,8 @@
 <template>
   <nav class="navbar">
-    <div class="navbar__logo">FRANS</div>
+    <div class="navbar__logo">
+      <img src="@/assets/FRANS_bar_logo.png" alt="FRANS Logo" style="height: 28px;" />
+    </div>
     <div class="navbar__right">
       <ul class="navbar__menu">
         <li :class="{ active: activeMenu === '대시보드' }" @click="selectMenuItem('대시보드')">대시보드</li>
@@ -119,16 +121,11 @@ onUnmounted(() => {
   justify-content: space-between;
   background: #4066fa;
   color: #fff;
-  padding: 0 32px;
+  padding: 0 15px;
   height: 38px;
   font-family: "NanumSquareOTF", sans-serif;
 }
-.navbar__logo {
-  font-size: 1.0rem;
-  font-weight: bold;
-  letter-spacing: 2px;
-  min-width: 120px;
-}
+
 .navbar__right {
   display: flex;
   align-items: center;

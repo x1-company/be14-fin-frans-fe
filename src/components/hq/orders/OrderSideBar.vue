@@ -181,6 +181,12 @@ function handleFranchiseClick(franchise) {
   height: 18px;
 }
 
+.sidebar__info-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+}
+
 .add-btn {
   margin-left: auto;
   background: none;
