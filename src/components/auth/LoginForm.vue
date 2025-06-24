@@ -43,8 +43,8 @@ const handleLogin = async () => {
         // 로그인 성공 후 SSE 연결 및 알림 로드
         try {
           console.log("로그인 성공, SSE 연결 시작...");
-          await notificationService.connect();
-          console.log("SSE 연결 성공.");
+          notificationService.connect();
+          console.log("SSE 연결 요청 전송 완료.");
           await notificationService.fetchNotifications();
           console.log("초기 알림 목록 로드 완료.");
         } catch (sseError) {
