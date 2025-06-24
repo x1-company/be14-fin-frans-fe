@@ -53,5 +53,11 @@ const initializeNotifications = async () => {
 
 // 라우터가 준비된 후, 즉 모든 초기화가 완료된 후 알림 초기화 실행
 router.isReady().then(() => {
-  initializeNotifications();
+  const authStore = useAuthStore();
+
+  if (authStore.accessToken && authStore.decodedToken) {
+    initializeNotifications(); // ✅ 로그인 상태에서만
+  } else {
+    console.log("초기 알림 초기화 생략: 로그인 상태가 아님");
+  }
 });
