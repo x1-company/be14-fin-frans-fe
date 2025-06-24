@@ -90,12 +90,7 @@
   import { useRouter } from 'vue-router';
   
   const tabLabels = [
-    '전체',
-    '대기 중인 구매 요청 목록',
-    '진행중인 구매 요청 목록',
-    '완료된 구매 요청 목록',
-    '취소된 구매 요청 목록',
-    '반려된 구매 요청 목록'
+    '전체'
   ];
   const activeTab = ref(0);
   const dateFilter = ref('30');
