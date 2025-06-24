@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import notificationService from '@/lib/notificationService';
 
 const emit = defineEmits(['account-locked'])
 
@@ -38,6 +39,17 @@ const handleLogin = async () => {
       const accessToken = response.headers.get('Authorization')
       if (accessToken) {
         authStore.setAccessToken(accessToken.replace('Bearer ', ''))
+
+        // 로그인 성공 후 SSE 연결 및 알림 로드
+        try {
+          console.log("로그인 성공, SSE 연결 시작...");
+          await notificationService.connect();
+          console.log("SSE 연결 성공.");
+          await notificationService.fetchNotifications();
+          console.log("초기 알림 목록 로드 완료.");
+        } catch (sseError) {
+          console.error("SSE 연결 또는 알림 로드 실패(로그인 계속 진행):", sseError);
+        }
       }
 
       if (result.needChangePassword) {
