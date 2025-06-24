@@ -132,14 +132,14 @@ onUnmounted(() => {
 .navbar__menu li {
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 400;
-  color: #e6eaff;
+  font-weight: 500;
+  color: #d2d2d2;
   padding: 0 12px;
-  transition: color 0.2s, font-weight 0.2s;
+  /* transition: color 0.2s; */
 }
 .navbar__menu li:hover {
   color: #fff;
-  font-weight: bold;
+  font-weight: 1000;
 }
 .notification-icon {
   width: 23px;
