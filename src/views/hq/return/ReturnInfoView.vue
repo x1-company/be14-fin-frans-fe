@@ -27,19 +27,16 @@ function handleSelectReturn(returnId) {
 </script>
 
 <style scoped>
-.app {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-.main-container {
-  flex: 1;
-  display: flex;
-  background: #f8f9fa;
-  overflow: auto;
-  max-width: 1800px;
-  width: 100%;
-  margin: 0 auto;
-}
-</style>
+  .app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .main-container {
+    flex: 1;
+    display: flex;
+    background: #f8f9fa;
+    overflow: auto;
+  }
+  </style> 

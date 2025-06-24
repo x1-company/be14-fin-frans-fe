@@ -52,9 +52,9 @@
             <tr v-for="(order, idx) in orders" :key="order.orderId">
               <td>{{ idx + 1 + (page-1)*pageSize }}</td>
               <td>
-                <router-link :to="`/franchise/orders/${order.orderId}`" class="order-link">
+                <a href="#" class="order-link" @click.prevent="showOrderDetail(order.orderId)">
                   {{ order.orderCode }}
-                </router-link>
+                </a>
               </td>
               <td>{{ order.productSummary }}</td>
               <td><span :class="['order-status', orderStatusClass(order.status)]">{{ statusText(order.status) }}</span></td>
@@ -83,13 +83,17 @@
   
   <script setup>
   import { ref, computed, watch, onMounted } from 'vue';
-  import { RouterLink } from 'vue-router';
   import Datepicker from '@vuepic/vue-datepicker';
   import '@vuepic/vue-datepicker/dist/main.css';
   import api from '@/lib/api';
   import OrderRegisterButton from './button/OrderRegisterButton.vue';
 
-  const emit = defineEmits(['show-register-view']);
+  const props = defineProps({
+    franchiseId: [String, Number],
+    selectedFranchiseId: [String, Number],
+  });
+
+  const emit = defineEmits(['show-register-view', 'show-order-detail']);
 
   const orders = ref([]);
   const search = ref('');
@@ -205,6 +209,10 @@
 
   watch(page, fetchOrders);
   onMounted(fetchOrders);
+
+  const showOrderDetail = (orderId) => {
+    emit('show-order-detail', orderId);
+  }
 </script>
 
   
