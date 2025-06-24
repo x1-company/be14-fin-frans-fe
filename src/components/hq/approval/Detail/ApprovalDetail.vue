@@ -224,6 +224,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
 import api from "@/lib/api";
 import ApprovalLineDetail from "./ApprovalLineDetail.vue";
 import ApprovalActionButtons from "./ApprovalActionButtons.vue";
@@ -233,11 +234,16 @@ import { useAuthStore } from "@/stores/auth";
 const activeTab = ref("document"); // 'document' or 'approvalLine'
 
 const emit = defineEmits(["close-detail", "approve", "reject", "refresh-list"]);
+const router = useRouter();
 
 const props = defineProps({
   document: {
     type: Object,
     required: true,
+  },
+  approvalId: {
+    type: [String, Number],
+    required: false,
   },
   isCurrentUserTurn: {
     type: Boolean,
@@ -255,35 +261,28 @@ const currentUserId = computed(() => authStore.userId);
 const currentUserName = computed(() => authStore.userName);
 const currentUserDutyName = computed(() => authStore.dutyName);
 
-// 🚀 수정 포인트: computed 이름 변경
-const computedIsCurrentUserTurn = computed(() => {
-  if (props.isCurrentUserTurn !== null) {
-    return props.isCurrentUserTurn;
-  }
-
-  if (!props.document || !currentUserId.value) {
-    return false;
-  }
-  return props.document.lines?.some(
-    (line) => line.id === currentUserId.value && line.status === "WAITING"
+// 현재 사용자가 결재선에서 APPROVER/COOPERATOR + WAITING 인지 체크
+const currentUserLine = computed(() => {
+  if (!props.document?.lines || !currentUserId.value) return null;
+  return props.document.lines.find(
+    (line) =>
+      String(line.id) === String(currentUserId.value) &&
+      (line.userType === "APPROVER" || line.userType === "COOPERATOR") &&
+      line.status === "WAITING"
   );
 });
 
-// 결재 요청 알림 정보 (현재 사용자 차례일 때만 표시)
+// 알림 메시지 및 버튼 노출 여부
+const isCurrentUserTurn = computed(() => !!currentUserLine.value);
+
+// 알림 메시지 정보
 const noticeInfo = computed(() => {
-  if (!computedIsCurrentUserTurn.value) {
-    return null;
-  }
-  const userLine = props.document.lines?.find(
-    (line) => line.id === currentUserId.value && line.status === "WAITING"
-  );
-  if (!userLine) {
-    return null;
-  }
-  const typeText = userLine.type === "APPROVER" ? "결재" : "협조";
+  if (!currentUserLine.value) return null;
+  const typeText =
+    currentUserLine.value.userType === "APPROVER" ? "결재" : "협조";
   return {
-    line: userLine,
-    typeText: typeText,
+    line: currentUserLine.value,
+    typeText,
   };
 });
 
@@ -317,7 +316,7 @@ const fetchDocumentContent = async () => {
 
 // 뒤로가기
 const goBack = () => {
-  emit("close-detail");
+  router.back();
 };
 
 // 날짜 포맷팅
@@ -366,8 +365,14 @@ const getDocumentStatusClass = (status) => {
 
 // 컴포넌트 마운트 시 데이터 로드
 onMounted(() => {
+  activeTab.value = "document"; // Always show document tab first
   fetchApprovalLine();
   fetchDocumentContent();
+  console.log("ApprovalDetail 디버깅:", {
+    document: props.document,
+    userId: authStore.userId,
+    lines: props.document?.lines,
+  });
 });
 </script>
 
