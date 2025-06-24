@@ -23,7 +23,6 @@
       <!-- Subtitle and Save Button -->
       <div class="modal-subheader">
         <p class="modal-subtitle">저장된 결재선 템플릿을 선택하세요</p>
-        <button class="save-current-btn">현재 결재선 저장</button>
       </div>
 
       <!-- Template List -->
@@ -171,22 +170,6 @@ const saveCurrentTemplate = () => {
   font-size: 16px;
   color: #6b7280;
   margin: 0;
-}
-
-.save-current-btn {
-  background: white;
-  border: 1px solid #d1d5db;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.save-current-btn:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
 }
 
 /* Template List */
