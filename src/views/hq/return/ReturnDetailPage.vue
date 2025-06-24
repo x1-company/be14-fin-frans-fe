@@ -79,8 +79,8 @@
   onMounted(fetchReturnDetail);
   </script>
   
-  <style scoped>
- <style scoped>
+<style scoped>
+
 .main-container {
   flex: 1;
   display: flex;
