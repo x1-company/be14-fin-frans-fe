@@ -21,11 +21,13 @@ class NotificationService {
 
     // 이미 연결 중이거나 연결되어 있으면 중단
     if (this.isConnecting || this.isConnected) {
+      console.log('SSE 이미 연결 중이거나 연결됨, 중단');
       return;
     }
 
     // 토큰이 없거나 유효하지 않으면 연결하지 않음
     if (!authStore.accessToken || !authStore.decodedToken) {
+      console.log('SSE 연결 실패: 토큰이 없거나 유효하지 않음');
       return;
     }
 
@@ -35,15 +37,21 @@ class NotificationService {
       // 기존 연결 해제
       this.disconnect();
 
-      // 마지막 이벤트 ID 가져오기 (로컬 스토리지에서)
-      const lastEventId = localStorage.getItem('lastEventId') || '';
+      // 마지막 이벤트 ID 가져오기 (사용자별로 구분)
+      const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
+      const lastEventIdKey = `lastEventId_${currentUserId}`;
+      const lastEventId = localStorage.getItem(lastEventIdKey) || '';
 
       // AbortController 생성
       this.abortController = new AbortController();
 
-      const url = `http://localhost:8080/api/notification/subscribe?lastEventId=${lastEventId}`;
+      // 환경변수에서 API URL 가져오기 (개발/배포 환경 구분)
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const url = `${API_BASE_URL}/api/notification/subscribe?lastEventId=${lastEventId}`;
 
       console.log('SSE 연결 시도:', url);
+      console.log('현재 사용자 ID:', currentUserId);
+      console.log('마지막 이벤트 ID:', lastEventId);
 
       // fetch API를 사용한 SSE 연결
       const response = await fetch(url, {
@@ -74,7 +82,7 @@ class NotificationService {
       const decoder = new TextDecoder();
 
       // 스트림 처리
-      this.processStream(reader, decoder, notificationStore);
+      this.processStream(reader, decoder, notificationStore, currentUserId);
 
     } catch (error) {
       this.isConnecting = false;
@@ -95,10 +103,11 @@ class NotificationService {
   }
 
   // 스트림 처리
-  async processStream(reader, decoder, notificationStore) {
+  async processStream(reader, decoder, notificationStore, currentUserId) {
     try {
       let buffer = '';
       const authStore = useAuthStore();
+      const lastEventIdKey = `lastEventId_${currentUserId}`;
       
       console.log('SSE 스트림 처리 시작');
       
@@ -175,7 +184,7 @@ class NotificationService {
           // id: 라인 처리
           else if (line.trim().startsWith('id:')) {
             const eventId = line.substring(line.indexOf('id:') + 3).trim();
-            localStorage.setItem('lastEventId', eventId);
+            localStorage.setItem(lastEventIdKey, eventId);
           } 
           // event: 라인 처리
           else if (line.trim().startsWith('event:')) {

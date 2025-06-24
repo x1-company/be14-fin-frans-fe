@@ -67,7 +67,13 @@ const handleNotificationNavigation = (notification) => {
         console.log('주문 페이지로 이동');
         break;
       case 'APPROVAL_REQUEST':
-        console.log('결재 페이지로 이동');
+        // 결재 요청 알림인 경우 해당 결재 상세 페이지로 이동
+        if (notification.approvalId) {
+          router.push(`/approval/${notification.approvalId}`);
+        } else {
+          // approvalId가 없는 경우 결재 목록 페이지로 이동
+          router.push('/approval');
+        }
         break;
       case 'LOW_STOCK':
         console.log('재고 페이지로 이동');
