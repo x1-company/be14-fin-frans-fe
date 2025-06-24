@@ -101,11 +101,12 @@ class NotificationService {
     }
   }
 
-  // 알림 목록 조회
-  async getNotifications(page, size) {
+  // 알림 목록 조회 및 스토어 업데이트
+  async fetchNotifications() {
+    const notificationStore = useNotificationStore();
     try {
-      const response = await api.get(`/api/notification?page=${page}&size=${size}`);
-      return response.data;
+      const response = await api.get('/api/notification/list');
+      notificationStore.setNotifications(response.data);
     } catch (error) {
       console.error('알림 목록 조회 실패:', error);
       throw error;
@@ -113,9 +114,12 @@ class NotificationService {
   }
 
   // 특정 알림 읽음 처리
-  async readNotification(notificationId) {
+  async markAsRead(notificationId) {
     try {
       await api.patch(`/api/notification/${notificationId}/read`);
+      // 성공 시 스토어 상태 직접 업데이트
+      const notificationStore = useNotificationStore();
+      notificationStore.markAsRead(notificationId);
     } catch (error) {
       console.error('알림 읽음 처리 실패:', error);
       throw error;
@@ -123,9 +127,11 @@ class NotificationService {
   }
 
   // 전체 알림 읽음 처리
-  async readAllNotifications() {
+  async markAllAsRead() {
+    const notificationStore = useNotificationStore();
     try {
-      await api.patch('/api/notification/read/all');
+      await api.patch('/api/notification/read-all');
+      notificationStore.markAllAsRead();
     } catch (error) {
       console.error('전체 알림 읽음 처리 실패:', error);
       throw error;
@@ -134,8 +140,10 @@ class NotificationService {
 
   // 읽은 알림 전체 삭제
   async deleteAllRead() {
+    const notificationStore = useNotificationStore();
     try {
-      await api.delete('/api/notification/read');
+      await api.delete('/api/notification/delete/read-all');
+      notificationStore.clearReadNotifications();
     } catch (error) {
       console.error('읽은 알림 삭제 실패:', error);
       throw error;
@@ -144,8 +152,10 @@ class NotificationService {
 
   // 특정 알림 삭제
   async deleteNotification(notificationId) {
+    const notificationStore = useNotificationStore();
     try {
-      await api.delete(`/api/notification/${notificationId}`);
+      await api.delete(`/api/notification/delete/${notificationId}`);
+      notificationStore.removeNotification(notificationId);
     } catch (error) {
       console.error('알림 삭제 실패:', error);
       throw error;
