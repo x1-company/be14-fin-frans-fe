@@ -296,7 +296,6 @@ const openDocument = (document) => {
 };
 
 const viewDocument = (document) => {
-  alert("viewDocument 호출");
   if (document && document.approvalId) {
     router.push(`/approval/${document.approvalId}`);
   } else {

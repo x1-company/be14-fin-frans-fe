@@ -5,24 +5,66 @@
         <component :is="iconComponent" />
       </span>
       <div class="person-info">
-        <div class="person-name-role">
-          {{ person.name }}
-          <span v-if="person.position">{{ person.position }}</span>
+        <div class="person-name-section">
+          <div class="person-name-role">
+            {{ person.name }}
+            <span v-if="person.position">{{ person.position }}</span>
+          </div>
+          <div class="person-dept-read-row">
+            <div v-if="person.department" class="person-department">{{
+              person.department
+            }}</div>
+          </div>
         </div>
-        <div v-if="person.department" class="person-department">{{
-          person.department
-        }}</div>
-        <div v-if="type === 'reference' && person.readTime" class="read-time">
-          열람: {{ formatDateTime(person.readTime) }}
+        <div v-if="person.readTime" class="read-time"
+          >열람: {{ formatDateTime(person.readTime) }}</div
+        >
+
+        <div v-if="person.comment" class="comment-box">
+          의견: {{ person.comment }}
         </div>
       </div>
-      <div class="status-badge" :class="badgeClass">{{ statusText }}</div>
-    </div>
-    <div v-if="person.comment" class="person-comment">
-      <div class="comment-text">의견: {{ person.comment }}</div>
-      <div v-if="person.commentTime" class="comment-time">{{
-        formatDateTime(person.commentTime)
-      }}</div>
+      <div
+        v-if="type === 'reference'"
+        class="status-badge"
+        :style="
+          person.isChecked
+            ? {
+                background: '#e3eafc',
+                color: '#1565c0',
+              }
+            : {
+                background: '#f3f4f6',
+                color: '#6b7280',
+              }
+        "
+      >
+        {{ person.isChecked ? "열람완료" : "통지됨" }}
+      </div>
+      <div
+        v-else-if="type === 'recipient'"
+        class="status-badge"
+        :style="
+          person.status === 'COMPLETED' || person.status === 'APPROVED'
+            ? {
+                background: '#e0f7fa',
+                color: '#00838f',
+              }
+            : {
+                background: '#f3f4f6',
+                color: '#6b7280',
+              }
+        "
+      >
+        {{
+          person.status === "COMPLETED" || person.status === "APPROVED"
+            ? "수신완료"
+            : "수신대기"
+        }}
+      </div>
+      <div v-else class="status-badge" :style="badgeInlineStyle">
+        {{ statusText }}
+      </div>
     </div>
   </div>
 </template>
@@ -35,23 +77,27 @@ const props = defineProps({
 
 const statusTextMap = {
   approver: {
-    completed: "승인완료",
-    pending: "결재대기",
-    expected: "결재예정",
-    rejected: "반려",
+    APPROVED: "승인완료",
+    PENDING: "결재대기",
+    EXPECTED: "결재예정",
+    REJECTED: "반려",
+    WAITING: "결재대기",
+    COMPLETED: "승인완료",
   },
   collaborator: {
-    waiting: "협의대기",
-    completed: "협의완료",
-    expected: "협의예정",
+    WAITING: "협의대기",
+    COMPLETED: "협의완료",
+    EXPECTED: "협의예정",
+    APPROVED: "협의완료",
+    REJECTED: "반려",
   },
   reference: {
-    read: "열람완료",
-    unread: "통지됨",
+    READ: "열람완료",
+    UNREAD: "통지됨",
   },
   recipient: {
-    waiting: "수신대기",
-    completed: "수신완료",
+    WAITING: "수신대기",
+    COMPLETED: "수신완료",
   },
 };
 const statusText = computed(() => {
@@ -82,28 +128,58 @@ const cardClass = computed(() => {
   }
   return "";
 });
-const badgeClass = computed(() => {
-  // 상태별 뱃지 색상
-  if (props.type === "collaborator") {
-    if (props.person.status === "waiting") return "badge-collab-wait";
-    if (props.person.status === "completed") return "badge-collab-done";
-    if (props.person.status === "expected") return "badge-collab-expected";
-  }
-  if (props.type === "reference") {
-    if (props.person.status === "read") return "badge-ref-read";
-    if (props.person.status === "unread") return "badge-ref-unread";
-  }
-  if (props.type === "recipient") {
-    if (props.person.status === "waiting") return "badge-rec-wait";
-    if (props.person.status === "completed") return "badge-rec-done";
-  }
+const badgeInlineStyle = computed(() => {
+  // 결재자(approver)
   if (props.type === "approver") {
-    if (props.person.status === "completed") return "badge-app-done";
-    if (props.person.status === "pending") return "badge-app-pending";
-    if (props.person.status === "expected") return "badge-app-expected";
-    if (props.person.status === "rejected") return "badge-app-reject";
+    if (
+      props.person.status === "APPROVED" ||
+      props.person.status === "COMPLETED"
+    ) {
+      return {
+        background: "#e6f9e6",
+        color: "#1a7f37",
+      };
+    }
+    if (props.person.status === "REJECTED") {
+      return {
+        background: "#ffe6e6",
+        color: "#d32f2f",
+      };
+    }
+    // 결재대기/예정
+    return {
+      background: "#ede9fe",
+      color: "#7c3aed",
+    };
   }
-  return "";
+  // 협조자(collaborator)
+  if (props.type === "collaborator") {
+    if (
+      props.person.status === "APPROVED" ||
+      props.person.status === "COMPLETED"
+    ) {
+      return {
+        background: "#e3f2fd",
+        color: "#1976d2",
+      };
+    }
+    if (props.person.status === "REJECTED") {
+      return {
+        background: "#ffe6e6",
+        color: "#d32f2f",
+      };
+    }
+    // 협의대기/예정
+    return {
+      background: "#ede9fe",
+      color: "#7c3aed",
+    };
+  }
+  // 기본
+  return {
+    background: "#f3f4f6",
+    color: "#212529",
+  };
 });
 const iconComponent = computed(() => {
   if (props.type === "collaborator") return "CollabIcon";
@@ -150,7 +226,7 @@ export default {
   },
 };
 </script>
-<style scoped>
+<style>
 .person-card {
   border-radius: 8px;
   padding: 16px;
@@ -216,11 +292,18 @@ export default {
 .person-info {
   flex: 1;
 }
+.person-name-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
 .person-name-role {
   font-size: 15px;
   font-weight: 600;
   color: #212529;
-  margin-bottom: 2px;
+  white-space: nowrap;
 }
 .person-department {
   font-size: 13px;
@@ -240,63 +323,12 @@ export default {
   margin-left: 8px;
   align-self: flex-start;
 }
-.badge-collab-wait {
-  background: #ede9fe;
-  color: #7c3aed;
-}
-.badge-collab-done {
-  background: #dcfce7;
-  color: #22c55e;
-}
-.badge-collab-expected {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-.badge-ref-read {
-  background: #dbeafe;
-  color: #2563eb;
-}
-.badge-ref-unread {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-.badge-rec-wait {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-.badge-rec-done {
-  background: #dcfce7;
-  color: #22c55e;
-}
-.badge-app-done {
-  background: #dcfce7;
-  color: #22c55e;
-}
-.badge-app-pending {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-.badge-app-expected {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-.badge-app-reject {
-  background: #fee2e2;
-  color: #ef4444;
-}
-.person-comment {
-  background: #f8fafc;
-  border-radius: 6px;
-  padding: 12px;
-  margin-top: 10px;
-  font-size: 13px;
-  color: #374151;
-}
-.comment-text {
-  margin-bottom: 6px;
-}
-.comment-time {
+.comment-box {
   font-size: 12px;
   color: #6b7280;
+}
+.person-dept-read-row {
+  display: flex;
+  gap: 8px;
 }
 </style>

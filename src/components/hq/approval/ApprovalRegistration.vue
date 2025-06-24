@@ -57,9 +57,19 @@
 import { ref, onMounted, nextTick } from "vue";
 import ApprovalTypeSelector from "./ApprovalTypeSelector.vue";
 import OrderApprovalForm from "./OrderApprovalForm.vue";
+import { useToast } from "@/composables/useToast";
 import api from "@/lib/api";
+import { useAuthStore } from "@/stores/auth";
 
-const emit = defineEmits(["submit", "cancel", "approval-submitted", "counts-refresh"]);
+const showToast = useToast();
+const authStore = useAuthStore();
+
+const emit = defineEmits([
+  "submit",
+  "cancel",
+  "approval-submitted",
+  "counts-refresh",
+]);
 
 const props = defineProps({
   selectedTemplate: { type: Object, default: null },
@@ -181,12 +191,22 @@ const processAndSubmit = async (isRequest) => {
       !formData.value.title.trim() ||
       formData.value.title.trim().length < 2
     ) {
-      alert("제목을 2자 이상 입력해주세요.");
+      showToast.error("제목을 2자 이상 입력해주세요.");
       return;
     }
 
     if (formData.value.approvalLines.length === 0) {
-      alert("결재선을 설정해주세요.");
+      showToast.error("결재선을 설정해주세요.");
+      return;
+    }
+
+    if (formData.value.approvalDocuments.documentIds.length === 0) {
+      showToast.error("결재문서를 첨부해주세요.");
+      return;
+    }
+
+    if (formData.value.signUrl === null || formData.value.signUrl === "") {
+      showToast.error("서명을 등록해 주세요.");
       return;
     }
   } else {
@@ -218,10 +238,10 @@ const processAndSubmit = async (isRequest) => {
         let seq = 1;
         formData.value.approvalLines.forEach((line) => {
           approvalLines.push({
-              userId: line.userId || line.id,
-              seq: seq++,
-              type: line.type,
-            });
+            userId: line.userId || line.id,
+            seq: seq++,
+            type: line.type,
+          });
         });
         return approvalLines;
       })(),
@@ -247,7 +267,7 @@ const processAndSubmit = async (isRequest) => {
     console.log("결재 ID:", response.data?.data?.id);
 
     if (response.status === 200 || response.status === 201) {
-      alert(
+      showToast.success(
         isRequest
           ? "결재 요청이 성공적으로 등록되었습니다."
           : "임시저장되었습니다."
@@ -275,7 +295,7 @@ const processAndSubmit = async (isRequest) => {
     }
   } catch (error) {
     console.error("Error:", error);
-    alert(
+    showToast.error(
       (isRequest ? "결재 요청 등록" : "임시저장") + " 중 오류가 발생했습니다."
     );
   } finally {

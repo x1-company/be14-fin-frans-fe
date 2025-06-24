@@ -379,31 +379,6 @@ onMounted(() => {
   activeTab.value = "document"; // Always show document tab first
   fetchApprovalLine();
   fetchDocumentContent();
-
-  // 강력한 디버깅
-  console.log(
-    "currentUserId.value:",
-    props.currentUserId,
-    typeof props.currentUserId
-  );
-  console.log("lines:", props.document?.lines);
-  console.log("currentUserLine:", currentUserLine.value);
-  console.log("isCurrentUserTurn:", isCurrentUserTurn.value);
-  console.log("noticeInfo:", noticeInfo.value);
-  console.log(
-    "lines 전체 구조:",
-    JSON.stringify(props.document?.lines, null, 2)
-  );
-
-  // alert로 확인
-  alert(`디버깅 정보:
-userId: ${props.currentUserId}
-userName: ${authStore.userName}
-lines 개수: ${props.document?.lines?.length || 0}
-currentUserLine: ${currentUserLine.value ? "찾음" : "없음"}
-isCurrentUserTurn: ${isCurrentUserTurn.value}
-noticeInfo: ${noticeInfo.value ? "있음" : "없음"}
-  `);
 });
 </script>
 
