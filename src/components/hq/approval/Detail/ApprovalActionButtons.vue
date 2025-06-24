@@ -236,6 +236,9 @@ const confirmReject = async () => {
       reason: rejectReason.value.trim(),
     });
     closeRejectModal();
+
+    // 페이지 새로고침
+    window.location.reload();
   } catch (error) {
     console.error("반려 처리 중 오류가 발생했습니다:", error);
     const errorMessage =
@@ -274,6 +277,9 @@ const confirmApprove = async () => {
       comment: approveComment.value.trim(),
     });
     closeApproveModal();
+
+    // 페이지 새로고침
+    window.location.reload();
   } catch (error) {
     console.error("승인 처리 중 오류가 발생했습니다:", error);
     const errorMessage =

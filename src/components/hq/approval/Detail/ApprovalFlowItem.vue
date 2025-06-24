@@ -138,7 +138,19 @@ export default {
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
+  background: #6c757d;
+}
+.status-icon.WAITING {
   background: #3888ec;
+}
+.status-icon.EXPECTED {
+  background: #6c757d;
+}
+.status-icon.APPROVED {
+  background: #28a745;
+}
+.status-icon.REJECTED {
+  background: #dc3545;
 }
 .status-img {
   width: 30px;

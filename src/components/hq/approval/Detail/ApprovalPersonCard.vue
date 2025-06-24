@@ -37,11 +37,13 @@ const statusTextMap = {
   approver: {
     completed: "승인완료",
     pending: "결재대기",
+    expected: "결재예정",
     rejected: "반려",
   },
   collaborator: {
     waiting: "협의대기",
     completed: "협의완료",
+    expected: "협의예정",
   },
   reference: {
     read: "열람완료",
@@ -62,6 +64,7 @@ const cardClass = computed(() => {
   if (props.type === "collaborator") {
     if (props.person.status === "waiting") return "card-collab-wait";
     if (props.person.status === "completed") return "card-collab-done";
+    if (props.person.status === "expected") return "card-collab-expected";
   }
   if (props.type === "reference") {
     if (props.person.status === "read") return "card-ref-read";
@@ -74,6 +77,7 @@ const cardClass = computed(() => {
   if (props.type === "approver") {
     if (props.person.status === "completed") return "card-app-done";
     if (props.person.status === "pending") return "card-app-pending";
+    if (props.person.status === "expected") return "card-app-expected";
     if (props.person.status === "rejected") return "card-app-reject";
   }
   return "";
@@ -83,6 +87,7 @@ const badgeClass = computed(() => {
   if (props.type === "collaborator") {
     if (props.person.status === "waiting") return "badge-collab-wait";
     if (props.person.status === "completed") return "badge-collab-done";
+    if (props.person.status === "expected") return "badge-collab-expected";
   }
   if (props.type === "reference") {
     if (props.person.status === "read") return "badge-ref-read";
@@ -95,6 +100,7 @@ const badgeClass = computed(() => {
   if (props.type === "approver") {
     if (props.person.status === "completed") return "badge-app-done";
     if (props.person.status === "pending") return "badge-app-pending";
+    if (props.person.status === "expected") return "badge-app-expected";
     if (props.person.status === "rejected") return "badge-app-reject";
   }
   return "";
@@ -159,6 +165,10 @@ export default {
   background: #f0fdf4;
   border-color: #bbf7d0;
 }
+.card-collab-expected {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
 .card-ref-read {
   background: #eff6ff;
   border-color: #bae6fd;
@@ -180,6 +190,10 @@ export default {
   border-color: #bbf7d0;
 }
 .card-app-pending {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+.card-app-expected {
   background: #f3f4f6;
   border-color: #e5e7eb;
 }
@@ -234,6 +248,10 @@ export default {
   background: #dcfce7;
   color: #22c55e;
 }
+.badge-collab-expected {
+  background: #f3f4f6;
+  color: #6b7280;
+}
 .badge-ref-read {
   background: #dbeafe;
   color: #2563eb;
@@ -255,6 +273,10 @@ export default {
   color: #22c55e;
 }
 .badge-app-pending {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.badge-app-expected {
   background: #f3f4f6;
   color: #6b7280;
 }
