@@ -281,6 +281,9 @@ import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/lib/api'
 import TemplateModifyModal from './TemplateModifyModal.vue'
+import { useToast } from "@/composables/useToast"
+
+const toast = useToast()
 
 const props = defineProps({
   selectedTemplate: Object,
@@ -407,11 +410,11 @@ const handleDelete = async () => {
   if (confirm(`"${props.selectedTemplate.name}" 템플릿을 삭제하시겠습니까?`)) {
     try {
       await api.delete(`/api/hq/approvals/templates/${props.selectedTemplate.id}`)
-      alert('템플릿이 성공적으로 삭제되었습니다.')
+      toast.success('템플릿이 성공적으로 삭제되었습니다.')
       emit('template-deleted')
     } catch (error) {
       console.error('템플릿 삭제 실패:', error)
-      alert('템플릿 삭제에 실패했습니다.')
+      toast.error('템플릿 삭제에 실패했습니다.')
     }
   }
 }
@@ -448,13 +451,13 @@ const toggleReorderMode = async () => {
         }
         
         console.log('모든 순서 변경 API 호출 완료')
-        alert('순서 변경이 완료되었습니다.')
+        toast.success('순서 변경이 완료되었습니다.')
         
         // 완료 이벤트 emit
         emit('reorder-complete')
       } catch (error) {
         console.error('순서 변경 API 호출 실패:', error)
-        alert('순서 변경에 실패했습니다.')
+        toast.error('순서 변경에 실패했습니다.')
         
         // 취소 이벤트 emit (롤백)
         emit('reorder-cancel')

@@ -9,7 +9,7 @@
 
 <style scoped>
 .top-bar {
-  background-color: #4169e1;
+  background: #4169e1;
   color: white;
   padding: 15px 20px;
   width: 100%;
