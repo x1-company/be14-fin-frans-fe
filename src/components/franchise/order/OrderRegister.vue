@@ -245,7 +245,7 @@ const submitOrder = async () => {
 
 // 최근 주문 불러오기 (임시)
 const loadRecentOrder = () => {
-    alert('최근 주문 불러오기 기능은 준비 중입니다.')
+    toast.error('최근 주문 불러오기 기능은 준비 중입니다.')
 }
 
 const loadOrderTemplate = () => {
