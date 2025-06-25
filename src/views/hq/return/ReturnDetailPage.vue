@@ -20,9 +20,10 @@
       <div class="detail-wrapper">
         <FranchiseInfoCard :returnData="returnDetail" />
         <ReturnInfoCard :returnData="returnDetail" />
-        <ProductTable
-          :returnProducts="returnDetail.returnProducts"
-          :totalAmount="returnDetail.totalAmount"
+        <ProductTable 
+          :products="returnDetail?.returnProducts || returnDetail?.products || []" 
+          :totalAmount="returnDetail?.totalAmount || 0" 
+          :isEditable="false"
         />
         <DeliveryInfoCard :returnData="returnDetail" />
         <ApprovalInfoCard :returnData="returnDetail" />
@@ -63,7 +64,7 @@
     try {
       const res = await api.get(`/api/hq/franchise/return/${props.returnId}`);
       returnDetail.value = res.data ? res.data : res;
-      console.log('📦 returnProducts:', returnDetail.value.returnProducts);
+      console.log('📦 returnProducts:', returnDetail.value.products);
       
     } catch (e) {
       returnDetail.value = null;
