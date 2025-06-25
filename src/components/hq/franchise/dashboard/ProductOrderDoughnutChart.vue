@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
 import {
   Chart,
@@ -45,17 +45,8 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['month-change'])
-
-const selectedMonth = ref(props.month)
-watch(() => props.month, (val) => { selectedMonth.value = val })
-
-function onMonthChange() {
-  emit('month-change', selectedMonth.value)
-}
-
 const filteredData = computed(() =>
-  props.chartData.filter(item => item.month === selectedMonth.value)
+  props.chartData.filter(item => item.month === props.month)
 )
 
 const colorPalette = [
@@ -64,7 +55,7 @@ const colorPalette = [
 
 const doughnutData = computed(() => {
   const labels = filteredData.value.map(item => item.productName || item.productId)
-  const data = filteredData.value.map(item => item.returnQuantity)
+  const data = filteredData.value.map(item => item.orderQuantity)
   return {
     labels,
     datasets: [
@@ -104,6 +95,6 @@ const doughnutOptions = {
 }
 
 const chartKey = computed(() =>
-  `${props.selectedFranchiseId}-${selectedMonth.value}`
+  `${props.selectedFranchiseId}-${props.month}`
 )
 </script> 

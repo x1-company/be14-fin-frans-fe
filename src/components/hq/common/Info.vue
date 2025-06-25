@@ -55,24 +55,28 @@
                             />
                         </template>
                         <template v-else-if="statsTab === 1">
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <h3 style="margin:0;">자재별 주문량</h3>
-                                <span style="color:#888;font-size:15px;">{{ selectedMonth }}월 기준 자재별 주문 비율</span>
-                                <h3 style="margin:0 0 0 48px;">자재별 반품량</h3>
-                                <span style="color:#888;font-size:15px;">{{ selectedMonth }}월 기준 자재별 반품 비율</span>
+                            <div class="doughnut-top-row">
+                                <div class="doughnut-top-right">
+                                    <label style="font-weight:500; margin-right:8px;">월 선택:</label>
+                                    <select v-model="selectedMonth" @change="handleMonthChange" class="month-dropdown">
+                                        <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="doughnut-charts-row">
                                 <div class="doughnut-chart-col">
-                                    <FranchiseReturnProductDoughnut
+                                    <h3 class="doughnut-title">자재별 주문량</h3>
+                                    <span class="doughnut-desc">{{ selectedMonth }}월 기준 자재별 주문 비율</span>
+                                    <FranchiseProductOrderDoughnut
                                         v-if="props.selectedFranchiseId"
-                                        :chart-data="orderAmountChartData"
+                                        :chart-data="productOrderChartData"
                                         :month="selectedMonth"
                                         :selected-franchise-id="props.selectedFranchiseId"
                                         @month-change="handleMonthChange"
                                     />
-                                    <ReturnProductDoughnutChart
+                                    <ProductOrderDoughnutChart
                                         v-else
-                                        :chart-data="orderAmountChartData"
+                                        :chart-data="productOrderChartData"
                                         :month="selectedMonth"
                                         :is-franchise-selected="false"
                                         :selected-franchise-id="props.selectedFranchiseId"
@@ -80,6 +84,8 @@
                                     />
                                 </div>
                                 <div class="doughnut-chart-col">
+                                    <h3 class="doughnut-title">자재별 반품량</h3>
+                                    <span class="doughnut-desc">{{ selectedMonth }}월 기준 자재별 반품 비율</span>
                                     <FranchiseReturnProductDoughnut
                                         v-if="props.selectedFranchiseId"
                                         :chart-data="returnProductChartData"
@@ -201,6 +207,8 @@ import OrderAmountBarChart from '@/components/hq/franchise/dashboard/OrderAmount
 import FranchiseOrderAmountBar from '@/components/hq/franchise/dashboard/FranchiseOrderAmountBar.vue'
 import ReturnProductDoughnutChart from '@/components/hq/franchise/dashboard/ReturnProductDoughnutChart.vue'
 import FranchiseReturnProductDoughnut from '@/components/hq/franchise/dashboard/FranchiseReturnProductDoughnut.vue'
+import ProductOrderDoughnutChart from '@/components/hq/franchise/dashboard/ProductOrderDoughnutChart.vue'
+import FranchiseProductOrderDoughnut from '@/components/hq/franchise/dashboard/FranchiseProductOrderDoughnut.vue'
 
 import api from '@/lib/api'
 
@@ -290,6 +298,7 @@ const dashboardStats = ref({
 
 const orderAmountChartData = ref([])
 const returnProductChartData = ref([])
+const productOrderChartData = ref([])
 
 function getPrevMonth() {
   const now = new Date();
@@ -321,6 +330,7 @@ function handleMonthChange(month) {
   selectedMonth.value = month
   fetchOrderAmountStats()
   fetchReturnProductStats()
+  fetchProductOrderStats()
 }
 function handleYearChange(year) {
   selectedYear.value = year
@@ -374,6 +384,26 @@ async function fetchReturnProductStats() {
   }
 }
 
+async function fetchProductOrderStats() {
+  try {
+    let url = ''
+    let params = { year: selectedYear.value, month: selectedMonth.value }
+    if (props.sidebarTab === 'team') {
+      url = '/api/hq/statistics/franchise/product-order/department'
+    } else if (props.selectedFranchiseId) {
+      url = `/api/hq/statistics/franchise/product-order/manager/${props.selectedFranchiseId}`
+      params = { year: selectedYear.value, month: selectedMonth.value }
+    } else {
+      url = '/api/hq/statistics/franchise/product-order/manager'
+    }
+    const { data } = await api.get(url, { params })
+    productOrderChartData.value = data || []
+  } catch (e) {
+    productOrderChartData.value = []
+    console.error('월별 자재별 주문량 통계 조회 실패', e)
+  }
+}
+
 watch([
   () => props.sidebarTab,
   () => props.selectedFranchiseId,
@@ -388,12 +418,20 @@ watch([
   selectedYear
 ], fetchReturnProductStats, { immediate: true })
 
+watch([
+  () => props.sidebarTab,
+  () => props.selectedFranchiseId,
+  selectedMonth,
+  selectedYear
+], fetchProductOrderStats, { immediate: true })
+
 // 수정: 컴포넌트 마운트 시와 activeTabSwitch가 0일 때 fetch 호출
 onMounted(() => {
   if (activeTabSwitch.value === 0) {
     fetchDashboardStats()
     fetchOrderAmountStats()
     fetchReturnProductStats()
+    fetchProductOrderStats()
   }
 })
 
@@ -402,6 +440,7 @@ watch(activeTabSwitch, (newTab) => {
     fetchDashboardStats()
     fetchOrderAmountStats()
     fetchReturnProductStats()
+    fetchProductOrderStats()
   }
 })
 
@@ -637,5 +676,43 @@ function selectStatsTab(idx) {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+}
+.doughnut-top-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.doughnut-top-left {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.doughnut-top-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 120px;
+}
+.doughnut-title {
+  margin: 0 0 2px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: left;
+}
+.doughnut-desc {
+  color: #888;
+  font-size: 15px;
+  margin-bottom: 8px;
+  display: block;
+  text-align: left;
+}
+.month-dropdown {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  font-size: 15px;
 }
 </style>
