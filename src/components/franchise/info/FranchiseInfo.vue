@@ -291,7 +291,7 @@ onMounted(() => {
 }
 
 .info-card {
-    background: #ffffff;
+    background: #f8f9fa;
     border: 1px solid #e9ecef;
     border-radius: 8px;
     padding: 20px;
@@ -322,12 +322,14 @@ onMounted(() => {
 
 .info-row .label {
     color: #6c757d;
+    font-size: 15px;
     font-weight: 500;
     min-width: 100px;
 }
 
 .info-row .value {
     color: #212529;
+    font-size: 15px;
     font-weight: 400;
     text-align: right;
     flex: 1;

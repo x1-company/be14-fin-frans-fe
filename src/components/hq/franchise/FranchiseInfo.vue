@@ -448,15 +448,18 @@ onMounted(() => {
 
 .info-row .label {
   color: #6c757d;
+  font-size: 15px;
   font-weight: 500;
   min-width: 100px;
 }
 
 .info-row .value {
   color: #212529;
+  font-size: 15px;
   font-weight: 400;
   text-align: right;
   flex: 1;
+  word-break: break-all;
 }
 
 .status-indicator {
