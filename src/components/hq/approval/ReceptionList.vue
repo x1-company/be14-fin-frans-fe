@@ -280,8 +280,8 @@ const editDocument = (document) => {
     return;
   }
   router.push({
-    name: "approval-register",
-    params: { approvalId: id },
+    name: "approval-edit",
+    params: { id },
   });
 };
 

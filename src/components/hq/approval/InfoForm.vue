@@ -8,6 +8,7 @@
       @tab-change="handleTabChange"
       @select-menu="handleSelectMenu"
       @document-view="handleDocumentView"
+      @edit-document="handleEditDocument"
     />
 
     <!-- 수신 관련 메뉴일 때 ReceptionList 표시 -->
@@ -71,7 +72,10 @@ const handleTabChange = (tabValue) => {
 const handleSelectMenu = (menuValue) => {
   emit("select-menu", menuValue); // Info.vue 로 전달
 };
-const emit = defineEmits(["tab-change", "select-menu"]);
+const handleEditDocument = (document) => {
+  emit("edit-document", document);
+};
+const emit = defineEmits(["tab-change", "select-menu", "edit-document"]);
 
 const props = defineProps({
   approvalList: {

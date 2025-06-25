@@ -1,213 +1,113 @@
 <template>
-    <div class="return-actions">
-        <!-- 반려 버튼: 검토 중 또는 검토 완료 상태에서만 노출 -->
-        <button
-        v-if="(isReviewing || isReviewed) && !isRejected"
-        class="btn reject"
-        @click="showRejectModal = true"
-        >반려</button>
+  <div class="return-actions">
+    <!-- 접수 대기 상태에서만 반려/검토 버튼 노출 -->
+    <template v-if="props.status === 'WAITING_FOR_RECEIPT' && !props.isEditing">
+      <button class="btn reject" @click="showRejectModal = true">반려</button>
+      <button class="btn approve" @click="startReview">검토</button>
+    </template>
+    <!-- 검토 모드일 때(상단 취소/검토완료는 부모에서 직접) -->
+    <!-- 기타 상태별 버튼은 기존대로 -->
+    <button
+      v-if="isApproved"
+      class="btn delivery"
+      @click="showDeliveryModal = true"
+    >
+      <span class="icon">🚚</span> 배송 정보 입력
+    </button>
+    <button
+      v-if="isDelivering"
+      class="btn delivery-complete"
+      @click="showDeliveryCompleteModal = true"
+    >
+      <span class="icon">✓</span> 배송 완료 처리
+    </button>
+    <button
+      v-if="isDelivering"
+      class="btn edit"
+      @click="showEditDeliveryModal = true"
+    >수정</button>
+    <button class="btn print"><span class="icon">&#128424;</span> 반품서 출력</button>
+    <button class="btn close" @click="handleClose"><span class="icon">&#10005;</span> 닫기</button>
 
-        <!-- 검토 완료 버튼: 검토중 상태에서만 -->
-        <button
-        v-if="isReviewing && !isRejected"
-        class="btn approve"
-        @click="showModal = true"
-        >검토 완료</button>
-
-        <!-- 검토 취소 버튼: 검토 완료 상태에서만 -->
-        <button
-        v-if="isReviewed && !isRejected"
-        class="btn cancel-review"
-        @click="showCancelModal = true"
-        >검토 취소</button>
-
-        <!-- 배송 정보 입력 버튼 -->
-        <button
-        v-if="isApproved"
-        class="btn delivery"
-        @click="showDeliveryModal = true"
-        >
-        <span class="icon">🚚</span>
-        배송 정보 입력
-        </button>
-
-        <button
-        v-if="isDelivering"
-        class="btn delivery-complete"
-        @click="showDeliveryCompleteModal = true"
-        >
-        <span class="icon">✓</span>
-        배송 완료 처리
-        </button>
-
-        <button
-        v-if="isDelivering"
-        class="btn edit"
-        @click="showEditDeliveryModal = true"
-        >수정</button>
-
-        <button class="btn print"><span class="icon">&#128424;</span> 반품서 출력</button>
-        <button class="btn close" @click="handleClose"><span class="icon">&#10005;</span> 닫기</button>
-        <ConfirmModal
-          :visible="showModal"
-          @confirm="handleConfirm"
-          @cancel="showModal = false"
-        />
-        <RejectModal
-          :visible="showRejectModal"
-          @reject="handleReject"
-          @cancel="showRejectModal = false"
-        />
-        <ConfirmCancelModal
-          :visible="showCancelModal"
-          @confirm="handleCancelReview"
-          @cancel="showCancelModal = false"
-        />
-        <DeliveryInfoModal
-          :visible="showDeliveryModal"
-          @confirm="handleDeliveryConfirm"
-          @cancel="showDeliveryModal = false"
-        />
-        <DeliveryCompleteModal
-          :visible="showDeliveryCompleteModal"
-          :delivery-info="deliveryInfo"
-          @confirm="handleDeliveryComplete"
-          @cancel="showDeliveryCompleteModal = false"
-        />
-        <DeliveryInfoModal
-          v-if="showEditDeliveryModal"
-          :visible="showEditDeliveryModal"
-          :initial-info="deliveryInfo"
-          @confirm="handleEditDeliveryConfirm"
-          @cancel="showEditDeliveryModal = false"
-        />
-    </div>
-  </template>
+    <!-- Modal 등은 기존대로 -->
+    <RejectModal
+      :visible="showRejectModal"
+      @reject="handleReject"
+      @cancel="showRejectModal = false"
+    />
+    <DeliveryInfoModal
+      :visible="showDeliveryModal"
+      @confirm="handleDeliveryConfirm"
+      @cancel="showDeliveryModal = false"
+    />
+    <DeliveryCompleteModal
+      :visible="showDeliveryCompleteModal"
+      :delivery-info="deliveryInfo"
+      @confirm="handleDeliveryComplete"
+      @cancel="showDeliveryCompleteModal = false"
+    />
+    <DeliveryInfoModal
+      v-if="showEditDeliveryModal"
+      :visible="showEditDeliveryModal"
+      :initial-info="deliveryInfo"
+      @confirm="handleEditDeliveryConfirm"
+      @cancel="showEditDeliveryModal = false"
+    />
+  </div>
+</template>
 
 <script setup>
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import ConfirmModal from '@/components/hq/orders/modal/ConfirmModal.vue';
 import RejectModal from '@/components/hq/orders/modal/RejectModal.vue';
-import ConfirmCancelModal from '@/components/hq/orders/modal/ConfirmCancelModal.vue';
 import DeliveryInfoModal from '@/components/hq/orders/modal/DeliveryInfoModal.vue';
 import DeliveryCompleteModal from '@/components/hq/orders/modal/DeliveryCompleteModal.vue';
-import api from '@/lib/api';
 
 const props = defineProps({
-  returnId: {
-    type: [String, Number],
-    required: true
-  },
+  returnId: [String, Number],
   rejectedReason: String,
   status: String,
-  deliveryInfo: Object
+  deliveryInfo: Object,
+  isEditing: Boolean
 });
 
-const showModal = ref(false);
 const showRejectModal = ref(false);
-const showCancelModal = ref(false);
 const showDeliveryModal = ref(false);
 const showDeliveryCompleteModal = ref(false);
 const showEditDeliveryModal = ref(false);
 
-const isRejected = computed(() => props.status === 'REJECTED');
-const isReviewed = computed(() => props.status === 'REVIEW_COMPLETED');
-const isReviewing = computed(() => props.status === 'REVIEWING'); // 반려
 const isApproved = computed(() => props.status === 'APPROVED');
 const isDelivering = computed(() => props.status === 'DELIVERING');
 
-// 최초 상태를 부모에서 받아오고 싶으면 watch/props로 동기화
-// 예: const isReviewed = computed(() => props.status === 'REVIEW_COMPLETED');
+const emit = defineEmits(['update:isEditing', 'refreshOrder', 'close']);
 
-const emits = defineEmits(['refreshOrder']); 
-
-const router = useRouter();
-
-async function handleConfirm() {
-  showModal.value = false;
-  try {
-    await api.patch(`/api/hq/return/${props.returnId}/review-complete`);
-    isReviewed.value = true;
-    emits('refreshOrder'); // 성공 시 부모에게 알림
-  } catch (e) {
-    alert('검토 완료 처리에 실패했습니다.');
-  }
+function handleClose() {
+  emit('close');
 }
-
-async function handleCancelReview() {
-  showCancelModal.value = false;
-  try {
-    await api.patch(`/api/hq/return/${props.returnId}/review-cancel`);
-    isReviewed.value = false;
-    emits('refreshOrder');
-  } catch (e) {
-    alert('검토 취소 처리에 실패했습니다.');
-  }
+function startReview() {
+  emit('update:isEditing', true);
 }
 
 async function handleReject(reason) {
   showRejectModal.value = false;
-  try {
-    await api.patch(`/api/hq/return/${props.returnId}/reject`, { reason });
-    isRejected.value = true;
-    emits('refreshOrder'); // 성공 시 부모에게 알림
-  } catch (e) {
-    alert('반려 처리에 실패했습니다.');
-  }
+  // 반려 요청(구현 예시, 실제 api 연결 필요)
+  // await api.patch(`/api/hq/return/${props.returnId}/reject`, { reason });
+  emit('refreshOrder');
 }
 
 async function handleDeliveryConfirm(deliveryInfo) {
-  try {
-    await api.patch(`/api/hq/return/${props.returnId}/delivery`, {
-      deliveryCompany: deliveryInfo.deliveryCompany,
-      trackingNumber: deliveryInfo.trackingNumber,
-      name: deliveryInfo.name,
-      phone: deliveryInfo.phone
-    });
-    showDeliveryModal.value = false;
-    emits('refreshOrder');
-  } catch (e) {
-    alert('배송 정보 등록에 실패했습니다.');
-  }
+  // 배송 정보 등록(구현 예시)
+  emit('refreshOrder');
 }
 
 async function handleDeliveryComplete(deliveryInfo) {
-  try {
-    await api.patch(`/api/hq/return/${props.returnId}/delivery`, {
-      deliveryCompany: deliveryInfo.deliveryCompany,
-      trackingNumber: deliveryInfo.trackingNumber,
-      name: deliveryInfo.name,
-      phone: deliveryInfo.phone,
-      deliveredAt: deliveryInfo.deliveredAt
-    });
-    showDeliveryCompleteModal.value = false;
-    emits('refreshOrder');
-  } catch (e) {
-    alert('배송 완료 처리에 실패했습니다.');
-  }
+  // 배송 완료 처리(구현 예시)
+  emit('refreshOrder');
 }
 
 async function handleEditDeliveryConfirm(deliveryInfo) {
-  try {
-    await api.patch(`/api/hq/return/${props.returnId}/delivery`, {
-      deliveryCompany: deliveryInfo.deliveryCompany,
-      trackingNumber: deliveryInfo.trackingNumber,
-      name: deliveryInfo.name,
-      phone: deliveryInfo.phone
-    });
-    showEditDeliveryModal.value = false;
-    emits('refreshOrder');
-  } catch (e) {
-    alert('배송 정보 수정에 실패했습니다.');
-  }
+  // 배송 정보 수정(구현 예시)
+  emit('refreshOrder');
 }
-
-function handleClose() {
-  // router.push({ path: '/hq/franchise', query: { tab: '반품관리' } });
-  emits('close');
-}
-
 </script>
 
 <style scoped>
@@ -215,7 +115,6 @@ function handleClose() {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
-  /* margin: 40px 55px -70px 0; */
 }
 .btn {
   padding: 6px 13px;
