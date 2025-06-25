@@ -438,6 +438,12 @@ onMounted(() => {
 .col-franchise {
   text-align: left;
   color: #000;
+  margin-left: 40px;
+}
+
+/* 가맹점명 헤더 텍스트 위치 조정 */
+.orderlist-table-header.return-layout .col-header:nth-child(3) {
+  margin-left: 40px;
 }
 
 .col-description {

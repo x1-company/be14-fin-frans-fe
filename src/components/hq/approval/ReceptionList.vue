@@ -155,6 +155,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+import { useRouter } from "vue-router";
 
 const emit = defineEmits([
   "tab-change",
@@ -171,6 +172,8 @@ const props = defineProps({
   },
   activeTab: { type: String, required: true },
 });
+
+const router = useRouter();
 
 // 반응형 데이터
 const activeTab = computed(() => props.activeTab);
@@ -271,7 +274,15 @@ const approveDocument = (document) => {
 
 // 문서 수정
 const editDocument = (document) => {
-  emit("document-edit", document);
+  const id = document.approvalId || document.id || document.documentId;
+  if (!id) {
+    alert("approvalId가 없습니다!");
+    return;
+  }
+  router.push({
+    name: "approval-register",
+    params: { approvalId: id },
+  });
 };
 
 // 결재 가능 여부 확인

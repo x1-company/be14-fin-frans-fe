@@ -64,6 +64,8 @@ const statusLabel = computed(() => {
     return "검토 중";
   if (props.person.status === "APPROVED") return "검토 완료";
   if (props.person.status === "REJECTED") return "반려";
+  if (props.person.status === "WAITING") return "대기 중";
+  if (props.person.status === "EXPECTED") return "예정";
   return "";
 });
 const typeLabel = computed(() => {
@@ -138,7 +140,19 @@ export default {
   align-items: center;
   justify-content: center;
   margin-bottom: 8px;
+  background: #6c757d;
+}
+.status-icon.WAITING {
   background: #3888ec;
+}
+.status-icon.EXPECTED {
+  background: #6c757d;
+}
+.status-icon.APPROVED {
+  background: #28a745;
+}
+.status-icon.REJECTED {
+  background: #dc3545;
 }
 .status-img {
   width: 30px;
@@ -149,7 +163,7 @@ export default {
 .status-label {
   font-size: 15px;
   font-weight: 700;
-  color: #3888ec;
+  color: #212529;
   margin-bottom: 6px;
   margin-top: 2px;
 }
@@ -174,7 +188,6 @@ export default {
   font-size: 17px;
   font-weight: 700;
   color: #212529;
-  margin-bottom: 2px;
 }
 .person-position,
 .person-department {

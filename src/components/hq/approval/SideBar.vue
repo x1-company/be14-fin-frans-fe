@@ -270,17 +270,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Footer -->
-    <div class="sidebar-footer">
-      <div class="user-profile">
-        <div class="user-avatar">황</div>
-        <div class="user-info">
-          <span class="user-name">황수민</span>
-          <span class="user-role">대리</span>
-        </div>
-      </div>
-    </div>
   </div>
   <!-- 생략 -->
 </template>
