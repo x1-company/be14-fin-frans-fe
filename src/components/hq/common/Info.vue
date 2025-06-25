@@ -19,25 +19,85 @@
 
                 <!-- 월별 주문금액 통계 그래프 (가맹점별/월별) -->
                 <div v-if="activeTabSwitch === 0" class="stats-graph-section">
+                    <div class="stats-tab-bar">
+                        <button
+                            class="stats-tab-btn"
+                            :class="{active: statsTab === 0}"
+                            @click="selectStatsTab(0)"
+                        >주문 금액 분석</button>
+                        <button
+                            class="stats-tab-btn"
+                            :class="{active: statsTab === 1}"
+                            @click="selectStatsTab(1)"
+                        >자재별 분석</button>
+                    </div>
                     <div class="stats-graph-card">
-                        <div style="display:flex;align-items:center;gap:12px;">
-                            <h3 style="margin:0;">월별 주문 금액 총액</h3>
-                            <button @click="toggleTrend" :class="['trend-btn', {active: trendVisible}]">
-                                {{ trendVisible ? '동향 닫기' : '동향 보기' }}
-                            </button>
-                        </div>
-                        <FranchiseOrderAmountBar 
-                            v-if="props.selectedFranchiseId"
-                            :chart-data="orderAmountChartData"
-                            :trend-visible="trendVisible"
-                        />
-                        <OrderAmountBarChart 
-                            v-else
-                            :chart-data="orderAmountChartData" 
-                            :month="selectedMonth"
-                            :is-franchise-selected="false"
-                            @month-change="handleMonthChange"
-                        />
+                        <template v-if="statsTab === 0">
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <h3 style="margin:0;">월별 주문 금액 총액</h3>
+                                <button v-if="props.selectedFranchiseId" @click="toggleTrend" :class="['trend-btn', {active: trendVisible}]">
+                                    {{ trendVisible ? '동향 닫기' : '동향 보기' }}
+                                </button>
+                            </div>
+                            <FranchiseOrderAmountBar 
+                                v-if="props.selectedFranchiseId"
+                                :chart-data="orderAmountChartData"
+                                :trend-visible="trendVisible"
+                                :selected-franchise-id="props.selectedFranchiseId"
+                            />
+                            <OrderAmountBarChart 
+                                v-else
+                                :chart-data="orderAmountChartData" 
+                                :month="selectedMonth"
+                                :is-franchise-selected="false"
+                                :trend-visible="trendVisible"
+                                @month-change="handleMonthChange"
+                            />
+                        </template>
+                        <template v-else-if="statsTab === 1">
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <h3 style="margin:0;">자재별 주문량</h3>
+                                <span style="color:#888;font-size:15px;">{{ selectedMonth }}월 기준 자재별 주문 비율</span>
+                                <h3 style="margin:0 0 0 48px;">자재별 반품량</h3>
+                                <span style="color:#888;font-size:15px;">{{ selectedMonth }}월 기준 자재별 반품 비율</span>
+                            </div>
+                            <div class="donut-charts-row">
+                                <div class="donut-chart-col">
+                                    <FranchiseReturnProductDonut
+                                        v-if="props.selectedFranchiseId"
+                                        :chart-data="orderAmountChartData"
+                                        :month="selectedMonth"
+                                        :selected-franchise-id="props.selectedFranchiseId"
+                                        @month-change="handleMonthChange"
+                                    />
+                                    <ReturnProductDonutChart
+                                        v-else
+                                        :chart-data="orderAmountChartData"
+                                        :month="selectedMonth"
+                                        :is-franchise-selected="false"
+                                        :selected-franchise-id="props.selectedFranchiseId"
+                                        @month-change="handleMonthChange"
+                                    />
+                                </div>
+                                <div class="donut-chart-col">
+                                    <FranchiseReturnProductDonut
+                                        v-if="props.selectedFranchiseId"
+                                        :chart-data="returnProductChartData"
+                                        :month="selectedMonth"
+                                        :selected-franchise-id="props.selectedFranchiseId"
+                                        @month-change="handleMonthChange"
+                                    />
+                                    <ReturnProductDonutChart
+                                        v-else
+                                        :chart-data="returnProductChartData"
+                                        :month="selectedMonth"
+                                        :is-franchise-selected="false"
+                                        :selected-franchise-id="props.selectedFranchiseId"
+                                        @month-change="handleMonthChange"
+                                    />
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
@@ -139,6 +199,8 @@ import ReturnFranchiseInfoCard from '../return/detail/FranchiseInfoCard.vue'
 import FranchiseDashboard from '@/components/hq/franchise/dashboard/FranchiseDashboard.vue'
 import OrderAmountBarChart from '@/components/hq/franchise/dashboard/OrderAmountBarChart.vue'
 import FranchiseOrderAmountBar from '@/components/hq/franchise/dashboard/FranchiseOrderAmountBar.vue'
+import ReturnProductDonutChart from '@/components/hq/franchise/dashboard/ReturnProductDonutChart.vue'
+import FranchiseReturnProductDonut from '@/components/hq/franchise/dashboard/FranchiseReturnProductDonut.vue'
 
 import api from '@/lib/api'
 
@@ -227,18 +289,38 @@ const dashboardStats = ref({
 });
 
 const orderAmountChartData = ref([])
+const returnProductChartData = ref([])
+
+function getPrevMonth() {
+  const now = new Date();
+  let month = now.getMonth();
+  if (month === 0) month = 12;
+  return { month };
+}
 
 const selectedYear = ref(new Date().getFullYear())
-const selectedMonth = ref(new Date().getMonth() + 1)
+const selectedMonth = ref(getPrevMonth().month)
 
 const trendVisible = ref(false)
 function toggleTrend() {
   trendVisible.value = !trendVisible.value
 }
 
+// 가맹점 선택 해제(전체) 시 trendVisible false, selectedMonth 저번 달로 리셋
+watch(
+  () => props.selectedFranchiseId,
+  (newVal, oldVal) => {
+    if (!newVal && trendVisible.value) {
+      trendVisible.value = false;
+    }
+    selectedMonth.value = getPrevMonth().month;
+  }
+)
+
 function handleMonthChange(month) {
   selectedMonth.value = month
   fetchOrderAmountStats()
+  fetchReturnProductStats()
 }
 function handleYearChange(year) {
   selectedYear.value = year
@@ -253,7 +335,7 @@ async function fetchOrderAmountStats() {
       url = '/api/hq/statistics/franchise/order-amount/department'
     } else if (props.selectedFranchiseId) {
       url = `/api/hq/statistics/franchise/order-amount/manager/${props.selectedFranchiseId}`
-      params = {}
+      params = { year: selectedYear.value, month: selectedMonth.value }
     } else {
       url = '/api/hq/statistics/franchise/order-amount/manager'
     }
@@ -272,6 +354,26 @@ async function fetchOrderAmountStats() {
   }
 }
 
+async function fetchReturnProductStats() {
+  try {
+    let url = ''
+    let params = { year: selectedYear.value, month: selectedMonth.value }
+    if (props.sidebarTab === 'team') {
+      url = '/api/hq/statistics/franchise/return-product/department'
+    } else if (props.selectedFranchiseId) {
+      url = `/api/hq/statistics/franchise/return-product/manager/${props.selectedFranchiseId}`
+      params = { year: selectedYear.value, month: selectedMonth.value }
+    } else {
+      url = '/api/hq/statistics/franchise/return-product/manager'
+    }
+    const { data } = await api.get(url, { params })
+    returnProductChartData.value = data || []
+  } catch (e) {
+    returnProductChartData.value = []
+    console.error('월별 자재별 반품량 통계 조회 실패', e)
+  }
+}
+
 watch([
   () => props.sidebarTab,
   () => props.selectedFranchiseId,
@@ -279,11 +381,19 @@ watch([
   selectedYear
 ], fetchOrderAmountStats, { immediate: true })
 
+watch([
+  () => props.sidebarTab,
+  () => props.selectedFranchiseId,
+  selectedMonth,
+  selectedYear
+], fetchReturnProductStats, { immediate: true })
+
 // 수정: 컴포넌트 마운트 시와 activeTabSwitch가 0일 때 fetch 호출
 onMounted(() => {
   if (activeTabSwitch.value === 0) {
     fetchDashboardStats()
     fetchOrderAmountStats()
+    fetchReturnProductStats()
   }
 })
 
@@ -291,6 +401,7 @@ watch(activeTabSwitch, (newTab) => {
   if (newTab === 0) {
     fetchDashboardStats()
     fetchOrderAmountStats()
+    fetchReturnProductStats()
   }
 })
 
@@ -388,6 +499,11 @@ async function fetchDashboardStats() {
     console.error('대시보드 통계 데이터 조회 실패', error)
   }
 }
+
+const statsTab = ref(0) // 0: 주문 금액 분석, 1: 자재별 분석
+function selectStatsTab(idx) {
+  statsTab.value = idx
+}
 </script>
 
 <style scoped>
@@ -478,5 +594,48 @@ async function fetchDashboardStats() {
 .trend-btn.active {
   background: #1a6ed8;
   color: #fff;
+}
+
+.stats-tab-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 18px;
+  background: #f6f7fa;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1.5px solid #f0f1f4;
+}
+.stats-tab-btn {
+  flex: 1;
+  padding: 18px 0;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #888;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+.stats-tab-btn.active {
+  background: #fff;
+  color: #222;
+  font-weight: 700;
+  box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.04);
+}
+.donut-charts-row {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 24px;
+}
+.donut-chart-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 </style>

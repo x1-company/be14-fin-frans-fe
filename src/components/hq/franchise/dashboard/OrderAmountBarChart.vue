@@ -36,16 +36,29 @@ import {
 
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, Title)
 
+function getPrevMonth() {
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth(); // 0~11, 저번 달
+  if (month === 0) {
+    year -= 1;
+    month = 12;
+  }
+  return { year, month };
+}
+
 const props = defineProps({
   chartData: {
     type: Array,
     default: () => []
   },
-  month: {
-    type: Number,
-    default: new Date().getMonth() + 1
-  },
+  month: Number,
   isFranchiseSelected: {
+    type: Boolean,
+    default: false
+  },
+  selectedFranchiseId: [String, Number],
+  trendVisible: {
     type: Boolean,
     default: false
   }
@@ -53,24 +66,64 @@ const props = defineProps({
 
 const emit = defineEmits(['month-change'])
 
-const selectedMonth = ref(props.month)
+const { month: prevMonth } = getPrevMonth();
+const selectedMonth = ref(props.month ?? prevMonth)
 watch(() => props.month, (val) => { selectedMonth.value = val })
 
 function onMonthChange() {
   emit('month-change', selectedMonth.value)
 }
 
-const barData = computed(() => ({
-  labels: props.chartData.map(item => item.franchiseName),
-  datasets: [
-    {
-      label: '주문 금액',
-      data: props.chartData.map(item => item.orderAmount),
-      backgroundColor: props.chartData.map((_, index) => colorPalette[index % colorPalette.length]),
-      borderRadius: 6
+// 가맹점 id가 바뀔 때만 selectedMonth를 저번 달로 리셋
+watch(
+  () => props.selectedFranchiseId,
+  () => {
+    const { month } = getPrevMonth();
+    selectedMonth.value = month;
+    emit('month-change', month);
+  }
+)
+
+const barData = computed(() => {
+  const labels = props.chartData.map(item => item.franchiseName)
+  const bar = {
+    label: '주문 금액',
+    data: props.chartData.map(item => item.orderAmount),
+    backgroundColor: props.chartData.map((_, index) => colorPalette[index % colorPalette.length]),
+    borderRadius: 6,
+    type: 'bar',
+    order: 1
+  }
+  if (props.trendVisible) {
+    return {
+      labels,
+      datasets: [
+        bar,
+        {
+          label: '동향',
+          data: props.chartData.map(item => item.orderAmount),
+          type: 'line',
+          order: 2,
+          borderColor: '#1a6ed8',
+          backgroundColor: '#fff',
+          pointBackgroundColor: '#1a6ed8',
+          pointBorderColor: '#1a6ed8',
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 3,
+          fill: false,
+          tension: 0.35,
+          spanGaps: true,
+          showLine: true
+        }
+      ]
     }
-  ]
-}))
+  }
+  return {
+    labels,
+    datasets: [bar]
+  }
+})
 
 const colorPalette = [
   '#A8DADC', // 파스텔 민트

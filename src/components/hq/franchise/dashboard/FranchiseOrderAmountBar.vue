@@ -30,7 +30,8 @@ const props = defineProps({
   trendVisible: {
     type: Boolean,
     default: false
-  }
+  },
+  selectedFranchiseId: [String, Number]
 })
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -55,6 +56,18 @@ watch(() => props.trendVisible, (val) => {
     animatedPoints.value = 0
   }
 })
+
+// 가맹점이 바뀔 때 trendVisible이 true면 애니메이션 리셋
+watch(
+  () => props.selectedFranchiseId,
+  () => {
+    if (props.trendVisible) {
+      animatedPoints.value = 0
+      animatePoints()
+    }
+  }
+)
+
 function animatePoints() {
   let i = 0
   const total = 12
