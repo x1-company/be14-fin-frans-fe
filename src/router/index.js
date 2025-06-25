@@ -13,6 +13,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useNotificationStore } from "@/stores/notification";
 import notificationService from "@/lib/notificationService";
 import FranchiseManagePage from "@/views/hq/franchise/FranchiseManagePage.vue";
+import ApprovalPdf from "@/views/hq/approval/pdf/ApprovalPdfModal.vue";
 
 // 개발 환경에서만 테스트 페이지 import
 let TestNotificationView = null;

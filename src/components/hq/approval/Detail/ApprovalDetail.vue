@@ -22,7 +22,7 @@
         </div>
         <!-- 헤더 액션 버튼들 -->
         <div class="header-actions">
-          <button class="print-button">
+          <button class="print-button" @click="showPdfModal = true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <polyline points="6,9 6,2 18,2 18,9" />
               <path
@@ -231,6 +231,14 @@
       @refresh-list="$emit('refresh-list')"
       @close-detail="goBack"
     />
+
+    <!-- PDF 모달 -->
+    <ApprovalPdfModal
+      v-if="showPdfModal"
+      :approval-id="document.approvalId"
+      :is-visible="showPdfModal"
+      @close="showPdfModal = false"
+    />
   </div>
 </template>
 
@@ -241,12 +249,16 @@ import api from "@/lib/api";
 import ApprovalLineDetail from "./ApprovalLineDetail.vue";
 import ApprovalActionButtons from "./ApprovalActionButtons.vue";
 import { useAuthStore } from "@/stores/auth";
+import ApprovalPdfModal from "@/views/hq/approval/pdf/ApprovalPdfModal.vue";
+
+const router = useRouter();
+
+const showPdfModal = ref(false);
 
 // 결재문서/결재선 탭 선택 상태
 const activeTab = ref("document"); // 'document' or 'approvalLine'
 
 const emit = defineEmits(["close-detail", "approve", "reject", "refresh-list"]);
-const router = useRouter();
 
 const props = defineProps({
   document: {
@@ -386,7 +398,8 @@ const getDocumentStatusClass = (status) => {
 };
 
 // 컴포넌트 마운트 시 데이터 로드
-onMounted(() => {
+onMounted(async () => {
+  console.log("ApprovalDetail mounted", props.document.approvalId);
   activeTab.value = "document"; // Always show document tab first
   fetchApprovalLine();
   fetchDocumentContent();
