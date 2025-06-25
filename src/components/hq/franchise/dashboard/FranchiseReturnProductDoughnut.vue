@@ -1,14 +1,20 @@
 <template>
-  <div class="doughnut-chart-container">
+  <div style="display: flex; flex-direction: column; align-items: center;">
     <Doughnut
       v-if="filteredData.length"
       :key="selectedFranchiseId + '-' + props.month"
       :data="doughnutData"
       :options="doughnutOptions"
-      style="max-width: 400px; height: 300px; margin: 0 auto"
+      style="width: 320px; height: 320px; display: block;"
     />
     <div v-else style="text-align:center; color:#888; padding:32px 0;">
       데이터가 없습니다.
+    </div>
+    <div v-if="filteredData.length" class="custom-legend" style="margin-top: 18px; display: flex; flex-wrap: wrap; gap: 18px 32px; justify-content: center;">
+      <div v-for="(label, idx) in doughnutData.labels" :key="label" style="display: flex; align-items: center; min-width: 120px;">
+        <span :style="{display:'inline-block', width:'18px', height:'18px', background: doughnutData.datasets[0].backgroundColor[idx], marginRight:'8px', borderRadius:'4px'}"></span>
+        <span>{{ label }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -55,8 +61,28 @@ const colorPalette = [
 ]
 
 const doughnutData = computed(() => {
-  const labels = filteredData.value.map(item => item.product)
-  const data = filteredData.value.map(item => item.qty)
+  // 데이터를 수량 기준으로 정렬
+  const sortedData = filteredData.value
+    .map(item => ({
+      label: item.product,
+      value: item.qty
+    }))
+    .sort((a, b) => b.value - a.value)
+
+  // 상위 10개와 나머지 분리
+  const top10 = sortedData.slice(0, 10)
+  const others = sortedData.slice(10)
+  
+  let labels = top10.map(item => item.label)
+  let data = top10.map(item => item.value)
+  
+  // 나머지가 있으면 "기타"로 묶기
+  if (others.length > 0) {
+    const othersSum = others.reduce((sum, item) => sum + item.value, 0)
+    labels.push('기타')
+    data.push(othersSum)
+  }
+
   return {
     labels,
     datasets: [
@@ -70,12 +96,13 @@ const doughnutData = computed(() => {
 })
 
 const doughnutOptions = {
-  responsive: true,
+  responsive: false,
+  maintainAspectRatio: false,
   cutout: '70%',
+  layout: { padding: 0 },
   plugins: {
     legend: {
-      display: true,
-      position: 'bottom'
+      display: false
     },
     tooltip: {
       callbacks: {
@@ -98,13 +125,4 @@ const doughnutOptions = {
   rotation: -90,
   circumference: 360
 }
-</script>
-
-<style scoped>
-.doughnut-chart-container {
-  min-height: 340px; /* 차트+셀렉트 높이만큼 고정, 흔들림 방지 */
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-</style> 
+</script> 

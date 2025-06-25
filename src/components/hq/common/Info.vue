@@ -677,6 +677,7 @@ function selectStatsTab(idx) {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  min-height: 500px; /* 자재 목록이 더 아래까지 표시되도록 높이 증가 */
 }
 .doughnut-top-row {
   display: flex;

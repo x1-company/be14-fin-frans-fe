@@ -1,13 +1,5 @@
 <template>
   <div>
-    <!-- 가맹점 미선택 시에만 월 선택 표시 -->
-    <div v-if="!isFranchiseSelected" class="month-selector">
-      <label>월 선택:</label>
-      <select v-model="selectedMonth" @change="onMonthChange">
-        <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
-      </select>
-    </div>
-    
     <Bar
       v-if="chartData && chartData.length"
       :data="barData"
@@ -22,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
 import {
   Chart,
@@ -35,17 +27,6 @@ import {
 } from 'chart.js'
 
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, Title)
-
-function getPrevMonth() {
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth(); // 0~11, 저번 달
-  if (month === 0) {
-    year -= 1;
-    month = 12;
-  }
-  return { year, month };
-}
 
 const props = defineProps({
   chartData: {
@@ -63,26 +44,6 @@ const props = defineProps({
     default: false
   }
 })
-
-const emit = defineEmits(['month-change'])
-
-const { month: prevMonth } = getPrevMonth();
-const selectedMonth = ref(props.month ?? prevMonth)
-watch(() => props.month, (val) => { selectedMonth.value = val })
-
-function onMonthChange() {
-  emit('month-change', selectedMonth.value)
-}
-
-// 가맹점 id가 바뀔 때만 selectedMonth를 저번 달로 리셋
-watch(
-  () => props.selectedFranchiseId,
-  () => {
-    const { month } = getPrevMonth();
-    selectedMonth.value = month;
-    emit('month-change', month);
-  }
-)
 
 const barData = computed(() => {
   const labels = props.chartData.map(item => item.franchiseName)
@@ -173,12 +134,3 @@ const barOptions = {
   }
 }
 </script>
-
-<style scoped>
-.month-selector {
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-</style>
