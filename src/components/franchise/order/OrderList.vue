@@ -210,6 +210,23 @@
   const showOrderDetail = (orderId) => {
     emit('show-order-detail', orderId);
   }
+
+  // 페이지네이션 번호 계산
+  const paginationPages = computed(() => {
+    const pages = [];
+    if (totalPages.value <= 7) {
+      for (let i = 1; i <= totalPages.value; i++) pages.push(i);
+    } else {
+      if (page.value <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages.value);
+      } else if (page.value >= totalPages.value - 3) {
+        pages.push(1, '...', totalPages.value - 4, totalPages.value - 3, totalPages.value - 2, totalPages.value - 1, totalPages.value);
+      } else {
+        pages.push(1, '...', page.value - 1, page.value, page.value + 1, '...', totalPages.value);
+      }
+    }
+    return pages;
+  });
 </script>
 
   
