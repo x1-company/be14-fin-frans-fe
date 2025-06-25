@@ -99,9 +99,27 @@
 
         <!-- 주문 등록 버튼 -->
         <div class="action-section">
-            <button @click="submitOrder" :disabled="orderList.length === 0 || isSubmitting" class="submit-btn">
+            <button @click="openConfirmModal" :disabled="orderList.length === 0 || isSubmitting" class="submit-btn">
                 {{ isSubmitting ? '주문 등록 중...' : '주문 등록' }}
             </button>
+        </div>
+
+        <!-- 주문 등록 확인 모달 (리디자인) -->
+        <div v-if="isConfirmModalVisible" class="modal-overlay" @click.self="closeConfirmModal">
+            <div class="modal-content confirm-modal">
+                <div class="modal-header-confirm">
+                    <span class="modal-icon">🛒</span>
+                    <span class="modal-title-confirm">주문 등록</span>
+                    <button class="modal-close-btn" @click="closeConfirmModal">&times;</button>
+                </div>
+                <div class="modal-message-box">
+                    <span>주문을 등록하시겠습니까?</span>
+                </div>
+                <div class="modal-actions-confirm">
+                    <button class="btn-cancel" @click="closeConfirmModal">취소</button>
+                    <button class="btn-confirm" @click="confirmSubmitOrder">주문 등록</button>
+                </div>
+            </div>
         </div>
 
         <!-- 로딩 오버레이 -->
@@ -137,6 +155,7 @@ const orderList = ref([])
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const isTemplateModalVisible = ref(false)
+const isConfirmModalVisible = ref(false)
 
 // 검색 디바운스를 위한 타이머
 let searchTimer = null
@@ -330,6 +349,13 @@ onMounted(() => {
         }
     })
 })
+
+const openConfirmModal = () => { isConfirmModalVisible.value = true; };
+const closeConfirmModal = () => { isConfirmModalVisible.value = false; };
+const confirmSubmitOrder = async () => {
+    closeConfirmModal();
+    await submitOrder();
+};
 </script>
 
 <style scoped>
@@ -391,7 +417,7 @@ onMounted(() => {
 }
 
 .recent-order-btn {
-    padding: 6px 13px;
+    padding: 7px 13px;
     border-radius: 6px;
     border: 1px solid #e0e0e0;
     background: #fff;
@@ -423,7 +449,7 @@ onMounted(() => {
 
 .search-input {
     flex: 1;
-    padding: 10px 12px;
+    padding: 8px 25px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
@@ -439,10 +465,10 @@ onMounted(() => {
     background: #4066fa;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     transition: background-color 0.2s;
 }
@@ -531,7 +557,7 @@ onMounted(() => {
 }
 
 .total-amount {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #4066fa;
 }
@@ -652,10 +678,10 @@ onMounted(() => {
     background: #4066fa;
     color: white;
     border: none;
-    padding: 12px 32px;
+    padding: 8px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     transition: background-color 0.2s;
 }
@@ -715,5 +741,118 @@ onMounted(() => {
 /* 기존 테이블 관련 스타일 제거 또는 주석 처리 */
 .table-container, .order-table {
     display: none;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-content.confirm-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 0 0 18px 0;
+    min-width: 330px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.modal-header-confirm {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 22px 18px 0 18px;
+    position: relative;
+}
+
+.modal-icon {
+    font-size: 1.4rem;
+    color: #4066fa;
+    margin-right: 4px;
+}
+
+.modal-title-confirm {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #4066fa;
+}
+
+.modal-close-btn {
+    position: absolute;
+    right: 24px;
+    top: 28px;
+    background: none;
+    border: none;
+    font-size: 1.7rem;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+/* 모달 내부 안내문 */
+.modal-message-box {
+    background: #eaf3ff;
+    color: #234;
+    border-radius: 10px;
+    padding: 16px 12px;
+    margin: 18px 18px 0 18px;
+    font-size: 0.9rem;
+    text-align: center;
+    width: calc(100% - 36px);
+}
+
+.modal-actions-confirm {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    width: 100%;
+    padding-right: 18px;
+}
+
+.btn-cancel {
+    background: #f5f5f5;
+    color: #333;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 22px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #e0e0e0;
+}
+
+.btn-confirm {
+    background: #4066fa;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 22px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-confirm:hover {
+    background: #2746b6;
 }
 </style>
