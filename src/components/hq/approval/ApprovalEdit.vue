@@ -2,7 +2,6 @@
   <div class="order-approval-form">
     <!-- 결재문서 선택 -->
     <div class="form-section">
-      <h2 class="section-title">결재 수정</h2>
       <div class="section-header">
         <h3 class="section-title">{{ sectionTitle }}</h3>
         <button class="add-document-button" @click="handleAddDocument"
@@ -14,31 +13,20 @@
         <table>
           <thead>
             <tr>
-              <th v-for="header in documentTableHeaders" :key="header">{{
-                header
-              }}</th>
-              <th></th>
+              <th>No.</th>
+              <th>문서번호</th>
+              <th>가맹점명</th>
+              <th>작성일</th>
+              <th>금액</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(doc, index) in filteredDocuments" :key="doc.id">
+            <tr v-for="(doc, index) in documentDetails" :key="doc.documentId">
               <td>{{ index + 1 }}</td>
-              <td>{{ doc.code }}</td>
-              <td v-if="type === 'RETURN'">{{ doc.name }}</td>
-              <td>{{ doc.date }}</td>
-              <td v-if="type === 'RETURN'">{{ doc.description }}</td>
-              <td v-else-if="type !== 'RETURN'">{{ doc.name }}</td>
-              <td>{{
-                formatCurrency(
-                  doc.amount ??
-                    doc.quantity * (doc.salePrice || doc.purchasePrice)
-                )
-              }}</td>
-              <td>
-                <button class="remove-button" @click="removeDocument(doc.id)">
-                  ×
-                </button>
-              </td>
+              <td>{{ doc.documentNo }}</td>
+              <td>{{ doc.franchiseName }}</td>
+              <td>{{ doc.createdAt }}</td>
+              <td>{{ doc.amount }}</td>
             </tr>
           </tbody>
         </table>
@@ -220,6 +208,24 @@
       </div>
     </div>
 
+    <!-- 저장/등록 버튼 영역 -->
+    <div class="action-buttons">
+      <button
+        class="temp-save-button"
+        @click="handleTempSave"
+        :disabled="isSubmitting"
+      >
+        임시저장
+      </button>
+      <button
+        class="submit-button"
+        @click="handleSubmit"
+        :disabled="isSubmitting"
+      >
+        등록
+      </button>
+    </div>
+
     <!-- 통합 문서 선택 모달 -->
     <UnifiedDocumentList
       v-if="showOrderListModal"
@@ -304,7 +310,18 @@ const formData = ref({
 const authStore = useAuthStore();
 
 // 컴포넌트 마운트 시 사용자 서명 자동 설정
-onMounted(() => {
+onMounted(async () => {
+  console.log("[ApprovalEdit] mounted, props:", { ...props });
+  if (props.approvalId) {
+    // 임시저장 데이터 불러오기
+    const response = await api.get(
+      `/api/hq/approvals/draft/${props.approvalId}`
+    );
+    if (response.status === 200 && response.data?.data) {
+      editData.value = response.data.data;
+      // ... (이후 폼에 데이터 세팅)
+    }
+  }
   if (authStore.userSignUrl) {
     formData.value.signUrl = authStore.userSignUrl;
     emitFormData();
@@ -495,27 +512,32 @@ watch(
 watch(
   () => props.initialData,
   (newData) => {
+    console.log("[ApprovalEdit] initialData changed, props:", { ...props });
     if (newData) {
-      console.log("OrderApprovalForm - initialData received:", newData);
-      console.log("OrderApprovalForm - isEditMode:", props.isEditMode);
-
       // 수정 모드일 때는 기존 데이터를 폼에 채움
       if (props.isEditMode) {
         formData.value = {
           title: newData.title || "",
           remarks: newData.remarks || "",
-          approvalLines: newData.approvalLines || [],
+          approvalLines: newData.lines || [],
           files: newData.files || [],
           approvalDocuments: {
-            documentIds: newData.approvalDocuments?.documentIds || [],
-            categoryType: newData.approvalDocuments?.categoryType || props.type,
+            documentIds: Array.isArray(newData.approvalDocuments)
+              ? newData.approvalDocuments.map((doc) => doc.documentId)
+              : [],
+            categoryType: newData.categoryType || props.type,
           },
           signUrl: newData.signUrl || "",
         };
 
         // 문서 ID가 있으면 문서 정보도 가져오기
-        if (newData.approvalDocuments?.documentIds?.length > 0) {
-          fetchDocuments(newData.approvalDocuments.documentIds);
+        if (
+          Array.isArray(newData.approvalDocuments) &&
+          newData.approvalDocuments.length > 0
+        ) {
+          fetchDocuments(
+            newData.approvalDocuments.map((doc) => doc.documentId)
+          );
         }
       } else {
         // 등록 모드일 때는 기존 로직 유지
@@ -923,6 +945,19 @@ const fetchDocuments = async (documentIds) => {
   }
 };
 
+// 문서 테이블에서 문서 상세정보를 보여주기 위한 computed 추가
+const documentDetails = computed(() => {
+  // initialData.approvalDocuments가 배열이면 그대로 반환
+  return Array.isArray(props.initialData?.approvalDocuments)
+    ? props.initialData.approvalDocuments
+    : [];
+});
+
+// 결재선 상세정보를 보여주기 위한 computed 추가
+const approvalLineDetails = computed(() => {
+  return Array.isArray(props.initialData?.lines) ? props.initialData.lines : [];
+});
+
 defineExpose({
   initializeForm,
   updateFormData,
@@ -1300,31 +1335,19 @@ defineExpose({
 .action-buttons {
   display: flex;
   justify-content: flex-end;
-  align-items: center;
   gap: 16px;
+  margin-top: 32px;
 }
 
-.submit-button,
-.temp-save-button {
-  padding: 12px 24px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
+.temp-save-button,
 .submit-button {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
+  padding: 12px 24px;
+  border-radius: 6px;
+  border: none;
+  font-size: 15px;
   font-weight: 600;
-}
-
-.submit-button:hover:not(:disabled) {
-  background: #2563eb;
-  border-color: #2563eb;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .temp-save-button {
@@ -1332,17 +1355,22 @@ defineExpose({
   color: #374151;
 }
 
-.temp-save-button:hover:not(:disabled) {
-  background: #e5e7eb;
-  border-color: #9ca3af;
-}
-
-.submit-button:disabled,
 .temp-save-button:disabled {
   background: #e5e7eb;
   color: #9ca3af;
   cursor: not-allowed;
-  border-color: #d1d5db;
+}
+
+.submit-button {
+  background: #4066fa;
+  color: white;
+  border: 1px solid #4066fa;
+}
+
+.submit-button:disabled {
+  background: #b3c6fa;
+  color: #f3f4f6;
+  cursor: not-allowed;
 }
 
 /* 발주 모달 플레이스홀더 스타일 */

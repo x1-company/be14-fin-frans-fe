@@ -19,6 +19,8 @@
           <ApprovalEdit
             v-if="isEditMode"
             :approvalId="editApprovalId"
+            :type="editApprovalType"
+            :initialData="editApprovalDoc"
             @close="handleCloseEdit"
           />
 
@@ -85,15 +87,21 @@ const authStore = useAuthStore();
 
 const isEditMode = ref(false);
 const editApprovalId = ref(null);
+const editApprovalType = ref("ORDER");
+const editApprovalDoc = ref(null);
 
-const handleEditDocument = (approvalId) => {
+const handleEditDocument = (document) => {
   isEditMode.value = true;
-  editApprovalId.value = approvalId;
+  editApprovalId.value = document.approvalId;
+  editApprovalType.value = document.categoryType || document.type || "ORDER";
+  editApprovalDoc.value = document;
 };
 
 const handleCloseEdit = () => {
   isEditMode.value = false;
   editApprovalId.value = null;
+  editApprovalType.value = "ORDER";
+  editApprovalDoc.value = null;
 };
 
 const handleTabChange = (tabValue) => {

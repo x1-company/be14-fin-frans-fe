@@ -167,6 +167,7 @@ const emit = defineEmits([
   "document-view",
   "document-approve",
   "document-edit",
+  "edit-document",
   "document-reject",
   "refresh-list",
   "select-menu",
@@ -319,7 +320,7 @@ const collaborateDocument = (document) => {
 
 const editDocument = (document) => {
   if (document && document.approvalId) {
-    emit("edit-document", document.approvalId);
+    emit("edit-document", document);
   } else {
     console.warn("approvalId가 없습니다:", document);
   }
