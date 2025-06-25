@@ -1,229 +1,281 @@
 <template>
-  <div class="order-approval-form">
-    <!-- 결재문서 선택 -->
-    <div class="form-section">
-      <div class="section-header">
-        <h3 class="section-title">{{ sectionTitle }}</h3>
-        <button class="add-document-button" @click="handleAddDocument"
-          >문서 추가</button
-        >
+  <!-- 모달 오버레이 -->
+  <div class="modal-overlay" @click="handleCloseModal">
+    <div class="modal-container" @click.stop>
+      <!-- 모달 헤더 -->
+      <div class="modal-header">
+        <h3 class="modal-title">{{
+          props.isEditMode ? "결재 수정" : "결재 등록"
+        }}</h3>
+        <button class="close-button" @click="handleCloseModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
       </div>
 
-      <div class="document-table">
-        <table>
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>문서번호</th>
-              <th>가맹점명</th>
-              <th>작성일</th>
-              <th>금액</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(doc, index) in documentDetails" :key="doc.documentId">
-              <td>{{ index + 1 }}</td>
-              <td>{{ doc.documentNo }}</td>
-              <td>{{ doc.franchiseName }}</td>
-              <td>{{ doc.createdAt }}</td>
-              <td>{{ doc.amount }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <!-- 모달 내용 -->
+      <div class="modal-body">
+        <div class="order-approval-form">
+          <!-- 결재문서 선택 -->
+          <div class="form-section">
+            <div class="section-header">
+              <h3 class="section-title">{{ sectionTitle }}</h3>
+              <button class="add-document-button" @click="handleAddDocument"
+                >문서 추가</button
+              >
+            </div>
 
-    <!-- 결재 내용 -->
-    <div class="form-section">
-      <h3 class="section-title">결재 내용</h3>
-      <div class="content-form">
-        <div class="form-group">
-          <label>제목</label>
-          <input
-            type="text"
-            v-model="formData.title"
-            placeholder="결재 제목을 입력하세요"
-            class="title-input"
-          />
-        </div>
-        <div class="form-group">
-          <label>내용</label>
-          <textarea
-            v-model="formData.remarks"
-            placeholder="결재 내용을 입력하세요"
-            class="content-textarea"
-            maxlength="255"
-            @input="updateRemarksCount"
-          ></textarea>
-          <div class="char-count">{{ remarksLength }}/255</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 결재선 -->
-    <div class="form-section">
-      <div class="section-header">
-        <h3 class="section-title">결재선</h3>
-        <div class="header-buttons">
-          <button class="load-template-button" @click="showTemplateModal = true"
-            >결재선 불러오기</button
-          >
-          <button
-            class="add-approver-button"
-            @click="showApprovalLineModal = true"
-          >
-            결재자 추가
-          </button>
-        </div>
-      </div>
-
-      <div v-if="formData.approvalLines.length === 0" class="no-approval-line">
-        <p>결재선이 지정되지 않았습니다.</p>
-        <p>결재자를 추가하거나 템플릿을 불러와주세요.</p>
-      </div>
-
-      <div v-else class="approval-line-list approval-line-row">
-        <div class="approval-line-left">
-          <div class="side-section-title main">결재 / 협조</div>
-          <draggable
-            v-model="approvalAndCollaboratorLines"
-            group="people"
-            item-key="id"
-            class="approval-draggable-list"
-            :animation="200"
-          >
-            <template #item="{ element, index }">
-              <div class="approval-card" :class="element.type.toLowerCase()">
-                <span class="order-num" :class="element.type.toLowerCase()">{{
-                  index + 1
-                }}</span>
-                <span
-                  class="circle-initial"
-                  :class="element.type.toLowerCase()"
-                  >{{ element.name[0] }}</span
-                >
-                <div class="user-info">
-                  <span class="user-name">{{ element.name }}</span>
-                  <span class="user-meta"
-                    >{{ element.position }} / {{ element.dept }}</span
+            <div class="document-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>No.</th>
+                    <th>문서번호</th>
+                    <th>가맹점명</th>
+                    <th>작성일</th>
+                    <th>금액</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(doc, index) in documentDetails"
+                    :key="doc.id || index"
                   >
-                </div>
-                <span
-                  class="badge"
-                  :class="`badge-${element.type.toLowerCase()}`"
-                >
-                  {{ element.type === "APPROVER" ? "결재" : "협조" }}
-                </span>
+                    <td>{{ index + 1 }}</td>
+                    <td>{{ doc.documentNo || doc.code || "-" }}</td>
+                    <td>{{ doc.franchiseName || doc.name || "-" }}</td>
+                    <td>{{ doc.createdAt || doc.date || "-" }}</td>
+                    <td>{{ doc.amount || doc.totalAmount || "-" }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 결재 내용 -->
+          <div class="form-section">
+            <h3 class="section-title">결재 내용</h3>
+            <div class="content-form">
+              <div class="form-group">
+                <label>제목</label>
+                <input
+                  type="text"
+                  v-model="formData.title"
+                  placeholder="결재 제목을 입력하세요"
+                  class="title-input"
+                />
+              </div>
+              <div class="form-group">
+                <label>내용</label>
+                <textarea
+                  v-model="formData.remarks"
+                  placeholder="결재 내용을 입력하세요"
+                  class="content-textarea"
+                  maxlength="255"
+                  @input="updateRemarksCount"
+                ></textarea>
+                <div class="char-count">{{ remarksLength }}/255</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 결재선 -->
+          <div class="form-section">
+            <div class="section-header">
+              <h3 class="section-title">결재선</h3>
+              <div class="header-buttons">
                 <button
-                  class="remove-approver"
-                  @click="removeApprover(element.id)"
+                  class="load-template-button"
+                  @click="showTemplateModal = true"
+                  >결재선 불러오기</button
                 >
-                  ×
+                <button
+                  class="add-approver-button"
+                  @click="showApprovalLineModal = true"
+                >
+                  결재자 추가
                 </button>
               </div>
-            </template>
-          </draggable>
-        </div>
-        <div class="approval-line-right">
-          <div v-if="receiverLines.length > 0" class="approval-side-section">
-            <div class="side-section-title receiver">수신</div>
-            <div
-              v-for="line in receiverLines"
-              :key="line.id"
-              class="approval-card receiver"
-            >
-              <span class="circle-initial receiver">{{ line.name[0] }}</span>
-              <div class="user-info">
-                <span class="user-name">{{ line.name }}</span>
-                <span class="user-meta"
-                  >{{ line.position }} / {{ line.dept }}</span
-                >
-              </div>
-              <button class="remove-approver" @click="removeApprover(line.id)">
-                ×
-              </button>
             </div>
-          </div>
-          <div v-if="referenceLines.length > 0" class="approval-side-section">
-            <div class="side-section-title reference">참조</div>
-            <div
-              v-for="line in referenceLines"
-              :key="line.id"
-              class="approval-card reference"
-            >
-              <span class="circle-initial reference">{{ line.name[0] }}</span>
-              <div class="user-info">
-                <span class="user-name">{{ line.name }}</span>
-                <span class="user-meta"
-                  >{{ line.position }} / {{ line.dept }}</span
-                >
-              </div>
-              <button class="remove-approver" @click="removeApprover(line.id)">
-                ×
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- 첨부파일 -->
-    <div class="form-section">
-      <div class="section-header">
-        <h3 class="section-title">첨부파일</h3>
-        <div class="header-buttons">
-          <button class="add-file-button" @click="openFilePicker">
-            파일 추가
-          </button>
-          <input
-            type="file"
-            ref="fileInput"
-            multiple
-            @change="handleFileSelect"
-            style="display: none"
-          />
-        </div>
-      </div>
-      <div v-if="formData.files.length === 0" class="no-files-attached">
-        <p>첨부된 파일이 없습니다.</p>
-      </div>
-      <div v-else class="file-list">
-        <div
-          v-for="(file, index) in formData.files"
-          :key="index"
-          class="file-item"
-        >
-          <div class="file-info">
-            <div class="file-icon">📄</div>
-            <div class="file-details">
-              <div class="file-name">{{ file.name }}</div>
-              <div class="file-size">{{ formatFileSize(file.size) }}</div>
+            <div
+              v-if="formData.approvalLines.length === 0"
+              class="no-approval-line"
+            >
+              <p>결재선이 지정되지 않았습니다.</p>
+              <p>결재자를 추가하거나 템플릿을 불러와주세요.</p>
+            </div>
+
+            <div v-else class="approval-line-list approval-line-row">
+              <div class="approval-line-left">
+                <div class="side-section-title main">결재 / 협조</div>
+                <draggable
+                  v-model="approvalAndCollaboratorLines"
+                  group="people"
+                  item-key="id"
+                  class="approval-draggable-list"
+                  :animation="200"
+                >
+                  <template #item="{ element, index }">
+                    <div
+                      class="approval-card"
+                      :class="element.type.toLowerCase()"
+                    >
+                      <span
+                        class="order-num"
+                        :class="element.type.toLowerCase()"
+                        >{{ index + 1 }}</span
+                      >
+                      <span
+                        class="circle-initial"
+                        :class="element.type.toLowerCase()"
+                        >{{ element.name ? element.name[0] : "-" }}</span
+                      >
+                      <div class="user-info">
+                        <span class="user-name">{{ element.name }}</span>
+                        <span class="user-meta"
+                          >{{ element.position }} / {{ element.dept }}</span
+                        >
+                      </div>
+                      <span
+                        class="badge"
+                        :class="`badge-${element.type.toLowerCase()}`"
+                      >
+                        {{ element.type === "APPROVER" ? "결재" : "협조" }}
+                      </span>
+                      <button
+                        class="remove-approver"
+                        @click="removeApprover(element.id)"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </template>
+                </draggable>
+              </div>
+              <div class="approval-line-right">
+                <div
+                  v-if="receiverLines.length > 0"
+                  class="approval-side-section"
+                >
+                  <div class="side-section-title receiver">수신</div>
+                  <div
+                    v-for="line in receiverLines"
+                    :key="line.id"
+                    class="approval-card receiver"
+                  >
+                    <span class="circle-initial receiver">{{
+                      line.name ? line.name[0] : "-"
+                    }}</span>
+                    <div class="user-info">
+                      <span class="user-name">{{ line.name }}</span>
+                      <span class="user-meta"
+                        >{{ line.position }} / {{ line.dept }}</span
+                      >
+                    </div>
+                    <button
+                      class="remove-approver"
+                      @click="removeApprover(line.id)"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+                <div
+                  v-if="referenceLines.length > 0"
+                  class="approval-side-section"
+                >
+                  <div class="side-section-title reference">참조</div>
+                  <div
+                    v-for="line in referenceLines"
+                    :key="line.id"
+                    class="approval-card reference"
+                  >
+                    <span class="circle-initial reference">{{
+                      line.name ? line.name[0] : "-"
+                    }}</span>
+                    <div class="user-info">
+                      <span class="user-name">{{ line.name }}</span>
+                      <span class="user-meta"
+                        >{{ line.position }} / {{ line.dept }}</span
+                      >
+                    </div>
+                    <button
+                      class="remove-approver"
+                      @click="removeApprover(line.id)"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="file-actions">
-            <span class="file-status">완료</span>
-            <button class="remove-file" @click="removeFile(index)">×</button>
+
+          <!-- 첨부파일 -->
+          <div class="form-section">
+            <div class="section-header">
+              <h3 class="section-title">첨부파일</h3>
+              <div class="header-buttons">
+                <button class="add-file-button" @click="openFilePicker">
+                  파일 추가
+                </button>
+                <input
+                  type="file"
+                  ref="fileInput"
+                  multiple
+                  @change="handleFileSelect"
+                  style="display: none"
+                />
+              </div>
+            </div>
+            <div v-if="formData.files.length === 0" class="no-files-attached">
+              <p>첨부된 파일이 없습니다.</p>
+            </div>
+            <div v-else class="file-list">
+              <div
+                v-for="(file, index) in formData.files"
+                :key="index"
+                class="file-item"
+              >
+                <div class="file-info">
+                  <div class="file-icon">📄</div>
+                  <div class="file-details">
+                    <div class="file-name">{{ file.name }}</div>
+                    <div class="file-size">{{ formatFileSize(file.size) }}</div>
+                  </div>
+                </div>
+                <div class="file-actions">
+                  <span class="file-status">완료</span>
+                  <button class="remove-file" @click="removeFile(index)"
+                    >×</button
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 저장/등록 버튼 영역 -->
+          <div class="action-buttons">
+            <button
+              class="temp-save-button"
+              @click="handleTempSave"
+              :disabled="isSubmitting"
+            >
+              임시저장
+            </button>
+            <button
+              class="submit-button"
+              @click="handleSubmit"
+              :disabled="isSubmitting"
+            >
+              {{ props.isEditMode ? "수정" : "등록" }}
+            </button>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- 저장/등록 버튼 영역 -->
-    <div class="action-buttons">
-      <button
-        class="temp-save-button"
-        @click="handleTempSave"
-        :disabled="isSubmitting"
-      >
-        임시저장
-      </button>
-      <button
-        class="submit-button"
-        @click="handleSubmit"
-        :disabled="isSubmitting"
-      >
-        등록
-      </button>
     </div>
 
     <!-- 통합 문서 선택 모달 -->
@@ -263,6 +315,10 @@ import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps({
   type: String,
+  approvalId: {
+    type: [String, Number],
+    default: null,
+  },
   files: {
     type: Array,
     default: () => [],
@@ -283,6 +339,7 @@ const emit = defineEmits([
   "document-approve",
   "add-file",
   "remove-file",
+  "close",
 ]);
 
 const showModal = ref(false);
@@ -312,16 +369,44 @@ const authStore = useAuthStore();
 // 컴포넌트 마운트 시 사용자 서명 자동 설정
 onMounted(async () => {
   console.log("[ApprovalEdit] mounted, props:", { ...props });
-  if (props.approvalId) {
-    // 임시저장 데이터 불러오기
-    const response = await api.get(
-      `/api/hq/approvals/draft/${props.approvalId}`
-    );
-    if (response.status === 200 && response.data?.data) {
-      editData.value = response.data.data;
-      // ... (이후 폼에 데이터 세팅)
+
+  // 수정 모드이고 approvalId가 있으면 기존 데이터 로드
+  if (props.isEditMode && props.approvalId) {
+    try {
+      const response = await api.get(`/api/hq/approvals/${props.approvalId}`);
+      if (response.status === 200 && response.data?.data) {
+        const approvalData = response.data.data;
+
+        // 폼 데이터 설정
+        formData.value = {
+          title: approvalData.title || "",
+          remarks: approvalData.remarks || "",
+          approvalLines: approvalData.lines || [],
+          files: approvalData.files || [],
+          approvalDocuments: {
+            documentIds: Array.isArray(approvalData.approvalDocuments)
+              ? approvalData.approvalDocuments.map((doc) => doc.documentId)
+              : [],
+            categoryType: approvalData.categoryType || props.type,
+          },
+          signUrl: approvalData.signUrl || "",
+        };
+
+        // 문서 ID가 있으면 문서 정보도 가져오기
+        if (
+          Array.isArray(approvalData.approvalDocuments) &&
+          approvalData.approvalDocuments.length > 0
+        ) {
+          fetchDocuments(
+            approvalData.approvalDocuments.map((doc) => doc.documentId)
+          );
+        }
+      }
+    } catch (error) {
+      console.error("결재 데이터 로드 실패:", error);
     }
   }
+
   if (authStore.userSignUrl) {
     formData.value.signUrl = authStore.userSignUrl;
     emitFormData();
@@ -730,7 +815,7 @@ const handleSubmit = async () => {
     return;
   }
 
-  if (formData.value.approvalDocuments.documentIds.length === 0) {
+  if (formData.value.approvalDocuments.length === 0) {
     alert("주문 문서를 선택해주세요.");
     return;
   }
@@ -773,22 +858,42 @@ const handleSubmit = async () => {
       approvalLines: approvalLines,
       files: files,
       approvalDocuments: {
-        ...formData.value.approvalDocuments,
+        approvalDocuments: {
+          documents: formData.value.approvalDocuments,
+          ...formData.value.approvalDocuments,
+        },
         categoryType: categoryType.value,
       },
     };
 
     console.log("전송 데이터 확인:", requestData);
 
-    const response = await api.post("/api/hq/approvals", requestData);
+    let response;
+
+    if (props.isEditMode && props.approvalId) {
+      // 수정 모드: PUT 요청
+      response = await api.put(
+        `/api/hq/approvals/${props.approvalId}`,
+        requestData
+      );
+    } else {
+      // 등록 모드: POST 요청
+      response = await api.post("/api/hq/approvals", requestData);
+    }
 
     if (response.status === 200 || response.status === 201) {
-      alert("결재가 등록되었습니다.");
+      const message = props.isEditMode
+        ? "결재가 수정되었습니다."
+        : "결재가 등록되었습니다.";
+      alert(message);
       emit("approval-submitted", response.data);
     }
   } catch (error) {
-    console.error("결재 등록 실패:", error);
-    alert("결재 등록에 실패했습니다. 다시 시도해주세요.");
+    console.error("결재 등록/수정 실패:", error);
+    const message = props.isEditMode
+      ? "결재 수정에 실패했습니다."
+      : "결재 등록에 실패했습니다.";
+    alert(message + " 다시 시도해주세요.");
   } finally {
     isSubmitting.value = false;
   }
@@ -946,17 +1051,17 @@ const fetchDocuments = async (documentIds) => {
 };
 
 // 문서 테이블에서 문서 상세정보를 보여주기 위한 computed 추가
-const documentDetails = computed(() => {
-  // initialData.approvalDocuments가 배열이면 그대로 반환
-  return Array.isArray(props.initialData?.approvalDocuments)
-    ? props.initialData.approvalDocuments
-    : [];
-});
+const documentDetails = computed(() => documents.value);
 
 // 결재선 상세정보를 보여주기 위한 computed 추가
 const approvalLineDetails = computed(() => {
   return Array.isArray(props.initialData?.lines) ? props.initialData.lines : [];
 });
+
+// 모달 닫기 핸들러 추가
+const handleCloseModal = () => {
+  emit("close");
+};
 
 defineExpose({
   initializeForm,
@@ -967,10 +1072,79 @@ defineExpose({
 </script>
 
 <style scoped>
+/* 모달 스타일 추가 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  max-width: 1200px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.close-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.modal-body {
+  padding: 0;
+  max-height: calc(90vh - 80px);
+  overflow-y: auto;
+}
+
+/* 기존 스타일 유지 */
 .order-approval-form {
   display: flex;
   flex-direction: column;
   gap: 40px;
+  padding: 24px;
 }
 
 .form-section {
@@ -1371,67 +1545,6 @@ defineExpose({
   background: #b3c6fa;
   color: #f3f4f6;
   cursor: not-allowed;
-}
-
-/* 발주 모달 플레이스홀더 스타일 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  max-width: 500px;
-  width: 90%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.modal-header button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-header button:hover {
-  color: #374151;
-}
-
-.modal-body {
-  padding: 24px;
-  text-align: center;
-  color: #6b7280;
 }
 
 /* 파일 첨부 */

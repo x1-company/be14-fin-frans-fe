@@ -154,12 +154,24 @@
         </div>
       </div>
     </div>
+
+    <!-- ApprovalEdit 모달 -->
+    <ApprovalEdit
+      v-if="showEditModal"
+      :approvalId="editDocumentId"
+      :type="editDocumentType"
+      :initialData="editDocumentData"
+      :isEditMode="true"
+      @close="closeEditModal"
+      @approval-submitted="handleApprovalSubmitted"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
+import ApprovalEdit from "./ApprovalEdit.vue";
 
 const emit = defineEmits([
   "tab-change",
@@ -185,6 +197,12 @@ const props = defineProps({
 const localActiveTab = ref(props.activeTab);
 const activeTab = computed(() => localActiveTab.value);
 const searchQuery = ref("");
+
+// 모달 상태 관리
+const showEditModal = ref(false);
+const editDocumentData = ref(null);
+const editDocumentType = ref("ORDER");
+const editDocumentId = ref(null);
 
 // 탭 설정
 const tabs = [
@@ -319,11 +337,45 @@ const collaborateDocument = (document) => {
 };
 
 const editDocument = (document) => {
-  if (document && document.approvalId) {
-    emit("edit-document", document);
-  } else {
-    console.warn("approvalId가 없습니다:", document);
-  }
+  console.log("수정하기 버튼 클릭:", document);
+
+  // 수정할 문서 데이터 설정
+  editDocumentData.value = {
+    title: document.title,
+    remarks: document.remarks,
+    lines: document.lines || [],
+    files: document.files || [],
+    approvalDocuments: {
+      documentIds: Array.isArray(document.approvalDocuments)
+        ? document.approvalDocuments.map((doc) => doc.documentId)
+        : document.approvalDocuments?.documentIds || [],
+      categoryType: document.categoryType || document.type || "ORDER",
+    },
+    signUrl: document.signUrl || "",
+  };
+
+  // 결재 유형 설정
+  editDocumentType.value = document.categoryType || document.type || "ORDER";
+
+  // 모달 열기
+  showEditModal.value = true;
+
+  // 수정할 문서의 approvalId 저장
+  editDocumentId.value = document.approvalId;
+};
+
+const closeEditModal = () => {
+  showEditModal.value = false;
+  editDocumentData.value = null;
+  editDocumentType.value = "ORDER";
+  editDocumentId.value = null;
+};
+
+const handleApprovalSubmitted = (data) => {
+  console.log("결재 수정 완료:", data);
+  closeEditModal();
+  // 목록 새로고침 이벤트 발생
+  emit("refresh-list");
 };
 
 const canApprove = (document) => {
