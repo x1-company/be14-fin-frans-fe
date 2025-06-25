@@ -61,16 +61,16 @@
                                 <h3 style="margin:0 0 0 48px;">자재별 반품량</h3>
                                 <span style="color:#888;font-size:15px;">{{ selectedMonth }}월 기준 자재별 반품 비율</span>
                             </div>
-                            <div class="donut-charts-row">
-                                <div class="donut-chart-col">
-                                    <FranchiseReturnProductDonut
+                            <div class="doughnut-charts-row">
+                                <div class="doughnut-chart-col">
+                                    <FranchiseReturnProductDoughnut
                                         v-if="props.selectedFranchiseId"
                                         :chart-data="orderAmountChartData"
                                         :month="selectedMonth"
                                         :selected-franchise-id="props.selectedFranchiseId"
                                         @month-change="handleMonthChange"
                                     />
-                                    <ReturnProductDonutChart
+                                    <ReturnProductDoughnutChart
                                         v-else
                                         :chart-data="orderAmountChartData"
                                         :month="selectedMonth"
@@ -79,15 +79,15 @@
                                         @month-change="handleMonthChange"
                                     />
                                 </div>
-                                <div class="donut-chart-col">
-                                    <FranchiseReturnProductDonut
+                                <div class="doughnut-chart-col">
+                                    <FranchiseReturnProductDoughnut
                                         v-if="props.selectedFranchiseId"
                                         :chart-data="returnProductChartData"
                                         :month="selectedMonth"
                                         :selected-franchise-id="props.selectedFranchiseId"
                                         @month-change="handleMonthChange"
                                     />
-                                    <ReturnProductDonutChart
+                                    <ReturnProductDoughnutChart
                                         v-else
                                         :chart-data="returnProductChartData"
                                         :month="selectedMonth"
@@ -199,8 +199,8 @@ import ReturnFranchiseInfoCard from '../return/detail/FranchiseInfoCard.vue'
 import FranchiseDashboard from '@/components/hq/franchise/dashboard/FranchiseDashboard.vue'
 import OrderAmountBarChart from '@/components/hq/franchise/dashboard/OrderAmountBarChart.vue'
 import FranchiseOrderAmountBar from '@/components/hq/franchise/dashboard/FranchiseOrderAmountBar.vue'
-import ReturnProductDonutChart from '@/components/hq/franchise/dashboard/ReturnProductDonutChart.vue'
-import FranchiseReturnProductDonut from '@/components/hq/franchise/dashboard/FranchiseReturnProductDonut.vue'
+import ReturnProductDoughnutChart from '@/components/hq/franchise/dashboard/ReturnProductDoughnutChart.vue'
+import FranchiseReturnProductDoughnut from '@/components/hq/franchise/dashboard/FranchiseReturnProductDoughnut.vue'
 
 import api from '@/lib/api'
 
@@ -623,7 +623,7 @@ function selectStatsTab(idx) {
   font-weight: 700;
   box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.04);
 }
-.donut-charts-row {
+.doughnut-charts-row {
   display: flex;
   flex-direction: row;
   gap: 32px;
@@ -631,7 +631,7 @@ function selectStatsTab(idx) {
   align-items: flex-start;
   margin-top: 24px;
 }
-.donut-chart-col {
+.doughnut-chart-col {
   flex: 1 1 0;
   min-width: 0;
   display: flex;

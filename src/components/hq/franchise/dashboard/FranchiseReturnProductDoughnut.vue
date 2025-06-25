@@ -1,5 +1,5 @@
 <template>
-  <div class="donut-chart-container">
+  <div class="doughnut-chart-container">
     <div class="month-selector">
       <label>월 선택:</label>
       <select v-model="selectedMonth" @change="onMonthChange">
@@ -143,7 +143,7 @@ const doughnutOptions = {
   align-items: center;
   gap: 8px;
 }
-.donut-chart-container {
+.doughnut-chart-container {
   min-height: 340px; /* 차트+셀렉트 높이만큼 고정, 흔들림 방지 */
   display: flex;
   flex-direction: column;

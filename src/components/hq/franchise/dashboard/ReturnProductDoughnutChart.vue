@@ -44,6 +44,10 @@ const props = defineProps({
   isFranchiseSelected: {
     type: Boolean,
     default: false
+  },
+  selectedFranchiseId: {
+    type: [String, Number],
+    default: null
   }
 })
 
