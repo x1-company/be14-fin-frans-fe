@@ -691,9 +691,11 @@ function selectStatsTab(idx) {
   color: #000000ad;
   border-color: #00020034;
 }
+
 .btn.review-complete{
   color: #388e3c;
   border-color: #c8e6c9;
+}
 
 .stats-graph-section {
     padding: 24px;
