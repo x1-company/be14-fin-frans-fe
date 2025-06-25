@@ -31,6 +31,7 @@
             {{ franchiseData.isActive ? '운영중' : '운영중지' }}
           </span>
         </div>
+        <button class="btn btn-primary edit-btn-top" @click="openEditModal">정보 수정</button>
       </div>
 
       <div class="info-grid">
@@ -103,12 +104,55 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Action Buttons -->
-      <div class="action-buttons">
-        <button class="btn btn-primary">정보 수정</button>
-        <button class="btn btn-secondary">계약서 보기</button>
-        <button class="btn btn-secondary">연락하기</button>
+    <!-- 정보 수정 모달 -->
+    <div v-if="showEditModal" class="modal-overlay">
+      <div class="modal-content modal-content-grid">
+        <h2>가맹점 정보 수정</h2>
+        <form @submit.prevent="submitEdit">
+          <div class="modal-form-grid">
+            <div class="modal-form-group">
+              <label>가맹점명</label>
+              <input v-model="editForm.name" required />
+            </div>
+            <div class="modal-form-group">
+              <label>우편번호</label>
+              <input v-model="editForm.zipcode" required />
+            </div>
+            <div class="modal-form-group">
+              <label>기본주소</label>
+              <input v-model="editForm.address" required />
+            </div>
+            <div class="modal-form-group">
+              <label>상세주소</label>
+              <input v-model="editForm.addressDetail" />
+            </div>
+            <div class="modal-form-group">
+              <label>사업자번호</label>
+              <input v-model="editForm.businessNumber" required />
+            </div>
+            <div class="modal-form-group">
+              <label>연락처</label>
+              <input v-model="editForm.phone" required />
+            </div>
+            <div class="modal-form-group">
+              <label>계약일</label>
+              <input v-model="editForm.signedAt" type="date" required />
+            </div>
+            <div class="modal-form-group">
+              <label>운영 상태</label>
+              <select v-model="editForm.isActive">
+                <option :value="true">운영중</option>
+                <option :value="false">운영중지</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary">저장</button>
+            <button type="button" class="btn btn-secondary" @click="closeEditModal">취소</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -117,6 +161,7 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import api from '@/lib/api'
+import { useToast } from '@/composables/useToast'
 
 const props = defineProps({
   selectedFranchiseId: {
@@ -128,6 +173,51 @@ const props = defineProps({
 const franchiseData = ref(null)
 const loading = ref(false)
 const error = ref(null)
+const toast = useToast();
+
+// 수정 모달 관련 상태
+const showEditModal = ref(false)
+const editForm = ref({
+  name: '',
+  address: '',
+  addressDetail: '',
+  zipcode: '',
+  businessNumber: '',
+  phone: '',
+  signedAt: '',
+  isActive: true
+})
+
+const openEditModal = () => {
+  if (!franchiseData.value) return
+  editForm.value = {
+    name: franchiseData.value.name || '',
+    address: franchiseData.value.address || '',
+    addressDetail: franchiseData.value.addressDetail || '',
+    zipcode: franchiseData.value.zipcode || '',
+    businessNumber: franchiseData.value.businessNumber || '',
+    phone: franchiseData.value.phone || '',
+    signedAt: franchiseData.value.signedAt ? franchiseData.value.signedAt.slice(0, 10) : '',
+    isActive: franchiseData.value.isActive
+  }
+  showEditModal.value = true
+}
+const closeEditModal = () => {
+  showEditModal.value = false
+}
+
+const submitEdit = async () => {
+  try {
+    await api.put(`/api/hq/franchise/${props.selectedFranchiseId}/update`, {
+      ...editForm.value
+    })
+    toast.success('가맹점 정보가 성공적으로 수정되었습니다.')
+    showEditModal.value = false
+    fetchFranchiseInfo()
+  } catch (err) {
+    toast.error('수정에 실패했습니다: ' + (err.response?.data?.message || err.message))
+  }
+}
 
 const fetchFranchiseInfo = async () => {
   if (!props.selectedFranchiseId) {
@@ -274,6 +364,9 @@ onMounted(() => {
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .franchise-title {
@@ -367,7 +460,7 @@ onMounted(() => {
 }
 
 .status-indicator {
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -393,7 +486,7 @@ onMounted(() => {
 }
 
 .btn {
-  padding: 10px 20px;
+  padding: 7px 17px;
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -403,23 +496,14 @@ onMounted(() => {
 }
 
 .btn-primary {
-  background: #667eea;
+  background: #4061f3;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #5a6fd8;
+  background: #374fd9;
 }
 
-.btn-secondary {
-  background: #f8f9fa;
-  color: #495057;
-  border: 1px solid #dee2e6;
-}
-
-.btn-secondary:hover {
-  background: #e9ecef;
-}
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -440,5 +524,80 @@ onMounted(() => {
   .btn {
     width: 100%;
   }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px 32px 20px 32px;
+  min-width: 680px;
+  max-width: 95vw;
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.13);
+  animation: modalPop 0.18s cubic-bezier(.4,1.6,.6,1) 1;
+}
+@keyframes modalPop {
+  0% { transform: scale(0.97); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 22px;
+  font-size: 1.35rem;
+  color: #222;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 30px;
+}
+.modal-form-group {
+  display: flex;
+  flex-direction: column;
+}
+.modal-form-group label {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+.modal-form-group input,
+.modal-form-group select {
+  padding: 10px 14px;
+  border: 1.5px solid #e0e4ea;
+  border-radius: 7px;
+  font-size: 0.9rem;
+  background: #f8fafd;
+  transition: border 0.2s, box-shadow 0.2s;
+  text-align: left;
+}
+.modal-form-group input:focus,
+.modal-form-group select:focus {
+  border: 1.5px solid #4061f3;
+  outline: none;
+  background: #fff;
+  box-shadow: 0 0 0 2px #e6eaff;
+}
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 28px;
+}
+.edit-btn-top {
+  height: 33px;
+  align-self: flex-start;
+  margin-left: 16px;
 }
 </style>
