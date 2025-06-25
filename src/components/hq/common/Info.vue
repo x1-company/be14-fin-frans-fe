@@ -604,6 +604,43 @@ function selectStatsTab(idx) {
     line-height: 1.5;
 }
 
+
+.review-action-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+.btn.review-cancel {
+  border: 1.5px solid #bdbdbd;
+  background: #fff;
+  color: #333;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 6px 13px;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s, border 0.15s;
+}
+.btn.review-complete {
+  border: 1.5px solid #16a34a;
+  background: #fff;
+  color: #16a34a;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 6px 13px;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s, border 0.15s;
+}
+.btn.review-cancel{
+  color: #000000ad;
+  border-color: #00020034;
+}
+
+.btn.review-complete{
+  color: #388e3c;
+  border-color: #c8e6c9;
+}
+
 .stats-graph-section {
     padding: 24px;
     background: #fff;
