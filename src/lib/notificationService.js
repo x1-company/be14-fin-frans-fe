@@ -72,10 +72,10 @@ class NotificationService {
       console.log('토큰 갱신 및 SSE 재연결을 시도합니다...');
 
       try {
-        await api.get('/api/auth/ping');
-        console.log('토큰 재발급 성공. 1초 후 SSE 재연결을 시도합니다.');
+        // await api.get('/api/auth/ping');
+        // console.log('토큰 재발급 성공. 1초 후 SSE 재연결을 시도합니다.');
 
-        setTimeout(() => this.connect(), 1000);
+        // setTimeout(() => this.connect(), 1000);
       } catch (reissueError) {
         console.error(
           'API 호출을 통한 토큰 재발급 최종 실패. 재연결을 중단합니다.',
