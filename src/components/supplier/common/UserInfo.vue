@@ -19,6 +19,9 @@
                 로그아웃
             </div>
         </div>
+
+        <!-- 내 정보 모달 -->
+        <MyInfo :isVisible="isMyInfoModalVisible" @close="closeMyInfoModal" />
     </div>
 </template>
 
@@ -27,7 +30,8 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
 import { useRouter } from "vue-router";
-import { UserIcon } from 'lucide-vue-next'
+import { UserIcon } from 'lucide-vue-next';
+import MyInfo from "./MyInfo.vue";
 
 const router = useRouter();
 
@@ -45,6 +49,7 @@ const props = defineProps({
 const auth = useAuthStore();
 const isDropdownOpen = ref(false);
 const dropdownRef = ref(null);
+const isMyInfoModalVisible = ref(false);
 
 const toggleDropdown = () => {
     isDropdownOpen.value = !isDropdownOpen.value;
@@ -55,7 +60,7 @@ const handleMenuClick = (menuItem) => {
 
     switch (menuItem) {
         case "마이 페이지":
-            // 마이 페이지로 이동
+            isMyInfoModalVisible.value = true;
             break;
         case "로그아웃":
             // 로그아웃 처리
@@ -81,6 +86,10 @@ const handleClickOutside = (event) => {
         isDropdownOpen.value = false;
     }
 };
+
+const closeMyInfoModal = () => {
+  isMyInfoModalVisible.value = false;
+}
 
 onMounted(() => {
     document.addEventListener("click", handleClickOutside);
