@@ -1,14 +1,8 @@
 <template>
   <div class="doughnut-chart-container">
-    <div class="month-selector">
-      <label>월 선택:</label>
-      <select v-model="selectedMonth" @change="onMonthChange">
-        <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
-      </select>
-    </div>
     <Doughnut
       v-if="filteredData.length"
-      :key="selectedFranchiseId + '-' + selectedMonth"
+      :key="selectedFranchiseId + '-' + props.month"
       :data="doughnutData"
       :options="doughnutOptions"
       style="max-width: 400px; height: 300px; margin: 0 auto"
@@ -20,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
 import {
   Chart,
@@ -32,17 +26,6 @@ import {
 
 Chart.register(ArcElement, Tooltip, Legend, Title)
 
-function getPrevMonth() {
-  const now = new Date();
-  let year = now.getFullYear();
-  let month = now.getMonth(); // 0~11, 저번 달
-  if (month === 0) {
-    year -= 1;
-    month = 12;
-  }
-  return { year, month };
-}
-
 const props = defineProps({
   chartData: {
     type: Array,
@@ -52,28 +35,9 @@ const props = defineProps({
   selectedFranchiseId: [String, Number]
 })
 
-const emit = defineEmits(['month-change'])
-
-const { month: prevMonth } = getPrevMonth();
-const selectedMonth = ref(props.month ?? prevMonth)
-
-function onMonthChange() {
-  emit('month-change', selectedMonth.value)
-}
-
-// 가맹점 id가 바뀔 때만 selectedMonth를 저번 달로 리셋
-watch(
-  () => props.selectedFranchiseId,
-  () => {
-    const { month } = getPrevMonth();
-    selectedMonth.value = month;
-    emit('month-change', month);
-  }
-)
-
 // 월별 + 자재별 집계
 const filteredData = computed(() => {
-  const monthData = props.chartData.filter(item => item.month === selectedMonth.value)
+  const monthData = props.chartData.filter(item => item.month === props.month)
   // 자재별 합산
   const productMap = {}
   monthData.forEach(item => {
@@ -137,12 +101,6 @@ const doughnutOptions = {
 </script>
 
 <style scoped>
-.month-selector {
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .doughnut-chart-container {
   min-height: 340px; /* 차트+셀렉트 높이만큼 고정, 흔들림 방지 */
   display: flex;

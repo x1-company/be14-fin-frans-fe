@@ -31,6 +31,15 @@
                             @click="selectStatsTab(1)"
                         >자재별 분석</button>
                     </div>
+                    <!-- 월 선택 드롭다운을 탭 아래에 공통 배치 -->
+                    <div class="doughnut-top-row">
+                        <div class="doughnut-top-right">
+                            <label style="font-weight:500; margin-right:8px;">월 선택:</label>
+                            <select v-model="selectedMonth" @change="handleMonthChange" class="month-dropdown">
+                                <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="stats-graph-card">
                         <template v-if="statsTab === 0">
                             <div style="display:flex;align-items:center;gap:12px;">
@@ -55,14 +64,6 @@
                             />
                         </template>
                         <template v-else-if="statsTab === 1">
-                            <div class="doughnut-top-row">
-                                <div class="doughnut-top-right">
-                                    <label style="font-weight:500; margin-right:8px;">월 선택:</label>
-                                    <select v-model="selectedMonth" @change="handleMonthChange" class="month-dropdown">
-                                        <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
-                                    </select>
-                                </div>
-                            </div>
                             <div class="doughnut-charts-row">
                                 <div class="doughnut-chart-col">
                                     <h3 class="doughnut-title">자재별 주문량</h3>
@@ -326,8 +327,8 @@ watch(
   }
 )
 
-function handleMonthChange(month) {
-  selectedMonth.value = month
+function handleMonthChange(event) {
+  selectedMonth.value = Number(event.target.value)
   fetchOrderAmountStats()
   fetchReturnProductStats()
   fetchProductOrderStats()
