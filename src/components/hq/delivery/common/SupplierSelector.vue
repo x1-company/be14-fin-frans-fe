@@ -13,13 +13,18 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '@/lib/api';
+import { useAuthStore } from '@/stores/auth';
 
 const emit = defineEmits(['supplier-selected']);
+const auth = useAuthStore()
 
 const suppliers = ref([]);
 const selectedSupplier = ref(null);
 
 const fetchSuppliers = async () => {
+  if (!auth.isAuthenticated) {
+    return;
+  }
   try {
     const response = await api.get('/api/hq/suppliers/list'); // 본사에서 사용하는 전체 공급처 목록 API
     suppliers.value = response.data;
