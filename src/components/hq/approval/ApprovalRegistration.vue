@@ -54,7 +54,13 @@
             @click="submitApproval"
             :disabled="isSubmitting"
           >
-            {{ isSubmitting ? "처리중..." : "결재요청" }}
+            {{
+              isSubmitting
+                ? "처리중..."
+                : props.approvalId
+                ? "등록"
+                : "결재요청"
+            }}
           </button>
         </div>
       </div>
@@ -274,14 +280,38 @@ const processAndSubmit = async (isRequest) => {
       contractTerms: formData.value.contractTerms,
     };
 
-    const response = await api.post("/api/hq/approvals", requestData);
+    // 수정 모드일 때는 PUT 요청, 등록 모드일 때는 POST 요청
+    let response;
+    if (props.approvalId) {
+      // 수정 모드
+      if (isRequest) {
+        // 결재 등록: POST /api/hq/approvals/{id}/request
+        response = await api.post(
+          `/api/hq/approvals/${props.approvalId}/request`,
+          requestData
+        );
+      } else {
+        // 임시저장: PUT /api/hq/approvals/{id}/draft
+        response = await api.put(
+          `/api/hq/approvals/${props.approvalId}/draft`,
+          requestData
+        );
+      }
+    } else {
+      // 등록 모드: POST /api/hq/approvals
+      response = await api.post("/api/hq/approvals", requestData);
+    }
 
-    console.log("결재 등록 응답:", response.data);
+    console.log("결재 등록/수정 응답:", response.data);
     console.log("결재 ID:", response.data?.data?.id);
 
     if (response.status === 200 || response.status === 201) {
       showToast.success(
-        isRequest
+        props.approvalId
+          ? isRequest
+            ? "결재 요청이 성공적으로 수정되었습니다."
+            : "임시저장되었습니다."
+          : isRequest
           ? "결재 요청이 성공적으로 등록되었습니다."
           : "임시저장되었습니다."
       );
@@ -301,7 +331,11 @@ const processAndSubmit = async (isRequest) => {
       }
     } else {
       throw new Error(
-        isRequest
+        props.approvalId
+          ? isRequest
+            ? "결재 요청 수정에 실패했습니다."
+            : "임시저장에 실패했습니다."
+          : isRequest
           ? "결재 요청 등록에 실패했습니다."
           : "임시저장에 실패했습니다."
       );
@@ -350,6 +384,7 @@ const handleCancel = () => {
 onMounted(async () => {
   if (props.approvalId) {
     try {
+      // 임시저장 데이터 불러오기
       const response = await api.get(
         `/api/hq/approvals/draft/${props.approvalId}`
       );
@@ -361,8 +396,10 @@ onMounted(async () => {
           selectedType.value =
             categoryType === "PURCHASE_ORDER" ? "PURCHASE" : categoryType;
         }
+        console.log("수정할 결재 문서 데이터:", editData.value);
       }
     } catch (error) {
+      console.error("임시저장 데이터 로드 실패:", error);
       showToast.error("임시저장 데이터를 불러오지 못했습니다.");
     }
   }

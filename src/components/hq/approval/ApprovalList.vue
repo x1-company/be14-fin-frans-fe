@@ -167,6 +167,7 @@ const emit = defineEmits([
   "document-view",
   "document-approve",
   "document-edit",
+  "edit-document",
   "document-reject",
   "refresh-list",
   "select-menu",
@@ -319,8 +320,7 @@ const collaborateDocument = (document) => {
 
 const editDocument = (document) => {
   if (document && document.approvalId) {
-    // 상세페이지가 아닌 등록(수정) 폼으로 이동
-    router.push(`/approval/register/${document.approvalId}`);
+    emit("edit-document", document);
   } else {
     console.warn("approvalId가 없습니다:", document);
   }
