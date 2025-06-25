@@ -64,18 +64,6 @@
           <div v-if="activeTabSwitch === 3">
             <ReturnList />
           </div>
-
-          <div v-if="activeTabSwitch === 4" class="content-section">
-            <h3>매출관리 컨텐츠</h3>
-            <p>매출 관리 내용이 여기에 표시됩니다.</p>
-            <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
-          </div>
-
-          <div v-if="activeTabSwitch === 5" class="content-section">
-            <h3>재고관리 컨텐츠</h3>
-            <p>재고 관리 내용이 여기에 표시됩니다.</p>
-            <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
-          </div>
         </div>
       </div>
     </div>
@@ -117,8 +105,6 @@ const tabs = [
   "가맹점 정보",
   "주문관리",
   "반품관리",
-  "매출관리",
-  "재고관리",
 ];
 
 const tabInfo = ref([
@@ -126,8 +112,6 @@ const tabInfo = ref([
   { title: "가맹점 정보", desc: "가맹점 정보를 관리할 수 있습니다." },
   { title: "주문 관리", desc: "주문을 관리할 수 있습니다." },
   { title: "반품 관리", desc: "반품을 관리할 수 있습니다." },
-  { title: "매출 관리", desc: "매출을 관리할 수 있습니다." },
-  { title: "재고 관리", desc: "재고를 관리할 수 있습니다." },
 ]);
 
 const activeTabSwitch = ref(0);
