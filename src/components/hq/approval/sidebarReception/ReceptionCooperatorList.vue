@@ -305,7 +305,15 @@ const cooperateDocument = (document) => {
 };
 
 const editDocument = (document) => {
-  emit("document-edit", document);
+  const id = document.approvalId || document.id || document.documentId;
+  if (!id) {
+    alert("approvalId가 없습니다!");
+    return;
+  }
+  router.push({
+    name: "approval-register",
+    params: { approvalId: id },
+  });
 };
 
 const canCooperate = (document) => {

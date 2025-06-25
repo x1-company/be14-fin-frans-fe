@@ -172,9 +172,9 @@
                             <ReturnProgressBar :status="returnDetail?.status" />
                             <ReturnFranchiseInfoCard :returnData="returnDetail" />
                             <ReturnInfoCard :returnData="returnDetail" />
-                            <ProductTable :products="returnDetail?.products" :totalAmount="returnDetail?.totalAmount" />
-                            <!-- <DeliveryInfoCard :returnData="returnDetail" />
-                            <ApprovalInfoCard :returnData="returnDetail" /> -->
+                            <ReturnProductTable :products="returnDetail?.returnProducts || []" :totalAmount="returnDetail?.totalAmount" />
+                            <ReturnDeliveryInfoCard :returnData="returnDetail" />
+                            <ReturnApprovalInfoCard :returnData="returnDetail" /> 
                         </div>
                     </div>
                 </div>
@@ -193,15 +193,18 @@ import FranchiseInfo from '../franchise/FranchiseInfo.vue'
 import OrderProgressBar from '../orders/detail/OrderProgressBar.vue'
 import FranchiseInfoCard from '../orders/detail/FranchiseInfoCard.vue'
 import DeliveryInfoCard from '../orders/detail/DeliveryInfoCard.vue'
+import ReturnDeliveryInfoCard from '../return/detail/DeliveryInfoCard.vue'
 import OrderInfoCard from '../orders/detail/OrderInfoCard.vue'
 import PaymentInfoCard from '../orders/detail/PaymentInfoCard.vue'
 import ProductTable from '../orders/detail/ProductTable.vue'
+import ReturnProductTable from '../return/detail/ProductTable.vue'
 import OrderActionButtons from '../orders/detail/OrderActionButtons.vue'
 import ReturnList from '../return/list/ReturnList.vue'
 import ReturnActionButtons from '../return/detail/ReturnActionButtons.vue'
 import ReturnProgressBar from '../return/detail/ReturnProgressBar.vue'
 import ReturnInfoCard from '../return/detail/ReturnInfoCard.vue'
 import ApprovalInfoCard from '../return/detail/ApprovalInfoCard.vue'
+import ReturnApprovalInfoCard from '../return/detail/ApprovalInfoCard.vue'
 import ReturnFranchiseInfoCard from '../return/detail/FranchiseInfoCard.vue'
 import FranchiseDashboard from '@/components/hq/franchise/dashboard/FranchiseDashboard.vue'
 import OrderAmountBarChart from '@/components/hq/franchise/dashboard/OrderAmountBarChart.vue'

@@ -228,6 +228,8 @@ const getStatusIconClass = (status) => {
       return "completed";
     case "pending":
       return "pending";
+    case "expected":
+      return "expected";
     default:
       return "default";
   }
@@ -449,6 +451,7 @@ const formatDateTime = (dateString) => {
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
+  background: #6c757d; /* 기본 회색 */
 }
 
 .status-icon.completed {
@@ -458,6 +461,11 @@ const formatDateTime = (dateString) => {
 
 .status-icon.pending {
   background: #007bff;
+  color: white;
+}
+
+.status-icon.expected {
+  background: #6c757d; /* 예정일 때 회색 */
   color: white;
 }
 

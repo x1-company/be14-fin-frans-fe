@@ -22,112 +22,122 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(p, idx) in returnProducts" :key="p.returnDetailId">
+        <tr v-for="(p, idx) in filteredProducts" :key="p?.returnDetailId || p?.id || idx">
           <td>{{ idx + 1 }}</td>
-          <td class="link">{{ p.productCode }}</td>
-          <td>{{ p.productName }}</td>
-          <td>{{ p.salePrice.toLocaleString() }}원</td>
-          <td>{{ p.returnQuantity }}</td>
-          <td>{{ p.purchaseUnit }}</td>
-          <td>{{ p.spec }}</td>
-          <td><span class="badge blue">{{ getTypeName(p.productTypeId) }}</span></td>
-          <td><span class="badge purple">{{ getGroupName(p.productGroupId) }}</span></td>
-          <td><span class="badge green">{{ getAttributeName(p.productAttributeId) }}</span></td>
-          <td>{{ getReturnType(p.returnType) }}</td>
+          <td class="link">{{ p?.productCode || '-' }}</td>
+          <td>{{ p?.productName || '-' }}</td>
+          <td>{{ formatPrice(p?.salePrice || p?.price) }}</td>
+          <td>{{ p?.returnQuantity || p?.quantity || '-' }}</td>
+          <td>{{ p?.purchaseUnit || p?.unit || '-' }}</td>
+          <td>{{ p?.spec || '-' }}</td>
+          <td><span class="badge blue">{{ getTypeName(p?.productTypeId) }}</span></td>
+          <td><span class="badge purple">{{ getGroupName(p?.productGroupId) }}</span></td>
+          <td><span class="badge green">{{ getAttributeName(p?.productAttributeId) }}</span></td>
+          <td>{{ getReturnType(p?.returnType) }}</td>
           <td>
-            <select v-model="p.returnStatus" class="select">
-              <option disabled value="">선택</option>
-              <option value="APPROVED">승인</option>
-              <option value="REJECTED">반려</option>
-            </select>
+            <template v-if="isEditable">
+              <select v-model="p.returnStatus" class="select status-select">
+                <option disabled value="">선택</option>
+                <option value="APPROVED">승인</option>
+                <option value="REJECTED">반려</option>
+              </select>
+            </template>
+            <template v-else>
+              {{ getReturnStatusText(p?.returnStatus) }}
+            </template>
           </td>
         </tr>
       </tbody>
     </table>
     <div class="summary-box">
       <div>총 수량: <strong>{{ totalQuantity }}개</strong></div>
-      <div class="total-amount">{{ totalAmount.toLocaleString() }}원</div>
+      <div class="total-amount">{{ formatPrice(totalAmount) }}</div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 const props = defineProps({
-  returnProducts: Array,
-  totalAmount: Number
-});
+  products: { type: Array, default: () => [] },
+  totalAmount: { type: [Number, String], default: 0 },
+  isEditable: { type: Boolean, default: false }
+})
+
+const filteredProducts = computed(() => {
+  if (!Array.isArray(props.products)) return []
+  return props.products.filter(p => p && typeof p === 'object')
+})
 
 const totalQuantity = computed(() =>
-  props.returnProducts?.reduce((sum, p) => sum + p.returnQuantity, 0) ?? 0
-);
+  filteredProducts.value.reduce((sum, p) => {
+    const quantity = p?.returnQuantity || p?.quantity || 0
+    return sum + (Number(quantity) || 0)
+  }, 0)
+)
 
-// 자재 분류
+const formatPrice = (value) => {
+  if (value == null || value === '' || value === undefined) return '-'
+  const num = Number(value)
+  return (isNaN(num) || !isFinite(num)) ? '-' : `${num.toLocaleString()}원`
+}
+
 const getTypeName = (id) => {
-  switch (id) {
-    case 1: return '원재료';
-    case 2: return '소모품';
-    case 3: return '상품';
-    default: return '-';
+  switch (Number(id)) {
+    case 1: return '원재료'
+    case 2: return '소모품'
+    case 3: return '상품'
+    default: return '-'
   }
-};
-
-// 자재 구분
+}
 const getGroupName = (id) => {
-  switch (id) {
-    case 1: return '상온';
-    case 2: return '냉장';
-    case 3: return '냉동';
-    default: return '-';
+  switch (Number(id)) {
+    case 1: return '상온'
+    case 2: return '냉장'
+    case 3: return '냉동'
+    default: return '-'
   }
-};
-
-// 자재 속성
+}
 const getAttributeName = (id) => {
-  switch (id) {
-    case 1: return '비신선식품';
-    case 2: return '신선식품';
-    case 3: return '비식품';
-    default: return '-';
+  switch (Number(id)) {
+    case 1: return '비신선식품'
+    case 2: return '신선식품'
+    case 3: return '비식품'
+    default: return '-'
   }
-};
-
-// 반품 타입
+}
 const getReturnType = (type) => {
   switch (type) {
-    case 'BAD_QUALITY': return '품질 불량';
-    case 'OVER_QUANTITY': return '수량 이상';
-    case 'DAMAGED': return '파손';
-    case 'ETC': return '기타';
-    default: return '-';
+    case 'BAD_QUALITY': return '품질 불량'
+    case 'OVER_QUANTITY': return '수량 이상'
+    case 'DAMAGED': return '파손'
+    case 'ETC': return '기타'
+    default: return '-'
   }
-};
+}
+const getReturnStatusText = (status) => {
+  switch (status) {
+    case 'APPROVED': return '승인'
+    case 'REJECTED': return '반려'
+    default: return '-'
+  }
+}
 </script>
 
 <style scoped>
-.select {
-  padding: 6px 10px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background-color: #fff;
-}
-
 .product-card {
   border: 1px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
-  padding: 32px 24px;
-  margin: 20px 0 10px -20px;
-  margin-bottom: 24px;
+  padding: 25px 24px;
+  margin-top: 20px;
   background: #fff;
-  max-width: 100%;
   width: 100%;
 }
 
 .card-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   margin-bottom: 20px;
   display: flex;
@@ -139,22 +149,24 @@ const getReturnType = (type) => {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 16px;
-  font-size: 15px;
+  font-size: 13px;
+}
+
+.product-table th,
+.product-table td {
+  padding: 10px;
+  text-align: center;
+  color: #333;
 }
 
 .product-table th {
   background: #f9fafb;
   font-weight: 600;
-  padding: 10px;
-  color: #333;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .product-table td {
-  padding: 10px;
   border-bottom: 1px solid #f1f1f1;
-  text-align: center;
-  color: #333;
 }
 
 .link {
@@ -165,7 +177,7 @@ const getReturnType = (type) => {
 
 .badge {
   padding: 4px 10px;
-  font-size: 14px;
+  font-size: 12px;
   border-radius: 12px;
   font-weight: 700;
 }
@@ -191,13 +203,28 @@ const getReturnType = (type) => {
   padding: 16px;
   background: #f9f9f9;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .total-amount {
   color: #15803d;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
+  margin-right: 20px;
+}
+
+.select.status-select {
+  padding: 6px 12px;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  background-color: #f4f6f8;
+  font-size: 13px;
+  color: #333;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23666' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
 }
 </style>

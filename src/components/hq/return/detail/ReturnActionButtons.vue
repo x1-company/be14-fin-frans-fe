@@ -87,11 +87,11 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
-// import ConfirmModal from '@/components/hq/orders/modal/ConfirmModal.vue';
-// import RejectModal from '@/components/hq/orders/modal/RejectModal.vue';
-// import ConfirmCancelModal from '@/components/hq/orders/modal/ConfirmCancelModal.vue';
-// import DeliveryInfoModal from '@/components/hq/orders/modal/DeliveryInfoModal.vue';
-// import DeliveryCompleteModal from '@/components/hq/orders/modal/DeliveryCompleteModal.vue';
+import ConfirmModal from '@/components/hq/orders/modal/ConfirmModal.vue';
+import RejectModal from '@/components/hq/orders/modal/RejectModal.vue';
+import ConfirmCancelModal from '@/components/hq/orders/modal/ConfirmCancelModal.vue';
+import DeliveryInfoModal from '@/components/hq/orders/modal/DeliveryInfoModal.vue';
+import DeliveryCompleteModal from '@/components/hq/orders/modal/DeliveryCompleteModal.vue';
 import api from '@/lib/api';
 
 const props = defineProps({

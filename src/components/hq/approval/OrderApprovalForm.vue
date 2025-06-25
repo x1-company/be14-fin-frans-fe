@@ -27,7 +27,12 @@
               <td>{{ doc.date }}</td>
               <td v-if="type === 'RETURN'">{{ doc.description }}</td>
               <td v-else-if="type !== 'RETURN'">{{ doc.name }}</td>
-              <td>{{ formatCurrency(doc.amount) }}</td>
+              <td>{{
+                formatCurrency(
+                  doc.amount ??
+                    doc.quantity * (doc.salePrice || doc.purchasePrice)
+                )
+              }}</td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
                   ×
@@ -241,18 +246,27 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import UnifiedDocumentList from "./modal/UnifiedDocumentList.vue";
 import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
 import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
 import api from "@/lib/api";
+import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps({
   type: String,
   files: {
     type: Array,
     default: () => [],
+  },
+  initialData: {
+    type: Object,
+    default: null,
+  },
+  isEditMode: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -282,6 +296,18 @@ const formData = ref({
   approvalDocuments: {
     documentIds: [],
   },
+  signUrl: "",
+});
+
+// authStore에서 사용자 서명 자동 설정
+const authStore = useAuthStore();
+
+// 컴포넌트 마운트 시 사용자 서명 자동 설정
+onMounted(() => {
+  if (authStore.userSignUrl) {
+    formData.value.signUrl = authStore.userSignUrl;
+    emitFormData();
+  }
 });
 
 const categoryType = computed(() => {
@@ -462,6 +488,29 @@ watch(
     emitFormData();
   },
   { deep: true }
+);
+
+// initialData가 변경될 때 폼 데이터 업데이트
+watch(
+  () => props.initialData,
+  (newData) => {
+    if (newData) {
+      formData.value = {
+        ...formData.value,
+        ...newData,
+        approvalDocuments: {
+          ...formData.value.approvalDocuments,
+          ...newData.approvalDocuments,
+        },
+      };
+
+      // 문서 ID가 있으면 문서 정보도 가져오기
+      if (newData.approvalDocuments?.documentIds?.length > 0) {
+        fetchDocuments(newData.approvalDocuments.documentIds);
+      }
+    }
+  },
+  { immediate: true, deep: true }
 );
 
 const initializeForm = () => {
@@ -783,6 +832,70 @@ const openFilePicker = () => {
 const removeFile = (index) => {
   formData.value.files.splice(index, 1);
   emitFormData();
+};
+
+// 문서 ID로 문서 정보 가져오기
+const fetchDocuments = async (documentIds) => {
+  try {
+    const promises = documentIds.map(async (id) => {
+      // 결재 유형에 따라 다른 API 엔드포인트 사용
+      let endpoint;
+      switch (props.type) {
+        case "ORDER":
+          endpoint = `/api/hq/orders/${id}`;
+          break;
+        case "RETURN":
+          endpoint = `/api/hq/returns/${id}`;
+          break;
+        case "PURCHASE_ORDER":
+          endpoint = `/api/hq/purchases/${id}`;
+          break;
+        default:
+          return null;
+      }
+
+      const response = await api.get(endpoint);
+      return response.data;
+    });
+
+    const fetchedDocuments = await Promise.all(promises);
+    const validDocuments = fetchedDocuments.filter((doc) => doc !== null);
+
+    // documents 배열에 추가
+    validDocuments.forEach((doc) => {
+      const existingDoc = documents.value.find(
+        (existing) => existing.id === doc.id
+      );
+      if (!existingDoc) {
+        let documentData = {
+          id: doc.id || doc.code,
+          code: doc.code,
+          date: formatDate(doc.createdAt),
+          amount: doc.totalAmount,
+        };
+
+        // 결재 유형에 따라 다른 필드 매핑
+        switch (props.type) {
+          case "ORDER":
+            documentData.name = doc.franchiseName;
+            break;
+          case "RETURN":
+            documentData.name = doc.name;
+            documentData.description = doc.description;
+            break;
+          case "PURCHASE_ORDER":
+            documentData.name = doc.supplierName;
+            break;
+          default:
+            documentData.name = doc.franchiseName || doc.name;
+        }
+
+        documents.value.push(documentData);
+      }
+    });
+  } catch (error) {
+    console.error("문서 정보 가져오기 실패:", error);
+  }
 };
 
 defineExpose({
