@@ -2,13 +2,18 @@
   <div class="info-form">
     <div class="approval-form-container">
       <!-- 결재 유형 선택 컴포넌트 -->
-      <ApprovalTypeSelector @type-selected="handleTypeSelected" />
+      <ApprovalTypeSelector
+        @type-selected="handleTypeSelected"
+        :initial-type="selectedType"
+      />
 
       <!-- 선택된 유형에 따른 폼 컴포넌트 -->
       <OrderApprovalForm
         v-if="selectedType === 'ORDER'"
         type="ORDER"
         ref="orderFormRef"
+        :initial-data="editData"
+        :is-edit-mode="!!props.approvalId"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
       />
@@ -17,6 +22,8 @@
         v-if="selectedType === 'RETURN'"
         type="RETURN"
         ref="returnFormRef"
+        :initial-data="editData"
+        :is-edit-mode="!!props.approvalId"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
       />
@@ -25,6 +32,8 @@
         v-if="selectedType === 'PURCHASE'"
         type="PURCHASE_ORDER"
         ref="purchaseFormRef"
+        :initial-data="editData"
+        :is-edit-mode="!!props.approvalId"
         @form-data-updated="handleFormDataUpdated"
         @add-document="handleAddDocument"
       />
@@ -57,17 +66,29 @@
 import { ref, onMounted, nextTick } from "vue";
 import ApprovalTypeSelector from "./ApprovalTypeSelector.vue";
 import OrderApprovalForm from "./OrderApprovalForm.vue";
+import { useToast } from "@/composables/useToast";
 import api from "@/lib/api";
+import { useAuthStore } from "@/stores/auth";
 
-const emit = defineEmits(["submit", "cancel", "approval-submitted", "counts-refresh"]);
+const showToast = useToast();
+const authStore = useAuthStore();
+
+const emit = defineEmits([
+  "submit",
+  "cancel",
+  "approval-submitted",
+  "counts-refresh",
+]);
 
 const props = defineProps({
   selectedTemplate: { type: Object, default: null },
+  approvalId: { type: [String, Number], default: null },
 });
 
 // 상태 관리
 const selectedType = ref("ORDER");
 const isSubmitting = ref(false);
+const editData = ref(null);
 
 // 폼 참조
 const orderFormRef = ref(null);
@@ -85,6 +106,7 @@ const formData = ref({
     categoryType: "ORDER",
     documentIds: [],
   },
+  signUrl: "",
   // 추가 필드들
   returnReason: "",
   detailedReason: "",
@@ -159,6 +181,7 @@ const resetFormData = () => {
       categoryType: selectedType.value,
       documentIds: [],
     },
+    signUrl: "",
     returnReason: "",
     detailedReason: "",
     supplierName: "",
@@ -181,12 +204,22 @@ const processAndSubmit = async (isRequest) => {
       !formData.value.title.trim() ||
       formData.value.title.trim().length < 2
     ) {
-      alert("제목을 2자 이상 입력해주세요.");
+      showToast.error("제목을 2자 이상 입력해주세요.");
       return;
     }
 
     if (formData.value.approvalLines.length === 0) {
-      alert("결재선을 설정해주세요.");
+      showToast.error("결재선을 설정해주세요.");
+      return;
+    }
+
+    if (formData.value.approvalDocuments.documentIds.length === 0) {
+      showToast.error("결재문서를 첨부해주세요.");
+      return;
+    }
+
+    if (formData.value.signUrl === null || formData.value.signUrl === "") {
+      showToast.error("서명을 등록해 주세요.");
       return;
     }
   } else {
@@ -218,10 +251,10 @@ const processAndSubmit = async (isRequest) => {
         let seq = 1;
         formData.value.approvalLines.forEach((line) => {
           approvalLines.push({
-              userId: line.userId || line.id,
-              seq: seq++,
-              type: line.type,
-            });
+            userId: line.userId || line.id,
+            seq: seq++,
+            type: line.type,
+          });
         });
         return approvalLines;
       })(),
@@ -247,7 +280,7 @@ const processAndSubmit = async (isRequest) => {
     console.log("결재 ID:", response.data?.data?.id);
 
     if (response.status === 200 || response.status === 201) {
-      alert(
+      showToast.success(
         isRequest
           ? "결재 요청이 성공적으로 등록되었습니다."
           : "임시저장되었습니다."
@@ -275,7 +308,7 @@ const processAndSubmit = async (isRequest) => {
     }
   } catch (error) {
     console.error("Error:", error);
-    alert(
+    showToast.error(
       (isRequest ? "결재 요청 등록" : "임시저장") + " 중 오류가 발생했습니다."
     );
   } finally {
@@ -314,7 +347,26 @@ const handleCancel = () => {
 };
 
 // 컴포넌트 마운트 시 초기화
-onMounted(() => {
+onMounted(async () => {
+  if (props.approvalId) {
+    try {
+      const response = await api.get(
+        `/api/hq/approvals/draft/${props.approvalId}`
+      );
+      if (response.status === 200 && response.data?.data) {
+        editData.value = response.data.data;
+        // 결재 유형 동기화
+        const categoryType = editData.value.approvalDocuments?.categoryType;
+        if (categoryType) {
+          selectedType.value =
+            categoryType === "PURCHASE_ORDER" ? "PURCHASE" : categoryType;
+        }
+      }
+    } catch (error) {
+      showToast.error("임시저장 데이터를 불러오지 못했습니다.");
+    }
+  }
+
   // 초기 문서 ID 설정
   formData.value.approvalDocuments.documentIds = [1, 2];
 

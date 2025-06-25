@@ -2,10 +2,11 @@
     <div class="app">
         <NavBar />
         <div class="main-container">
-            <OrderSideBar @select-franchise="handleFranchiseSelect" />
+            <OrderSideBar @select-franchise="handleFranchiseSelect" v-model:tab="sidebarTab" />
         <Info 
           :activeTab="activeTab"
           :selectedFranchiseId="selectedFranchiseId"
+          :sidebarTab="sidebarTab"
           @tab-change="handleTabChange"
         />
     </div>
@@ -21,6 +22,7 @@ import Info from '@/components/hq/common/Info.vue';
 
 const route = useRoute();
 const selectedFranchiseId = ref(null);
+const sidebarTab = ref('mine');
 
 const activeTab = computed(() => route.query.tab || '대시보드');
 

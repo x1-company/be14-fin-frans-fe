@@ -1,253 +1,112 @@
-import api from './api';
-import { useNotificationStore } from '@/stores/notification';
-import { useAuthStore } from '@/stores/auth';
 import { EventSourcePolyfill } from 'event-source-polyfill';
+import { useAuthStore } from '../stores/auth';
+import { useNotificationStore } from '../stores/notification';
+import api from './api';
 
 class NotificationService {
   constructor() {
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 1000; // 1초
-    this.maxReconnectDelay = 30000; // 30초
-    this.abortController = null;
-    this.isConnecting = false;
-    this.isConnected = false;
-    this.reconnectTimeout = null;
     this.eventSource = null;
+    this.isConnecting = false;
   }
 
   // SSE 연결 시작
-  async connect() {
+  connect() {
     const authStore = useAuthStore();
     const notificationStore = useNotificationStore();
 
-    // 이미 연결 중이거나 연결되어 있으면 중단
-    if (this.isConnecting || this.isConnected) {
-      console.log('SSE 이미 연결 중이거나 연결됨, 중단');
+    if (!authStore.accessToken) {
+      console.log('SSE 연결 실패: 토큰이 없습니다.');
       return;
     }
-
-    // 토큰이 없거나 유효하지 않으면 연결하지 않음
-    if (!authStore.accessToken || !authStore.decodedToken) {
-      console.log('SSE 연결 실패: 토큰이 없거나 유효하지 않음');
+    if (this.isConnecting) {
+      console.log('SSE 연결이 이미 진행 중입니다.');
       return;
     }
-
-    // 토큰 만료 확인
-    if (authStore.decodedToken.exp) {
-      const currentTime = Math.floor(Date.now() / 1000);
-      if (currentTime >= authStore.decodedToken.exp) {
-        console.log('SSE 연결 실패: 토큰이 만료됨');
-        authStore.clearAccessToken();
-        return;
-      }
-    }
-
     this.isConnecting = true;
 
-    try {
-      // 기존 연결 해제
-      this.disconnect();
+    // 기존 연결이 있다면 명확하게 종료
+    this.disconnect();
 
-      // 마지막 이벤트 ID 가져오기 (사용자별로 구분)
-      const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
-      const lastEventIdKey = `lastEventId_${currentUserId}`;
-      const lastEventId = localStorage.getItem(lastEventIdKey) || '';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    const lastEventId = localStorage.getItem(`lastEventId_${authStore.decodedToken?.sub}`) || '';
+    const url = `${API_BASE_URL}/api/notification/subscribe?lastEventId=${lastEventId}`;
 
-      // 환경변수에서 API URL 가져오기 (개발/배포 환경 구분)
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
-      const url = `${API_BASE_URL}/api/notification/subscribe?lastEventId=${lastEventId}`;
+    console.log('SSE 연결 시도:', url);
 
-      console.log('SSE 연결 시도:', url);
-      console.log('현재 사용자 ID:', currentUserId);
-      console.log('마지막 이벤트 ID:', lastEventId);
+    this.eventSource = new EventSourcePolyfill(url, {
+      headers: {
+        Authorization: `Bearer ${authStore.accessToken}`,
+      },
+      heartbeatTimeout: 60000, // 1분
+    });
 
-      // EventSourcePolyfill을 사용한 SSE 연결
-      this.eventSource = new EventSourcePolyfill(url, {
-        headers: {
-          'Authorization': `Bearer ${authStore.accessToken}`,
-          'Accept': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'Last-Event-ID': lastEventId
-        },
-        withCredentials: true,
-        heartbeatTimeout: 30000, // 30초
-        connectionTimeout: 10000  // 10초
-      });
-
-      // 연결 성공 이벤트
-      this.eventSource.onopen = (event) => {
-        console.log('SSE 연결 성공');
-        this.isConnected = true;
-        this.isConnecting = false;
-        notificationStore.setConnectionStatus(true);
-        this.reconnectAttempts = 0;
-      };
-
-      // 'sse' 이벤트만 알림으로 처리
-      this.eventSource.addEventListener('sse', (event) => {
-        // lastEventId 저장
-        if (event.lastEventId) {
-          const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
-          const lastEventIdKey = `lastEventId_${currentUserId}`;
-          localStorage.setItem(lastEventIdKey, event.lastEventId);
-        }
-
-        try {
-          // 데이터가 JSON 형식일 때만 파싱
-          if (event.data && event.data.startsWith('{')) {
-            const parsedData = JSON.parse(event.data);
-            this.handleNotificationMessage(parsedData, notificationStore, authStore);
-          } else {
-            // JSON이 아닌 데이터(예: "EventStream Created...")는 무시
-            console.log('SSE non-JSON data received:', event.data);
-          }
-        } catch (error) {
-          console.error('SSE 메시지 파싱 오류:', error, '원본 데이터:', event.data);
-        }
-      });
-
-      // 'heartbeat' 이벤트는 무시 (연결 유지용)
-      this.eventSource.addEventListener('heartbeat', (event) => {
-        // 아무 처리도 하지 않음
-        // console.log('heartbeat', event);
-      });
-
-      // 기존 onmessage는 최소화 또는 제거
-      this.eventSource.onmessage = null;
-
-      // 에러 처리
-      this.eventSource.onerror = (event) => {
-        console.error('SSE 연결 오류:', event);
-        this.isConnected = false;
-        this.isConnecting = false;
-        notificationStore.setConnectionStatus(false);
-      
-          // SSE 오류 발생 시 토큰 유효성 직접 검사
-        const currentTime = Math.floor(Date.now() / 1000);
-        if (!authStore.accessToken || currentTime >= authStore.decodedToken?.exp) {
-          console.log('SSE 연결 실패: 액세스 토큰이 유효하지 않음 → 연결 해제');
-          authStore.clearAccessToken();
-          this.disconnect();
-          return;
-        }
-
-        // 네트워크 오류인 경우 재연결 시도
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.handleReconnect();
-        }
-      };
-
-    } catch (error) {
+    // 연결 성공
+    this.eventSource.onopen = () => {
+      console.log('SSE 연결 성공');
       this.isConnecting = false;
-      console.error('SSE 연결 생성 실패:', error);
-      notificationStore.setConnectionStatus(false);
-      
-      // 자동 재연결 시도 (로그인 시에는 재연결하지 않음)
-      if (this.reconnectAttempts > 0) {
-        this.handleReconnect();
-      }
-    }
-  }
+      notificationStore.setConnectionStatus(true);
+    };
 
-  // 알림 메시지 처리
-  handleNotificationMessage(parsedData, notificationStore, authStore) {
-    // 알림 데이터 처리 - 현재 사용자의 알림인지 확인
-    if (parsedData.id && parsedData.content) {
-      // 사용자 ID가 포함되어 있다면 현재 사용자의 것인지 확인
-      if (parsedData.userId && authStore.decodedToken) {
-        const currentUserId = authStore.decodedToken.sub || authStore.decodedToken.userId;
-        if (parsedData.userId !== currentUserId) {
-          console.log('다른 사용자의 알림 무시:', parsedData.userId, '현재:', currentUserId);
-          return;
+    // 'sse' 타입의 메시지만 처리
+    this.eventSource.addEventListener('sse', event => {
+      if (event.lastEventId) {
+        localStorage.setItem(`lastEventId_${authStore.decodedToken?.sub}`, event.lastEventId);
+      }
+      try {
+        if (event.data && event.data.startsWith('{')) {
+          const parsedData = JSON.parse(event.data);
+          notificationStore.addNotification(parsedData);
         }
+      } catch (error) {
+        console.error('SSE 메시지 파싱 오류:', error);
       }
-      
-      // 이미 존재하는 알림인지 확인
-      const existingNotifications = notificationStore.notifications;
-      const isDuplicate = existingNotifications.some(n => n.id === parsedData.id);
-      if (isDuplicate) {
-        console.log('중복 알림 무시:', parsedData.id);
-        return;
+    });
+
+    // 에러 처리 (단순화된 로직)
+    this.eventSource.onerror = async error => {
+      console.error('SSE 연결 오류:', error);
+      this.isConnecting = false;
+      notificationStore.setConnectionStatus(false);
+      this.disconnect(); // 오류 발생 시 현재 연결은 무조건 종료
+
+      console.log('토큰 갱신 및 SSE 재연결을 시도합니다...');
+
+      try {
+        // await api.get('/api/auth/ping');
+        // console.log('토큰 재발급 성공. 1초 후 SSE 재연결을 시도합니다.');
+
+        // setTimeout(() => this.connect(), 1000);
+      } catch (reissueError) {
+        console.error(
+          'API 호출을 통한 토큰 재발급 최종 실패. 재연결을 중단합니다.',
+          reissueError,
+        );
+        // api.js의 인터셉터가 로그아웃을 처리하므로 여기서는 추가 작업 없음
       }
-      
-      // 사용자 ID가 없거나 현재 사용자의 것이라면 처리
-      console.log('새 알림 추가:', parsedData.id, parsedData.content);
-      notificationStore.addNotification(parsedData);
-    }
-  }
-
-  // 재연결 처리
-  handleReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('최대 재연결 시도 횟수를 초과했습니다.');
-      return;
-    }
-
-    // 이미 재연결 타이머가 있다면 취소
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-    }
-
-    this.reconnectAttempts++;
-    const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), this.maxReconnectDelay);
-
-    console.log(`SSE 재연결 시도 ${this.reconnectAttempts}/${this.maxReconnectAttempts} (${delay}ms 후)`);
-
-    this.reconnectTimeout = setTimeout(() => {
-      // 재연결 시도 전에 연결 상태 확인
-      if (!this.isConnected && !this.isConnecting) {
-        console.log('SSE 재연결 시도 중...');
-        this.connect();
-      }
-    }, delay);
+    };
   }
 
   // SSE 연결 해제
   disconnect() {
-    const notificationStore = useNotificationStore();
-    
-    // 재연결 타이머가 있다면 취소
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
-    
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
+      console.log('기존 SSE 연결을 종료했습니다.');
     }
-    
-    this.isConnected = false;
+    // isConnecting 상태도 초기화
     this.isConnecting = false;
-    notificationStore.setConnectionStatus(false);
-  }
-
-  // 서버에 연결 해제 요청
-  async disconnectFromServer() {
-    try {
-      await api.delete('/api/notification/disconnect');
-      console.log('서버에서 SSE 연결이 해제되었습니다.');
-    } catch (error) {
-      // 401 오류는 토큰이 이미 만료되었거나 로그아웃된 상태이므로 무시
-      if (error.response && error.response.status === 401) {
-        console.log('토큰이 만료되어 서버 연결 해제를 건너뜁니다.');
-        return;
-      }
-      console.error('서버 연결 해제 실패:', error);
+    const notificationStore = useNotificationStore();
+    if (notificationStore) {
+      notificationStore.setConnectionStatus(false);
     }
   }
 
-  // 알림 목록 조회
+  // 알림 목록 조회 및 스토어 업데이트
   async fetchNotifications() {
+    const notificationStore = useNotificationStore();
     try {
       const response = await api.get('/api/notification/list');
-      console.log('서버에서 받은 알림 목록:', response.data);
-      
-      const notificationStore = useNotificationStore();
       notificationStore.setNotifications(response.data);
-      return response.data;
     } catch (error) {
       console.error('알림 목록 조회 실패:', error);
       throw error;
@@ -258,6 +117,7 @@ class NotificationService {
   async markAsRead(notificationId) {
     try {
       await api.patch(`/api/notification/${notificationId}/read`);
+      // 성공 시 스토어 상태 직접 업데이트
       const notificationStore = useNotificationStore();
       notificationStore.markAsRead(notificationId);
     } catch (error) {
@@ -268,9 +128,9 @@ class NotificationService {
 
   // 전체 알림 읽음 처리
   async markAllAsRead() {
+    const notificationStore = useNotificationStore();
     try {
       await api.patch('/api/notification/read-all');
-      const notificationStore = useNotificationStore();
       notificationStore.markAllAsRead();
     } catch (error) {
       console.error('전체 알림 읽음 처리 실패:', error);
@@ -280,46 +140,39 @@ class NotificationService {
 
   // 읽은 알림 전체 삭제
   async deleteAllRead() {
+    const notificationStore = useNotificationStore();
     try {
-      console.log('읽은 알림 전체 삭제 API 호출 시작');
-      const response = await api.delete('/api/notification/delete/read-all');
-      console.log('읽은 알림 전체 삭제 API 응답:', response);
-      
-      const notificationStore = useNotificationStore();
+      await api.delete('/api/notification/delete/read-all');
       notificationStore.clearReadNotifications();
     } catch (error) {
       console.error('읽은 알림 삭제 실패:', error);
-      console.error('에러 응답:', error.response);
       throw error;
     }
   }
 
   // 특정 알림 삭제
   async deleteNotification(notificationId) {
+    const notificationStore = useNotificationStore();
     try {
-      console.log('알림 삭제 API 호출 시작:', notificationId);
-      const response = await api.delete(`/api/notification/delete/${notificationId}`);
-      console.log('알림 삭제 API 응답:', response);
-      
-      const notificationStore = useNotificationStore();
+      await api.delete(`/api/notification/delete/${notificationId}`);
       notificationStore.removeNotification(notificationId);
     } catch (error) {
       console.error('알림 삭제 실패:', error);
-      console.error('에러 응답:', error.response);
       throw error;
     }
   }
-
+  
   // 로그아웃 시 정리
-  async cleanup() {
+  cleanup() {
     this.disconnect();
-    await this.disconnectFromServer();
-    
     const notificationStore = useNotificationStore();
     notificationStore.reset();
     
-    // 로컬 스토리지 정리
-    localStorage.removeItem('lastEventId');
+    // lastEventId도 정리
+    const authStore = useAuthStore();
+    if (authStore.decodedToken?.sub) {
+      localStorage.removeItem(`lastEventId_${authStore.decodedToken.sub}`);
+    }
   }
 }
 

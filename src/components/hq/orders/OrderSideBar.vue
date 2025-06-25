@@ -2,15 +2,16 @@
 import { ref, computed, onMounted, watch } from "vue";
 import api from "@/lib/api";
 
-const emit = defineEmits(["select-franchise"]);
+const emit = defineEmits(["select-franchise", "update:tab"]);
 
 const props = defineProps({
-  selectedFranchiseId: [String, Number]
+  selectedFranchiseId: [String, Number],
+  tab: { type: String, default: 'mine' }
 });
 
 const searchQuery = ref("");
 const totalCount = ref(0);
-const tab = ref('mine');    // 디폴트는 직원 담당으로 
+const tab = ref(props.tab);
 const franchises = ref([]);
 const selectedFranchise = ref(null);
 
@@ -32,7 +33,26 @@ async function fetchFranchises() {
   }
 };
 onMounted(fetchFranchises);
-watch(tab, fetchFranchises);
+watch(tab, (newVal) => {
+  emit('update:tab', newVal);
+  fetchFranchises();
+});
+
+watch(() => props.tab, (newVal) => {
+  if (tab.value !== newVal) tab.value = newVal;
+});
+
+watch(
+  () => props.selectedFranchiseId,
+  (newVal) => {
+    if (!newVal) {
+      selectedFranchise.value = null;
+    } else {
+      const found = franchises.value.find(f => f.id === newVal);
+      selectedFranchise.value = found || { id: newVal };
+    }
+  }
+);
 
 const filteredFranchises = computed(() => {
   if (!searchQuery.value) return franchises.value;

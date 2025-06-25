@@ -52,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted } from "vue";
+import { ref, watch, nextTick, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import NavBar from "@/components/hq/common/NavBar.vue";
 import SideBar from "@/components/hq/approval/SideBar.vue";
@@ -77,6 +77,28 @@ const route = useRoute();
 const router = useRouter();
 const approvalId = ref(route.params.approvalId);
 const approvalDetail = ref(null);
+
+// 등록/수정 모드 감지
+const isRegisterMode = computed(() => {
+  return (
+    route.name === "approval-register" ||
+    route.path.includes("/approval/register")
+  );
+});
+
+// 등록 모드일 때 자동으로 등록 모드 활성화
+watch(
+  isRegisterMode,
+  (newValue) => {
+    if (newValue) {
+      console.log("등록 모드 감지됨:", route.path);
+      isRegistrationMode.value = true;
+      currentTabIndex.value = 1; // 전자결재 탭
+      activeTab.value = "전자결재";
+    }
+  },
+  { immediate: true }
+);
 
 const handleSelectMenu = (menuValue) => {
   const sentMenus = ["상신-전체", "임시저장", "결재중", "결재완료", "결재반려"];
@@ -352,9 +374,6 @@ const fetchApprovalList = async () => {
       approvalList.value = [];
     }
   } else {
-    console.warn(
-      `No endpoint found for key: ${endpointKey} in ${mainTab.value}`
-    );
     approvalList.value = [];
   }
 };
@@ -383,7 +402,16 @@ onMounted(fetchCounts);
 watch(
   () => route.params.approvalId,
   async (newId) => {
+    console.log("라우터 파라미터 approvalId:", newId);
     approvalId.value = newId;
+
+    // 등록 모드일 때는 상세 정보를 가져오지 않음
+    if (isRegisterMode.value) {
+      console.log("등록 모드이므로 상세 정보를 가져오지 않습니다.");
+      approvalDetail.value = null;
+      return;
+    }
+
     if (newId) {
       try {
         // 문서 내용과 결재선 정보를 모두 가져오기
@@ -407,6 +435,7 @@ watch(
             ? approvalLines
             : approvalLines.line, // 객체면 .line을 사용
         };
+        console.log("approvalDetail 세팅:", approvalDetail.value);
       } catch (error) {
         console.error("결재 상세 정보 조회 실패:", error);
         approvalDetail.value = null;

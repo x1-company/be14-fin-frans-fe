@@ -305,7 +305,7 @@ defineExpose({
 
 <style scoped>
 .template-sidebar {
-  width: 320px;
+  width: 230px;
   height: 100%;
   background: #f8f9fa;
   border-right: 1px solid #e9ecef;

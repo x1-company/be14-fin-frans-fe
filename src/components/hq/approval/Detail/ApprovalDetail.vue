@@ -22,7 +22,7 @@
         </div>
         <!-- 헤더 액션 버튼들 -->
         <div class="header-actions">
-          <button class="print-button">
+          <button class="print-button" @click="showPdfModal = true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <polyline points="6,9 6,2 18,2 18,9" />
               <path
@@ -94,9 +94,10 @@
               <label>총 금액:</label>
               <span class="amount">{{
                 formatAmount(
-                  calculateTotalAmount(
-                    documentContent?.history || document.history
-                  )
+                  props.document?.totalAmount ??
+                    calculateTotalAmount(
+                      documentContent?.history || document.history
+                    )
                 )
               }}</span>
             </div>
@@ -111,7 +112,7 @@
           "
           class="order-section"
         >
-          <h2 class="section-title">주문 내역</h2>
+          <h2 class="section-title">{{ getHistorySectionTitle() }}</h2>
           <div class="order-table-container">
             <table class="order-table">
               <thead>
@@ -136,8 +137,18 @@
                   <td>{{ item.spec }}</td>
                   <td>{{ item.purchaseUnit }}</td>
                   <td>{{ item.quantity }}</td>
-                  <td>{{ formatAmount(item.salePrice) }}</td>
-                  <td>{{ formatAmount(item.quantity * item.salePrice) }}</td>
+                  <td>{{
+                    formatAmount(
+                      item.amount ??
+                        item.quantity * (item.salePrice || item.purchasePrice)
+                    )
+                  }}</td>
+                  <td>{{
+                    formatAmount(
+                      item.amount ??
+                        item.quantity * (item.salePrice || item.purchasePrice)
+                    )
+                  }}</td>
                 </tr>
               </tbody>
               <tfoot>
@@ -145,9 +156,10 @@
                   <td colspan="6" class="total-label">합 계</td>
                   <td class="total-amount">{{
                     formatAmount(
-                      calculateTotalAmount(
-                        documentContent?.history || document.history
-                      )
+                      props.document?.totalAmount ??
+                        calculateTotalAmount(
+                          documentContent?.history || document.history
+                        )
                     )
                   }}</td>
                 </tr>
@@ -219,6 +231,14 @@
       @refresh-list="$emit('refresh-list')"
       @close-detail="goBack"
     />
+
+    <!-- PDF 모달 -->
+    <ApprovalPdfModal
+      v-if="showPdfModal"
+      :approval-id="document.approvalId"
+      :is-visible="showPdfModal"
+      @close="showPdfModal = false"
+    />
   </div>
 </template>
 
@@ -229,12 +249,16 @@ import api from "@/lib/api";
 import ApprovalLineDetail from "./ApprovalLineDetail.vue";
 import ApprovalActionButtons from "./ApprovalActionButtons.vue";
 import { useAuthStore } from "@/stores/auth";
+import ApprovalPdfModal from "@/views/hq/approval/pdf/ApprovalPdfModal.vue";
+
+const router = useRouter();
+
+const showPdfModal = ref(false);
 
 // 결재문서/결재선 탭 선택 상태
 const activeTab = ref("document"); // 'document' or 'approvalLine'
 
 const emit = defineEmits(["close-detail", "approve", "reject", "refresh-list"]);
-const router = useRouter();
 
 const props = defineProps({
   document: {
@@ -249,6 +273,10 @@ const props = defineProps({
     type: Boolean,
     default: null, // null이면 내부에서 계산, 값이 있으면 그 값을 사용
   },
+  currentUserId: {
+    type: [String, Number],
+    required: true,
+  },
 });
 
 // 결재선 정보와 문서 상세 내용
@@ -257,29 +285,35 @@ const documentContent = ref(null);
 const authStore = useAuthStore();
 
 // 현재 사용자 정보
-const currentUserId = computed(() => authStore.userId);
 const currentUserName = computed(() => authStore.userName);
 const currentUserDutyName = computed(() => authStore.dutyName);
 
 // 현재 사용자가 결재선에서 APPROVER/COOPERATOR + WAITING 인지 체크
 const currentUserLine = computed(() => {
-  if (!props.document?.lines || !currentUserId.value) return null;
+  if (!props.document?.lines || !props.currentUserId) return null;
   return props.document.lines.find(
     (line) =>
-      String(line.id) === String(currentUserId.value) &&
-      (line.userType === "APPROVER" || line.userType === "COOPERATOR") &&
+      String(line.id) === String(props.currentUserId) &&
+      (line.type === "APPROVER" || line.type === "COOPERATOR") &&
       line.status === "WAITING"
   );
 });
 
 // 알림 메시지 및 버튼 노출 여부
-const isCurrentUserTurn = computed(() => !!currentUserLine.value);
+const isCurrentUserTurn = computed(() => {
+  if (!props.document?.lines || !props.currentUserId) return false;
+  return props.document.lines.find(
+    (line) =>
+      String(line.id) === String(props.currentUserId) &&
+      (line.type === "APPROVER" || line.type === "COOPERATOR") &&
+      line.status === "WAITING"
+  );
+});
 
 // 알림 메시지 정보
 const noticeInfo = computed(() => {
   if (!currentUserLine.value) return null;
-  const typeText =
-    currentUserLine.value.userType === "APPROVER" ? "결재" : "협조";
+  const typeText = currentUserLine.value.type === "APPROVER" ? "결재" : "협조";
   return {
     line: currentUserLine.value,
     typeText,
@@ -364,16 +398,37 @@ const getDocumentStatusClass = (status) => {
 };
 
 // 컴포넌트 마운트 시 데이터 로드
-onMounted(() => {
+onMounted(async () => {
+  console.log("ApprovalDetail mounted", props.document.approvalId);
   activeTab.value = "document"; // Always show document tab first
   fetchApprovalLine();
   fetchDocumentContent();
-  console.log("ApprovalDetail 디버깅:", {
-    document: props.document,
-    userId: authStore.userId,
-    lines: props.document?.lines,
-  });
 });
+
+// 주문 내역 섹션 제목 계산
+const getHistorySectionTitle = () => {
+  // 디버깅을 위한 로그 추가
+  console.log("document props:", props.document);
+  console.log("approvalDocuments:", props.document?.approvalDocuments);
+  console.log("categoryType:", props.document?.approvalDocuments?.categoryType);
+  let categoryType = props.document?.categoryType;
+
+  // 결재 유형에 따라 다른 제목 반환
+  if (!categoryType && props.document?.approvalDocuments?.categoryType) {
+    categoryType = props.document.approvalDocuments.categoryType;
+  }
+  switch (categoryType) {
+    case "ORDER":
+      return "주문 내역";
+    case "RETURN":
+      return "반품 내역";
+    case "PURCHASE_ORDER":
+      return "발주 내역";
+    default:
+      console.log("기본값 '주문 내역' 반환, categoryType:", categoryType);
+      return "주문 내역";
+  }
+};
 </script>
 
 <style scoped>

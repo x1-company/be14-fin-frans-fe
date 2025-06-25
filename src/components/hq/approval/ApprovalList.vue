@@ -285,13 +285,17 @@ const handleSearch = () => {
   // 검색 로직은 computed에서 처리됨
 };
 
+const router = useRouter();
 const openDocument = (document) => {
-  emit("document-click", document);
+  alert("openDocument! " + JSON.stringify(document));
+  if (document && document.approvalId) {
+    router.push(`/approval/${document.approvalId}`);
+  } else {
+    console.warn("approvalId가 없습니다:", document);
+  }
 };
 
-const router = useRouter();
 const viewDocument = (document) => {
-  alert("viewDocument 호출");
   if (document && document.approvalId) {
     router.push(`/approval/${document.approvalId}`);
   } else {
@@ -314,7 +318,12 @@ const collaborateDocument = (document) => {
 };
 
 const editDocument = (document) => {
-  emit("document-edit", document);
+  if (document && document.approvalId) {
+    // 상세페이지가 아닌 등록(수정) 폼으로 이동
+    router.push(`/approval/register/${document.approvalId}`);
+  } else {
+    console.warn("approvalId가 없습니다:", document);
+  }
 };
 
 const canApprove = (document) => {

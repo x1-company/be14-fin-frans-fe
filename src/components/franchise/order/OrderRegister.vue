@@ -51,61 +51,75 @@
                 <span class="total-amount">총 금액: {{ formatPrice(totalAmount) }}원</span>
             </div>
 
-            <div class="table-container">
-                <table class="order-table">
-                    <thead>
-                        <tr>
-                            <th>No.</th>
-                            <th>자재 번호</th>
-                            <th>자재명</th>
-                            <th>구매 단가</th>
-                            <th>수량</th>
-                            <th>단위</th>
-                            <th>자재 분류</th>
-                            <th>자재 구분</th>
-                            <th>자재 속성</th>
-                            <th>금액</th>
-                            <th>협력 업체</th>
-                            <th>삭제</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-if="orderList.length === 0">
-                            <td colspan="12" class="empty-message">
-                                주문할 자재를 검색하여 추가해주세요
-                            </td>
-                        </tr>
-                        <tr v-for="(item, index) in orderList" :key="item.id" class="order-row">
-                            <td>{{ index + 1 }}</td>
-                            <td class="product-code-cell">{{ item.code }}</td>
-                            <td class="product-name-cell">{{ item.name }}</td>
-                            <td class="price-cell">{{ formatPrice(item.sale_price) }}</td>
-                            <td class="quantity-cell">
-                                <input v-model.number="item.quantity" @input="updateAmount(item)" type="number" min="1"
-                                    class="quantity-input" />
-                            </td>
-                            <td>{{ item.unit }}</td>
-                            <td>{{ getProductGroupName(item.productGroupId) }}</td>
-                            <td>{{ getProductTypeName(item.productTypeId) }}</td>
-                            <td>{{ getProductAttributeName(item.productAttributeId) }}</td>
-                            <td class="amount-cell">{{ formatPrice(item.totalAmount) }}</td>
-                            <td>{{ item.supplierName }}</td>
-                            <td class="action-cell">
-                                <button @click="removeFromOrderList(index)" class="remove-btn">
-                                    ❌
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="product-table">
+                <div class="product-table-header">
+                    <div class="col col-no">No.</div>
+                    <div class="col col-code">자재 번호</div>
+                    <div class="col col-name">자재명</div>
+                    <div class="col col-price">구매 단가</div>
+                    <div class="col col-quantity">수량</div>
+                    <div class="col col-unit">단위</div>
+                    <div class="col col-spec">규격</div>
+                    <div class="col col-group">자재 분류</div>
+                    <div class="col col-type">자재 구분</div>
+                    <div class="col col-attr">자재 속성</div>
+                    <div class="col col-amount">금액</div>
+                    <div class="col col-supplier">협력 업체</div>
+                    <div class="col col-delete">삭제</div>
+                </div>
+                <div class="product-table-body">
+                    <div v-if="orderList.length === 0" class="empty-message">
+                        주문할 자재를 검색하여 추가해주세요
+                    </div>
+                    <div v-for="(item, index) in orderList" :key="item.id" class="product-row">
+                        <div class="col col-no">{{ index + 1 }}</div>
+                        <div class="col col-code">{{ item.code }}</div>
+                        <div class="col col-name">{{ item.name }}</div>
+                        <div class="col col-price">{{ formatPrice(item.sale_price) }}</div>
+                        <div class="col col-quantity">
+                            <input v-model.number="item.quantity" @input="updateAmount(item)" type="number" min="1"
+                                class="quantity-input" />
+                        </div>
+                        <div class="col col-unit">{{ item.unit }}</div>
+                        <div class="col col-spec">{{ item.spec }}</div>
+                        <div class="col col-group"><span :class="getTagClass('group')">{{ getProductGroupName(item.productGroupId) }}</span></div>
+                        <div class="col col-type"><span :class="getTagClass('type')">{{ getProductTypeName(item.productTypeId) }}</span></div>
+                        <div class="col col-attr"><span :class="getTagClass('attr')">{{ getProductAttributeName(item.productAttributeId) }}</span></div>
+                        <div class="col col-amount">{{ formatPrice(item.totalAmount) }}</div>
+                        <div class="col col-supplier">{{ item.supplierName }}</div>
+                        <div class="col col-delete">
+                            <button @click="removeFromOrderList(index)" class="remove-btn">
+                                ❌
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- 주문 등록 버튼 -->
         <div class="action-section">
-            <button @click="submitOrder" :disabled="orderList.length === 0 || isSubmitting" class="submit-btn">
+            <button @click="openConfirmModal" :disabled="orderList.length === 0 || isSubmitting" class="submit-btn">
                 {{ isSubmitting ? '주문 등록 중...' : '주문 등록' }}
             </button>
+        </div>
+
+        <!-- 주문 등록 확인 모달 (리디자인) -->
+        <div v-if="isConfirmModalVisible" class="modal-overlay" @click.self="closeConfirmModal">
+            <div class="modal-content confirm-modal">
+                <div class="modal-header-confirm">
+                    <span class="modal-icon">🛒</span>
+                    <span class="modal-title-confirm">주문 등록</span>
+                    <button class="modal-close-btn" @click="closeConfirmModal">&times;</button>
+                </div>
+                <div class="modal-message-box">
+                    <span>주문을 등록하시겠습니까?</span>
+                </div>
+                <div class="modal-actions-confirm">
+                    <button class="btn-cancel" @click="closeConfirmModal">취소</button>
+                    <button class="btn-confirm" @click="confirmSubmitOrder">주문 등록</button>
+                </div>
+            </div>
         </div>
 
         <!-- 로딩 오버레이 -->
@@ -141,6 +155,7 @@ const orderList = ref([])
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const isTemplateModalVisible = ref(false)
+const isConfirmModalVisible = ref(false)
 
 // 검색 디바운스를 위한 타이머
 let searchTimer = null
@@ -316,6 +331,16 @@ const getProductAttributeName = (id) => {
     return attributes[id] || '기타'
 }
 
+const getTagClass = (category) => {
+    const baseClass = 'product-tag';
+    const categoryMap = {
+        'group': 'tag-blue',
+        'type': 'tag-purple',
+        'attr': 'tag-green'
+    };
+    return `${baseClass} ${categoryMap[category] || ''}`;
+}
+
 // 컴포넌트 외부 클릭 시 검색 결과 숨기기
 onMounted(() => {
     document.addEventListener('click', (e) => {
@@ -324,6 +349,13 @@ onMounted(() => {
         }
     })
 })
+
+const openConfirmModal = () => { isConfirmModalVisible.value = true; };
+const closeConfirmModal = () => { isConfirmModalVisible.value = false; };
+const confirmSubmitOrder = async () => {
+    closeConfirmModal();
+    await submitOrder();
+};
 </script>
 
 <style scoped>
@@ -385,7 +417,7 @@ onMounted(() => {
 }
 
 .recent-order-btn {
-    padding: 6px 13px;
+    padding: 7px 13px;
     border-radius: 6px;
     border: 1px solid #e0e0e0;
     background: #fff;
@@ -417,7 +449,7 @@ onMounted(() => {
 
 .search-input {
     flex: 1;
-    padding: 10px 12px;
+    padding: 8px 25px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
@@ -433,10 +465,10 @@ onMounted(() => {
     background: #4066fa;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     transition: background-color 0.2s;
 }
@@ -525,73 +557,87 @@ onMounted(() => {
 }
 
 .total-amount {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #4066fa;
 }
 
-.table-container {
-    border: 1px solid #e9ecef;
+.product-table {
+    border: 1px solid #eef0f4;
     border-radius: 8px;
     overflow: hidden;
 }
 
-.order-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+.product-table-header, .product-row {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
 }
 
-.order-table th {
+.product-table-header {
     background: #f8f9fa;
-    padding: 12px 8px;
-    text-align: center;
-    font-weight: 600;
     color: #495057;
-    border-bottom: 1px solid #e9ecef;
+    font-size: 13px;
+    font-weight: 500;
+    height: 48px;
+    border-bottom: 1px solid #eef0f4;
+}
+
+.product-table-body .product-row {
+    border-bottom: 1px solid #eef0f4;
+}
+
+.product-table-body .product-row:last-child {
+    border-bottom: none;
+}
+
+.product-row {
+    height: 64px;
+    font-size: 14px;
+    background: #fff;
+}
+
+.product-row:hover {
+    background: #f8f9fa;
+}
+
+.col {
+    text-align: center;
+    padding: 0 8px;
     white-space: nowrap;
 }
 
-.order-table td {
-    padding: 12px 8px;
-    text-align: center;
-    border-bottom: 1px solid #f1f3f4;
-    vertical-align: middle;
+.col-no       { flex-basis: 4%; }
+.col-code     { flex-basis: 8%; font-family: monospace; color: #6c757d; }
+.col-name     { flex-basis: 12%; text-align: left; font-weight: 500; }
+.col-price    { flex-basis: 8%; text-align: right; }
+.col-quantity { flex-basis: 8%; }
+.col-unit     { flex-basis: 5%; }
+.col-spec     { flex-basis: 8%; }
+.col-group    { flex-basis: 8%; }
+.col-type     { flex-basis: 8%; }
+.col-attr     { flex-basis: 8%; }
+.col-amount   { flex-basis: 8%; text-align: right; font-weight: 500; }
+.col-supplier { flex-basis: 8%; }
+.col-delete   { flex-basis: 4%; }
+
+.product-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
 }
 
-.order-row:hover {
-    background: #f8f9fa;
-}
+.tag-blue { background-color: #e6f0ff; color: #4066fa; }
+.tag-purple { background-color: #f3e8ff; color: #9333ea; }
+.tag-green { background-color: #e6f9ed; color: #16a34a; }
 
 .empty-message {
+    text-align: center;
     color: #6c757d;
     font-style: italic;
-    padding: 40px !important;
-}
-
-.product-code-cell {
-    font-family: monospace;
-    font-size: 12px;
-    color: #6c757d;
-}
-
-.product-name-cell {
-    text-align: left !important;
-    font-weight: 500;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.price-cell,
-.amount-cell {
-    text-align: right !important;
-    font-weight: 500;
-}
-
-.quantity-cell {
-    padding: 8px !important;
+    padding: 40px;
 }
 
 .quantity-input {
@@ -605,10 +651,6 @@ onMounted(() => {
 .quantity-input:focus {
     outline: none;
     border-color: #4066fa;
-}
-
-.action-cell {
-    padding: 8px !important;
 }
 
 .remove-btn {
@@ -636,10 +678,10 @@ onMounted(() => {
     background: #4066fa;
     color: white;
     border: none;
-    padding: 12px 32px;
+    padding: 8px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     transition: background-color 0.2s;
 }
@@ -694,5 +736,123 @@ onMounted(() => {
     .order-table td {
         padding: 8px 4px;
     }
+}
+
+/* 기존 테이블 관련 스타일 제거 또는 주석 처리 */
+.table-container, .order-table {
+    display: none;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-content.confirm-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 0 0 18px 0;
+    min-width: 330px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.modal-header-confirm {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 22px 18px 0 18px;
+    position: relative;
+}
+
+.modal-icon {
+    font-size: 1.4rem;
+    color: #4066fa;
+    margin-right: 4px;
+}
+
+.modal-title-confirm {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #4066fa;
+}
+
+.modal-close-btn {
+    position: absolute;
+    right: 24px;
+    top: 28px;
+    background: none;
+    border: none;
+    font-size: 1.7rem;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+/* 모달 내부 안내문 */
+.modal-message-box {
+    background: #eaf3ff;
+    color: #234;
+    border-radius: 10px;
+    padding: 16px 12px;
+    margin: 18px 18px 0 18px;
+    font-size: 0.9rem;
+    text-align: center;
+    width: calc(100% - 36px);
+}
+
+.modal-actions-confirm {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    width: 100%;
+    padding-right: 18px;
+}
+
+.btn-cancel {
+    background: #f5f5f5;
+    color: #333;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 22px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #e0e0e0;
+}
+
+.btn-confirm {
+    background: #4066fa;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 22px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-confirm:hover {
+    background: #2746b6;
 }
 </style>
