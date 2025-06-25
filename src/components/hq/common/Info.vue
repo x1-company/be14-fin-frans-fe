@@ -517,26 +517,17 @@ function handleReturnBackToList() {
 
 async function fetchDashboardStats() {
   try {
-    // 담당 가맹점 월 주문 금액 통계 조회 API 호출
-    const orderAmountRes = await api.get('/api/hq/statistics/franchise/order-amount/manager')
-    const orderAmountData = orderAmountRes.data || []
+    // 대시보드 카드 데이터는 별도 API가 필요할 수 있으므로 임시로 하드코딩된 값 사용
+    // 실제로는 별도의 대시보드 통계 API를 호출해야 함
+    dashboardCardData.value = {
+      inProgressOrder: { count: 3, diff: 2 },
+      inProgressApproval: { count: 1, diff: -1 },
+      completedOrder: { count: 200, diff: 15 }
+    }
 
-    // 담당 가맹점 월 자재별 반품량 통계 조회 API 호출
-    const returnProductRes = await api.get('/api/hq/statistics/franchise/return-product/manager')
-    const returnProductData = returnProductRes.data || []
-
-    // TODO: 재고 부족 수치는 별도 API 있을 가능성 있음. 임시로 0 처리
-    const lowStockCount = 0
-
-    // API 반환 데이터 구조에 맞게 값 계산 (아래는 예시)
-    const todayOrderCount = orderAmountData.reduce((sum, item) => sum + (item.todayOrderCount || 0), 0)
-    const totalMonthSales = orderAmountData.reduce((sum, item) => sum + (item.orderAmount || 0), 0)
-    const totalReturnRequest = returnProductData.reduce((sum, item) => sum + (item.returnQuantity || 0), 0)
-
-    dashboardStats.value.todayOrder = todayOrderCount
-    dashboardStats.value.monthSales = totalMonthSales
-    dashboardStats.value.lowStock = lowStockCount
-    dashboardStats.value.returnRequest = totalReturnRequest
+    // 기존의 중복된 API 호출 제거
+    // orderAmountStats, returnProductStats, productOrderStats는 
+    // 각각의 전용 함수에서 이미 호출되고 있음
 
   } catch (error) {
     console.error('대시보드 통계 데이터 조회 실패', error)
