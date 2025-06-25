@@ -222,7 +222,7 @@
   }
   .order-form__tabs {
     display: flex;
-    gap: 32px;
+    gap: 50px;
     border-bottom: 1.5px solid #e9ecef;
     margin-top: -30px;
     margin-bottom: 10px;
@@ -230,7 +230,7 @@
   }
   .order-form__tab {
     position: relative;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: #888;
     font-weight: 500;
     padding: 4px 0 7px 0;
@@ -263,15 +263,15 @@
     align-items: center;
   }
   .order-form__search-group input {
-    height: 20px;
+    height: 35px;
     border: 1px solid #e9ecef;
     border-radius: 6px;
     padding: 12px 8px;
     font-size: 0.8rem;
-    width: 140px;
+    width: 180px;
   }
   .order-form__search-group select {
-    height: 28px;
+    height: 35px;
     border: 1px solid #e9ecef;
     border-radius: 6px;
     padding: 0 7px;
@@ -452,17 +452,22 @@
     font-size: 0.92rem;
   }
   .custom-datepicker-input {
-    height: 28px;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    padding: 0 8px;
-    font-size: 0.95rem;
-    width: 120px;
+    height: 22px !important;
+    font-size: 0.8rem !important;
+    padding: 0 5px !important;
+    width: 90px !important;
+    border-radius: 5px !important;
+    text-align: right !important;
   }
+  .custom-datepicker-input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
   .order-register-btn:hover {
     font-size: 10px;
     height: 10px;
     width: 10px;
     background: #2746b6;
   }
-  </style> 
+  </style>
