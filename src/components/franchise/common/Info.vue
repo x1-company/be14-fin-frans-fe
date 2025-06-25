@@ -226,7 +226,7 @@ const updateTab = (newTabIndex) => {
 .breadcrumb-container {
   flex-shrink: 0;
   /* 브레드크럼은 고정 크기 */
-  padding: 20px 30px;
+  padding: 15px 30px;
   background: #f8f9fa;
 }
 

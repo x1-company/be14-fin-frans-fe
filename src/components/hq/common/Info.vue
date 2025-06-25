@@ -10,36 +10,37 @@
                     @select-tab="updateTab" @update-breadcrumb="updateBreadcrumb" />
 
                 <!-- 탭별 컨텐츠 영역 -->
-                <FranchiseDashboard
-                    v-if="activeTabSwitch === 0"
-                    :in-progress-order="dashboardCardData.inProgressOrder"
-                    :in-progress-approval="dashboardCardData.inProgressApproval"
-                    :completed-order="dashboardCardData.completedOrder"
-                />
+                <div class="tab-content">
+                  <FranchiseDashboard
+                      v-if="activeTabSwitch === 0"
+                      :in-progress-order="dashboardCardData.inProgressOrder"
+                      :in-progress-approval="dashboardCardData.inProgressApproval"
+                      :completed-order="dashboardCardData.completedOrder"
+                  />
 
-                <!-- 월별 주문금액 통계 그래프 (가맹점별/월별) -->
-                <div v-if="activeTabSwitch === 0" class="stats-graph-section">
-                    <div class="stats-tab-bar">
-                        <button
-                            class="stats-tab-btn"
-                            :class="{active: statsTab === 0}"
-                            @click="selectStatsTab(0)"
-                        >주문 금액 분석</button>
-                        <button
-                            class="stats-tab-btn"
-                            :class="{active: statsTab === 1}"
-                            @click="selectStatsTab(1)"
-                        >자재별 분석</button>
-                    </div>
-                    <!-- 월 선택 드롭다운을 탭 아래에 공통 배치 -->
-                    <div class="doughnut-top-row">
-                        <div class="doughnut-top-right">
-                            <label style="font-weight:500; margin-right:8px;">월 선택:</label>
-                            <select v-model="selectedMonth" @change="handleMonthChange" class="month-dropdown">
-                                <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
-                            </select>
-                        </div>
-                    </div>
+                  <!-- 월별 주문금액 통계 그래프 (가맹점별/월별) -->
+                  <div v-if="activeTabSwitch === 0" class="stats-graph-section">
+                      <div class="stats-tab-bar">
+                          <button
+                              class="stats-tab-btn"
+                              :class="{active: statsTab === 0}"
+                              @click="selectStatsTab(0)"
+                          >주문 금액 분석</button>
+                          <button
+                              class="stats-tab-btn"
+                              :class="{active: statsTab === 1}"
+                              @click="selectStatsTab(1)"
+                          >자재별 분석</button>
+                      </div>
+                      <!-- 월 선택 드롭다운을 탭 아래에 공통 배치 -->
+                      <div class="doughnut-top-row">
+                          <div class="doughnut-top-right">
+                              <label style="font-weight:500; margin-right:8px;">월 선택:</label>
+                              <select v-model="selectedMonth" @change="handleMonthChange" class="month-dropdown">
+                                  <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
+                              </select>
+                          </div>
+                      </div>
                     <div class="stats-graph-card">
                         <template v-if="statsTab === 0">
                             <div style="display:flex;align-items:center;gap:12px;">
@@ -181,6 +182,7 @@
             </div>
         </div>
     </div>
+  </div>
 
 </template>
 
