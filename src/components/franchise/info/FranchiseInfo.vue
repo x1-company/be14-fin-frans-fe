@@ -15,69 +15,84 @@
         </div>
 
         <!-- 가맹점 정보 표시 -->
-        <div v-else-if="franchiseData" class="info-content">
-            <!-- 기본 정보 섹션 -->
-            <div class="info-section">
-                <div class="section-header">
-                    <h3 class="section-title">기본 정보</h3>
-                    <div class="status-badge" :class="{ active: franchiseData.isActive }">
-                        {{ franchiseData.isActive ? '운영중' : '운영중단' }}
-                    </div>
-                </div>
-
-                <div class="info-grid">
-                    <div class="info-row">
-                        <div class="info-item">
-                            <label>가맹점 코드</label>
-                            <span class="code-text">{{ franchiseData.code }}</span>
-                        </div>
-                        <div class="info-item">
-                            <label>가맹점명</label>
-                            <span class="name-text">{{ franchiseData.name }}</span>
-                        </div>
-                    </div>
-
-                    <div class="info-row">
-                        <div class="info-item">
-                            <label>대표자명</label>
-                            <span>{{ franchiseData.ownerName }}</span>
-                        </div>
-                        <div class="info-item">
-                            <label>사업자등록번호</label>
-                            <span>{{ formatBusinessNumber(franchiseData.businessNumber) }}</span>
-                        </div>
-                    </div>
-
-                    <div class="info-row">
-                        <div class="info-item">
-                            <label>연락처</label>
-                            <span>{{ formatPhoneNumber(franchiseData.phone) }}</span>
-                        </div>
-                        <div class="info-item">
-                            <label>계약일</label>
-                            <span>{{ formatDate(franchiseData.signedAt) }}</span>
-                        </div>
-                    </div>
+        <div v-else-if="franchiseData" class="franchise-content">
+            <div class="franchise-header">
+                <div class="franchise-title">
+                    <h2>{{ franchiseData.name }}</h2>
+                    <span class="franchise-code">{{ franchiseData.code }}</span>
+                    <span class="status-badge" :class="{ active: franchiseData.isActive, inactive: !franchiseData.isActive }">
+                        {{ franchiseData.isActive ? '운영중' : '운영중지' }}
+                    </span>
                 </div>
             </div>
 
-            <!-- 주소 정보 섹션 -->
-            <div class="info-section">
-                <div class="section-header">
-                    <h3 class="section-title">주소 정보</h3>
+            <div class="info-grid">
+                <!-- 기본 정보 -->
+                <div class="info-card">
+                    <h3 class="card-title">기본 정보</h3>
+                    <div class="info-rows">
+                        <div class="info-row">
+                            <span class="label">가맹점명</span>
+                            <span class="value">{{ franchiseData.name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">가맹점 코드</span>
+                            <span class="value">{{ franchiseData.code }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">사업자번호</span>
+                            <span class="value">{{ formatBusinessNumber(franchiseData.businessNumber) }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">대표자명</span>
+                            <span class="value">{{ franchiseData.ownerName }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">연락처</span>
+                            <span class="value">{{ formatPhoneNumber(franchiseData.phone) }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">계약일</span>
+                            <span class="value">{{ formatDate(franchiseData.signedAt) }}</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="address-content">
-                    <div class="address-item">
-                        <label>우편번호</label>
-                        <span class="zipcode">{{ franchiseData.zipcode }}</span>
+                <!-- 주소 정보 -->
+                <div class="info-card">
+                    <h3 class="card-title">주소 정보</h3>
+                    <div class="info-rows">
+                        <div class="info-row">
+                            <span class="label">우편번호</span>
+                            <span class="value">{{ franchiseData.zipcode }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">기본주소</span>
+                            <span class="value">{{ franchiseData.address }}</span>
+                        </div>
+                        <div class="info-row" v-if="franchiseData.addressDetail">
+                            <span class="label">상세주소</span>
+                            <span class="value">{{ franchiseData.addressDetail }}</span>
+                        </div>
                     </div>
-                    <div class="address-item full-width">
-                        <label>주소</label>
-                        <span class="address-text">{{ franchiseData.address }}</span>
-                        <span v-if="franchiseData.addressDetail" class="address-detail">
-                            {{ franchiseData.addressDetail }}
-                        </span>
+                </div>
+
+                <!-- 운영 상태 -->
+                <div class="info-card">
+                    <h3 class="card-title">운영 상태</h3>
+                    <div class="info-rows">
+                        <div class="info-row">
+                            <span class="label">운영 상태</span>
+                            <span class="value">
+                                <span class="status-indicator" :class="{ active: franchiseData.isActive, inactive: !franchiseData.isActive }">
+                                    {{ franchiseData.isActive ? '운영중' : '운영중지' }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">계약 기간</span>
+                            <span class="value">{{ formatDate(franchiseData.signedAt) }} ~ </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -145,15 +160,19 @@ onMounted(() => {
 
 <style scoped>
 .franchise-info {
-    min-height: 400px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
 }
 
+/* Loading State */
 .loading-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
+    height: 300px;
     color: #6c757d;
 }
 
@@ -161,28 +180,24 @@ onMounted(() => {
     width: 40px;
     height: 40px;
     border: 3px solid #f3f3f3;
-    border-top: 3px solid #4066fa;
+    border-top: 3px solid #667eea;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 16px;
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
+/* Error State */
 .error-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
+    height: 300px;
     text-align: center;
 }
 
@@ -193,174 +208,164 @@ onMounted(() => {
 
 .error-container h3 {
     color: #dc3545;
-    margin: 0 0 8px 0;
+    margin-bottom: 8px;
 }
 
 .error-container p {
     color: #6c757d;
-    margin: 0 0 24px 0;
+    margin-bottom: 16px;
 }
 
 .retry-btn {
-    background: #4066fa;
+    background: #667eea;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 16px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.2s;
 }
 
 .retry-btn:hover {
-    background: #3453c7;
+    background: #5a6fd8;
 }
 
-.info-content {
+/* Franchise Content */
+.franchise-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.franchise-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.franchise-title {
     display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-.info-section {
-    background: #fff;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #f8f9fa;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-.section-title {
+.franchise-title h2 {
     margin: 0;
     color: #212529;
-    font-size: 18px;
+    font-size: 1.5rem;
     font-weight: 600;
+}
+
+.franchise-code {
+    background: #f8f9fa;
+    color: #6c757d;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: monospace;
 }
 
 .status-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    background: #dc3545;
-    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
 }
 
 .status-badge.active {
-    background: #28a745;
+    background: #d4edda;
+    color: #155724;
 }
 
+.status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Info Grid */
 .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.info-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.card-title {
+    margin: 0 0 16px 0;
+    color: #495057;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #667eea;
+}
+
+.info-rows {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .info-row {
     display: flex;
-    gap: 32px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
 }
 
-.info-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.info-item label {
-    font-size: 14px;
+.info-row .label {
     color: #6c757d;
+    font-size: 15px;
     font-weight: 500;
+    min-width: 100px;
 }
 
-.info-item span {
-    font-size: 15px;
+.info-row .value {
     color: #212529;
+    font-size: 15px;
     font-weight: 400;
-}
-
-.code-text {
-    font-family: 'Courier New', monospace;
-    background: #f8f9fa;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 600 !important;
-    color: #4066fa !important;
-}
-
-.name-text {
-    font-weight: 600 !important;
-    color: #212529 !important;
-    font-size: 16px !important;
-}
-
-.address-content {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.address-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.address-item.full-width {
+    text-align: right;
     flex: 1;
+    word-break: break-all;
 }
 
-.address-item label {
-    font-size: 14px;
-    color: #6c757d;
+.status-indicator {
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 0.75rem;
     font-weight: 500;
 }
 
-.zipcode {
-    font-family: 'Courier New', monospace;
-    background: #f8f9fa;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 600;
-    color: #4066fa;
-    display: inline-block;
-    width: fit-content;
+.status-indicator.active {
+    background: #d4edda;
+    color: #155724;
 }
 
-.address-text {
-    font-size: 15px;
-    color: #212529;
-    font-weight: 500;
-    line-height: 1.4;
+.status-indicator.inactive {
+    background: #f8d7da;
+    color: #721c24;
 }
 
-.address-detail {
-    font-size: 14px;
-    color: #6c757d;
-    margin-top: 4px;
-    line-height: 1.4;
-}
-
+/* Responsive */
 @media (max-width: 768px) {
-    .info-row {
-        flex-direction: column;
-        gap: 16px;
+    .franchise-info {
+        padding: 15px;
     }
-
-    .section-header {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .franchise-title {
         flex-direction: column;
         align-items: flex-start;
-        gap: 12px;
+        gap: 8px;
     }
 }
 </style>
