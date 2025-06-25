@@ -83,7 +83,7 @@ import FranchiseInfoCard from '@/components/hq/orders/detail/FranchiseInfoCard.v
 import DeliveryInfoCard from '@/components/hq/orders/detail/DeliveryInfoCard.vue'
 import OrderInfoCard from '@/components/hq/orders/detail/OrderInfoCard.vue'
 import ProductTable from '@/components/hq/orders/detail/ProductTable.vue'
-import ReturnList from '@/components/hq/return/list/ReturnList.vue'
+import ReturnList from '@/components/franchise/return/list/ReturnList.vue'
 import api from '@/lib/api'
 
 const props = defineProps({
