@@ -367,7 +367,7 @@ const handleCollaborationDocsClick = () => {
 <style scoped>
 /* 메인 사이드바 컨테이너 */
 .sidebar {
-  width: 300px;
+  width: 230px;
   background: #f8f9fa;
   border-right: 1px solid #e9ecef;
   display: flex;
