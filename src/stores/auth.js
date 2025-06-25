@@ -75,13 +75,21 @@ export const useAuthStore = defineStore("auth", {
       localStorage.setItem("accessToken", token);
     },
     async clearAccessToken() {
-      // 로그아웃 시 SSE 연결 정리
+      // 로그아웃 시 서버 SSE emitter/캐시 명시적 정리
       try {
-        // cleanup이 notificationStore.reset()을 호출하여 인메모리 상태를 정리합니다.
+        const api = (await import('@/lib/api')).default;
+        await api.delete('/api/notification/disconnect');
+        console.log('서버 SSE disconnect 호출 완료');
+      } catch (e) {
+        // 이미 세션이 만료됐거나 서버 연결이 끊겼을 수도 있으니 무시
+        console.warn('서버 SSE disconnect 실패(무시):', e);
+      }
+      // 기존 SSE 연결 정리
+      try {
         await notificationService.cleanup();
-        console.log("SSE 연결 정리 완료");
+        console.log('SSE 연결 정리 완료');
       } catch (error) {
-        console.error("SSE 연결 정리 실패:", error);
+        console.error('SSE 연결 정리 실패:', error);
       }
 
       this.accessToken = "";
