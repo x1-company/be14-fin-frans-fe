@@ -83,6 +83,8 @@ import ApprovalRegistration from "@/components/hq/approval/ApprovalRegistration.
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
 import ApprovalEdit from "@/components/hq/approval/ApprovalEdit.vue";
 import { useAuthStore } from "@/stores/auth";
+import api from "@/lib/api";
+
 const authStore = useAuthStore();
 
 const isEditMode = ref(false);
@@ -90,11 +92,32 @@ const editApprovalId = ref(null);
 const editApprovalType = ref("ORDER");
 const editApprovalDoc = ref(null);
 
-const handleEditDocument = (document) => {
+// approvalDocuments가 documentIds만 있을 때 상세 문서 배열을 fetch하는 함수
+async function fetchDocumentsByIds(documentIds) {
+  // 예시: ORDER 타입만 처리, 필요시 타입별로 분기
+  const promises = documentIds.map((id) =>
+    api.get(`/api/hq/orders/${id}`).then((res) => res.data)
+  );
+  return Promise.all(promises);
+}
+
+// handleEditDocument를 비동기로 변경
+const handleEditDocument = async (document) => {
   isEditMode.value = true;
   editApprovalId.value = document.approvalId;
   editApprovalType.value = document.categoryType || document.type || "ORDER";
-  editApprovalDoc.value = document;
+  let docs = [];
+  if (Array.isArray(document.approvalDocuments)) {
+    docs = document.approvalDocuments;
+  } else if (Array.isArray(document.approvalDocuments?.documents)) {
+    docs = document.approvalDocuments.documents;
+  } else if (Array.isArray(document.approvalDocuments?.documentIds)) {
+    docs = await fetchDocumentsByIds(document.approvalDocuments.documentIds);
+  }
+  editApprovalDoc.value = {
+    ...document,
+    approvalDocuments: docs,
+  };
 };
 
 const handleCloseEdit = () => {
