@@ -14,6 +14,7 @@ import { useNotificationStore } from "@/stores/notification";
 import notificationService from "@/lib/notificationService";
 import FranchiseManagePage from "@/views/hq/franchise/FranchiseManagePage.vue";
 import ApprovalPdf from "@/views/hq/approval/pdf/ApprovalPdfModal.vue";
+import ApprovalEdit from "@/components/hq/approval/ApprovalEdit.vue";
 
 // 개발 환경에서만 테스트 페이지 import
 let TestNotificationView = null;
@@ -85,6 +86,12 @@ const router = createRouter({
       path: "/approval/register/:approvalId?",
       name: "approval-register",
       component: ApprovalListView,
+      props: true,
+    },
+    {
+      path: "/approval/edit/:id",
+      name: "approval-edit",
+      component: () => import("@/components/hq/approval/ApprovalEdit.vue"),
       props: true,
     },
     {

@@ -56,12 +56,6 @@ const approvalTypes = ref([
 ]);
 
 const selectType = (type) => {
-  // 수정 모드에서는 타입 변경을 제한할 수 있음
-  if (props.isEditMode) {
-    console.log("ApprovalTypeSelector - type change blocked in edit mode");
-    return;
-  }
-
   selectedType.value = type;
   console.log("ApprovalTypeSelector - type selected:", type);
   emit("type-selected", type);

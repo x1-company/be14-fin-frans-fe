@@ -15,9 +15,16 @@
             @update-breadcrumb="updateBreadcrumb"
           />
 
+          <!-- 수정 모드 -->
+          <ApprovalEdit
+            v-if="isEditMode"
+            :approvalId="editApprovalId"
+            @close="handleCloseEdit"
+          />
+
           <!-- 결재 상세 -->
           <ApprovalDetail
-            v-if="approvalId && approvalDetail"
+            v-else-if="approvalId && approvalDetail"
             :document="approvalDetail"
             :approvalId="approvalId"
             :currentUserId="authStore.userId"
@@ -34,12 +41,14 @@
             @tab-change="handleTabChange"
             @select-menu="handleSelectMenu"
             @refresh-list="$emit('refresh-list')"
+            @edit-document="handleEditDocument"
           />
 
           <!-- 결재 등록 -->
           <ApprovalRegistration
             v-else-if="activeTabSwitch === 0 && isRegistrationMode"
             :selectedTemplate="props.selectedTemplate"
+            :approvalId="props.approvalId"
             @cancel="(value) => handleToggleRegistrationMode(value)"
             @approval-submitted="handleApprovalSubmitted"
             @counts-refresh="handleCountsRefresh"
@@ -70,8 +79,22 @@ import InfoForm from "@/components/hq/approval/InfoForm.vue";
 import ApprovalTemplate from "@/components/hq/approval/ApprovalTemplate.vue";
 import ApprovalRegistration from "@/components/hq/approval/ApprovalRegistration.vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+import ApprovalEdit from "@/components/hq/approval/ApprovalEdit.vue";
 import { useAuthStore } from "@/stores/auth";
 const authStore = useAuthStore();
+
+const isEditMode = ref(false);
+const editApprovalId = ref(null);
+
+const handleEditDocument = (approvalId) => {
+  isEditMode.value = true;
+  editApprovalId.value = approvalId;
+};
+
+const handleCloseEdit = () => {
+  isEditMode.value = false;
+  editApprovalId.value = null;
+};
 
 const handleTabChange = (tabValue) => {
   emit("tab-change", tabValue); // InfoView.vue 로 전달

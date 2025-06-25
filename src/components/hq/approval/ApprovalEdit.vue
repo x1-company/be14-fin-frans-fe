@@ -2,6 +2,7 @@
   <div class="order-approval-form">
     <!-- 결재문서 선택 -->
     <div class="form-section">
+      <h2 class="section-title">결재 수정</h2>
       <div class="section-header">
         <h3 class="section-title">{{ sectionTitle }}</h3>
         <button class="add-document-button" @click="handleAddDocument"
