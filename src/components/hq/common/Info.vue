@@ -156,31 +156,44 @@
                         <div v-if="returnLoading"></div>
                         <div v-else-if="!returnDetail">반품 상세 데이터를 불러올 수 없습니다.</div>
                         <div v-else>
-                            <!-- 반품 상세 컴포넌트들 -->
+                            <!-- 검토 모드 상단 버튼 -->
+                            <div class="review-action-bar" v-if="isEditing">
+                                <button class="btn review-cancel" @click="handleCancelEdit">취소</button>
+                                <button class="btn review-complete" @click="handleReviewCompleted">검토 완료</button>
+                            </div>
+                            <!-- 평소 상태: ReturnActionButtons에서 검토/반려 등 노출, 검토 모드일 때는 숨김 -->
                             <ReturnActionButtons
+                                v-if="!isEditing"
                                 :returnId="returnDetailId"
                                 :rejectedReason="returnDetail?.rejectedReason"
                                 :status="returnDetail?.status"
-                                :delivery-info="{
-                                    deliveryCompany: returnDetail?.deliveryCompany,
-                                    name: returnDetail?.driverName,
-                                    phone: returnDetail?.driverPhone,
-                                    trackingNumber: returnDetail?.trackingNumber
-                                }"
+                                :isEditing="isEditing"
+                                @update:isEditing="val => { isEditing = val; if (val) startEdit(); }"
                                 @refreshReturn="fetchReturnDetail"
                                 @close="handleReturnBackToList"
-                            />                                                                                                                                                                                                                                                                                 
+                            />
                             <ReturnProgressBar :status="returnDetail?.status" />
                             <ReturnFranchiseInfoCard :returnData="returnDetail" />
-                            <ReturnInfoCard :returnData="returnDetail" />
-                            <ReturnProductTable :products="returnDetail?.returnProducts || []" :totalAmount="returnDetail?.totalAmount" />
+                            <ReturnInfoCard
+                                :returnData="returnDetail"
+                                :isEditing="isEditing"
+                                :rejectReason="editRejectReason"
+                                @update:rejectReason="val => editRejectReason = val"
+                            />
+                            <ReturnProductTable
+                                :products="editProducts"
+                                :totalAmount="returnDetail?.totalAmount"
+                                :isEditable="isEditing"
+                                @update:products="val => editProducts = val"
+                            />
                             <ReturnDeliveryInfoCard :returnData="returnDetail" />
-                            <ReturnApprovalInfoCard :returnData="returnDetail" /> 
+                            <ReturnApprovalInfoCard :returnData="returnDetail" />
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        <ReviewIncompleteModal :visible="isReviewIncompleteModalVisible" @close="isReviewIncompleteModalVisible = false" />
     </div>
   </div>
 
@@ -205,9 +218,9 @@ import ReturnList from '../return/list/ReturnList.vue'
 import ReturnActionButtons from '../return/detail/ReturnActionButtons.vue'
 import ReturnProgressBar from '../return/detail/ReturnProgressBar.vue'
 import ReturnInfoCard from '../return/detail/ReturnInfoCard.vue'
-import ApprovalInfoCard from '../return/detail/ApprovalInfoCard.vue'
 import ReturnApprovalInfoCard from '../return/detail/ApprovalInfoCard.vue'
 import ReturnFranchiseInfoCard from '../return/detail/FranchiseInfoCard.vue'
+import ReviewIncompleteModal from '../return/modal/ReviewIncompleteModal.vue'
 import FranchiseDashboard from '@/components/hq/franchise/dashboard/FranchiseDashboard.vue'
 import OrderAmountBarChart from '@/components/hq/franchise/dashboard/OrderAmountBarChart.vue'
 import FranchiseOrderAmountBar from '@/components/hq/franchise/dashboard/FranchiseOrderAmountBar.vue'
@@ -215,6 +228,7 @@ import ReturnProductDoughnutChart from '@/components/hq/franchise/dashboard/Retu
 import FranchiseReturnProductDoughnut from '@/components/hq/franchise/dashboard/FranchiseReturnProductDoughnut.vue'
 import ProductOrderDoughnutChart from '@/components/hq/franchise/dashboard/ProductOrderDoughnutChart.vue'
 import FranchiseProductOrderDoughnut from '@/components/hq/franchise/dashboard/FranchiseProductOrderDoughnut.vue'
+
 
 import api from '@/lib/api'
 
@@ -465,6 +479,12 @@ const returnDetailId = ref(null)
 const returnDetail = ref(null)
 const returnLoading = ref(false)
 
+// --- 추가: 검토 모드 상태 ---
+const isEditing = ref(false)
+const editRejectReason = ref('')
+const editProducts = ref([])
+const isReviewIncompleteModalVisible = ref(false)
+
 async function fetchOrderDetail() {
   if (!orderDetailId.value) {
     order.value = null;
@@ -497,6 +517,7 @@ function handleBackToList() {
 function handleShowReturnDetail(returnId) {
     returnDetailId.value = returnId;
     fetchReturnDetail();
+    isEditing.value = false;
 }
 
 async function fetchReturnDetail() {
@@ -505,6 +526,8 @@ async function fetchReturnDetail() {
     try {
         const { data } = await api.get(`/api/hq/franchise/return/${returnDetailId.value}`);
         returnDetail.value = data;
+        editRejectReason.value = data.rejectedReason || '';
+        editProducts.value = (data.returnProducts || data.products || []).map(p => ({ ...p, status: p.returnStatus || '' }));
     } catch (error) {
         returnDetail.value = null;
     } finally {
@@ -515,6 +538,42 @@ async function fetchReturnDetail() {
 function handleReturnBackToList() {
     returnDetailId.value = null;
     returnDetail.value = null;
+    isEditing.value = false;
+}
+
+function startEdit() {
+    if (!returnDetail.value) return;
+    editRejectReason.value = returnDetail.value.rejectedReason || '';
+    editProducts.value = (returnDetail.value.returnProducts || returnDetail.value.products || []).map(p => ({ ...p, status: p.returnStatus || '' }));
+}
+function handleCancelEdit() {
+    isEditing.value = false;
+    if (!returnDetail.value) return;
+    editRejectReason.value = returnDetail.value.rejectedReason || '';
+    editProducts.value = (returnDetail.value.returnProducts || returnDetail.value.products || []).map(p => ({ ...p, status: p.returnStatus || '' }));
+}
+async function handleReviewCompleted() {
+    if (!returnDetail.value) return;
+    // 모든 자재의 status가 지정되어 있는지 확인
+    const allSelected = editProducts.value.every(p => p.status === 'APPROVED' || p.status === 'REJECTED');
+    if (!allSelected) {
+        isReviewIncompleteModalVisible.value = true;
+        return;
+    }
+    try {
+        const payload = {
+            rejectReason: editRejectReason.value,
+            statusList: editProducts.value.map(p => ({
+                returnDetailId: p.returnDetailId || p.id,
+                status: p.status
+            })),
+        };
+        await api.patch(`/api/hq/return/${returnDetailId.value}/review-completed`, payload);
+        isEditing.value = false;
+        await fetchReturnDetail();
+    } catch (e) {
+        alert('검토 완료 처리에 실패했습니다.');
+    }
 }
 
 async function fetchDashboardStats() {
@@ -601,6 +660,40 @@ function selectStatsTab(idx) {
     color: #6c757d;
     line-height: 1.5;
 }
+
+.review-action-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+.btn.review-cancel {
+  border: 1.5px solid #bdbdbd;
+  background: #fff;
+  color: #333;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 6px 13px;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s, border 0.15s;
+}
+.btn.review-complete {
+  border: 1.5px solid #16a34a;
+  background: #fff;
+  color: #16a34a;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 6px 13px;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s, border 0.15s;
+}
+.btn.review-cancel{
+  color: #000000ad;
+  border-color: #00020034;
+}
+.btn.review-complete{
+  color: #388e3c;
+  border-color: #c8e6c9;
 
 .stats-graph-section {
     padding: 24px;

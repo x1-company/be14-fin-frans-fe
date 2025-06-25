@@ -36,14 +36,16 @@
           <td>{{ getReturnType(p?.returnType) }}</td>
           <td>
             <template v-if="isEditable">
-              <select v-model="p.returnStatus" class="select status-select">
+              <select v-model="p.status" class="select status-select">
                 <option disabled value="">선택</option>
                 <option value="APPROVED">승인</option>
                 <option value="REJECTED">반려</option>
               </select>
             </template>
             <template v-else>
-              {{ getReturnStatusText(p?.returnStatus) }}
+              <span v-if="p?.returnStatus === 'APPROVED' || p?.status === 'APPROVED'" class="status-badge approved">승인</span>
+              <span v-else-if="p?.returnStatus === 'REJECTED' || p?.status === 'REJECTED'" class="status-badge rejected">반려</span>
+              <span v-else class="status-badge">-</span>
             </template>
           </td>
         </tr>
@@ -154,7 +156,7 @@ const getReturnStatusText = (status) => {
 
 .product-table th,
 .product-table td {
-  padding: 10px;
+  padding: 7px 6px;
   text-align: center;
   color: #333;
 }
@@ -215,16 +217,60 @@ const getReturnStatusText = (status) => {
 }
 
 .select.status-select {
-  padding: 6px 12px;
-  border: 1px solid #dcdcdc;
-  border-radius: 6px;
-  background-color: #f4f6f8;
+  min-width: 80px;
+  height: 30px;
+  padding: 0 16px;
+  border: 1.5px solid #ececec;
+  border-radius: 8px;
+  background: #fff;
   font-size: 13px;
-  color: #333;
+  font-weight: 400;
+  color: #0c0c0cde;
   appearance: none;
+  box-shadow: none;
+  display: block;
+  margin: 0 auto;
+  transition: border 0.2s;
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23666' stroke-width='2'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 12px;
+}
+.select.status-select:focus,
+.select.status-select:hover {
+  border-color: #1976d2;
+  outline: none;
+}
+.select.status-select option {
+  font-weight: 600;
+  color: #222;
+}
+
+.status-badge {
+  display: inline-block;
+  min-width: 44px;
+  padding: 4px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+.status-badge.approved {
+  background: #e6f9ed;
+  color: #16a34a;
+  font-weight: 700;
+  margin-right: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 12px;
+}
+.status-badge.rejected {
+  background: #ffeaea;
+  color: #d32f2f;
+  font-weight: 700;
+  margin-right: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 12px;
 }
 </style>

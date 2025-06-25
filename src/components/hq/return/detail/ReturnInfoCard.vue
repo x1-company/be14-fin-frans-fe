@@ -30,7 +30,19 @@
     <!-- 반려 사유 -->
     <div class="reject-box">
       <div class="reject-title">반려 사유</div>
-      <div class="reject-reason">{{ returnData.rejectedReason || '-' }}</div>
+      <div class="reject-reason">
+        <template v-if="props.isEditing">
+          <textarea
+            v-model="props.rejectReason"
+            placeholder="반려 사유를 입력해주세요."
+            @input="onInput"
+            class="reason-textarea"
+          />
+        </template>
+        <template v-else>
+          {{ props.returnData.rejectedReason || '-' }}
+        </template>
+      </div>
     </div>
 
     <!-- 첨부파일 미리보기 -->
@@ -55,8 +67,15 @@
 <script setup>
 import { computed } from 'vue';
 const props = defineProps({
-  returnData: Object
+  returnData: Object,
+  isEditing: Boolean,
+  rejectReason: String
 });
+
+const emit = defineEmits(['update:rejectReason']);
+function onInput(e) {
+  emit('update:rejectReason', e.target.value);
+}
 
 const statusText = computed(() => {
   switch(props.returnData.status) {
@@ -70,6 +89,8 @@ const statusText = computed(() => {
     default: return props.returnData.status;
   }
 });
+
+
 </script>
 
 <style scoped>
@@ -218,5 +239,25 @@ const statusText = computed(() => {
   font-size: 12px;
   color: #555;
   word-break: break-all;
+}
+
+.reason-textarea {
+  width: 100%;
+  min-height: 90px;
+  border: 2px solid #bdbdbd;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-family: inherit;
+  color: #222;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border 0.2s, box-shadow 0.2s;
+  resize: vertical;
+}
+.reason-textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px #e3eefd;
 }
 </style>
