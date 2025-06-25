@@ -333,6 +333,7 @@ onMounted(() => {
     font-weight: 400;
     text-align: right;
     flex: 1;
+    word-break: break-all;
 }
 
 .status-indicator {
