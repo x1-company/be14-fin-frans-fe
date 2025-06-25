@@ -101,7 +101,7 @@ const handleCompanyClick = (company) => {
 
 <style scoped>
 .sidebar {
-  width: 300px;
+  width: 230px;
   background: #f8f9fa;
   border-right: 1px solid #e9ecef;
   display: flex;
