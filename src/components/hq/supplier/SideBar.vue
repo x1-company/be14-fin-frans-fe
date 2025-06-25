@@ -188,11 +188,11 @@ const handleCompanyClick = (company) => {
 .company-header {
   display: flex;
   align-items: center;
-  gap: 8px;
   margin-bottom: 12px;
 }
 
 .company-name {
+  font-size: 13px;
   font-weight: 600;
   color: #212529;
 }
@@ -200,9 +200,10 @@ const handleCompanyClick = (company) => {
 .company-category {
   background: #667eea;
   color: white;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 10px;
+  font-weight: 650;
   margin-left: auto;
 }
 
