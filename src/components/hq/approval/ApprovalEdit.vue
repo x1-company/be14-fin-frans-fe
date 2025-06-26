@@ -305,7 +305,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
 import UnifiedDocumentList from "./modal/UnifiedDocumentList.vue";
 import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
 import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
@@ -383,8 +383,6 @@ onMounted(async () => {
       console.log(response);
       if (response.status === 200 && response.data) {
         const approvalData = response.data;
-
-        // 폼 데이터 설정
         formData.value = {
           title: approvalData.title || "",
           remarks: approvalData.remarks || "",
@@ -406,6 +404,8 @@ onMounted(async () => {
           },
           signUrl: approvalData.signUrl || "",
         };
+        await nextTick();
+        emitFormData();
 
         // 문서 ID가 있으면 문서 정보도 가져오기
         if (
@@ -823,7 +823,9 @@ const handleEdit = async () => {
     if (response.status === 200 || response.status === 201) {
       toast.success("임시저장이 완료되었습니다.");
       emit("approval-submitted", response.data);
-      router.push("/approval");
+      router.push("/approval").then(() => {
+        window.location.reload();
+      });
     }
   } catch (error) {
     console.error("임시저장 실패:", error);
@@ -836,23 +838,29 @@ const handleEdit = async () => {
 const handleRegister = async () => {
   if (isSubmitting.value) return;
 
-  if (!formData.value.title.trim()) {
-    alert("제목을 입력해주세요.");
+  // 디버깅용: formData 값 확인
+  console.log(
+    "handleRegister formData:",
+    JSON.parse(JSON.stringify(formData.value))
+  );
+
+  if (!formData.value.title || !formData.value.title.trim()) {
+    toast.error("제목을 입력해주세요.");
     return;
   }
-
-  if (!formData.value.remarks.trim()) {
-    alert("내용을 입력해주세요.");
+  if (
+    !formData.value.approvalLines ||
+    formData.value.approvalLines.length === 0
+  ) {
+    toast.error("결재선을 지정해주세요.");
     return;
   }
-
-  if (formData.value.approvalLines.length === 0) {
-    alert("결재선을 지정해주세요.");
-    return;
-  }
-
-  if (formData.value.approvalDocuments.length === 0) {
-    alert("주문 문서를 선택해주세요.");
+  if (
+    !formData.value.approvalDocuments ||
+    !formData.value.approvalDocuments.documentIds ||
+    formData.value.approvalDocuments.documentIds.length === 0
+  ) {
+    toast.error("주문 문서를 선택해주세요.");
     return;
   }
 
@@ -894,42 +902,27 @@ const handleRegister = async () => {
       approvalLines: approvalLines,
       files: files,
       approvalDocuments: {
-        approvalDocuments: {
-          documents: formData.value.approvalDocuments,
-          ...formData.value.approvalDocuments,
-        },
-        categoryType: categoryType.value,
+        categoryType: formData.value.approvalDocuments.categoryType,
+        documentIds: formData.value.approvalDocuments.documentIds,
       },
     };
 
-    console.log("전송 데이터 확인:", requestData);
+    console.log("결재등록 PATCH body:", requestData);
 
-    let response;
-
-    if (props.isEditMode && props.approvalId) {
-      // 수정 모드: PUT 요청
-      response = await api.put(
-        `/api/hq/approvals/${props.approvalId}`,
-        requestData
-      );
-    } else {
-      // 등록 모드: POST 요청
-      response = await api.post("/api/hq/approvals", requestData);
-    }
+    // PUT 요청
+    const response = await api.put(
+      `/api/hq/approvals/${props.approvalId}`,
+      requestData
+    );
 
     if (response.status === 200 || response.status === 201) {
-      const message = props.isEditMode
-        ? "결재가 수정되었습니다."
-        : "결재가 등록되었습니다.";
-      alert(message);
+      toast.success("결재가 등록되었습니다.");
       emit("approval-submitted", response.data);
+      router.push(`/approval/${props.approvalId}`);
     }
   } catch (error) {
-    console.error("결재 등록/수정 실패:", error);
-    const message = props.isEditMode
-      ? "결재 수정에 실패했습니다."
-      : "결재 등록에 실패했습니다.";
-    alert(message + " 다시 시도해주세요.");
+    console.error("결재 등록 실패:", error);
+    toast.error("결재 등록에 실패했습니다. 다시 시도해주세요.");
   } finally {
     isSubmitting.value = false;
   }
@@ -1095,7 +1088,7 @@ const approvalLineDetails = computed(() => {
   return Array.isArray(props.initialData?.lines) ? props.initialData.lines : [];
 });
 
-// 모달 닫기 핸들러 추가
+// 모달 닫기 핸들러 수정
 const handleCloseModal = () => {
   emit("close");
 };
