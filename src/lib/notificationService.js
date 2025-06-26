@@ -36,8 +36,11 @@ class NotificationService {
     this.eventSource = new EventSourcePolyfill(url, {
       headers: {
         Authorization: `Bearer ${authStore.accessToken}`,
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
-      heartbeatTimeout: 60000, // 1분
+      heartbeatTimeout: 120000, // 2분으로 증가 (ALB 타임아웃 고려)
+      withCredentials: true, // 쿠키 포함 (Sticky Session 지원)
     });
 
     // 연결 성공
@@ -66,20 +69,22 @@ class NotificationService {
       console.debug('Heartbeat 수신:', event.data); // 보통 'ping'이 옴
     });
 
-    // 에러 처리 (단순화된 로직)
+    // 에러 처리 (ALB 환경 고려)
     this.eventSource.onerror = async error => {
       console.error('SSE 연결 오류:', error);
       this.isConnecting = false;
       notificationStore.setConnectionStatus(false);
       this.disconnect(); // 오류 발생 시 현재 연결은 무조건 종료
 
-      console.log('토큰 갱신 및 SSE 재연결을 시도합니다...');
+      // ALB 환경에서는 더 긴 대기 시간 후 재연결
+      const reconnectDelay = 3000; // 3초 대기
+      console.log(`${reconnectDelay}ms 후 SSE 재연결을 시도합니다...`);
 
       try {
         // ping을 통해 accessToken 재발급 시도
         await api.get('/api/auth/ping');
-        console.log('토큰 재발급 성공. 1초 후 SSE 재연결을 시도합니다.');
-        setTimeout(() => this.connect(), 1000);
+        console.log('토큰 재발급 성공. SSE 재연결을 시도합니다.');
+        setTimeout(() => this.connect(), reconnectDelay);
       } catch (reissueError) {
         console.error(
           'API 호출을 통한 토큰 재발급 최종 실패. 재연결을 중단합니다.',

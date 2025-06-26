@@ -1,0 +1,17 @@
+datasource:
+  driver-class-name: org.mariadb.jdbc.Driver
+  url: jdbc:mariadb://frans-db.c5smweakgdg6.ap-northeast-2.rds.amazonaws.com:3306/frans
+  username: root
+  password: x1company1234!
+
+  hikari:
+    maximum-pool-size: 20        # 50에서 20으로 줄임 (리소스 효율성)
+    minimum-idle: 5
+    idle-timeout: 600000         # 10분 (기존 유지)
+    max-lifetime: 1800000        # 30분 (기존 유지)
+    connection-timeout: 60000    # 30초에서 60초로 증가
+    leak-detection-threshold: 60000  # 연결 누수 감지 (1분)
+    connection-test-query: SELECT 1  # 연결 테스트 쿼리
+    validation-timeout: 5000     # 검증 타임아웃 (5초)
+    keepalive-time: 30000        # keepalive 간격 (30초)
+    register-mbeans: true        # JMX 모니터링 활성화 
