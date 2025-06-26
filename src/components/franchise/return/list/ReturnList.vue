@@ -14,7 +14,7 @@
     </div>
     
     <!-- 검색창 및 필터 -->
-    <div class="return-form__header">
+    <div v-if="!showReturnRegister" class="return-form__header">
       <div class="return-form__search-group">
         <Datepicker
           v-model="searchDate"
