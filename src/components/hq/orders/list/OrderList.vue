@@ -33,7 +33,11 @@
             <option value="orderNo">주문 번호</option>
           </select>
         </div>
+        <button class="deadline-btn" @click="showDeadlineModal = true">
+          주문 마감 시간 관리
+        </button>
       </div>
+      <OrderDeadlineModal v-if="showDeadlineModal" @close="showDeadlineModal = false" />
 
       <!-- 주문 목록 테이블 -->
       <div class="order-table">
@@ -85,6 +89,7 @@
     import Datepicker from '@vuepic/vue-datepicker';
     import '@vuepic/vue-datepicker/dist/main.css';
     import api from '@/lib/api';
+    import OrderDeadlineModal from '@/components/hq/orders/OrderDeadlineModal.vue'
 
     const emit = defineEmits(['show-register-view', 'franchise-deselect', 'show-order-detail']);
 
@@ -101,6 +106,7 @@
     const totalPages = ref(1);
     const totalCount = ref(0);
     const loading = ref(false);
+    const showDeadlineModal = ref(false);
 
     const tabs = [
     { label: '전체', value: 'all' },
@@ -519,6 +525,21 @@
     font-size: 10px;
     height: 10px;
     width: 10px;
+    background: #2746b6;
+  }
+  .deadline-btn {
+    background: #4066fa;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 12px;
+    transition: background 0.2s;
+  }
+  .deadline-btn:hover {
     background: #2746b6;
   }
   </style>
