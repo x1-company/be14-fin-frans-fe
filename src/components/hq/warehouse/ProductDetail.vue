@@ -99,6 +99,9 @@
 import { ref, onMounted, computed } from 'vue';
 import { Pencil } from 'lucide-vue-next';
 import api from '@/lib/api';
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const props = defineProps({
   productId: {
@@ -149,7 +152,7 @@ const fetchProductDetail = async () => {
   detail.value = data;
   } catch (error) {
     console.error('Failed to fetch product details:', error);
-    alert('자재 정보를 불러오는 데 실패했습니다.');
+    toast.error('자재 정보를 불러오는 데 실패했습니다.');
   }
 };
 
@@ -159,7 +162,7 @@ const fetchSuppliers = async () => {
     suppliers.value = data.map(s => ({ ...s, id: Number(s.id) }));
   } catch (error) {
     console.error('Failed to fetch suppliers:', error);
-    alert('공급처 목록을 불러오는 데 실패했습니다.');
+    toast.error('공급처 목록을 불러오는 데 실패했습니다.');
   }
 };
 
@@ -203,10 +206,10 @@ async function saveChanges() {
       await api.patch(`/api/hq/products/${edited.id}/active`, { active: edited.isActive });
       await fetchProductDetail();
       isEditing.value = false;
-      alert('자재 사용여부가 성공적으로 변경되었습니다.');
+      toast.success('자재 사용여부가 성공적으로 변경되었습니다.');
     } catch (error) {
       console.error('Failed to change active status:', error);
-      alert(`자재 사용여부 변경에 실패했습니다: ${error.response?.data?.message || error.message}`);
+      toast.error(`자재 사용여부 변경에 실패했습니다: ${error.response?.data?.message || error.message}`);
       editableDetail.value.isActive = original.isActive;
     }
     return;
@@ -232,10 +235,10 @@ async function saveChanges() {
     await api.put('/api/hq/products', payload);
     await fetchProductDetail();
     isEditing.value = false;
-    alert('자재 정보가 성공적으로 수정되었습니다.');
+    toast.success('자재 정보가 성공적으로 수정되었습니다.');
   } catch (error) {
     console.error('Failed to update product:', error);
-    alert(`자재 정보 수정에 실패했습니다: ${error.response?.data?.message || error.message}`);
+    toast.error(`자재 정보 수정에 실패했습니다: ${error.response?.data?.message || error.message}`);
   }
 }
 

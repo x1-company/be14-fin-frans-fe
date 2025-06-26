@@ -69,6 +69,9 @@
 <script setup>
 import { ref, watch } from 'vue'
 import api from '@/lib/api'
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const props = defineProps({
   modelValue: Boolean
@@ -114,11 +117,11 @@ async function registerDeadline() {
     emit('register', currentDeadline.value)
     
     // 성공 메시지 (선택사항)
-    alert('마감시간이 성공적으로 등록되었습니다.')
+    toast.success('마감시간이 성공적으로 등록되었습니다.')
     
   } catch (err) {
     console.error('마감시간 등록 실패:', err)
-    alert('마감시간 등록에 실패했습니다. 다시 시도해주세요.')
+    toast.error('마감시간 등록에 실패했습니다. 다시 시도해주세요.')
   } finally {
     submitting.value = false
   }

@@ -168,7 +168,9 @@ import { ref, watch } from 'vue'
 import { SearchIcon, UserIcon, XIcon, KeyIcon, LoaderIcon } from 'lucide-vue-next'
 import api from '@/lib/api'
 import { resetPassword } from '@/utils/user/userUtils.js'
+import { useToast } from "@/composables/useToast";
 
+const toast = useToast()
 const searchName = ref('')
 const searchResults = ref([])
 const selectedUser = ref(null)
@@ -257,9 +259,9 @@ const handleResetPassword = async () => {
     isResetPasswordLoading.value = true
     try {
       await resetPassword(selectedUser.value.code)
-      alert('비밀번호가 성공적으로 초기화되었습니다.')
+      toast.success('비밀번호가 성공적으로 초기화되었습니다.')
     } catch (error) {
-      alert('비밀번호 초기화에 실패했습니다.')
+      toast.error('비밀번호 초기화에 실패했습니다.')
     } finally {
       isResetPasswordLoading.value = false
     }

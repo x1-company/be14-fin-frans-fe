@@ -114,8 +114,10 @@
 import { ref, computed } from "vue";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
+import { useToast } from "@/composables/useToast";
 
 const emit = defineEmits(["approve", "reject"]);
+const toast = useToast();
 
 const props = defineProps({
   document: {
@@ -245,7 +247,7 @@ const confirmReject = async () => {
       userType.value === "결재"
         ? "반려 처리에 실패했습니다. 다시 시도해주세요."
         : "협조 반려 처리에 실패했습니다. 다시 시도해주세요.";
-    alert(errorMessage);
+    toast.error(errorMessage);
   } finally {
     isProcessing.value = false;
   }
@@ -286,7 +288,7 @@ const confirmApprove = async () => {
       userType.value === "결재"
         ? "승인 처리에 실패했습니다. 다시 시도해주세요."
         : "협조 승인 처리에 실패했습니다. 다시 시도해주세요.";
-    alert(errorMessage);
+    toast.error(errorMessage);
   } finally {
     isProcessing.value = false;
   }

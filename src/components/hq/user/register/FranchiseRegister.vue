@@ -290,6 +290,9 @@ import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { LoaderIcon, Search, X } from 'lucide-vue-next'
 import { seoulDistricts } from '@/utils/user/userUtils'
 import api from '@/lib/api'
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const isLoading = ref(false)
 const searchLoading = ref(false)
@@ -502,11 +505,11 @@ const handleSubmit = async () => {
 
     await api.post('/api/hq/user/franchise', submitData)
 
-    alert('가맹점 계정이 성공적으로 등록되었습니다.')
+    toast.success('가맹점 계정이 성공적으로 등록되었습니다.')
     resetForm()
   } catch (error) {
     console.error('계정 등록 실패:', error)
-    alert('계정 등록에 실패했습니다. 다시 시도해주세요.')
+    toast.error('계정 등록에 실패했습니다. 다시 시도해주세요.')
   } finally {
     isLoading.value = false
   }

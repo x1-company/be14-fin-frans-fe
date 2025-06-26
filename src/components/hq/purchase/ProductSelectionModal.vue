@@ -100,6 +100,9 @@
 import { ref, watch, computed, onMounted } from "vue";
 import api from "@/lib/api";
 import { PRODUCT_TYPE_MAP, PRODUCT_GROUP_MAP, PRODUCT_ATTRIBUTE_MAP } from '@/enums/hqEnums';
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const props = defineProps({
   isVisible: Boolean,
@@ -176,7 +179,7 @@ async function fetchProducts() {
 
   } catch (error) {
     console.error("자재 목록을 불러오는 데 실패했습니다.", error);
-    alert("자재 목록을 불러오는 데 실패했습니다.");
+    toast.error("자재 목록을 불러오는 데 실패했습니다.");
     allProducts.value = [];
   }
 }
@@ -220,7 +223,7 @@ function changePage(newPage) {
 
 function addSelectedProducts() {
   if (selectedProducts.value.length === 0) {
-    alert("추가할 자재를 선택해주세요.");
+    toast.warning("추가할 자재를 선택해주세요.");
     return;
   }
   emit("add-products", [...selectedProducts.value]);

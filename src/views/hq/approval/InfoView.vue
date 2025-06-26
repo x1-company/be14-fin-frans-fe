@@ -59,6 +59,9 @@ import SideBar from "@/components/hq/approval/SideBar.vue";
 import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
 import Info from "@/components/hq/approval/Info.vue";
 import api from "@/lib/api";
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const approvalList = ref([]);
 const mainTab = ref("상신"); // '상신' 또는 '수신'
@@ -216,7 +219,7 @@ const handleReorderComplete = async () => {
     reorderChanges.value = [];
   } catch (error) {
     console.error("순서 변경 실패:", error);
-    alert("순서 변경에 실패했습니다.");
+    toast.error("순서 변경에 실패했습니다.");
 
     // 실패 시 사이드바 롤백
     if (templateSidebarRef.value) {

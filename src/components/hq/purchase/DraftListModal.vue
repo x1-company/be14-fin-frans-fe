@@ -118,6 +118,9 @@ import {
   Clock as ClockIcon
 } from 'lucide-vue-next';
 import api from '@/lib/api';
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const props = defineProps({
   isVisible: {
@@ -137,7 +140,7 @@ async function fetchDrafts() {
     draftList.value = response.data.content.map(d => ({ ...d, selected: false }));
   } catch (error) {
     console.error("임시저장 목록을 불러오는 데 실패했습니다.", error);
-    alert("임시저장 목록을 불러오는 데 실패했습니다.");
+    toast.error("임시저장 목록을 불러오는 데 실패했습니다.");
   }
 }
 
@@ -208,7 +211,7 @@ function loadSelected() {
 async function deleteSelected() {
   const idsToDelete = selectedDrafts.value.map(d => d.id);
   if (idsToDelete.length === 0) {
-    alert('삭제할 항목을 선택해주세요.');
+    toast.warning('삭제할 항목을 선택해주세요.');
     return;
   }
 
@@ -217,11 +220,11 @@ async function deleteSelected() {
       for (const id of idsToDelete) {
         await api.delete(`/api/hq/purchase/requests/${id}`);
       }
-      alert('선택한 항목이 삭제되었습니다.');
+      toast.success('선택한 항목이 삭제되었습니다.');
       await fetchDrafts();
     } catch (error) {
       console.error('임시저장 삭제에 실패했습니다.', error);
-      alert('삭제에 실패했습니다.');
+      toast.error('삭제에 실패했습니다.');
     }
   }
 }

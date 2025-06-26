@@ -49,6 +49,9 @@ import api from "@/lib/api";
 import { useRouter } from "vue-router";
 import { UserIcon } from 'lucide-vue-next'
 import MyInfo from "./MyInfo.vue";
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const router = useRouter();
 
@@ -137,10 +140,10 @@ const saveSignature = async (signatureData) => {
       auth.setAccessToken(newAccessToken.replace('Bearer ', ''));
     }
 
-    alert('서명이 성공적으로 저장되었습니다.')
+    toast.success('서명이 성공적으로 저장되었습니다.')
   } catch (error) {
     console.error("서명 저장 실패:", error);
-    alert("서명 저장에 실패했습니다.");
+    toast.error("서명 저장에 실패했습니다.");
   }
 };
 
@@ -152,7 +155,7 @@ const handleLogout = async () => {
       router.push("/login");
     } catch (error) {
       console.error("로그아웃 실패:", error);
-      alert("로그아웃에 실패했습니다.");
+      toast.error("로그아웃에 실패했습니다.");
     }
   }
 };

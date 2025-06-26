@@ -3,6 +3,9 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/lib/api'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -39,7 +42,7 @@ const handleChangePassword = async () => {
       newPassword: newPassword.value
     })
 
-    alert("비밀번호가 성공적으로 변경되었습니다.")
+    toast.success("비밀번호가 성공적으로 변경되었습니다.")
     authStore.clearAccessToken()
     router.push('/login')
   } catch (error) {
