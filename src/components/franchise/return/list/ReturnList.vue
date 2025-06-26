@@ -40,7 +40,7 @@
     <!-- 반품 등록 컴포넌트 -->
     <ReturnRegister 
       v-if="showReturnRegister" 
-      @back-to-list="showReturnRegister = false" 
+      @back-to-list="handleBackToList" 
     />
 
     <!-- 반품 목록 테이블 -->
@@ -63,7 +63,7 @@
               {{ returnItem.code }}
             </a>
           </div>
-          <div class="col col-name">{{ returnItem.productSummary }}</div>
+          <div class="col col-name">{{ formatproductSummary(returnItem.productSummary) }}</div>
           <div class="col col-status">
             <span :class="['return-status', returnStatusClass(returnItem.status)]">
               {{ statusText(returnItem.status) }}
@@ -129,6 +129,13 @@ const activeTab = ref(0);
 function selectTab(idx) {
   activeTab.value = idx;
   page.value = 1;
+  fetchReturns();
+}
+
+// 반품 등록 완료 후 목록으로 돌아갈 때 호출되는 함수
+function handleBackToList() {
+  showReturnRegister.value = false;
+  // 반품 목록 새로고침
   fetchReturns();
 }
 
@@ -250,6 +257,14 @@ const paginationPages = computed(() => {
   }
   return pages;
 });
+
+const formatproductSummary = (text) => {
+  const match = text.match(/^(.+?) 외 0건$/);
+  if (match) {
+    return match[1]; // "자재1"만 반환
+  }
+  return text; // 나머지는 원본 그대로 반환
+}
 </script>
 
 <style scoped>
