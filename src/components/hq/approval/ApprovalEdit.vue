@@ -47,7 +47,7 @@
                     <td>{{ doc.documentNo || doc.code || "-" }}</td>
                     <td>{{ doc.franchiseName || doc.name || "-" }}</td>
                     <td>{{ doc.createdAt || doc.date || "-" }}</td>
-                    <td>{{ doc.amount || doc.totalAmount || "-" }}</td>
+                    <td>{{ formatCurrency(doc.amount || doc.totalAmount) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -260,18 +260,18 @@
           <!-- 저장/등록 버튼 영역 -->
           <div class="action-buttons">
             <button
-              class="temp-save-button"
-              @click="handleTempSave"
+              class="edit-button"
+              @click="handleEdit"
               :disabled="isSubmitting"
             >
-              임시저장
+              수정
             </button>
             <button
-              class="submit-button"
-              @click="handleSubmit"
+              class="register-button"
+              @click="handleRegister"
               :disabled="isSubmitting"
             >
-              {{ props.isEditMode ? "수정" : "등록" }}
+              등록
             </button>
           </div>
         </div>
@@ -312,6 +312,8 @@ import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
+import { useToast } from "@/composables/useToast";
 
 const props = defineProps({
   type: String,
@@ -366,6 +368,8 @@ const formData = ref({
 // authStore에서 사용자 서명 자동 설정
 const authStore = useAuthStore();
 
+const toast = useToast();
+
 // 컴포넌트 마운트 시 사용자 서명 자동 설정
 onMounted(async () => {
   console.log("[ApprovalEdit] mounted, props:", { ...props });
@@ -373,16 +377,27 @@ onMounted(async () => {
   // 수정 모드이고 approvalId가 있으면 기존 데이터 로드
   if (props.isEditMode && props.approvalId) {
     try {
-      const response = await api.get(`/api/hq/approvals/${props.approvalId}`);
-      if (response.status === 200 && response.data?.data) {
-        const approvalData = response.data.data;
+      const response = await api.get(
+        `/api/hq/approvals/draft/${props.approvalId}`
+      );
+      console.log(response);
+      if (response.status === 200 && response.data) {
+        const approvalData = response.data;
 
         // 폼 데이터 설정
         formData.value = {
           title: approvalData.title || "",
           remarks: approvalData.remarks || "",
-          approvalLines: approvalData.lines || [],
-          files: approvalData.files || [],
+          approvalLines: (approvalData.lines || []).map((line) => ({
+            ...line,
+            name: line.approverName || line.name,
+            dept: line.deptName || line.dept,
+            position: line.positionName || line.position,
+          })),
+          files: (approvalData.files || []).map((f) => ({
+            name: f.name || f.fileName,
+            url: f.url,
+          })),
           approvalDocuments: {
             documentIds: Array.isArray(approvalData.approvalDocuments)
               ? approvalData.approvalDocuments.map((doc) => doc.documentId)
@@ -397,9 +412,15 @@ onMounted(async () => {
           Array.isArray(approvalData.approvalDocuments) &&
           approvalData.approvalDocuments.length > 0
         ) {
-          fetchDocuments(
-            approvalData.approvalDocuments.map((doc) => doc.documentId)
-          );
+          // 문서 정보가 이미 배열로 들어온 경우 바로 할당
+          documents.value = approvalData.approvalDocuments.map((doc) => ({
+            ...doc,
+            date: formatDate(doc.createdAt),
+            createdAt: formatDate(doc.createdAt),
+            name: doc.franchiseName || doc.name,
+            amount: doc.amount || doc.totalAmount,
+            code: doc.documentNo || doc.code,
+          }));
         }
       }
     } catch (error) {
@@ -430,7 +451,8 @@ const filteredDocuments = computed(() => {
 });
 
 const formatCurrency = (amount) => {
-  return `₩${amount.toLocaleString()}`;
+  if (!amount && amount !== 0) return "-";
+  return `₩${parseInt(amount, 10).toLocaleString()}`;
 };
 
 const formatFileSize = (bytes) => {
@@ -498,9 +520,7 @@ const handleFileSelect = (event) => {
   files.forEach((file) => {
     formData.value.files.push({
       name: file.name,
-      size: file.size,
-      file: file,
-      url: "",
+      url: file.url,
     });
   });
   emitFormData();
@@ -526,6 +546,7 @@ const handleSelectDocuments = (selectedDocuments) => {
         id: doc.id || doc.code,
         code: doc.code,
         date: formatDate(doc.createdAt),
+        createdAt: formatDate(doc.createdAt),
         amount: doc.totalAmount,
       };
 
@@ -604,8 +625,16 @@ watch(
         formData.value = {
           title: newData.title || "",
           remarks: newData.remarks || "",
-          approvalLines: newData.lines || [],
-          files: newData.files || [],
+          approvalLines: (newData.lines || []).map((line) => ({
+            ...line,
+            name: line.approverName || line.name,
+            dept: line.deptName || line.dept,
+            position: line.positionName || line.position,
+          })),
+          files: (newData.files || []).map((f) => ({
+            name: f.name || f.fileName,
+            url: f.url,
+          })),
           approvalDocuments: {
             documentIds: Array.isArray(newData.approvalDocuments)
               ? newData.approvalDocuments.map((doc) => doc.documentId)
@@ -736,7 +765,9 @@ const updateRemarksCount = () => {
   }
 };
 
-const handleTempSave = async () => {
+const router = useRouter();
+
+const handleEdit = async () => {
   if (isSubmitting.value) return;
 
   try {
@@ -784,20 +815,25 @@ const handleTempSave = async () => {
 
     console.log("임시저장 전송 데이터 확인:", requestData);
 
-    const response = await api.post("/api/hq/approvals", requestData);
+    const response = await api.put(
+      `/api/hq/approvals/${props.approvalId}`,
+      requestData
+    );
 
     if (response.status === 200 || response.status === 201) {
-      alert("임시저장이 완료되었습니다.");
+      toast.success("임시저장이 완료되었습니다.");
+      emit("approval-submitted", response.data);
+      router.push("/approval");
     }
   } catch (error) {
     console.error("임시저장 실패:", error);
-    alert("임시저장에 실패했습니다. 다시 시도해주세요.");
+    toast.error("임시저장에 실패했습니다. 다시 시도해주세요.");
   } finally {
     isSubmitting.value = false;
   }
 };
 
-const handleSubmit = async () => {
+const handleRegister = async () => {
   if (isSubmitting.value) return;
 
   if (!formData.value.title.trim()) {
@@ -1023,6 +1059,7 @@ const fetchDocuments = async (documentIds) => {
           id: doc.id || doc.code,
           code: doc.code,
           date: formatDate(doc.createdAt),
+          createdAt: formatDate(doc.createdAt),
           amount: doc.totalAmount,
         };
 
@@ -1513,8 +1550,8 @@ defineExpose({
   margin-top: 32px;
 }
 
-.temp-save-button,
-.submit-button {
+.edit-button,
+.register-button {
   padding: 12px 24px;
   border-radius: 6px;
   border: none;
@@ -1524,24 +1561,24 @@ defineExpose({
   transition: all 0.2s;
 }
 
-.temp-save-button {
+.edit-button {
   background: #f3f4f6;
   color: #374151;
 }
 
-.temp-save-button:disabled {
+.edit-button:disabled {
   background: #e5e7eb;
   color: #9ca3af;
   cursor: not-allowed;
 }
 
-.submit-button {
+.register-button {
   background: #4066fa;
   color: white;
   border: 1px solid #4066fa;
 }
 
-.submit-button:disabled {
+.register-button:disabled {
   background: #b3c6fa;
   color: #f3f4f6;
   cursor: not-allowed;
