@@ -1,11 +1,11 @@
 <template>
-  <div class="info-container">
-    <div class="breadcrumb-container">
-      <Breadcrumb :items="breadcrumbItems" />
-    </div>
+    <div class="info-container">
+        <div class="breadcrumb-container">
+            <Breadcrumb :items="breadcrumbItems" />
+        </div>
 
-    <div class="info-content-wrapper">
-      <div class="info-wrapper">
+        <div class="info-content-wrapper">
+            <div class="info-wrapper">
         <InfoHeader
           :title="title"
           :desc="desc"
@@ -15,7 +15,7 @@
           @update-breadcrumb="updateBreadcrumb"
         />
 
-        <div class="tab-content">
+                <div class="tab-content">
           <FranchiseDashboard
             v-if="activeTabSwitch === 0"
             :in-progress-order="dashboardCardData.inProgressOrder"
@@ -28,7 +28,7 @@
             <div class="stats-tab-bar">
               <button class="stats-tab-btn" :class="{ active: statsTab === 0 }" @click="selectStatsTab(0)">주문 금액 분석</button>
               <button class="stats-tab-btn" :class="{ active: statsTab === 1 }" @click="selectStatsTab(1)">자재별 분석</button>
-            </div>
+                    </div>
 
             <div class="doughnut-top-row">
               <div class="doughnut-top-right">
@@ -37,7 +37,7 @@
                   <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
                 </select>
               </div>
-            </div>
+                    </div>
 
             <div class="stats-graph-card">
               <template v-if="statsTab === 0">
@@ -87,8 +87,8 @@
                       :selected-franchise-id="props.selectedFranchiseId"
                       @month-change="handleMonthChange"
                     />
-                  </div>
-
+                    </div>
+                    
                   <div class="doughnut-chart-col">
                     <h3 class="doughnut-title">자재별 반품량</h3>
                     <span class="doughnut-desc">{{ selectedMonth }}월 기준 자재별 반품 비율</span>
@@ -181,11 +181,11 @@
               <ReturnDeliveryInfoCard :returnData="returnDetail" />
               <ReturnApprovalInfoCard :returnData="returnDetail" />
             </div>
-          </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </template>
 
 
@@ -288,7 +288,7 @@ const desc = computed(() => {
     }
     if (activeTabSwitch.value === 2 && orderDetailId.value) {
     return "주문의 상세 내역을 확인합니다.";
-  }
+    }
     return tabInfo.value[activeTabSwitch.value]?.desc || '대시보드입니다.'
 })
 
