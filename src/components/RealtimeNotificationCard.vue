@@ -113,6 +113,15 @@ const handleClick = () => {
 
 const handleNotificationNavigation = (notification) => {
   if (notification.url) {
+    // url이 /로 시작하지 않고, status=...&url=... 형태라면 파싱
+    if (!notification.url.startsWith('/') && notification.url.includes('url=')) {
+      const params = new URLSearchParams(notification.url);
+      const url = params.get('url');
+      params.delete('url');
+      const query = params.toString();
+      router.push(query ? `${url}?${query}` : url);
+      return;
+    }
     router.push(notification.url);
   } else {
     // 알림 타입에 따라 적절한 페이지로 이동 (fallback)
@@ -121,11 +130,9 @@ const handleNotificationNavigation = (notification) => {
         console.log('주문 페이지로 이동');
         break;
       case 'APPROVAL_REQUEST':
-        // 결재 요청 알림인 경우 해당 결재 상세 페이지로 이동
         if (notification.approvalId) {
           router.push(`/approval/${notification.approvalId}`);
         } else {
-          // approvalId가 없는 경우 결재 목록 페이지로 이동
           router.push('/approval');
         }
         break;
