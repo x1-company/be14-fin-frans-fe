@@ -100,7 +100,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from './InfoHeader.vue'
 import FranchiseInfo from '@/components/franchise/info/FranchiseInfo.vue'
@@ -155,6 +156,8 @@ const loading = ref(false);
 const returnDetailId = ref(null);
 const returnData = ref(null);
 const returnLoading = ref(false);
+
+const route = useRoute();
 
 const handleShowOrderDetail = (id) => {
   orderDetailId.value = id;
@@ -278,6 +281,26 @@ const updateTab = (newTabIndex) => {
   const selectedTab = tabs[newTabIndex];
   emit("tab-change", selectedTab);
 };
+
+onMounted(() => {
+  // 주문관리 탭 + orderId 쿼리 있을 때 자동 상세 오픈
+  if (route.query.tab === '주문관리' && route.query.orderId) {
+    activeTabSwitch.value = 2;
+    orderDetailId.value = route.query.orderId;
+    fetchOrderDetail();
+  }
+});
+
+watch(
+  () => [route.query.tab, route.query.orderId],
+  ([tab, orderId]) => {
+    if (tab === '주문관리' && orderId) {
+      activeTabSwitch.value = 2;
+      orderDetailId.value = orderId;
+      fetchOrderDetail();
+    }
+  }
+);
 </script>
 
 <style scoped>
