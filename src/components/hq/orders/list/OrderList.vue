@@ -37,7 +37,12 @@
           주문 마감 시간 관리
         </button>
       </div>
-      <OrderDeadlineModal v-if="showDeadlineModal" @close="showDeadlineModal = false" />
+      <OrderDeadlineModal 
+        v-model="showDeadlineModal" 
+        :current-deadline="currentDeadline"
+        @register="handleRegisterDeadline"
+        @delete="handleDeleteDeadline"
+      />
 
       <!-- 주문 목록 테이블 -->
       <div class="order-table">
@@ -107,6 +112,19 @@
     const totalCount = ref(0);
     const loading = ref(false);
     const showDeadlineModal = ref(false);
+    const currentDeadline = ref('');
+
+    function handleRegisterDeadline(newDeadline) {
+      // Handle deadline registration logic here
+      console.log('Registering deadline:', newDeadline);
+      showDeadlineModal.value = false;
+    }
+
+    function handleDeleteDeadline() {
+      // Handle deadline deletion logic here
+      console.log('Deleting deadline');
+      showDeadlineModal.value = false;
+    }
 
     const tabs = [
     { label: '전체', value: 'all' },
