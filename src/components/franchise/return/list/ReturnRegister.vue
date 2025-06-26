@@ -202,8 +202,10 @@
 import { ref, onMounted } from 'vue';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
+import { useToast } from '@/composables/useToast';
 
 const auth = useAuthStore();
+const toast = useToast();
 
 const emit = defineEmits(['back-to-list']);
 
@@ -372,7 +374,7 @@ const deleteUploadedFiles = async (files) => {
 // 반품 등록
 const submitReturn = async () => {
   if (!returnDescription.value.trim()) {
-    alert('반품 사유를 입력해주세요.');
+    toast.warning('반품 사유를 입력해주세요.');
     return;
   }
 
@@ -399,7 +401,7 @@ const submitReturn = async () => {
 
     await api.post(`/api/franchise/${auth.franchiseId}/return/regist`, returnData);
     
-    alert('반품이 성공적으로 등록되었습니다.');
+    toast.success('반품이 성공적으로 등록되었습니다.');
     emit('back-to-list');
 
   } catch (error) {
@@ -410,7 +412,7 @@ const submitReturn = async () => {
       await deleteUploadedFiles(uploadedFileList);
     }
     
-    alert('반품 등록에 실패했습니다. 다시 시도해주세요.');
+    toast.error('반품 등록에 실패했습니다. 다시 시도해주세요.');
   } finally {
     isSubmitting.value = false;
   }

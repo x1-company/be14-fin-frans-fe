@@ -52,6 +52,9 @@ import ProductTable from './ProductTable.vue';
 import DeliveryInfoCard from './DeliveryInfoCard.vue';
 import ApprovalInfoCard from './ApprovalInfoCard.vue';
 import api from '@/lib/api';
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast()
 
 const props = defineProps({
   returnId: {
@@ -114,7 +117,7 @@ async function handleReviewCompleted() {
     await fetchReturnDetail();
     currentStatus.value = 'REVIEW_COMPLETED';
   } catch (e) {
-    alert('검토 완료 처리에 실패했습니다.');
+    toast.error('검토 완료 처리에 실패했습니다.');
   }
 }
 

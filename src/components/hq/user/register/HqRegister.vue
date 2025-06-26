@@ -178,6 +178,9 @@ import { ref, reactive, computed } from 'vue'
 import { LoaderIcon, Upload, X } from 'lucide-vue-next'
 import api from '@/lib/api'
 import { topLevelDepartmentIds, positionMap, dutyMap, getDepartmentNameById, departmentMap } from '@/enums/hqEnums'
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 // Component state
 const isLoading = ref(false)
@@ -287,7 +290,7 @@ const handleSubmit = async () => {
 
     await api.post('/api/hq/user/hq', requestData)
 
-    alert('계정이 성공적으로 등록되었습니다.')
+    toast.success('계정이 성공적으로 등록되었습니다.')
     resetForm()
   } catch (error) {
     console.error('계정 등록 실패:', error)
@@ -297,7 +300,7 @@ const handleSubmit = async () => {
         fileName: profileUrl.split('/').pop()
       }
     })
-    alert('계정 등록에 실패했습니다. 다시 시도해주세요.')
+    toast.error('계정 등록에 실패했습니다. 다시 시도해주세요.')
   } finally {
     isLoading.value = false
   }

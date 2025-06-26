@@ -306,7 +306,6 @@ const handleSearch = () => {
 
 const router = useRouter();
 const openDocument = (document) => {
-  alert("openDocument! " + JSON.stringify(document));
   if (document && document.approvalId) {
     router.push(`/approval/${document.approvalId}`);
   } else {

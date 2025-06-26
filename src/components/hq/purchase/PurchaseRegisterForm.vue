@@ -161,6 +161,9 @@
   import ProductSelectionModal from './ProductSelectionModal.vue';
   import DraftListModal from './DraftListModal.vue';
   import { PRODUCT_TYPE_MAP, PRODUCT_GROUP_MAP, PRODUCT_ATTRIBUTE_MAP } from '@/enums/hqEnums';
+  import { useToast } from "@/composables/useToast";
+
+  const toast = useToast();
   
   const router = useRouter();
   const authStore = useAuthStore();
@@ -283,10 +286,10 @@
         requestedProducts.value = [];
       }
 
-      alert('임시저장 내용을 불러왔습니다.');
+      toast.success('임시저장 내용을 불러왔습니다.');
     } catch (error) {
       console.error('임시저장 내용을 불러오는 데 실패했습니다.', error);
-      alert('임시저장 내용을 불러오는 데 실패했습니다.');
+      toast.error('임시저장 내용을 불러오는 데 실패했습니다.');
     } finally {
       isDraftModalVisible.value = false;
     }
@@ -320,11 +323,11 @@
   
   async function savePurchaseRequest(isRequested) {
     if (!purchaseRequest.value.title) {
-      alert('제목을 입력해주세요.');
+      toast.warning('제목을 입력해주세요.');
       return;
     }
     if (requestedProducts.value.length === 0) {
-      alert('요청할 자재를 하나 이상 추가해주세요.');
+      toast.warning('요청할 자재를 하나 이상 추가해주세요.');
       return;
     }
   
@@ -347,11 +350,11 @@
   
     try {
       await api.post('/api/hq/purchase/requests', payload);
-      alert(isRequested ? '구매 요청이 등록되었습니다.' : '내용이 임시저장되었습니다.');
+      toast.success(isRequested ? '구매 요청이 등록되었습니다.' : '내용이 임시저장되었습니다.');
       router.push('/purchase');
     } catch (error) {
       console.error('구매 요청 저장에 실패했습니다.', error);
-      alert('요청 저장에 실패했습니다.');
+      toast.error('요청 저장에 실패했습니다.');
     }
   }
 

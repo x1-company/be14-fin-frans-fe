@@ -160,9 +160,11 @@ import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
 import { useAuthStore } from "@/stores/auth";
+import { useToast } from "@/composables/useToast";
 
 const auth = useAuthStore();
 const router = useRouter();
+const toast = useToast();
 
 const emit = defineEmits([
   "tab-change",
@@ -309,7 +311,7 @@ const approveDocument = (document) => {
 const editDocument = (document) => {
   const id = document.approvalId || document.id || document.documentId;
   if (!id) {
-    alert("approvalId가 없습니다!");
+    toast.warning("approvalId가 없습니다!");
     return;
   }
   router.push({
