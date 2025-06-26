@@ -16,7 +16,7 @@
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <circle cx="12" cy="12" r="10" fill="#FF4D4F" />
+          <circle cx="12" cy="12" r="10" fill="#04C975" />
           <path
             d="M12 7V13"
             stroke="white"
@@ -174,11 +174,11 @@ const formatTime = (dateString) => {
   align-items: flex-start;
   width: 380px;
   background: #ffffff;
-  border: 1px solid #ffccc7; /* 연한 빨강 테두리 */
+  border: 1px solid #04c975; /* 진한 녹색 테두리 */
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   margin-bottom: 16px;
-  overflow: hidden;
+  overflow: hidden; /* For border-radius to apply to children */
   position: relative;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -195,7 +195,7 @@ const formatTime = (dateString) => {
   top: 0;
   bottom: 0;
   width: 6px;
-  background-color: #ffccc7; /* 연한 빨강 */
+  background-color: #04c975; /* 진한 녹색 */
 }
 
 .card-icon {
@@ -251,11 +251,11 @@ const formatTime = (dateString) => {
 
 /* 읽지 않은 알림 스타일 */
 .realtime-notification-card.unread {
-  border-color: #ff8a80; /* 더 진한 빨강 테두리 */
+  border-color: #04C975; 
 }
 
 .realtime-notification-card.unread .card-border {
-  background-color: #ff4d4f; /* 진한 빨강 */
+  background-color: #04C975;
 }
 
 .realtime-notification-card.unread .notification-time {
