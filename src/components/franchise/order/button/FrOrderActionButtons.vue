@@ -1,7 +1,7 @@
 <template>
     <div class="order-actions">
       <button
-        v-if="props.status !== 'RECEIPT_CANCELED'"
+        v-if="props.status === 'WAITING_FOR_RECEIPT'"
         class="btn cancel"
         @click="openCancelModal"
       >
@@ -30,8 +30,8 @@
   </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import api from '@/lib/api';
 import { useToast } from '@/composables/useToast';
 
@@ -47,11 +47,22 @@ const props = defineProps({
 });
 
 const router = useRouter();
+const route = useRoute();
 const showCancelModal = ref(false);
 const toast = useToast();
 
+watch(
+  () => route.query.orderId,
+  (newOrderId, oldOrderId) => {
+    if (!newOrderId) {
+      // orderId가 없어지면(=상세 닫기) 목록 새로고침
+      fetchOrderList();
+    }
+  }
+);
+
 function handleClose() {
-  router.push({ path: '/franchise', query: { tab: '주문관리' } });
+  router.replace({ path: '/franchise', query: { tab: '주문관리' } });
 }
 
 function handlePrint() {
