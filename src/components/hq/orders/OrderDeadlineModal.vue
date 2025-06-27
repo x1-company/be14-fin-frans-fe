@@ -2,13 +2,13 @@
   <div v-if="modelValue" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
-        <span class="modal-icon">⚙️</span>
+        <img src="@/assets/setting.png" alt="설정" class="modal-icon-img" />
         <span class="modal-title">주문 마감 시간 관리</span>
         <button class="modal-close" @click="$emit('update:modelValue', false)">&times;</button>
       </div>
       <div class="modal-desc">
         가맹점에 일괄 적용되는 주문 마감 시간을 등록합니다.<br />
-        설정된 시간 이후에는 주문 접수가 제한됩니다.
+        설정된 시간에 접수 대기인 주문이 검토중으로 변경됩니다.
       </div>
       <hr class="modal-divider" />
       
@@ -30,7 +30,7 @@
         <div class="modal-section">
           <div class="section-label">현재 주문 마감 시간</div>
           <div class="current-deadline-box">
-            <span class="icon clock">🕒</span>
+            <img src="@/assets/clock.png" alt="시계" class="clock-img" />
             <span class="current-deadline-text">
               주문 마감 시간 <b>{{ currentDeadline || '--:--' }}</b>
             </span>
@@ -52,16 +52,36 @@
           <button 
             class="btn btn-primary" 
             :disabled="!newDeadline || submitting" 
-            @click="registerDeadline"
+            @click="showConfirm = true"
           >
             <span v-if="submitting" class="btn-spinner"></span>
             {{ submitting ? '등록 중...' : '+ 마감 시간 등록' }}
           </button>
-          <button class="btn btn-secondary" @click="$emit('delete')" :disabled="submitting">
-            삭제
-          </button>
         </div>
       </template>
+      <!-- 컨펌 모달 -->
+      <div v-if="showConfirm" class="confirm-overlay">
+        <div class="confirm-modal">
+          <div class="confirm-header">
+            <img src="@/assets/setting.png" alt="설정" class="confirm-icon" />
+            <span class="confirm-title">주문 마감 시간 등록</span>
+            <button class="confirm-close" @click="showConfirm = false">&times;</button>
+          </div>
+          <div class="confirm-body">
+            <div class="confirm-message">
+              주문 마감 시간을 변경하시겠습니까?<br />
+              <span class="confirm-current">현재 등록된 마감 시간 {{ currentDeadline || '--:--' }}</span>
+            </div>
+          </div>
+          <div class="confirm-actions">
+            <button class="btn btn-cancel" @click="showConfirm = false" :disabled="submitting">취소</button>
+            <button class="btn btn-main" @click="onConfirmRegister" :disabled="submitting">
+              <span v-if="submitting" class="btn-spinner"></span>
+              마감 시간 등록
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -76,13 +96,14 @@ const toast = useToast();
 const props = defineProps({
   modelValue: Boolean
 })
-const emit = defineEmits(['update:modelValue', 'register', 'delete'])
+const emit = defineEmits(['update:modelValue', 'register'])
 
 const currentDeadline = ref('')
 const newDeadline = ref('')
 const loading = ref(false)
 const submitting = ref(false)
 const error = ref('')
+const showConfirm = ref(false)
 
 // 현재 마감시간 조회
 async function fetchCurrentDeadline() {
@@ -100,25 +121,17 @@ async function fetchCurrentDeadline() {
   }
 }
 
-// 마감시간 등록
-async function registerDeadline() {
+// 실제 등록 함수 (컨펌에서 호출)
+async function onConfirmRegister() {
   if (!newDeadline.value) return
-  
   submitting.value = true
-  
   try {
     await api.post(`/api/hq/orders/deadline?time=${newDeadline.value}`)
-    
-    // 성공 시 현재 마감시간 업데이트
     currentDeadline.value = newDeadline.value
     newDeadline.value = ''
-    
-    // 부모 컴포넌트에 등록 완료 알림
     emit('register', currentDeadline.value)
-    
-    // 성공 메시지 (선택사항)
     toast.success('마감시간이 성공적으로 등록되었습니다.')
-    
+    showConfirm.value = false
   } catch (err) {
     console.error('마감시간 등록 실패:', err)
     toast.error('마감시간 등록에 실패했습니다. 다시 시도해주세요.')
@@ -127,7 +140,6 @@ async function registerDeadline() {
   }
 }
 
-// 모달이 열릴 때 현재 마감시간 조회
 watch(() => props.modelValue, (val) => {
   if (val) {
     newDeadline.value = ''
@@ -166,12 +178,13 @@ watch(() => props.modelValue, (val) => {
   gap: 10px;
   margin-bottom: 8px;
 }
-.modal-icon {
-  font-size: 1.6rem;
-  color: #2257e7;
+.modal-icon-img {
+  width: 28px;
+  height: 28px;
+  margin-right: 2px;
 }
 .modal-title {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #222;
 }
@@ -185,8 +198,9 @@ watch(() => props.modelValue, (val) => {
   padding: 0 4px;
 }
 .modal-desc {
-  color: #6c6f7a;
-  font-size: 1.05rem;
+  color: #676970;
+  font-size: 0.8rem;
+  margin-top: 15px;
   margin-bottom: 18px;
 }
 .modal-divider {
@@ -195,7 +209,6 @@ watch(() => props.modelValue, (val) => {
   margin: 16px 0 18px 0;
 }
 
-/* 로딩 상태 */
 .loading-section {
   display: flex;
   align-items: center;
@@ -218,7 +231,6 @@ watch(() => props.modelValue, (val) => {
   100% { transform: rotate(360deg); }
 }
 
-/* 에러 상태 */
 .error-section {
   display: flex;
   align-items: center;
@@ -254,7 +266,7 @@ watch(() => props.modelValue, (val) => {
   margin-bottom: 18px;
 }
 .section-label {
-  font-size: 1.05rem;
+  font-size: 0.88rem;
   font-weight: 600;
   margin-bottom: 8px;
   color: #222;
@@ -267,21 +279,22 @@ watch(() => props.modelValue, (val) => {
   align-items: center;
   gap: 12px;
 }
-.icon.clock {
-  color: #2257e7;
-  font-size: 1.3rem;
+.clock-img {
+  width: 22px;
+  height: 22px;
+  margin-right: 2px;
 }
 .current-deadline-text {
-  font-size: 1.13rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 500;
   color: #222;
 }
 .badge {
   background: #e3fbe7;
   color: #1a7f37;
   border-radius: 12px;
-  padding: 5px 16px;
-  font-size: 0.98rem;
+  padding: 3px 13px;
+  font-size: 0.85rem;
   font-weight: 600;
   margin-left: auto;
 }
@@ -290,9 +303,9 @@ watch(() => props.modelValue, (val) => {
   color: #6b7280;
 }
 .deadline-input {
-  width: 180px;
-  padding: 10px 14px;
-  font-size: 1.08rem;
+  width: 160px;
+  padding: 8px 12px;
+  font-size: 1rem;
   border: 1.5px solid #e0e4ea;
   border-radius: 7px;
   margin-bottom: 8px;
@@ -310,11 +323,11 @@ watch(() => props.modelValue, (val) => {
   margin-top: 28px;
 }
 .btn {
-  padding: 12px 0;
-  min-width: 180px;
+  padding: 8px 0;
+  min-width: 140px;
   border: none;
   border-radius: 8px;
-  font-size: 1.08rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -336,19 +349,6 @@ watch(() => props.modelValue, (val) => {
   color: #b0b6c2;
   cursor: not-allowed;
 }
-.btn-secondary {
-  background: #f8fafd;
-  color: #333;
-  min-width: 80px;
-}
-.btn-secondary:hover:not(:disabled) {
-  background: #e2e4ea;
-}
-.btn-secondary:disabled {
-  background: #f3f4f6;
-  color: #9ca3af;
-  cursor: not-allowed;
-}
 .btn-spinner {
   width: 16px;
   height: 16px;
@@ -356,5 +356,110 @@ watch(() => props.modelValue, (val) => {
   border-top: 2px solid currentColor;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+}
+.confirm-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+.confirm-modal {
+  background: #fff;
+  border-radius: 22px;
+  min-width: 380px;
+  max-width: 95vw;
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.13);
+  padding: 0 0 28px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+}
+.confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 28px 0 28px;
+}
+.confirm-icon {
+  width: 32px;
+  height: 32px;
+}
+.confirm-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin-left: 6px;
+}
+.confirm-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #888;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.confirm-body {
+  padding: 24px 28px 0 28px;
+}
+.confirm-message {
+  background: #eaf2ff;
+  color: #222;
+  border-radius: 16px;
+  padding: 28px 0 22px 0;
+  text-align: center;
+  font-size: 1.08rem;
+  font-weight: 500;
+  margin-bottom: 0;
+}
+.confirm-current {
+  display: block;
+  color: #2563eb;
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin-top: 8px;
+}
+.confirm-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 32px;
+  padding: 0 28px;
+}
+.btn-cancel {
+  background: #f5f6fa;
+  color: #222;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.02rem;
+  font-weight: 600;
+  padding: 12px 0;
+  min-width: 110px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-cancel:hover:not(:disabled) {
+  background: #e2e4ea;
+}
+.btn-main {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.02rem;
+  font-weight: 600;
+  padding: 12px 0;
+  min-width: 110px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-main:disabled {
+  background: #bcd2fa;
+  color: #fff;
+  cursor: not-allowed;
 }
 </style>
