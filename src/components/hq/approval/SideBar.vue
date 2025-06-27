@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar">
     <!-- Header -->
-    <div class="sidebar-header">
+    <!-- <div class="sidebar-header">
       <div class="header-content">
         <div class="logo"> </div>
         <div class="header-text">
@@ -9,7 +9,7 @@
           <span class="app-subtitle">전자결재</span>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <div class="register-button-container">
       <button @click="handleRegisterApproval" class="register-button">
@@ -423,11 +423,13 @@ const handleCollaborationDocsClick = () => {
 /* 탭 헤더 */
 .tab-headers {
   border-bottom: 1px solid #e9ecef;
+  background-color: white;
 }
 
 .tab-container {
   display: flex;
   width: 100%;
+  background-color: white;
 }
 
 .tab-button {
@@ -463,6 +465,7 @@ const handleCollaborationDocsClick = () => {
 .tab-content {
   flex: 1;
   overflow-y: auto;
+  background-color: white;
 }
 
 .tab-panel {
