@@ -344,6 +344,7 @@ const emit = defineEmits([
   "add-file",
   "remove-file",
   "close",
+  "refresh-list",
 ]);
 
 const showModal = ref(false);
@@ -539,11 +540,11 @@ const handleAddDocument = () => {
 const handleSelectDocuments = (selectedDocuments) => {
   selectedDocuments.forEach((doc) => {
     const existingDoc = documents.value.find(
-      (existing) => existing.id === (doc.id || doc.code)
+      (existing) => existing.id === doc.id
     );
     if (!existingDoc) {
       let documentData = {
-        id: doc.id || doc.code,
+        id: doc.id,
         code: doc.code,
         date: formatDate(doc.createdAt),
         createdAt: formatDate(doc.createdAt),
@@ -567,7 +568,7 @@ const handleSelectDocuments = (selectedDocuments) => {
       }
 
       documents.value.unshift(documentData);
-      formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
+      formData.value.approvalDocuments.documentIds.push(doc.id);
     }
   });
   showOrderListModal.value = false;
@@ -770,13 +771,54 @@ const router = useRouter();
 const handleEdit = async () => {
   if (isSubmitting.value) return;
 
+  // 제목, 결재선, 결재문서 모두 필수
+  if (!formData.value.title || !formData.value.title.trim()) {
+    toast.error("제목을 입력해주세요.");
+    return;
+  }
+  if (
+    !formData.value.approvalLines ||
+    formData.value.approvalLines.length === 0
+  ) {
+    toast.error("결재선을 지정해주세요.");
+    return;
+  }
+  if (
+    !formData.value.approvalDocuments ||
+    !formData.value.approvalDocuments.documentIds ||
+    formData.value.approvalDocuments.documentIds.length === 0
+  ) {
+    toast.error("주문 문서를 선택해주세요.");
+    return;
+  }
+
   try {
     isSubmitting.value = true;
 
+    // 파일 업로드 및 files 배열 생성
+    const uploadedFiles = [];
+    for (const file of formData.value.files) {
+      if (!file.url && file.file) {
+        // 새로 추가된 파일만 업로드
+        const uploadedUrlArr = await uploadFiles([file.file]);
+        const uploadedUrl = Array.isArray(uploadedUrlArr)
+          ? uploadedUrlArr[0]
+          : uploadedUrlArr;
+        uploadedFiles.push({
+          name: file.name,
+          url: uploadedUrl, // 반드시 url 할당
+        });
+      } else if (file.url) {
+        // 이미 업로드된 파일
+        uploadedFiles.push({
+          name: file.name,
+          url: file.url,
+        });
+      }
+    }
+
     const approvalLines = [];
     let seq = 1;
-
-    // 결재/협조자 순서대로 seq 부여
     approvalAndCollaboratorLines.value.forEach((line) => {
       approvalLines.push({
         userId: line.userId || line.id,
@@ -784,8 +826,6 @@ const handleEdit = async () => {
         type: line.type,
       });
     });
-
-    // 수신/참조자는 seq: 0
     formData.value.approvalLines
       .filter((line) => line.type === "RECIPIENT" || line.type === "REFERENCE")
       .forEach((line) => {
@@ -796,17 +836,12 @@ const handleEdit = async () => {
         });
       });
 
-    const files = formData.value.files.map((file) => ({
-      name: file.name,
-      url: file.url,
-    }));
-
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,
       isRequest: false,
       approvalLines: approvalLines,
-      files: files,
+      files: uploadedFiles,
       approvalDocuments: {
         ...formData.value.approvalDocuments,
         categoryType: categoryType.value,
@@ -867,10 +902,27 @@ const handleRegister = async () => {
   try {
     isSubmitting.value = true;
 
+    // 파일 업로드 및 files 배열 생성
+    const uploadedFiles = [];
+    for (const file of formData.value.files) {
+      if (!file.url && file.file) {
+        // 새로 추가된 파일만 업로드
+        const uploadedUrl = await uploadFiles([file.file]);
+        uploadedFiles.push({
+          name: file.name,
+          url: uploadedUrl[0],
+        });
+      } else {
+        // 이미 업로드된 파일
+        uploadedFiles.push({
+          name: file.name,
+          url: file.url,
+        });
+      }
+    }
+
     const approvalLines = [];
     let seq = 1;
-
-    // 결재/협조자 순서대로 seq 부여
     approvalAndCollaboratorLines.value.forEach((line) => {
       approvalLines.push({
         userId: line.userId || line.id,
@@ -878,8 +930,6 @@ const handleRegister = async () => {
         type: line.type,
       });
     });
-
-    // 수신/참조자는 seq: 0
     formData.value.approvalLines
       .filter((line) => line.type === "RECIPIENT" || line.type === "REFERENCE")
       .forEach((line) => {
@@ -890,17 +940,12 @@ const handleRegister = async () => {
         });
       });
 
-    const files = formData.value.files.map((file) => ({
-      name: file.name,
-      url: file.url,
-    }));
-
     const requestData = {
       title: formData.value.title,
       remarks: formData.value.remarks,
       isRequest: true,
       approvalLines: approvalLines,
-      files: files,
+      files: uploadedFiles,
       approvalDocuments: {
         categoryType: formData.value.approvalDocuments.categoryType,
         documentIds: formData.value.approvalDocuments.documentIds,
@@ -1096,7 +1141,8 @@ const approvalLineDetails = computed(() => {
 
 // 모달 닫기 핸들러 수정
 const handleCloseModal = () => {
-  emit("close");
+  router.push("/approval");
+  emit("refresh-list");
 };
 
 defineExpose({
