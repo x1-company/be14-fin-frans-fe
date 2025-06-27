@@ -10,7 +10,7 @@
           <th>No.</th>
           <th>자재 번호</th>
           <th>자재명</th>
-          <th>구매 단가</th>
+          <th>판매 단가</th>
           <th>수량</th>
           <th>단위</th>
           <th>규격</th>
@@ -24,7 +24,7 @@
           <td>{{ idx + 1 }}</td>
           <td class="link">{{ p.code }}</td>
           <td>{{ p.name }}</td>
-          <td>{{ p.purchasePrice.toLocaleString() }}원</td>
+          <td>{{ p.salePrice.toLocaleString() }}원</td>
           <td>{{ p.quantity }}</td>
           <td>{{ p.purchaseUnit }}</td>
           <td>{{ p.spec }}</td>
