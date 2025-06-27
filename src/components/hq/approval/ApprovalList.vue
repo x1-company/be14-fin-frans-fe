@@ -496,20 +496,20 @@ watch(
 .tab-list {
   display: flex;
   padding: 0 24px;
-  border-bottom: 1.5px solid #e0e0e0;
   background-color: white;
 }
 
 .tab-button {
-  padding: 16px 32px;
+  padding: 8px 25px;
   border: none;
   background: none;
   cursor: pointer;
   font-size: 15px;
   font-weight: 500;
   color: #6c757d;
-  border-bottom: 3px solid transparent;
+  border-bottom: 1px solid transparent;
   transition: all 0.2s ease;
+  font-size: 0.9rem;
 }
 
 .tab-button:hover {
@@ -519,14 +519,13 @@ watch(
 .tab-button.active {
   color: #4066fa;
   border-bottom-color: #4066fa;
-  border-bottom: 2.5px solid #1976d2;
+  border-bottom: 2px solid #1976d2;
   background: none;
 }
 
 /* 검색 영역 */
 .search-section {
   padding: 20px 24px;
-  border-bottom: 1px solid #e9ecef;
   display: flex;
   justify-content: flex-end;
 }
@@ -562,7 +561,7 @@ watch(
 
 /* 문서 목록 */
 .document-list {
-  padding: 24px;
+  padding: 0 80px;
 }
 
 /* 날짜 그룹 */

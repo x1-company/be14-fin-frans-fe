@@ -266,7 +266,7 @@ const safeApprovalList = computed(() =>
 
 .header-banner {
   color: white;
-  padding: 32px 24px;
+  /* padding: 32px 24px; */
 }
 
 .page-title {
@@ -317,7 +317,7 @@ const safeApprovalList = computed(() =>
 .info-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 0 24px;
 }
 
 .content-header {
