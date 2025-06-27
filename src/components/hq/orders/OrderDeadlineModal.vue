@@ -63,21 +63,20 @@
       <div v-if="showConfirm" class="confirm-overlay">
         <div class="confirm-modal">
           <div class="confirm-header">
-            <img src="@/assets/setting.png" alt="설정" class="confirm-icon" />
+            <span class="confirm-emoji">🕙</span>
             <span class="confirm-title">주문 마감 시간 등록</span>
             <button class="confirm-close" @click="showConfirm = false">&times;</button>
           </div>
           <div class="confirm-body">
             <div class="confirm-message">
-              주문 마감 시간을 변경하시겠습니까?<br />
-              <span class="confirm-current">현재 등록된 마감 시간 {{ currentDeadline || '--:--' }}</span>
+              주문 마감 시간을 변경하시겠습니까?
             </div>
           </div>
           <div class="confirm-actions">
             <button class="btn btn-cancel" @click="showConfirm = false" :disabled="submitting">취소</button>
             <button class="btn btn-main" @click="onConfirmRegister" :disabled="submitting">
               <span v-if="submitting" class="btn-spinner"></span>
-              마감 시간 등록
+              등록
             </button>
           </div>
         </div>
@@ -368,11 +367,10 @@ watch(() => props.modelValue, (val) => {
 }
 .confirm-modal {
   background: #fff;
-  border-radius: 22px;
-  min-width: 380px;
-  max-width: 95vw;
-  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.13);
-  padding: 0 0 28px 0;
+  border-radius: 18px;
+  min-width: 320px;
+  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.10);
+  padding: 10px 0 20px 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -381,64 +379,60 @@ watch(() => props.modelValue, (val) => {
 .confirm-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 28px 28px 0 28px;
+  gap: 7px;
+  padding: 20px 20px 0 20px;
 }
-.confirm-icon {
-  width: 32px;
-  height: 32px;
+.confirm-emoji {
+  font-size: 1.4rem;
+  margin-right: 2px;
+  line-height: 1;
 }
 .confirm-title {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: #2563eb;
-  margin-left: 6px;
+  color: #4066fa;
+  margin-left: 5px;
+  letter-spacing: -0.5px;
 }
 .confirm-close {
   margin-left: auto;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: #888;
   cursor: pointer;
   padding: 0 4px;
+  line-height: 1;
 }
 .confirm-body {
-  padding: 24px 28px 0 28px;
+  padding: 16px 20px 0 20px;
 }
 .confirm-message {
   background: #eaf2ff;
   color: #222;
-  border-radius: 16px;
-  padding: 28px 0 22px 0;
+  border-radius: 10px;
+  padding: 16px 20px 12px 20px;
   text-align: center;
-  font-size: 1.08rem;
-  font-weight: 500;
+  font-size: 0.9rem;
   margin-bottom: 0;
 }
-.confirm-current {
-  display: block;
-  color: #2563eb;
-  font-size: 0.98rem;
-  font-weight: 700;
-  margin-top: 8px;
-}
 .confirm-actions {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-top: 32px;
-  padding: 0 28px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+    width: 100%;
+    padding-right: 18px;
 }
 .btn-cancel {
   background: #f5f6fa;
   color: #222;
   border: none;
   border-radius: 12px;
-  font-size: 1.02rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  padding: 12px 0;
-  min-width: 110px;
+  padding: 9px 0;
+  min-width: 80px;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -446,14 +440,14 @@ watch(() => props.modelValue, (val) => {
   background: #e2e4ea;
 }
 .btn-main {
-  background: #2563eb;
+  background: #4066fa;
   color: #fff;
   border: none;
   border-radius: 12px;
-  font-size: 1.02rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  padding: 12px 0;
-  min-width: 110px;
+  padding: 9px 0;
+  min-width: 80px;
   cursor: pointer;
   transition: background 0.2s;
 }
