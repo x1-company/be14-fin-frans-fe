@@ -4,13 +4,13 @@
       <div class="product-list-title">자재 목록</div>
       <div class="product-list-controls">
         <div class="filter-group">
-          <select v-model="filterType" class="product-list-select">
-            <option value="">자재 분류</option>
-            <option v-for="type in typeOptions" :key="type.value" :value="type.value">{{ type.label }}</option>
-          </select>
           <select v-model="filterGroup" class="product-list-select">
-            <option value="">자재 구분</option>
+            <option value="">자재 분류</option>
             <option v-for="group in groupOptions" :key="group.value" :value="group.value">{{ group.label }}</option>
+          </select>
+          <select v-model="filterType" class="product-list-select">
+            <option value="">자재 구분</option>
+            <option v-for="type in typeOptions" :key="type.value" :value="type.value">{{ type.label }}</option>
           </select>
           <select v-model="filterAttr" class="product-list-select">
             <option value="">자재 속성</option>
@@ -24,7 +24,7 @@
         </div>
         <div class="search-group">
           <select v-model="searchType" class="product-list-select" style="min-width:110px">
-            <option value="all">전체</option>
+            <option value="all">검색 조건</option>
             <option value="name">자재명</option>
             <option value="code">자재코드</option>
             <option value="supplier">공급처명</option>
@@ -108,6 +108,7 @@ const filterActive = ref('');
 const searchType = ref('all'); // 'all', 'name', 'code', 'supplier'
 
 // === ENUM 매핑 테이블 ===
+const PRODUCT_GROUP_MAP = { 1: '상온', 2: '냉장', 3: '냉동', 4: '기타' };
 const PRODUCT_TYPE_MAP = {
   1: '원재료',
   2: '상품',
@@ -117,7 +118,6 @@ const PRODUCT_TYPE_MAP = {
   6: '경품',
   7: '기타',
 };
-const PRODUCT_GROUP_MAP = { 1: '상온', 2: '냉장', 3: '냉동', 4: '기타' };
 const PRODUCT_ATTRIBUTE_MAP = {
   1: '신선식품',
   2: '비신선식품',
