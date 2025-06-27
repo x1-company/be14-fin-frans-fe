@@ -23,6 +23,21 @@
         <!-- 헤더 액션 버튼들 -->
         <div class="header-actions">
           <button
+            v-if="canEditDocument"
+            class="edit-button"
+            @click="showEditConfirmModal = true"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+              ></path>
+              <path
+                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+              ></path>
+            </svg>
+            수정하기
+          </button>
+          <button
             v-if="canPrintDocument"
             class="print-button"
             @click="showPdfModal = true"
@@ -243,6 +258,34 @@
       :is-visible="showPdfModal"
       @close="showPdfModal = false"
     />
+
+    <!-- 수정 확인 모달 -->
+    <div
+      v-if="showEditConfirmModal"
+      class="modal-overlay"
+      @click="closeEditConfirmModal"
+    >
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>문서 수정</h3>
+        </div>
+        <div class="modal-body">
+          <p>문서를 수정하시겠습니까?</p>
+          <p class="modal-description">
+            수정 버튼을 누르면 임시저장의 상태로 변합니다.<br />
+            임시저장 탭에서 수정이 가능합니다.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn cancel-btn" @click="closeEditConfirmModal">
+            취소
+          </button>
+          <button class="modal-btn confirm-btn" @click="confirmEditDocument">
+            수정
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -253,11 +296,15 @@ import api from "@/lib/api";
 import ApprovalLineDetail from "./ApprovalLineDetail.vue";
 import ApprovalActionButtons from "./ApprovalActionButtons.vue";
 import { useAuthStore } from "@/stores/auth";
+import { useToast } from "@/composables/useToast";
 import ApprovalPdfModal from "@/views/hq/approval/pdf/ApprovalPdfModal.vue";
 
 const router = useRouter();
+const authStore = useAuthStore();
+const toast = useToast();
 
 const showPdfModal = ref(false);
+const showEditConfirmModal = ref(false);
 
 // 결재문서/결재선 탭 선택 상태
 const activeTab = ref("document"); // 'document' or 'approvalLine'
@@ -286,7 +333,6 @@ const props = defineProps({
 // 결재선 정보와 문서 상세 내용
 const approvalLine = ref(null);
 const documentContent = ref(null);
-const authStore = useAuthStore();
 
 // 현재 사용자 정보
 const currentUserName = computed(() => authStore.userName);
@@ -442,6 +488,56 @@ const canPrintDocument = computed(() => {
     props.document.status === "APPROVED" || props.document.status === "REJECTED"
   );
 });
+
+// 문서 수정 버튼 노출 여부
+const canEditDocument = computed(() => {
+  if (!props.document) return false;
+
+  // 결재중 상태에서만
+  if (props.document.status !== "IN_PROGRESS") {
+    return false;
+  }
+
+  // 첫 번째 결재자/협조자가 WAITING인지
+  const firstLine = props.document.lines.find(
+    (line) => line.type === "APPROVER" || line.type === "COOPERATOR"
+  );
+  if (!firstLine) return false;
+
+  return firstLine.status === "WAITING";
+});
+
+// 수정 확인 모달 핸들러
+const closeEditConfirmModal = () => {
+  showEditConfirmModal.value = false;
+};
+
+const confirmEditDocument = async () => {
+  if (!props.document) return;
+
+  try {
+    // 문서 상태를 임시저장으로 변경
+    await api.patch(
+      `/api/hq/approvals/${props.document.approvalId}/draft`,
+      {
+        isRequested: false,
+      },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    toast.success("문서가 임시저장 상태로 변경되었습니다.");
+
+    // 임시저장 탭으로 이동
+    router.push("/approval?tab=임시저장");
+
+    closeEditConfirmModal();
+  } catch (error) {
+    console.error("문서 상태 변경 실패:", error);
+    toast.error("문서 상태 변경에 실패했습니다.");
+  }
+};
 </script>
 
 <style scoped>
@@ -518,27 +614,51 @@ const canPrintDocument = computed(() => {
   gap: 12px;
 }
 
+.edit-button,
 .print-button,
 .close-button {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border: 1px solid #dee2e6;
-  background: white;
-  color: #495057;
+  border: none;
   border-radius: 6px;
-  cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.print-button:hover,
-.close-button:hover {
-  background: #f8f9fa;
-  border-color: #adb5bd;
+.edit-button {
+  background: #ffc107;
+  color: #212529;
 }
 
+.edit-button:hover {
+  background: #e0a800;
+}
+
+.print-button {
+  background: #667eea;
+  color: white;
+}
+
+.print-button:hover {
+  background: #5a67d8;
+}
+
+.close-button {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.close-button:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.edit-button svg,
 .print-button svg,
 .close-button svg {
   width: 16px;
@@ -914,5 +1034,97 @@ const canPrintDocument = computed(() => {
   text-align: center;
   padding: 24px;
   color: #6c757d;
+}
+
+/* 수정 확인 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-body p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #495057;
+  line-height: 1.5;
+}
+
+.modal-description {
+  font-size: 13px !important;
+  color: #6c757d !important;
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid #667eea;
+}
+
+.modal-footer {
+  padding: 0 24px 24px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.cancel-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.confirm-btn {
+  background: #667eea;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #5a67d8;
 }
 </style>
