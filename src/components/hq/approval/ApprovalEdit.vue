@@ -68,7 +68,7 @@
                 />
               </div>
               <div class="form-group">
-                <label>내용</label>
+                <label>비고</label>
                 <textarea
                   v-model="formData.remarks"
                   placeholder="결재 내용을 입력하세요"
@@ -244,7 +244,20 @@
                   <div class="file-icon">📄</div>
                   <div class="file-details">
                     <div class="file-name">{{ file.name }}</div>
-                    <div class="file-size">{{ formatFileSize(file.size) }}</div>
+                    <div class="file-size">
+                      <template
+                        v-if="file.size !== undefined && file.size !== null"
+                      >
+                        {{ formatFileSize(file.size) }}
+                      </template>
+                      <template v-else-if="file.url">
+                        <span v-if="file._sizeLoading">...</span>
+                        <span v-else>{{
+                          fetchAndShowFileSize(file, index)
+                        }}</span>
+                      </template>
+                      <template v-else>-</template>
+                    </div>
                   </div>
                 </div>
                 <div class="file-actions">
@@ -484,6 +497,7 @@ const formatCurrency = (amount) => {
 };
 
 const formatFileSize = (bytes) => {
+  if (!bytes || isNaN(bytes)) return "-";
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -548,7 +562,9 @@ const handleFileSelect = (event) => {
   files.forEach((file) => {
     formData.value.files.push({
       name: file.name,
-      url: file.url,
+      size: file.size,
+      file: file,
+      url: "",
     });
   });
   emitFormData();
@@ -1272,6 +1288,34 @@ const handleResubmit = async () => {
   }
 };
 
+// 파일 크기 동적 조회 함수
+const fetchFileSize = async (file, index) => {
+  if (!file.url || file.size) return;
+  try {
+    const response = await fetch(file.url, { method: "HEAD" });
+    const size = response.headers.get("Content-Length");
+    if (size) {
+      // 반응형으로 할당
+      formData.value.files[index].size = Number(size);
+    } else {
+      formData.value.files[index].size = null;
+    }
+  } catch (e) {
+    formData.value.files[index].size = null;
+  }
+};
+
+// fetchAndShowFileSize 함수 추가
+const fetchAndShowFileSize = (file, index) => {
+  if (!file._sizeLoading) {
+    file._sizeLoading = true;
+    fetchFileSize(file, index).then(() => {
+      file._sizeLoading = false;
+    });
+  }
+  return "...";
+};
+
 defineExpose({
   initializeForm,
   updateFormData,
@@ -1504,6 +1548,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 20px;
+  margin-top: 32px;
 }
 
 .form-group {

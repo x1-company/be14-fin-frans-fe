@@ -58,8 +58,8 @@
             @input="emitFormData"
           />
         </div>
-        <div class="form-group">
-          <label>내용</label>
+        <div class="form-group form-group-remarks">
+          <label>비고</label>
           <textarea
             v-model="formData.remarks"
             placeholder="결재 내용을 입력하세요"
@@ -1124,6 +1124,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 20px;
+  margin-top: 32px;
 }
 
 .form-group {
