@@ -22,11 +22,7 @@
         </div>
         <!-- 헤더 액션 버튼들 -->
         <div class="header-actions">
-          <button
-            v-if="canPrintDocument"
-            class="print-button"
-            @click="showPdfModal = true"
-          >
+          <button class="print-button" @click="showPdfModal = true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <polyline points="6,9 6,2 18,2 18,9" />
               <path
@@ -98,7 +94,7 @@
               <label>총 금액:</label>
               <span class="amount">{{
                 formatAmount(
-                  props.document?.totalAmount ??
+                  document?.totalAmount ??
                     calculateTotalAmount(
                       documentContent?.history || document.history
                     )
@@ -160,7 +156,7 @@
                   <td colspan="6" class="total-label">합 계</td>
                   <td class="total-amount">{{
                     formatAmount(
-                      props.document?.totalAmount ??
+                      document?.totalAmount ??
                         calculateTotalAmount(
                           documentContent?.history || document.history
                         )
@@ -267,7 +263,8 @@ const emit = defineEmits(["close-detail", "approve", "reject", "refresh-list"]);
 const props = defineProps({
   document: {
     type: Object,
-    required: true,
+    required: false,
+    default: null,
   },
   approvalId: {
     type: [String, Number],
@@ -279,13 +276,14 @@ const props = defineProps({
   },
   currentUserId: {
     type: [String, Number],
-    required: true,
+    required: false,
   },
 });
 
 // 결재선 정보와 문서 상세 내용
 const approvalLine = ref(null);
 const documentContent = ref(null);
+const document = ref(null);
 const authStore = useAuthStore();
 
 // 현재 사용자 정보
@@ -294,8 +292,8 @@ const currentUserDutyName = computed(() => authStore.dutyName);
 
 // 현재 사용자가 결재선에서 APPROVER/COOPERATOR + WAITING 인지 체크
 const currentUserLine = computed(() => {
-  if (!props.document?.lines || !props.currentUserId) return null;
-  return props.document.lines.find(
+  if (!document.value?.lines || !props.currentUserId) return null;
+  return document.value.lines.find(
     (line) =>
       String(line.id) === String(props.currentUserId) &&
       (line.type === "APPROVER" || line.type === "COOPERATOR") &&
@@ -305,8 +303,8 @@ const currentUserLine = computed(() => {
 
 // 알림 메시지 및 버튼 노출 여부
 const isCurrentUserTurn = computed(() => {
-  if (!props.document?.lines || !props.currentUserId) return false;
-  return props.document.lines.find(
+  if (!document.value?.lines || !props.currentUserId) return false;
+  return document.value.lines.find(
     (line) =>
       String(line.id) === String(props.currentUserId) &&
       (line.type === "APPROVER" || line.type === "COOPERATOR") &&
@@ -324,12 +322,46 @@ const noticeInfo = computed(() => {
   };
 });
 
+// approvalId가 있으면 해당 결재 데이터 가져오기
+const fetchApprovalData = async () => {
+  if (props.approvalId) {
+    try {
+      const [contentResponse, linesResponse] = await Promise.all([
+        api.get(`/api/hq/approvals/detail/${props.approvalId}/content`),
+        api.get(`/api/hq/approvals/detail/${props.approvalId}/lines`),
+      ]);
+
+      // 문서 내용
+      const documentContentData = Array.isArray(contentResponse.data)
+        ? contentResponse.data[0]
+        : contentResponse.data;
+
+      // 결재선 정보
+      const approvalLines = linesResponse.data;
+
+      // 두 정보를 합쳐서 document 생성
+      document.value = {
+        ...documentContentData,
+        lines: Array.isArray(approvalLines)
+          ? approvalLines
+          : approvalLines.line, // 객체면 .line을 사용
+      };
+      console.log("ApprovalCreateDetail - document 세팅:", document.value);
+    } catch (error) {
+      console.error("결재 상세 정보 조회 실패:", error);
+      document.value = null;
+    }
+  } else if (props.document) {
+    document.value = props.document;
+  }
+};
+
 // 결재선 정보 가져오기
 const fetchApprovalLine = async () => {
-  if (!props.document?.approvalId) return;
+  if (!document.value?.approvalId) return;
   try {
     const response = await api.get(
-      `/api/hq/approvals/detail/${props.document.approvalId}/lines`
+      `/api/hq/approvals/detail/${document.value.approvalId}/lines`
     );
     approvalLine.value = response.data;
   } catch (error) {
@@ -339,10 +371,10 @@ const fetchApprovalLine = async () => {
 
 // 문서 상세 내용 가져오기
 const fetchDocumentContent = async () => {
-  if (!props.document?.approvalId) return;
+  if (!document.value?.approvalId) return;
   try {
     const response = await api.get(
-      `/api/hq/approvals/detail/${props.document.approvalId}/content`
+      `/api/hq/approvals/detail/${document.value.approvalId}/content`
     );
     if (response.data && response.data.length > 0) {
       documentContent.value = response.data[0];
@@ -354,8 +386,8 @@ const fetchDocumentContent = async () => {
 
 // 뒤로가기
 const goBack = () => {
-  emit("refresh-list");
   router.push("/approval");
+  emit("refresh-list");
 };
 
 // 날짜 포맷팅
@@ -408,19 +440,20 @@ onMounted(async () => {
   activeTab.value = "document"; // Always show document tab first
   fetchApprovalLine();
   fetchDocumentContent();
+  await fetchApprovalData();
 });
 
 // 주문 내역 섹션 제목 계산
 const getHistorySectionTitle = () => {
   // 디버깅을 위한 로그 추가
-  console.log("document props:", props.document);
-  console.log("approvalDocuments:", props.document?.approvalDocuments);
-  console.log("categoryType:", props.document?.approvalDocuments?.categoryType);
-  let categoryType = props.document?.categoryType;
+  console.log("document value:", document.value);
+  console.log("approvalDocuments:", document.value?.approvalDocuments);
+  console.log("categoryType:", document.value?.approvalDocuments?.categoryType);
+  let categoryType = document.value?.categoryType;
 
   // 결재 유형에 따라 다른 제목 반환
-  if (!categoryType && props.document?.approvalDocuments?.categoryType) {
-    categoryType = props.document.approvalDocuments.categoryType;
+  if (!categoryType && document.value?.approvalDocuments?.categoryType) {
+    categoryType = document.value.approvalDocuments.categoryType;
   }
   switch (categoryType) {
     case "ORDER":
@@ -434,14 +467,6 @@ const getHistorySectionTitle = () => {
       return "주문 내역";
   }
 };
-
-// 결재서 출력 버튼 노출 여부
-const canPrintDocument = computed(() => {
-  if (!props.document) return false;
-  return (
-    props.document.status === "APPROVED" || props.document.status === "REJECTED"
-  );
-});
 </script>
 
 <style scoped>

@@ -188,6 +188,7 @@ const approvalLinesFiltered = computed(() => {
     signUrl: approval.value.url,
     status: "DRAFTED",
   };
+
   // 결재자/협조자(기존)
   const lines = (approvalLines.value || [])
     .filter((line) => line.type === "APPROVER" || line.type === "COOPERATOR")

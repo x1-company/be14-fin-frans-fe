@@ -402,14 +402,14 @@ const handleRefreshList = () => {
 };
 
 const handleApprovalSubmitted = (approvalData) => {
-  // 결재 요청 성공 시 해당 결재의 상세 페이지로 이동
+  // 결재 요청 성공 시 ApprovalCreateDetail 페이지로 이동
   console.log("결재 제출 완료, 데이터:", approvalData);
   if (approvalData && approvalData.id) {
     console.log(
-      "결재 상세 페이지로 이동 시도:",
-      `/approval/${approvalData.id}`
+      "ApprovalCreateDetail 페이지로 이동 시도:",
+      `/approval/create/${approvalData.id}`
     );
-    router.push(`/approval/${approvalData.id}`);
+    router.push(`/approval/create/${approvalData.id}`);
   } else {
     console.log("결재 ID가 없어서 이동하지 않음");
   }

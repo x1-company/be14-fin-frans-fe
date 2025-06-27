@@ -57,7 +57,7 @@ const filteredData = computed(() => {
 })
 
 const colorPalette = [
-  '#4F5DFF', '#FFB800', '#FF5A5A', '#1BC47D', '#888', '#A8DADC', '#89CFF0', '#B0E0E6', '#CAE4DB', '#D3E4CD', '#F0E2E6', '#F7D6BF', '#E8D9F0'
+  '#3366FF', '#FFB800', '#FF5C5C', '#00C49A', '#888888', '#FF7F50', '#8A2BE2', '#FF69B4', '#00BFFF', '#FFD700', '#32CD32', '#FF6347'
 ]
 
 const doughnutData = computed(() => {

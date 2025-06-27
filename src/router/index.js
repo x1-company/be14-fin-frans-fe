@@ -13,8 +13,8 @@ import { useAuthStore } from "@/stores/auth";
 import { useNotificationStore } from "@/stores/notification";
 import notificationService from "@/lib/notificationService";
 import FranchiseManagePage from "@/views/hq/franchise/FranchiseManagePage.vue";
-import ApprovalPdf from "@/views/hq/approval/pdf/ApprovalPdfModal.vue";
-import ApprovalEdit from "@/components/hq/approval/ApprovalEdit.vue";
+// import ApprovalCreateDetail from "@/components/hq/approval/Detail/ApprovalCreateDetail.vue";
+import ApprovalCreateDetail from "@/views/hq/approval/InfoView.vue";
 
 // 개발 환경에서만 테스트 페이지 import
 let TestNotificationView = null;
@@ -80,6 +80,12 @@ const router = createRouter({
       path: "/approval/:approvalId",
       name: "approval-detail",
       component: ApprovalListView,
+      props: true,
+    },
+    {
+      path: "/approval/create/:approvalId",
+      name: "approval-create-detail",
+      component: ApprovalCreateDetail,
       props: true,
     },
     {

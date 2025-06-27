@@ -47,7 +47,7 @@
             <div class="order-code">{{ order.code }}</div>
             <div class="order-date">배송일: {{ order.deliveredAt }}</div>
           </div>
-          <div class="order-status">{{ order.status }}</div>
+          <div class="order-status">배송 완료</div>
         </div>
       </div>
     </div>
@@ -62,6 +62,11 @@
           <div class="col col-name">상품명</div>
           <div class="col col-price">단가</div>
           <div class="col col-ordered">주문 수량</div>
+          <div class="col col-unit">단위</div>
+          <div class="col col-spec">규격</div>
+          <div class="col col-type">자재 분류</div>
+          <div class="col col-group">자재 구분</div>
+          <div class="col col-attr">자재 속성</div>
         </div>
         <div class="product-table-body">
           <div v-for="product in orderProducts" :key="product.id" class="product-row">
@@ -75,7 +80,18 @@
             <div class="col col-code">{{ product.productCode }}</div>
             <div class="col col-name">{{ product.productName }}</div>
             <div class="col col-price">{{ formatPrice(product.salePrice) }}원</div>
-            <div class="col col-ordered">{{ product.quantity }}{{ product.unit }}</div>
+            <div class="col col-ordered">{{ product.quantity }}</div>
+            <div class="col col-unit">{{ product.unit }}</div>
+            <div class="col col-spec">{{ product.spec || '-' }}</div>
+            <div class="col col-type">
+              <span :class="['badge', getTypeBadgeClass(product.productTypeName)]">{{ product.productTypeName || '-' }}</span>
+            </div>
+            <div class="col col-group">
+              <span :class="['badge', getGroupBadgeClass(product.productGroupName)]">{{ product.productGroupName || '-' }}</span>
+            </div>
+            <div class="col col-attr">
+              <span :class="['badge', getAttrBadgeClass(product.productAttributeName)]">{{ product.productAttributeName || '-' }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -90,15 +106,35 @@
       <h3 class="content-title">반품 수량 및 사유 입력</h3>
       <div class="quantity-reason-table">
         <div class="quantity-reason-header">
+          <div class="col col-code">상품 코드</div>
           <div class="col col-name">상품명</div>
+          <div class="col col-price">단가</div>
           <div class="col col-ordered">주문 수량</div>
+          <div class="col col-unit">단위</div>
+          <div class="col col-spec">규격</div>
+          <div class="col col-type">자재 분류</div>
+          <div class="col col-group">자재 구분</div>
+          <div class="col col-attr">자재 속성</div>
           <div class="col col-return">반품 수량</div>
           <div class="col col-reason">반품 사유</div>
         </div>
         <div class="quantity-reason-body">
           <div v-for="item in returnItems" :key="item.productId" class="quantity-reason-row">
+            <div class="col col-code">{{ getProductCode(item.productId) }}</div>
             <div class="col col-name">{{ getProductName(item.productId) }}</div>
-            <div class="col col-ordered">{{ getProductQuantity(item.productId) }}{{ getProductUnit(item.productId) }}</div>
+            <div class="col col-price">{{ formatPrice(getProductPrice(item.productId)) }}원</div>
+            <div class="col col-ordered">{{ getProductQuantity(item.productId) }}</div>
+            <div class="col col-unit">{{ getProductUnit(item.productId) }}</div>
+            <div class="col col-spec">{{ getProductSpec(item.productId) }}</div>
+            <div class="col col-type">
+              <span :class="['badge', getTypeBadgeClass(getProductTypeName(item.productId))]">{{ getProductTypeName(item.productId) }}</span>
+            </div>
+            <div class="col col-group">
+              <span :class="['badge', getGroupBadgeClass(getProductGroupName(item.productId))]">{{ getProductGroupName(item.productId) }}</span>
+            </div>
+            <div class="col col-attr">
+              <span :class="['badge', getAttrBadgeClass(getProductAttributeName(item.productId))]">{{ getProductAttributeName(item.productId) }}</span>
+            </div>
             <div class="col col-return">
               <input 
                 type="number" 
@@ -113,8 +149,8 @@
                 v-model="item.returnType"
                 class="return-type-select"
               >
-                <option value="WRONG_DELIVERY">잘못 배송</option>
-                <option value="OVER_QUANTITY">수량 초과</option>
+                <option value="WRONG_DELIVERY">오배송</option>
+                <option value="OVER_QUANTITY">수량 이상</option>
                 <option value="DAMAGED">파손</option>
                 <option value="BAD_QUALITY">품질 불량</option>
                 <option value="EXPIRING_SOON">유통기한 임박</option>
@@ -132,15 +168,51 @@
 
     <!-- 4단계: 반품 등록 -->
     <div v-if="currentStep === 4" class="step-content">
-      <h3 class="content-title">반품 정보 입력</h3>
+      <!-- <h3 class="content-title">반품 정보 입력</h3> -->
       
       <!-- 반품 상품 요약 -->
-      <div class="return-summary">
-        <h4>반품 상품 목록</h4>
-        <div v-for="item in returnItems" :key="item.productId" class="summary-item">
-          <span class="product-name">{{ getProductName(item.productId) }}</span>
-          <span class="quantity">{{ item.quantity }}개</span>
-          <span class="return-type">{{ getReturnTypeText(item.returnType) }}</span>
+      <div class="return-summary product-card">
+        <div class="card-title">
+          <span class="icon">📦</span>
+          반품 품목 정보
+        </div>
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>자재 번호</th>
+              <th>자재명</th>
+              <th>구매 단가</th>
+              <th>수량</th>
+              <th>단위</th>
+              <th>규격</th>
+              <th>자재 분류</th>
+              <th>자재 구분</th>
+              <th>자재 속성</th>
+              <th>반품 타입</th>
+              <th>반품 상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, idx) in returnItems" :key="item.productId">
+              <td>{{ idx + 1 }}</td>
+              <td class="link">{{ getProductCode(item.productId) }}</td>
+              <td>{{ getProductName(item.productId) }}</td>
+              <td>{{ formatPrice(getProductPrice(item.productId)) }}</td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ getProductUnit(item.productId) }}</td>
+              <td>{{ getProductSpec(item.productId) }}</td>
+              <td><span :class="['badge', getTypeBadgeClass(getProductTypeName(item.productId))]">{{ getProductTypeName(item.productId) }}</span></td>
+              <td><span :class="['badge', getGroupBadgeClass(getProductGroupName(item.productId))]">{{ getProductGroupName(item.productId) }}</span></td>
+              <td><span :class="['badge', getAttrBadgeClass(getProductAttributeName(item.productId))]">{{ getProductAttributeName(item.productId) }}</span></td>
+              <td>{{ getReturnTypeText(item.returnType) }}</td>
+              <td>-</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="summary-box">
+          <div>총 수량: <strong>{{ returnItems.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0) }}개</strong></div>
+          <div class="total-amount">{{ formatPrice(returnItems.reduce((sum, item) => sum + (Number(getProductPrice(item.productId)) * Number(item.quantity) || 0), 0)) }}원</div>
         </div>
       </div>
 
@@ -175,9 +247,13 @@
         </div>
         
         <!-- 선택된 파일 목록 -->
-        <div v-if="selectedFiles.length > 0" class="selected-files">
-          <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
-            <span class="file-name">{{ file.name }}</span>
+        <div v-if="selectedFiles.length > 0" class="selected-files-preview">
+          <div v-for="(file, index) in selectedFiles" :key="index" class="file-preview-item">
+            <span class="file-icon">📄</span>
+            <div class="file-info-box">
+              <span class="file-name">{{ file.name }}</span>
+              <span class="file-size">{{ (file.size / 1024).toFixed(2) }} KB</span>
+            </div>
             <button class="file-remove-btn" @click="removeFile(index)">❌</button>
           </div>
         </div>
@@ -299,11 +375,35 @@ const getProductUnit = (productId) => {
   return product ? product.unit : '';
 };
 
+// 상품 규격 가져오기
+const getProductSpec = (productId) => {
+  const product = orderProducts.value.find(p => p.productId === productId);
+  return product ? product.spec : '';
+};
+
+// 상품 자재 분류 가져오기
+const getProductTypeName = (productId) => {
+  const product = orderProducts.value.find(p => p.productId === productId);
+  return product ? product.productTypeName : '';
+};
+
+// 상품 자재 구분 가져오기
+const getProductGroupName = (productId) => {
+  const product = orderProducts.value.find(p => p.productId === productId);
+  return product ? product.productGroupName : '';
+};
+
+// 상품 자재 속성 가져오기
+const getProductAttributeName = (productId) => {
+  const product = orderProducts.value.find(p => p.productId === productId);
+  return product ? product.productAttributeName : '';
+};
+
 // 반품 사유 텍스트 변환
 const getReturnTypeText = (type) => {
   const typeMap = {
-    'WRONG_DELIVERY': '잘못 배송',
-    'OVER_QUANTITY': '수량 초과',
+    'WRONG_DELIVERY': '오배송',
+    'OVER_QUANTITY': '수량 이상',
     'DAMAGED': '파손',
     'BAD_QUALITY': '품질 불량',
     'EXPIRING_SOON': '유통기한 임박',
@@ -423,6 +523,44 @@ const formatPrice = (price) => {
   return new Intl.NumberFormat('ko-KR').format(price);
 };
 
+function getTypeBadgeClass(type) {
+  switch(type) {
+    case '원재료': return 'badge-blue';
+    case '소모품': return 'badge-sky';
+    case '상품': return 'badge-gray';
+    default: return 'badge-gray';
+  }
+}
+
+function getGroupBadgeClass(group) {
+  switch(group) {
+    case '냉동': return 'badge-purple';
+    case '상온': return 'badge-yellow';
+    case '기타': return 'badge-gray';
+    default: return 'badge-gray';
+  }
+}
+
+function getAttrBadgeClass(attr) {
+  switch(attr) {
+    case '신선식품': return 'badge-green';
+    case '비신선식품': return 'badge-lightgreen';
+    case '비식품': return 'badge-gray';
+    default: return 'badge-gray';
+  }
+}
+
+// 새로운 getter 함수 추가
+const getProductCode = (productId) => {
+  const product = orderProducts.value.find(p => p.productId === productId);
+  return product ? product.productCode : '';
+};
+
+const getProductPrice = (productId) => {
+  const product = orderProducts.value.find(p => p.productId === productId);
+  return product ? product.salePrice : '';
+};
+
 onMounted(() => {
   fetchDeliveredOrders();
 });
@@ -505,7 +643,7 @@ onMounted(() => {
 }
 
 .step.completed .step-number {
-  background: #28a745;
+  background: #4066fa;
   color: white;
 }
 
@@ -528,7 +666,7 @@ onMounted(() => {
 }
 
 .step-line.completed {
-  background: #28a745;
+  background: #2563eb;
 }
 
 .step-content {
@@ -573,7 +711,6 @@ onMounted(() => {
 .order-code {
   font-weight: 600;
   color: #212529;
-  font-family: monospace;
 }
 
 .order-date {
@@ -632,33 +769,41 @@ onMounted(() => {
 }
 
 /* 2단계 상품 선택 테이블 컬럼 */
-.product-table .col-select { flex-basis: 10%; }
-.product-table .col-code { flex-basis: 20%; font-family: monospace; color: #6c757d; }
-.product-table .col-name { flex-basis: 30%; text-align: left; font-weight: 500; }
-.product-table .col-price { flex-basis: 20%; text-align: right; }
-.product-table .col-ordered { flex-basis: 20%; }
+.product-table .col-select { flex-basis: 8%; min-width: 60px; max-width: 80px; }
+.product-table .col-code { flex-basis: 18%; min-width: 100px; }
+.product-table .col-name { flex-basis: 20%; min-width: 100px; }
+.product-table .col-price { flex-basis: 10%; min-width: 60px; text-align: center; }
+.product-table .col-ordered { flex-basis: 14%; min-width: 80px; }
+.product-table .col-unit { flex-basis: 14%; min-width: 60px; }
+.product-table .col-spec { flex-basis: 10%; min-width: 70px; }
+.product-table .col-type { flex-basis: 10%; min-width: 70px; }
+.product-table .col-group { flex-basis: 10%; min-width: 70px; }
+.product-table .col-attr { flex-basis: 10%; min-width: 70px; }
 
 /* 3단계 수량 및 사유 입력 테이블 컬럼 */
-.quantity-reason-table .col-name { flex-basis: 30%; text-align: left; font-weight: 500; }
-.quantity-reason-table .col-ordered { flex-basis: 20%; }
-.quantity-reason-table .col-return { flex-basis: 20%; }
-.quantity-reason-table .col-reason { flex-basis: 30%; }
+.quantity-reason-table .col-code { flex-basis: 10%; min-width: 80px; }
+.quantity-reason-table .col-price { flex-basis: 10%; min-width: 60px; text-align: center; }
+.quantity-reason-table .col-name { flex-basis: 13%; min-width: 80px; text-align: center; font-weight: 500; }
+.quantity-reason-table .col-ordered { flex-basis: 10%; }
+.quantity-reason-table .col-unit { flex-basis: 8%; }
+.quantity-reason-table .col-spec { flex-basis: 8%; }
+.quantity-reason-table .col-type { flex-basis: 10%; }
+.quantity-reason-table .col-group { flex-basis: 10%; }
+.quantity-reason-table .col-attr { flex-basis: 10%; }
+.quantity-reason-table .col-return { flex-basis: 10%; min-width: 70px; display: flex; align-items: center; justify-content: center; }
+.quantity-reason-table .col-reason { flex-basis: 16%; min-width: 90px; display: flex; align-items: center; justify-content: center; }
 
-.quantity-input {
-  width: 80px;
-  padding: 6px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 14px;
-}
-
+.quantity-input,
 .return-type-select {
-  width: 140px;
-  padding: 6px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  width: 100%;
+  min-width: 0;
+  border: 1.5px solid #ececec;
+  max-width: 100%;
+  height: 32px;
+  padding: 0 8px;
   font-size: 13px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
 .return-summary {
@@ -711,8 +856,9 @@ onMounted(() => {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 500;
   color: #212529;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .description-input {
@@ -761,32 +907,61 @@ onMounted(() => {
   color: #6c757d;
 }
 
-.selected-files {
+.selected-files-preview {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin-bottom: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.file-item {
+.file-preview-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background: #f8f9fa;
-  border-radius: 6px;
+  gap: 14px;
+  padding: 6px 0;
+}
+
+.file-icon {
+  font-size: 24px;
+  color: #bdbdbd;
+  flex-shrink: 0;
+}
+
+.file-info-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
 }
 
 .file-name {
-  font-size: 14px;
-  color: #212529;
+  font-weight: 700;
+  color: #222;
+  font-size: 13px;
+}
+
+.file-size {
+  color: #6b7280;
+  font-size: 13px;
+  margin-top: 2px;
 }
 
 .file-remove-btn {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 18px;
+  color: #bbb;
+  margin-left: 8px;
   padding: 2px;
+  transition: color 0.2s;
+}
+
+.file-remove-btn:hover {
+  color: #ff2222;
 }
 
 .step-actions {
@@ -796,15 +971,19 @@ onMounted(() => {
   margin-top: 24px;
 }
 
+.btn-secondary, .btn-primary {
+  padding: 6px 14px;
+  font-size: 12px;
+  height: 32px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
 .btn-secondary {
   background: #f8f9fa;
   color: #212529;
   border: 1px solid #dee2e6;
-  padding: 10px 24px;
-  border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
   transition: background-color 0.2s;
 }
 
@@ -816,11 +995,7 @@ onMounted(() => {
   background: #4066fa;
   color: white;
   border: none;
-  padding: 10px 24px;
-  border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
   transition: background-color 0.2s;
 }
 
@@ -865,5 +1040,105 @@ onMounted(() => {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.badge {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  white-space: nowrap !important;
+}
+
+.badge-blue {
+  background: #e0f0ff;
+  color: #2563eb;
+}
+.badge-sky {
+  background: #e3f6fd;
+  color: #00bcd4;
+}
+.badge-purple {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+.badge-yellow {
+  background: #fff9db;
+  color: #eab308;
+}
+.badge-green {
+  background: #e6f9ed;
+  color: #16a34a;
+}
+.badge-lightgreen {
+  background: #e6fbe6;
+  color: #22c55e;
+}
+.badge-gray {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.product-card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
+  padding: 25px 24px;
+  margin-top: 20px;
+  background: #fff;
+  width: 100%;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.product-table th,
+.product-table td {
+  padding: 7px 6px;
+  text-align: center;
+  color: #333;
+}
+.product-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  border-bottom: 1px solid #e0e0e0;
+}
+.product-table td {
+  border-bottom: 1px solid #f1f1f1;
+}
+.link {
+  color: #1d4ed8;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.summary-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.summary-box div {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.total-amount {
+  color: #4066fa;
+  font-weight: 600;
 }
 </style>

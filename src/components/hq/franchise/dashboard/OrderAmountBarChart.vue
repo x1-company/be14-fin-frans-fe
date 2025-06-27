@@ -87,14 +87,7 @@ const barData = computed(() => {
 })
 
 const colorPalette = [
-  '#A8DADC', // 파스텔 민트
-  '#89CFF0', // 파스텔 블루
-  '#B0E0E6', // 파스텔 하늘색
-  '#CAE4DB', // 연한 민트
-  '#D3E4CD', // 연한 연두
-  '#F0E2E6', // 연한 핑크
-  '#F7D6BF', // 연한 살구색
-  '#E8D9F0'  // 연한 라벤더
+  '#3366FF', '#FFB800', '#FF5C5C', '#00C49A', '#888888', '#FF7F50', '#8A2BE2', '#FF69B4', '#00BFFF', '#FFD700', '#32CD32', '#FF6347'
 ]
 
 const barOptions = {

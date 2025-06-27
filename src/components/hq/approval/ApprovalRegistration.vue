@@ -239,13 +239,26 @@ const processAndSubmit = async (isRequest) => {
       return;
     }
   } else {
-    // 임시저장 시에도 제목은 필수
-    console.log("임시저장 제목 검증:", formData.value.title);
+    // 임시저장 시에도 제목, 결재선, 결재문서 모두 필수
     if (
       !formData.value.title.trim() ||
       formData.value.title.trim().length < 2
     ) {
       showToast.error("제목을 2자 이상 입력해주세요.");
+      return;
+    }
+    if (
+      !formData.value.approvalLines ||
+      formData.value.approvalLines.length === 0
+    ) {
+      showToast.error("결재선을 설정해주세요.");
+      return;
+    }
+    if (
+      !formData.value.approvalDocuments.documentIds ||
+      formData.value.approvalDocuments.documentIds.length === 0
+    ) {
+      showToast.error("결재문서를 첨부해주세요.");
       return;
     }
   }
@@ -278,7 +291,7 @@ const processAndSubmit = async (isRequest) => {
             type: line.type,
           });
         });
-        return approvalLines;
+        return approvalLines.length > 0 ? approvalLines : null;
       })(),
       files: uploadedFiles,
       approvalDocuments: {
@@ -286,7 +299,10 @@ const processAndSubmit = async (isRequest) => {
           selectedType.value === "PURCHASE"
             ? "PURCHASE_ORDER"
             : selectedType.value,
-        documentIds: formData.value.approvalDocuments.documentIds,
+        documentIds:
+          formData.value.approvalDocuments.documentIds.length > 0
+            ? formData.value.approvalDocuments.documentIds
+            : null,
       },
       returnReason: formData.value.returnReason,
       detailedReason: formData.value.detailedReason,
@@ -328,19 +344,18 @@ const processAndSubmit = async (isRequest) => {
             selectedType.value === "PURCHASE"
               ? "PURCHASE_ORDER"
               : selectedType.value,
-          approvalDocumentId: formData.value.approvalDocuments.documentIds,
-          approvalLines: (() => {
-            const approvalLines = [];
-            let seq = 1;
-            formData.value.approvalLines.forEach((line) => {
-              approvalLines.push({
-                userId: line.userId || line.id,
-                seq: seq++,
-                type: line.type,
-              });
-            });
-            return approvalLines;
-          })(),
+          approvalDocumentId:
+            formData.value.approvalDocuments.documentIds.length > 0
+              ? formData.value.approvalDocuments.documentIds
+              : null,
+          approvalLines:
+            formData.value.approvalLines.length > 0
+              ? formData.value.approvalLines.map((line, idx) => ({
+                  userId: line.userId || line.id,
+                  seq: idx + 1,
+                  type: line.type,
+                }))
+              : null,
           files: uploadedFiles,
         };
         response = await api.post("/api/hq/approvals/drafts", draftRequestData);
