@@ -60,12 +60,12 @@
 import { computed } from 'vue';
 
 // 이미지 import (Vite에서 경로 깨짐 방지용)
-import ReviewingIcon from '@/assets/reviewing.png';
-import ReviewCompletedIcon from '@/assets/review_completed.png';
-import ApprovedIcon from '@/assets/approved.png';
-import DeliveringIcon from '@/assets/delivering.png';
-import DeliveredIcon from '@/assets/delivered.png';
-import RejectedIcon from '@/assets/rejected.png';
+import ReviewingIcon from '@/assets/REVIEWING.png'
+import ReviewCompletedIcon from '@/assets/REVIEW_COMPLETED.png';
+import ApprovedIcon from '@/assets/APPROVED.png';
+import DeliveringIcon from '@/assets/DELIVERING.png';
+import DeliveredIcon from '@/assets/DELIVERED.png';
+import RejectedIcon from '@/assets/REJECTED.png';
 import ReceiptCanceledIcon from '@/assets/REVIEW_CANCEL.png';
 
 const props = defineProps({

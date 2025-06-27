@@ -33,6 +33,7 @@
         :selectedTemplate="selectedTemplate"
         :approvalId="approvalId"
         :approvalDetail="approvalDetail"
+        :activeTabSwitch="currentTabIndex === 1 ? 0 : currentTabIndex"
         @active-tab-change="handleActiveTabChange"
         @toggle-registration-mode="handleToggleRegistrationMode"
         @template-deleted="handleTemplateDeleted"
@@ -151,9 +152,12 @@ const handleRegisterApproval = () => {
 };
 
 const handleToggleRegistrationMode = (value) => {
-  // 파라미터가 있으면 해당 값으로, 없으면 토글
   isRegistrationMode.value =
     value !== undefined ? value : !isRegistrationMode.value;
+  if (value === false) {
+    currentTabIndex.value = 1; // 전자결재 탭 인덱스
+    activeTab.value = "임시저장"; // 임시저장 목록 탭 이름
+  }
 };
 
 // 템플릿 삭제 처리

@@ -55,6 +55,7 @@
             v-model="formData.title"
             placeholder="결재 제목을 입력하세요"
             class="title-input"
+            @input="emitFormData"
           />
         </div>
         <div class="form-group">
@@ -634,6 +635,12 @@ const updateRemarksCount = () => {
 const handleTempSave = async () => {
   if (isSubmitting.value) return;
 
+  // 임시저장 시에도 제목은 필수
+  if (!formData.value.title.trim() || formData.value.title.trim().length < 2) {
+    alert("제목을 2자 이상 입력해주세요.");
+    return;
+  }
+
   try {
     isSubmitting.value = true;
 
@@ -679,7 +686,7 @@ const handleTempSave = async () => {
 
     console.log("임시저장 전송 데이터 확인:", requestData);
 
-    const response = await api.post("/api/hq/approvals", requestData);
+    const response = await api.post("/api/hq/approvals/drafts", requestData);
 
     if (response.status === 200 || response.status === 201) {
       toast.success("임시저장이 완료되었습니다.");
