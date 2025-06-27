@@ -29,7 +29,7 @@
             <OrderRegister v-if="showOrderRegister" @back-to-list="showOrderRegister = false" />
             
             <div v-else-if="orderDetailId">
-              <div v-if="loading">로딩 중...</div>
+              <div v-if="loading"></div>
               <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
               <div v-else>
                 <FrOrderActionButtons
@@ -165,7 +165,7 @@ const handleShowOrderDetail = (id) => {
   orderDetailId.value = id;
 };
 
-const handleBackToList = () => {
+function handleBackToList() {
   orderDetailId.value = null;
   order.value = null;
 };
