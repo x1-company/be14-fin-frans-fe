@@ -3,7 +3,7 @@
         <!-- 헤더 영역 -->
         <div class="header-section">
             <div class="header-left">
-                <h2 class="section-title">📦 자재 정보</h2>
+                <h2 class="section-title">📝 주문 등록</h2>
             </div>
             <div class="header-right">
                 <Outbutton @close="$emit('back-to-list')" />
