@@ -22,6 +22,9 @@
 <script setup>
 import { ref } from 'vue';
 import api from '@/lib/api';
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const props = defineProps({
   deliveryInfoId: {
@@ -37,7 +40,7 @@ const submitting = ref(false);
 
 const confirmDate = async () => {
   if (!selectedDate.value) {
-    alert('납품일을 선택해주세요.');
+    toast.warning('납품일을 선택해주세요.');
     return;
   }
 
@@ -52,11 +55,11 @@ const confirmDate = async () => {
 
     await api.patch(`/api/hq/delivery-infos/${props.deliveryInfoId}`, requestDTO);
     
-    alert('납품일이 성공적으로 확정되었습니다.');
+    toast.success('납품일이 성공적으로 확정되었습니다.');
     emit('success');
   } catch (error) {
     console.error('납품일 확정 실패:', error);
-    alert('납품일 확정에 실패했습니다. 다시 시도해주세요.');
+    toast.error('납품일 확정에 실패했습니다. 다시 시도해주세요.');
   } finally {
     submitting.value = false;
     emit('close');

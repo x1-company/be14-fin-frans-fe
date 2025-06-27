@@ -27,7 +27,12 @@
               <td>{{ doc.date }}</td>
               <td v-if="type === 'RETURN'">{{ doc.description }}</td>
               <td v-else-if="type !== 'RETURN'">{{ doc.name }}</td>
-              <td>{{ formatCurrency(doc.amount) }}</td>
+              <td>{{
+                formatCurrency(
+                  doc.amount ??
+                    doc.quantity * (doc.salePrice || doc.purchasePrice)
+                )
+              }}</td>
               <td>
                 <button class="remove-button" @click="removeDocument(doc.id)">
                   ×
@@ -50,6 +55,7 @@
             v-model="formData.title"
             placeholder="결재 제목을 입력하세요"
             class="title-input"
+            @input="emitFormData"
           />
         </div>
         <div class="form-group">
@@ -241,18 +247,30 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import UnifiedDocumentList from "./modal/UnifiedDocumentList.vue";
 import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
 import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
 import api from "@/lib/api";
+import { useAuthStore } from "@/stores/auth";
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const props = defineProps({
   type: String,
   files: {
     type: Array,
     default: () => [],
+  },
+  initialData: {
+    type: Object,
+    default: null,
+  },
+  isEditMode: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -282,6 +300,18 @@ const formData = ref({
   approvalDocuments: {
     documentIds: [],
   },
+  signUrl: "",
+});
+
+// authStore에서 사용자 서명 자동 설정
+const authStore = useAuthStore();
+
+// 컴포넌트 마운트 시 사용자 서명 자동 설정
+onMounted(() => {
+  if (authStore.userSignUrl) {
+    formData.value.signUrl = authStore.userSignUrl;
+    emitFormData();
+  }
 });
 
 const categoryType = computed(() => {
@@ -464,6 +494,53 @@ watch(
   { deep: true }
 );
 
+// initialData가 변경될 때 폼 데이터 업데이트
+watch(
+  () => props.initialData,
+  (newData) => {
+    if (newData) {
+      console.log("OrderApprovalForm - initialData received:", newData);
+      console.log("OrderApprovalForm - isEditMode:", props.isEditMode);
+
+      // 수정 모드일 때는 기존 데이터를 폼에 채움
+      if (props.isEditMode) {
+        formData.value = {
+          title: newData.title || "",
+          remarks: newData.remarks || "",
+          approvalLines: newData.approvalLines || [],
+          files: newData.files || [],
+          approvalDocuments: {
+            documentIds: newData.approvalDocuments?.documentIds || [],
+            categoryType: newData.approvalDocuments?.categoryType || props.type,
+          },
+          signUrl: newData.signUrl || "",
+        };
+
+        // 문서 ID가 있으면 문서 정보도 가져오기
+        if (newData.approvalDocuments?.documentIds?.length > 0) {
+          fetchDocuments(newData.approvalDocuments.documentIds);
+        }
+      } else {
+        // 등록 모드일 때는 기존 로직 유지
+        formData.value = {
+          ...formData.value,
+          ...newData,
+          approvalDocuments: {
+            ...formData.value.approvalDocuments,
+            ...newData.approvalDocuments,
+          },
+        };
+
+        // 문서 ID가 있으면 문서 정보도 가져오기
+        if (newData.approvalDocuments?.documentIds?.length > 0) {
+          fetchDocuments(newData.approvalDocuments.documentIds);
+        }
+      }
+    }
+  },
+  { immediate: true, deep: true }
+);
+
 const initializeForm = () => {
   emitFormData();
 };
@@ -541,7 +618,7 @@ const handleSelectTemplate = async (template) => {
       type: line.type,
     }));
   } catch (error) {
-    alert("템플릿 결재선 정보를 불러오지 못했습니다.");
+    toast.error("템플릿 결재선 정보를 불러오지 못했습니다.");
     console.error(error);
   }
   showTemplateModal.value = false;
@@ -557,6 +634,12 @@ const updateRemarksCount = () => {
 
 const handleTempSave = async () => {
   if (isSubmitting.value) return;
+
+  // 임시저장 시에도 제목은 필수
+  if (!formData.value.title.trim() || formData.value.title.trim().length < 2) {
+    alert("제목을 2자 이상 입력해주세요.");
+    return;
+  }
 
   try {
     isSubmitting.value = true;
@@ -603,14 +686,14 @@ const handleTempSave = async () => {
 
     console.log("임시저장 전송 데이터 확인:", requestData);
 
-    const response = await api.post("/api/hq/approvals", requestData);
+    const response = await api.post("/api/hq/approvals/drafts", requestData);
 
     if (response.status === 200 || response.status === 201) {
-      alert("임시저장이 완료되었습니다.");
+      toast.success("임시저장이 완료되었습니다.");
     }
   } catch (error) {
     console.error("임시저장 실패:", error);
-    alert("임시저장에 실패했습니다. 다시 시도해주세요.");
+    toast.error("임시저장에 실패했습니다. 다시 시도해주세요.");
   } finally {
     isSubmitting.value = false;
   }
@@ -620,22 +703,22 @@ const handleSubmit = async () => {
   if (isSubmitting.value) return;
 
   if (!formData.value.title.trim()) {
-    alert("제목을 입력해주세요.");
+    toast.warning("제목을 입력해주세요.");
     return;
   }
 
   if (!formData.value.remarks.trim()) {
-    alert("내용을 입력해주세요.");
+    toast.warning("내용을 입력해주세요.");
     return;
   }
 
   if (formData.value.approvalLines.length === 0) {
-    alert("결재선을 지정해주세요.");
+    toast.warning("결재선을 지정해주세요.");
     return;
   }
 
   if (formData.value.approvalDocuments.documentIds.length === 0) {
-    alert("주문 문서를 선택해주세요.");
+    toast.warning("주문 문서를 선택해주세요.");
     return;
   }
 
@@ -687,12 +770,12 @@ const handleSubmit = async () => {
     const response = await api.post("/api/hq/approvals", requestData);
 
     if (response.status === 200 || response.status === 201) {
-      alert("결재가 등록되었습니다.");
+      toast.success("결재가 등록되었습니다.");
       emit("approval-submitted", response.data);
     }
   } catch (error) {
     console.error("결재 등록 실패:", error);
-    alert("결재 등록에 실패했습니다. 다시 시도해주세요.");
+    toast.error("결재 등록에 실패했습니다. 다시 시도해주세요.");
   } finally {
     isSubmitting.value = false;
   }
@@ -783,6 +866,70 @@ const openFilePicker = () => {
 const removeFile = (index) => {
   formData.value.files.splice(index, 1);
   emitFormData();
+};
+
+// 문서 ID로 문서 정보 가져오기
+const fetchDocuments = async (documentIds) => {
+  try {
+    const promises = documentIds.map(async (id) => {
+      // 결재 유형에 따라 다른 API 엔드포인트 사용
+      let endpoint;
+      switch (props.type) {
+        case "ORDER":
+          endpoint = `/api/hq/orders/${id}`;
+          break;
+        case "RETURN":
+          endpoint = `/api/hq/returns/${id}`;
+          break;
+        case "PURCHASE_ORDER":
+          endpoint = `/api/hq/purchases/${id}`;
+          break;
+        default:
+          return null;
+      }
+
+      const response = await api.get(endpoint);
+      return response.data;
+    });
+
+    const fetchedDocuments = await Promise.all(promises);
+    const validDocuments = fetchedDocuments.filter((doc) => doc !== null);
+
+    // documents 배열에 추가
+    validDocuments.forEach((doc) => {
+      const existingDoc = documents.value.find(
+        (existing) => existing.id === doc.id
+      );
+      if (!existingDoc) {
+        let documentData = {
+          id: doc.id || doc.code,
+          code: doc.code,
+          date: formatDate(doc.createdAt),
+          amount: doc.totalAmount,
+        };
+
+        // 결재 유형에 따라 다른 필드 매핑
+        switch (props.type) {
+          case "ORDER":
+            documentData.name = doc.franchiseName;
+            break;
+          case "RETURN":
+            documentData.name = doc.name;
+            documentData.description = doc.description;
+            break;
+          case "PURCHASE_ORDER":
+            documentData.name = doc.supplierName;
+            break;
+          default:
+            documentData.name = doc.franchiseName || doc.name;
+        }
+
+        documents.value.push(documentData);
+      }
+    });
+  } catch (error) {
+    console.error("문서 정보 가져오기 실패:", error);
+  }
 };
 
 defineExpose({

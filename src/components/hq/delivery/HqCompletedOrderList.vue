@@ -96,6 +96,9 @@
 import { ref, watch } from 'vue';
 import api from '@/lib/api';
 import DeliveryDateConfirmModal from './modal/DeliveryDateConfirmModal.vue';
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const props = defineProps({
   supplierId: {
@@ -135,7 +138,7 @@ const fetchDeliveryList = async () => {
     deliveryList.value = response.data;
   } catch (error) {
     console.error('납품 완료 목록 조회 실패:', error);
-    alert('데이터를 불러오는 데 실패했습니다.');
+    toast.error('데이터를 불러오는 데 실패했습니다.');
     deliveryList.value = [];
   } finally {
     loading.value = false;

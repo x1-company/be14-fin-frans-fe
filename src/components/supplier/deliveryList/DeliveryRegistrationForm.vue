@@ -133,6 +133,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import api from '@/lib/api'
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast()
 
 const props = defineProps({
   purchaseOrderId: {
@@ -178,7 +181,7 @@ const fetchOrderData = async () => {
     productList.value = response.data.productList || []
   } catch (error) {
     console.error('발주 정보 조회 실패:', error)
-    alert('발주 정보를 불러오는데 실패했습니다.')
+    toast.error('발주 정보를 불러오는데 실패했습니다.')
   } finally {
     loading.value = false
   }
@@ -192,7 +195,7 @@ const updateTotalAmount = () => {
 // 납품 정보 등록
 const submitDeliveryInfo = async () => {
   if (!isFormValid.value) {
-    alert('필수 항목을 모두 입력해주세요.')
+    toast.warning('필수 항목을 모두 입력해주세요.')
     return
   }
 
@@ -214,11 +217,11 @@ const submitDeliveryInfo = async () => {
     console.log('납품 정보 등록 요청 데이터:', requestData)
 
     await api.post('/api/supplier/delivery-infos', requestData)
-    alert('납품 정보가 성공적으로 등록되었습니다.')
+    toast.success('납품 정보가 성공적으로 등록되었습니다.')
     emit('success')
   } catch (error) {
     console.error('납품 정보 등록 실패:', error)
-    alert('납품 정보 등록에 실패했습니다.')
+    toast.error('납품 정보 등록에 실패했습니다.')
   } finally {
     submitting.value = false
   }

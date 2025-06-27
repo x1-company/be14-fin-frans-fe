@@ -1,35 +1,8 @@
 <template>
   <div class="info-form">
-    <ApprovalDetail
-      v-if="isDetailViewMode"
-      :document="selectedDocument"
-      @close-detail="
-        () => {
-          isDetailViewMode.value = false;
-          selectedDocument.value = null;
-        }
-      "
-      @approve="handleDocumentApprove"
-      @reject="handleDocumentReject"
-      @refresh-list="handleRefreshList"
-    />
-
-    <!-- ApprovalDetail 모달 (결재자용) -->
-    <ApprovalDetail
-      v-if="isApproverDetailMode"
-      :document="selectedDocument"
-      :is-current-user-turn="canApprove(selectedDocument)"
-      @close-detail="
-        () => {
-          isApproverDetailMode.value = false;
-          selectedDocument.value = null;
-        }
-      "
-      @approve="handleDocumentApprove"
-      @reject="handleDocumentReject"
-      @refresh-list="handleRefreshList"
-    />
-    <div v-else>
+    <!-- ApprovalDetail 모달 제거됨 -->
+    <!-- 문서 목록 및 탭 항상 렌더링 -->
+    <div>
       <!-- 탭 메뉴 -->
       <div class="tab-container">
         <div class="tab-list">
@@ -159,7 +132,12 @@
                 <button
                   v-else-if="!canEdit(document)"
                   class="action-btn detail-btn"
-                  @click.stop="viewDocument(document)"
+                  @click.stop="
+                    () => {
+                      console.log('상세보기 클릭!');
+                      viewDocument(document);
+                    }
+                  "
                 >
                   상세보기
                 </button>
@@ -176,12 +154,24 @@
         </div>
       </div>
     </div>
+
+    <!-- ApprovalEdit 모달 -->
+    <ApprovalEdit
+      v-if="showEditModal"
+      :approvalId="editDocumentId"
+      :type="editDocumentType"
+      :initialData="editDocumentData"
+      :isEditMode="true"
+      @close="closeEditModal"
+      @approval-submitted="handleApprovalSubmitted"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
+import { useRouter } from "vue-router";
+import ApprovalEdit from "./ApprovalEdit.vue";
 
 const emit = defineEmits([
   "tab-change",
@@ -189,6 +179,7 @@ const emit = defineEmits([
   "document-view",
   "document-approve",
   "document-edit",
+  "edit-document",
   "document-reject",
   "refresh-list",
   "select-menu",
@@ -207,10 +198,11 @@ const localActiveTab = ref(props.activeTab);
 const activeTab = computed(() => localActiveTab.value);
 const searchQuery = ref("");
 
-// 상세 보기 모드 상태 관리
-const isDetailViewMode = ref(false);
-const isApproverDetailMode = ref(false);
-const selectedDocument = ref(null);
+// 모달 상태 관리
+const showEditModal = ref(false);
+const editDocumentData = ref(null);
+const editDocumentType = ref("ORDER");
+const editDocumentId = ref(null);
 
 // 탭 설정
 const tabs = [
@@ -312,30 +304,77 @@ const handleSearch = () => {
   // 검색 로직은 computed에서 처리됨
 };
 
+const router = useRouter();
 const openDocument = (document) => {
-  emit("document-click", document);
+  if (document && document.approvalId) {
+    router.push(`/approval/${document.approvalId}`);
+  } else {
+    console.warn("approvalId가 없습니다:", document);
+  }
 };
 
 const viewDocument = (document) => {
-  // emit("document-view", document);
-  selectedDocument.value = document;
-  isDetailViewMode.value = true;
+  if (document && document.approvalId) {
+    router.push(`/approval/${document.approvalId}`);
+  } else {
+    console.warn("approvalId가 없습니다:", document);
+  }
 };
 
 const approveDocument = (document) => {
-  // emit("document-approve", document);
-  selectedDocument.value = document;
-  isApproverDetailMode.value = true;
+  if (document && document.approvalId) {
+    router.push(`/approval/${document.approvalId}`);
+  } else {
+    console.warn("approvalId가 없습니다:", document);
+  }
 };
 
 const collaborateDocument = (document) => {
   // emit("document-collaborate", document);
-  selectedDocument.value = document;
-  isDetailViewMode.value = true;
+  // selectedDocument.value = document;
+  // isDetailViewMode.value = true;
 };
 
 const editDocument = (document) => {
-  emit("document-edit", document);
+  console.log("수정하기 버튼 클릭:", document);
+
+  // 수정할 문서 데이터 설정
+  editDocumentData.value = {
+    title: document.title,
+    remarks: document.remarks,
+    lines: document.lines || [],
+    files: document.files || [],
+    approvalDocuments: {
+      documentIds: Array.isArray(document.approvalDocuments)
+        ? document.approvalDocuments.map((doc) => doc.documentId)
+        : document.approvalDocuments?.documentIds || [],
+      categoryType: document.categoryType || document.type || "ORDER",
+    },
+    signUrl: document.signUrl || "",
+  };
+
+  // 결재 유형 설정
+  editDocumentType.value = document.categoryType || document.type || "ORDER";
+
+  // 모달 열기
+  showEditModal.value = true;
+
+  // 수정할 문서의 approvalId 저장
+  editDocumentId.value = document.approvalId;
+};
+
+const closeEditModal = () => {
+  showEditModal.value = false;
+  editDocumentData.value = null;
+  editDocumentType.value = "ORDER";
+  editDocumentId.value = null;
+};
+
+const handleApprovalSubmitted = (data) => {
+  console.log("결재 수정 완료:", data);
+  closeEditModal();
+  // 목록 새로고침 이벤트 발생
+  emit("refresh-list");
 };
 
 const canApprove = (document) => {

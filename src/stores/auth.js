@@ -14,6 +14,18 @@ export const useAuthStore = defineStore("auth", {
     accessToken: localStorage.getItem("accessToken") || "",
   }),
   getters: {
+    isAuthenticated(state) {
+      if (!state.accessToken) return false;
+
+      try {
+        const decoded = jwtDecode(state.accessToken);
+        // 토큰 만료 시간 체크
+        const currentTime = Date.now() / 1000;
+        return decoded.exp > currentTime;
+      } catch (e) {
+        return false;
+      }
+    },
     decodedToken(state) {
       try {
         return state.accessToken ? jwtDecode(state.accessToken) : null;
@@ -68,39 +80,28 @@ export const useAuthStore = defineStore("auth", {
     },
   },
   actions: {
-    async setAccessToken(token) {
+    setAccessToken(token) {
       this.accessToken = token;
 
       // 개발 편의를 위한 로컬 스토리지 저장
       localStorage.setItem("accessToken", token);
-
-      // 토큰이 설정되고 유효한 경우에만 SSE 연결 시작
-      if (token && this.decodedToken) {
-        try {
-          console.log("SSE 연결 시도 중...");
-          await notificationService.connect();
-          console.log("SSE 연결 성공");
-
-          // 알림 목록도 함께 로드
-          console.log("알림 목록 로드 중...");
-          await notificationService.fetchNotifications();
-          console.log("알림 목록 로드 완료");
-        } catch (error) {
-          console.error("SSE 연결 실패:", error);
-          // SSE 연결 실패해도 로그인은 계속 진행
-        }
-      } else {
-        console.log("토큰이 유효하지 않아 SSE 연결을 건너뜁니다.");
-      }
     },
     async clearAccessToken() {
-      // 로그아웃 시 SSE 연결 정리
+      // 로그아웃 시 서버 SSE emitter/캐시 명시적 정리
       try {
-        // cleanup이 notificationStore.reset()을 호출하여 인메모리 상태를 정리합니다.
+        const api = (await import('@/lib/api')).default;
+        await api.delete('/api/notification/disconnect');
+        console.log('서버 SSE disconnect 호출 완료');
+      } catch (e) {
+        // 이미 세션이 만료됐거나 서버 연결이 끊겼을 수도 있으니 무시
+        console.warn('서버 SSE disconnect 실패(무시):', e);
+      }
+      // 기존 SSE 연결 정리
+      try {
         await notificationService.cleanup();
-        console.log("SSE 연결 정리 완료");
+        console.log('SSE 연결 정리 완료');
       } catch (error) {
-        console.error("SSE 연결 정리 실패:", error);
+        console.error('SSE 연결 정리 실패:', error);
       }
 
       this.accessToken = "";

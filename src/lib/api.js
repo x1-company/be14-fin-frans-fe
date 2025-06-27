@@ -36,8 +36,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // accessToken 만료로 401인 경우 (무한 루프 방지 위해 재시도 여부 체크)
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // accessToken 만료로 419인 경우 (무한 루프 방지 위해 재시도 여부 체크)
+    if (error.response?.status === 419 && !originalRequest._retry) {
       originalRequest._retry = true
       const authStore = useAuthStore()
 
@@ -67,7 +67,7 @@ api.interceptors.response.use(
         // 토스트로 알림 표시
         toast.error("세션이 만료되었습니다. 다시 로그인해주세요.")
 
-        // router.push("/login")
+        router.push("/login")
         return Promise.reject(refreshError)
       }
     }

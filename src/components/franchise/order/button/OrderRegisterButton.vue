@@ -6,13 +6,13 @@
 
 <style>
 .order-register-btn {
-    height: 36px;
+    height: 35px;
     background: #4066fa;
     color: #fff;
     border-radius: 8px;
     padding: 0 22px;
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
   }

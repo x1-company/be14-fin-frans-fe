@@ -73,17 +73,15 @@ onMounted(fetchFranchise);
 
 <style scoped>
 .sidebar {
-  min-width: 260px;
-  max-width: 340px;
-  width: 300px;
-  flex-shrink: 0;
+  width: 230px;      /* 최소 너비 추가 */
+  flex-shrink: 0;        /* 줄어들지 않게 */
   background: #ffffff;
   border-right: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow-x: hidden;
-  position: relative;
+  height: 100%;         /* 화면 전체 높이로 고정 */
+  overflow-x: hidden;    /* 가로 스크롤 방지 */
+  position: relative;    /* 겹침 방지 */
   z-index: 2;
 }
 
@@ -100,47 +98,50 @@ onMounted(fetchFranchise);
 }
 
 .header-item {
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-weight: 500;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .sidebar__icon {
-  width: 26px;
-  height: 23px;
+  width: 21px;
+  height: 18px;
 }
 
 .franchise-icon {
-  width: 28px;
-  height: 27px;
+  width: 23px;
+  height: 22px;
 }
 
 .sidebar-content {
   flex: 1;
+  overflow-y: auto;
   padding: 16px;
 }
 
 .company-item {
   background: #eaf3ff;
   border: 1px solid #d1e3ff;
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 8px;
+  padding: 16px;
   margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .company-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .company-name {
+  font-size: 13px;
   font-weight: 600;
   color: #212529;
-  font-size: 1.1rem;
 }
 
 .company-district {
@@ -148,22 +149,22 @@ onMounted(fetchFranchise);
   color: #155724;
   padding: 4px 10px;
   border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 650;
   margin-left: auto;
 }
 
 .company-details {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .detail-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 14px;
-  color: #495057;
+  gap: 8px;
+  font-size: 13px;
+  color: #6c757d;
 }
 </style> 

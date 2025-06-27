@@ -35,35 +35,32 @@
         </div>
         <OrderRegisterButton @click="$emit('show-register-view')" />
       </div>
-      <div class="order-form__table-wrapper">
-        <table class="order-form__table">
-          <thead>
-            <tr>
-              <th>No.</th>
-              <th>주문 번호</th>
-              <th>품목명</th>
-              <th>주문 상태</th>
-              <th>주문일</th>
-              <th>총 주문 금액</th>
-              <th>가맹점 명</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(order, idx) in orders" :key="order.orderId">
-              <td>{{ idx + 1 + (page-1)*pageSize }}</td>
-              <td>
-                <router-link :to="`/franchise/orders/${order.orderId}`" class="order-link">
-                  {{ order.orderCode }}
-                </router-link>
-              </td>
-              <td>{{ order.productSummary }}</td>
-              <td><span :class="['order-status', orderStatusClass(order.status)]">{{ statusText(order.status) }}</span></td>
-              <td>{{ order.createdAt.slice(0, 10) }}</td>
-              <td>{{ order.totalAmount.toLocaleString() }}원</td>
-              <td>{{ order.franchiseName }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="order-table">
+        <div class="order-table-header">
+          <div class="col col-no">No.</div>
+          <div class="col col-code">주문 번호</div>
+          <div class="col col-name">품목명</div>
+          <div class="col col-status">주문 상태</div>
+          <div class="col col-date">주문일</div>
+          <div class="col col-amount">총 주문 금액</div>
+          <div class="col col-franchise">가맹점 명</div>
+        </div>
+        <div class="order-table-body">
+          <div v-if="orders.length === 0" class="empty-message">주문 내역이 없습니다.</div>
+          <div v-for="(order, idx) in orders" :key="order.orderId" class="order-row">
+            <div class="col col-no">{{ idx + 1 + (page-1)*pageSize }}</div>
+            <div class="col col-code">
+              <a href="#" class="order-link" @click.prevent="showOrderDetail(order.orderId)">
+                {{ order.orderCode }}
+              </a>
+            </div>
+            <div class="col col-name">{{ order.productSummary }}</div>
+            <div class="col col-status"><span :class="['order-status', orderStatusClass(order.status)]">{{ statusText(order.status) }}</span></div>
+            <div class="col col-date">{{ order.createdAt.slice(0, 10) }}</div>
+            <div class="col col-amount">{{ order.totalAmount.toLocaleString() }}원</div>
+            <div class="col col-franchise">{{ order.franchiseName }}</div>
+          </div>
+        </div>
       </div>
       <div class="order-form__pagination">
         <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
@@ -83,13 +80,17 @@
   
   <script setup>
   import { ref, computed, watch, onMounted } from 'vue';
-  import { RouterLink } from 'vue-router';
   import Datepicker from '@vuepic/vue-datepicker';
   import '@vuepic/vue-datepicker/dist/main.css';
   import api from '@/lib/api';
   import OrderRegisterButton from './button/OrderRegisterButton.vue';
 
-  const emit = defineEmits(['show-register-view']);
+  const props = defineProps({
+    franchiseId: [String, Number],
+    selectedFranchiseId: [String, Number],
+  });
+
+  const emit = defineEmits(['show-register-view', 'show-order-detail']);
 
   const orders = ref([]);
   const search = ref('');
@@ -205,6 +206,27 @@
 
   watch(page, fetchOrders);
   onMounted(fetchOrders);
+
+  const showOrderDetail = (orderId) => {
+    emit('show-order-detail', orderId);
+  }
+
+  // 페이지네이션 번호 계산
+  const paginationPages = computed(() => {
+    const pages = [];
+    if (totalPages.value <= 7) {
+      for (let i = 1; i <= totalPages.value; i++) pages.push(i);
+    } else {
+      if (page.value <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages.value);
+      } else if (page.value >= totalPages.value - 3) {
+        pages.push(1, '...', totalPages.value - 4, totalPages.value - 3, totalPages.value - 2, totalPages.value - 1, totalPages.value);
+      } else {
+        pages.push(1, '...', page.value - 1, page.value, page.value + 1, '...', totalPages.value);
+      }
+    }
+    return pages;
+  });
 </script>
 
   
@@ -217,18 +239,18 @@
   }
   .order-form__tabs {
     display: flex;
-    gap: 57px;
+    gap: 50px;
     border-bottom: 1.5px solid #e9ecef;
-    margin-top: -15px;
-    margin-bottom: 15px;
-    padding-left: 15px;
+    margin-top: -30px;
+    margin-bottom: 10px;
+    padding-left: 10px;
   }
   .order-form__tab {
     position: relative;
-    font-size: 1.05rem;
+    font-size: 0.9rem;
     color: #888;
     font-weight: 500;
-    padding: 8px 0 12px 0;
+    padding: 4px 0 7px 0;
     cursor: pointer;
     transition: color 0.2s;
   }
@@ -241,7 +263,7 @@
     left: 0;
     bottom: -2px;
     width: 100%;
-    height: 3px;
+    height: 2px;
     background: #4066fa;
     border-radius: 2px 2px 0 0;
   }
@@ -249,81 +271,111 @@
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    margin-bottom: 16px;
-    gap: 16px;
+    margin-bottom: 10px;
+    gap: 10px;
   }
   .order-form__search-group {
     display: flex;
-    gap: 8px;
+    gap: 5px;
     align-items: center;
   }
   .order-form__search-group input {
-    height: 36px;
+    height: 35px;
     border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 0 14px;
-    font-size: 1rem;
-    width: 220px;
+    border-radius: 6px;
+    padding: 12px 8px;
+    font-size: 0.8rem;
+    width: 180px;
   }
   .order-form__search-group select {
-    height: 36px;
+    height: 35px;
     border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 0 12px;
-    font-size: 1rem;
+    border-radius: 6px;
+    padding: 0 7px;
+    font-size: 0.8rem;
     background: #fff;
   }
   .order-form__search-group button {
-    height: 36px;
+    height: 28px;
     background: #4066fa;
     color: #fff;
     border: none;
-    border-radius: 8px;
-    padding: 0 22px;
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 0.5rem;
+    font-weight: 100;
     cursor: pointer;
     transition: background 0.2s;
   }
   .order-form__search-group button:hover {
     background: #2746b6;
   }
-  .order-form__table-wrapper {
-    overflow-x: auto;
+  .order-table {
+    border: 1px solid #eef0f4;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
   }
-  .order-form__table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 16px;
+  .order-table-header, .order-row {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
   }
-  .order-form__table th, .order-form__table td {
-    border: 1px solid #e9ecef;
-    padding: 12px 8px;
+  .order-table-header {
+    background: #f8f9fa;
+    color: #495057;
+    font-size: 13px;
+    font-weight: 500;
+    height: 40px;
+    border-bottom: 1px solid #eef0f4;
+  }
+  .order-table-body .order-row {
+    border-bottom: 1px solid #eef0f4;
+  }
+  .order-table-body .order-row:last-child {
+    border-bottom: none;
+  }
+  .order-row {
+    height: 48px;
+    font-size: 14px;
+    background: #fff;
+    transition: background 0.2s;
+  }
+  .order-row:hover {
+    background: #f8f9fa;
+  }
+  .col {
     text-align: center;
-    font-size: 1rem;
+    padding: 0 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .order-form__table th {
-    background: #f4f6fb;
-    font-weight: bold;
+  .col-no        { flex-basis: 7%; }
+  .col-code      { flex-basis: 20%; color: #222; font-family: monospace; overflow: visible; text-overflow: unset; white-space: nowrap; }
+  .col-name      { flex-basis: 25%; text-align: center; font-weight: 500; }
+  .col-status    { flex-basis: 15%; }
+  .col-date      { flex-basis: 15%; }
+  .col-amount    { flex-basis: 15%; text-align: right; font-weight: 500; }
+  .col-franchise { flex-basis: 20%; }
+  .empty-message {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 40px;
   }
   .order-link {
     color: #4066fa;
     text-decoration: underline;
     cursor: pointer;
+    font-size: 0.95rem;
   }
   .order-status {
     display: inline-block;
-    min-width: 80px;
-    text-align: center;
-    padding: 4px 10px;
-    border-radius: 24px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    margin: 4px 0;
-    background: #fff;
-    letter-spacing: 1px;
-    box-sizing: border-box;
-    border: none;
+    padding: 3px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
   }
   .status-reject {
     color: #ff2222;
@@ -356,19 +408,19 @@
   }
   .order-form__pagination {
     display: flex;
-    gap: 8px;
+    gap: 5px;
     align-items: center;
     justify-content: center;
-    margin: 16px 0;
+    margin: 10px 0;
   }
   .page-btn {
-    min-width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    border: 1.5px solid #e2e4ea;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #e2e4ea;
     background: #fff;
     color: #222;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -391,13 +443,13 @@
     pointer-events: none;
   }
   .page-arrow {
-    min-width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    border: 1.5px solid #e2e4ea;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #e2e4ea;
     background: #f5f6fa;
     color: #bdbdbd;
-    font-size: 1.3rem;
+    font-size: 1.05rem;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -413,18 +465,26 @@
   .order-form__total {
     text-align: right;
     color: #888;
-    margin-top: 8px;
-    font-size: 0.98rem;
+    margin-top: 4px;
+    font-size: 0.92rem;
   }
   .custom-datepicker-input {
-    height: 36px;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 0 14px;
-    font-size: 1rem;
-    width: 250px;
+    height: 22px !important;
+    font-size: 0.8rem !important;
+    padding: 0 5px !important;
+    width: 90px !important;
+    border-radius: 5px !important;
+    text-align: right !important;
   }
+  .custom-datepicker-input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
   .order-register-btn:hover {
+    font-size: 10px;
+    height: 10px;
+    width: 10px;
     background: #2746b6;
   }
-  </style> 
+  </style>

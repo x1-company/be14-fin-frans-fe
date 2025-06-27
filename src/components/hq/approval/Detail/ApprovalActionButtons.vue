@@ -16,7 +16,7 @@
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </svg>
-      <span class="button-text">반려</span>
+      <span class="button-text">{{ rejectButtonText }}</span>
     </button>
 
     <button
@@ -34,14 +34,14 @@
           <polyline points="20,6 9,17 4,12" />
         </svg>
       </svg>
-      <span class="button-text">승인</span>
+      <span class="button-text">{{ approveButtonText }}</span>
     </button>
 
     <!-- 반려 사유 입력 모달 -->
     <div v-if="showRejectModal" class="modal-overlay" @click="closeRejectModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>반려 사유 입력</h3>
+          <h3>{{ rejectModalTitle }}</h3>
           <button class="close-button" @click="closeRejectModal">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -52,7 +52,7 @@
         <div class="modal-body">
           <textarea
             v-model="rejectReason"
-            placeholder="반려 사유를 입력해주세요..."
+            :placeholder="rejectPlaceholder"
             rows="4"
             class="reason-textarea"
           ></textarea>
@@ -80,7 +80,7 @@
     >
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>승인 확인</h3>
+          <h3>{{ approveModalTitle }}</h3>
           <button class="close-button" @click="closeApproveModal">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -89,10 +89,10 @@
           </button>
         </div>
         <div class="modal-body">
-          <p>이 문서를 승인하시겠습니까?</p>
+          <p>{{ approveModalContent }}</p>
           <textarea
             v-model="approveComment"
-            placeholder="승인 의견을 입력해주세요 (선택사항)"
+            :placeholder="approvePlaceholder"
             rows="3"
             class="reason-textarea"
           ></textarea>
@@ -111,11 +111,13 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
+import { useToast } from "@/composables/useToast";
 
 const emit = defineEmits(["approve", "reject"]);
+const toast = useToast();
 
 const props = defineProps({
   document: {
@@ -130,6 +132,70 @@ const showApproveModal = ref(false);
 const rejectReason = ref("");
 const approveComment = ref("");
 const authStore = useAuthStore();
+
+// 현재 사용자의 역할과 차례 확인
+const currentUserLine = computed(() => {
+  if (!props.document?.lines || !authStore.userId) return null;
+  return props.document.lines.find(
+    (line) =>
+      String(line.id) === String(authStore.userId) && line.status === "WAITING"
+  );
+});
+
+// 디버깅을 위한 콘솔 로그 추가
+console.log("ApprovalActionButtons - currentUserLine:", currentUserLine.value);
+console.log("ApprovalActionButtons - authStore.userId:", authStore.userId);
+console.log("ApprovalActionButtons - document lines:", props.document?.lines);
+
+// 사용자 타입 (결재자/협조자)
+const userType = computed(() => {
+  const line = currentUserLine.value;
+  if (!line) return "결재"; // 기본값
+
+  console.log("ApprovalActionButtons - line.type:", line.type);
+
+  // userType이 명확하게 COOPERATOR인 경우에만 협조로 설정
+  if (line.type === "COOPERATOR") {
+    return "협조";
+  } else if (line.type === "APPROVER") {
+    return "결재";
+  } else {
+    // userType이 없거나 다른 값인 경우 기본값
+    console.warn("ApprovalActionButtons - Unknown userType:", line.type);
+    return "결재";
+  }
+});
+
+// 버튼 텍스트
+const approveButtonText = computed(() => {
+  return "승인";
+});
+
+const rejectButtonText = computed(() => {
+  return "반려";
+});
+
+// 모달 제목
+const approveModalTitle = computed(() => {
+  return "승인 확인";
+});
+
+const rejectModalTitle = computed(() => {
+  return "반려 사유 입력";
+});
+
+// 모달 내용
+const approveModalContent = computed(() => {
+  return "이 문서를 승인하시겠습니까?";
+});
+
+const approvePlaceholder = computed(() => {
+  return "승인 의견을 입력해주세요 (선택사항)";
+});
+
+const rejectPlaceholder = computed(() => {
+  return "반려 사유를 입력해주세요...";
+});
 
 const handleReject = () => {
   if (isProcessing.value) return;
@@ -156,13 +222,8 @@ const confirmReject = async () => {
 
   isProcessing.value = true;
   try {
-    const currentUserLine = props.document.lines.find(
-      (line) => line.id === authStore.userId && line.status === "WAITING"
-    );
-    const approvalType = currentUserLine?.type === "APPROVER" ? "결재" : "협조";
-
     const payload = {
-      approvalType: approvalType,
+      approvalType: userType.value,
       status: "반려",
       opinion: rejectReason.value.trim(),
     };
@@ -177,9 +238,16 @@ const confirmReject = async () => {
       reason: rejectReason.value.trim(),
     });
     closeRejectModal();
+
+    // 페이지 새로고침
+    window.location.reload();
   } catch (error) {
     console.error("반려 처리 중 오류가 발생했습니다:", error);
-    alert("반려 처리에 실패했습니다. 다시 시도해주세요.");
+    const errorMessage =
+      userType.value === "결재"
+        ? "반려 처리에 실패했습니다. 다시 시도해주세요."
+        : "협조 반려 처리에 실패했습니다. 다시 시도해주세요.";
+    toast.error(errorMessage);
   } finally {
     isProcessing.value = false;
   }
@@ -190,16 +258,15 @@ const confirmApprove = async () => {
 
   isProcessing.value = true;
   try {
-    const currentUserLine = props.document.lines.find(
-      (line) => line.id === authStore.userId && line.status === "WAITING"
-    );
-    const approvalType = currentUserLine?.type === "APPROVER" ? "결재" : "협조";
+    const defaultComment =
+      userType.value === "결재"
+        ? "내용 확인하였습니다. 승인합니다."
+        : "내용 확인하였습니다. 협조합니다.";
 
     const payload = {
-      approvalType: approvalType,
+      approvalType: userType.value,
       status: "승인",
-      opinion:
-        approveComment.value.trim() || "내용 확인하였습니다. 승인합니다.",
+      opinion: approveComment.value.trim() || defaultComment,
     };
 
     await api.post(
@@ -212,9 +279,16 @@ const confirmApprove = async () => {
       comment: approveComment.value.trim(),
     });
     closeApproveModal();
+
+    // 페이지 새로고침
+    window.location.reload();
   } catch (error) {
     console.error("승인 처리 중 오류가 발생했습니다:", error);
-    alert("승인 처리에 실패했습니다. 다시 시도해주세요.");
+    const errorMessage =
+      userType.value === "결재"
+        ? "승인 처리에 실패했습니다. 다시 시도해주세요."
+        : "협조 승인 처리에 실패했습니다. 다시 시도해주세요.";
+    toast.error(errorMessage);
   } finally {
     isProcessing.value = false;
   }

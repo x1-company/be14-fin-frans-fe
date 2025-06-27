@@ -22,6 +22,8 @@
             :key="person.id"
             :person="person"
             :isLast="index === approvalSequence.length - 1"
+            :index="index"
+            :flow="approvalSequence"
           />
         </div>
       </div>
@@ -112,17 +114,21 @@ const recipients = ref([]);
 
 // 결재 순서 (결재자 + 협조자가 순서대로 진행)
 const approvalSequence = computed(() => {
-  const sequence = [];
-
-  // 결재자들을 먼저 추가
-  sequence.push(...approvers.value.map((p) => ({ ...p, type: "approver" })));
-
-  // 협조자들을 추가 (플로우에 포함되는 협조자들)
-  sequence.push(
-    ...collaborators.value.map((c) => ({ ...c, type: "collaborator" }))
-  );
-
-  return sequence;
+  // DB 순서대로 결재자, 협조자만 플로우에 포함
+  return approvalLines.value
+    .filter((line) => line.type === "APPROVER" || line.type === "COOPERATOR")
+    .map((line) => ({
+      id: line.id,
+      name: line.userName,
+      department: line.departmentName,
+      position: line.positionName,
+      status: line.status,
+      processedAt: line.processedAt,
+      comment: line.opinion,
+      commentTime: line.processedAt,
+      readTime: line.checkedAt,
+      type: line.type === "APPROVER" ? "approver" : "collaborator",
+    }));
 });
 
 // API에서 결재선 데이터 가져오기
@@ -146,24 +152,26 @@ const fetchApprovalLines = async () => {
       .map((line) => ({
         id: line.id,
         name: line.userName,
-        position: line.userPosition,
-        department: line.userDepartment,
-        status: mapBackendStatus(line.status),
+        department: line.departmentName,
+        position: line.positionName,
+        status: line.status,
         processedAt: line.processedAt,
-        comment: line.comment,
-        commentTime: line.commentTime,
+        comment: line.opinion,
+        commentTime: line.processedAt,
+        readTime: line.checkedAt,
       }));
 
     collaborators.value = approvalLines.value
-      .filter((line) => line.type === "COLLABORATOR")
+      .filter((line) => line.type === "COOPERATOR")
       .map((line) => ({
         id: line.id,
         name: line.userName,
-        position: line.userPosition,
-        department: line.userDepartment,
-        status: mapBackendStatus(line.status),
-        comment: line.comment,
-        commentTime: line.commentTime,
+        department: line.departmentName,
+        position: line.positionName,
+        status: line.status,
+        comment: line.opinion,
+        commentTime: line.processedAt,
+        readTime: line.checkedAt,
       }));
 
     references.value = approvalLines.value
@@ -171,10 +179,10 @@ const fetchApprovalLines = async () => {
       .map((line) => ({
         id: line.id,
         name: line.userName,
-        position: line.userPosition,
-        department: line.userDepartment,
-        status: mapBackendStatus(line.status),
-        readTime: line.readTime,
+        department: line.departmentName,
+        position: line.positionName,
+        status: line.status,
+        readTime: line.checkedAt,
       }));
 
     recipients.value = approvalLines.value
@@ -182,9 +190,10 @@ const fetchApprovalLines = async () => {
       .map((line) => ({
         id: line.id,
         name: line.userName,
-        position: line.userPosition,
-        department: line.userDepartment,
-        status: mapBackendStatus(line.status),
+        department: line.departmentName,
+        position: line.positionName,
+        status: line.status,
+        readTime: line.checkedAt,
       }));
   } catch (err) {
     console.error("결재선 데이터 조회 실패:", err);
@@ -193,20 +202,6 @@ const fetchApprovalLines = async () => {
   } finally {
     loading.value = false;
   }
-};
-
-// 백엔드 상태를 프론트엔드 상태로 매핑
-const mapBackendStatus = (backendStatus) => {
-  const statusMap = {
-    WAITING: "waiting",
-    EXPECTED: "waiting",
-    COMPLETED: "completed",
-    APPROVED: "completed",
-    REJECTED: "rejected",
-    READ: "read",
-    UNREAD: "unread",
-  };
-  return statusMap[backendStatus] || "waiting";
 };
 
 // 컴포넌트 마운트 시 데이터 로드
@@ -233,6 +228,8 @@ const getStatusIconClass = (status) => {
       return "completed";
     case "pending":
       return "pending";
+    case "expected":
+      return "expected";
     default:
       return "default";
   }
@@ -454,6 +451,7 @@ const formatDateTime = (dateString) => {
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
+  background: #6c757d; /* 기본 회색 */
 }
 
 .status-icon.completed {
@@ -463,6 +461,11 @@ const formatDateTime = (dateString) => {
 
 .status-icon.pending {
   background: #007bff;
+  color: white;
+}
+
+.status-icon.expected {
+  background: #6c757d; /* 예정일 때 회색 */
   color: white;
 }
 

@@ -43,13 +43,30 @@
       >
         {{ step.label }}
       </div>
-      <div v-if="idx < steps.length - 1" class="bar" :class="{ completed: idx < currentStep && !isRejected && !isCanceled, rejected: isRejected && idx === 0, canceled: isCanceled && idx === 0 }"></div>
+      <div
+        v-if="idx < steps.length - 1"
+        class="bar"
+        :class="{
+          completed: idx < currentStep && !isRejected && !isCanceled,
+          rejected: isRejected && idx === 0,
+          canceled: isCanceled && idx === 0
+        }"
+      ></div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
+
+// 이미지 import (Vite에서 경로 깨짐 방지용)
+import ReviewingIcon from '@/assets/REVIEWING.png'
+import ReviewCompletedIcon from '@/assets/REVIEW_COMPLETED.png';
+import ApprovedIcon from '@/assets/APPROVED.png';
+import DeliveringIcon from '@/assets/DELIVERING.png';
+import DeliveredIcon from '@/assets/DELIVERED.png';
+import RejectedIcon from '@/assets/REJECTED.png';
+import ReceiptCanceledIcon from '@/assets/REVIEW_CANCEL.png';
 
 const props = defineProps({
   status: String
@@ -60,7 +77,18 @@ const isCanceled = computed(() => props.status === 'RECEIPT_CANCELED');
 
 const steps = computed(() => [
   { key: 'REVIEWING', label: '검토 중' },
-  { key: isRejected.value ? 'REJECTED' : isCanceled.value ? 'RECEIPT_CANCELED' : 'REVIEW_COMPLETED', label: isRejected.value ? '반려' : isCanceled.value ? '접수 취소' : '검토 완료' },
+  {
+    key: isRejected.value
+      ? 'REJECTED'
+      : isCanceled.value
+      ? 'RECEIPT_CANCELED'
+      : 'REVIEW_COMPLETED',
+    label: isRejected.value
+      ? '반려'
+      : isCanceled.value
+      ? '접수 취소'
+      : '검토 완료'
+  },
   { key: 'APPROVED', label: '결재 완료' },
   { key: 'DELIVERING', label: '배송 중' },
   { key: 'DELIVERED', label: '배송 완료' }
@@ -79,25 +107,21 @@ const statusToStep = {
 const currentStep = computed(() => statusToStep[props.status] ?? 0);
 
 function getIcon(key, isActive) {
-  if (key === 'REJECTED') {
-    return new URL('@/assets/rejected.png', import.meta.url).href;
-  }
-  if (key === 'RECEIPT_CANCELED') {
-    return new URL('@/assets/REVIEW_CANCEL.png', import.meta.url).href;
-  }
-  // 파랑/흰색 아이콘 분기 필요시 파일명 규칙에 맞게 수정
-  const suffix = isActive ? '-active' : '-inactive';
   switch (key) {
     case 'REVIEWING':
-      return new URL(`@/assets/reviewing.png`, import.meta.url).href;
+      return ReviewingIcon;
     case 'REVIEW_COMPLETED':
-      return new URL(`@/assets/review_completed.png`, import.meta.url).href;
+      return ReviewCompletedIcon;
     case 'APPROVED':
-      return new URL(`@/assets/approved.png`, import.meta.url).href;
+      return ApprovedIcon;
     case 'DELIVERING':
-      return new URL(`@/assets/delivering.png`, import.meta.url).href;
+      return DeliveringIcon;
     case 'DELIVERED':
-      return new URL(`@/assets/delivered.png`, import.meta.url).href;
+      return DeliveredIcon;
+    case 'REJECTED':
+      return RejectedIcon;
+    case 'RECEIPT_CANCELED':
+      return ReceiptCanceledIcon;
     default:
       return '';
   }
@@ -163,17 +187,17 @@ function getIcon(key, isActive) {
   transform: translateY(-50%);
 }
 .bar.completed {
-  background: #4285F4;
+  background: #4285f4;
 }
 .completed .circle {
-  background: #4285F4;
+  background: #4285f4;
 }
 .completed .label {
-  color: #4285F4;
+  color: #4285f4;
   font-weight: 700;
 }
 .active .circle {
-  background: #4285F4;
+  background: #4285f4;
 }
 .active .label {
   color: #1976d2;

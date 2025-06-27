@@ -59,6 +59,15 @@ const handleNotificationClick = (notification) => {
 
 const handleNotificationNavigation = (notification) => {
   if (notification.url) {
+    // url이 /로 시작하지 않고, status=...&url=... 형태라면 파싱
+    if (!notification.url.startsWith('/') && notification.url.includes('url=')) {
+      const params = new URLSearchParams(notification.url);
+      const url = params.get('url');
+      params.delete('url');
+      const query = params.toString();
+      router.push(query ? `${url}?${query}` : url);
+      return;
+    }
     router.push(notification.url);
   } else {
     // 알림 타입에 따라 적절한 페이지로 이동 (기존 fallback)
@@ -67,11 +76,9 @@ const handleNotificationNavigation = (notification) => {
         console.log('주문 페이지로 이동');
         break;
       case 'APPROVAL_REQUEST':
-        // 결재 요청 알림인 경우 해당 결재 상세 페이지로 이동
         if (notification.approvalId) {
           router.push(`/approval/${notification.approvalId}`);
         } else {
-          // approvalId가 없는 경우 결재 목록 페이지로 이동
           router.push('/approval');
         }
         break;
@@ -203,8 +210,10 @@ const formatTime = (dateString) => {
           <div
             v-for="notification in sortedNotifications"
             :key="notification.id"
-            class="notification-item"
-            :class="{ unread: !notification.readAt }"
+            :class="[
+              'notification-item',
+              notification.readAt ? 'read' : 'unread',
+            ]"
             @click="handleNotificationClick(notification)"
           >
             <div class="card-border"></div>
@@ -216,7 +225,7 @@ const formatTime = (dateString) => {
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <circle cx="12" cy="12" r="10" fill="#FF4D4F" />
+                <circle cx="12" cy="12" r="10" fill="#04C975" />
                 <path
                   d="M12 7V13"
                   stroke="white"
@@ -323,7 +332,7 @@ const formatTime = (dateString) => {
 }
 
 .toggle-switch.active {
-  background-color: #ff4d4f; /* 요청하신 빨간색으로 변경 */
+  background-color: #04c975; /* 활성 상태 배경색 */
 }
 
 .toggle-thumb {
@@ -387,24 +396,32 @@ const formatTime = (dateString) => {
 
 .notification-item {
   display: flex;
-  align-items: flex-start;
-  background: #ffffff;
-  border: 1px solid #ffccc7;
+  align-items: flex-start; /* 세로 정렬 기준 */
+  background-color: #fff;
+  border: 1px solid #04c975; /* 진한 녹색 테두리 */
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   position: relative;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s;
+  overflow: hidden; /* For border-radius to apply to children */
 }
 
 .notification-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #f7f7f7;
 }
 
-.notification-item:last-child {
-  margin-bottom: 0;
+.notification-item.unread {
+  background-color: #f7fffd;
+}
+
+.notification-item.read {
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.notification-item.read:hover {
+  opacity: 1;
 }
 
 .card-border {
@@ -412,22 +429,21 @@ const formatTime = (dateString) => {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 6px;
-  background-color: #ffccc7;
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  width: 6px; /* 두께 통일 */
+  background-color: #04c975; /* 진한 녹색 */
+  /* 둥근 모서리는 item에서 overflow:hidden으로 처리 */
 }
 
 .card-icon {
-  padding: 16px 12px 16px 18px;
+  padding: 16px 12px 16px 18px; /* 아이콘 주변 여백 원복 */
   display: flex;
   align-items: center;
+  align-self: stretch; /* 아이콘 영역이 전체 높이를 차지하도록 */
 }
 
 .card-main-content {
   flex-grow: 1;
-  padding: 16px 16px 16px 0;
-  padding-right: 30px;
+  padding: 16px 16px 16px 4px; /* 본문 여백 조정 */
 }
 
 .card-header {
@@ -455,19 +471,6 @@ const formatTime = (dateString) => {
   text-overflow: ellipsis;
 }
 
-.notification-item.unread {
-  border-color: #ff8a80;
-}
-
-.notification-item.unread .card-border {
-  background-color: #ff4d4f;
-}
-
-.notification-item.unread .notification-time {
-  color: #000;
-  font-weight: 700;
-}
-
 .delete-btn {
   position: absolute;
   top: 8px;
@@ -486,7 +489,7 @@ const formatTime = (dateString) => {
 }
 
 .delete-btn:hover {
-  background-color: #f0f0f0;
+  background-color: #396726;
   color: #333;
 }
 </style> 

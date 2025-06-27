@@ -83,6 +83,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/lib/api';
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const router = useRouter();
 
@@ -129,7 +132,7 @@ const fetchSuppliers = async () => {
     suppliers.value = data.map(s => ({ ...s, id: Number(s.id) }));
   } catch (error) {
     console.error('Failed to fetch suppliers:', error);
-    alert('공급처 목록을 불러오는 데 실패했습니다.');
+    toast.error('공급처 목록을 불러오는 데 실패했습니다.');
   }
 };
 
@@ -142,12 +145,12 @@ function cancelRegister() {
 async function saveProduct() {
   // 필수 필드 검증
   if (!formData.value.code || !formData.value.name) {
-    alert('자재번호와 자재명은 필수 입력 항목입니다.');
+    toast.warning('자재번호와 자재명은 필수 입력 항목입니다.');
     return;
   }
 
   if (!formData.value.supplierId) {
-    alert('공급처를 선택해주세요.');
+    toast.warning('공급처를 선택해주세요.');
     return;
   }
 
@@ -168,11 +171,11 @@ async function saveProduct() {
   
   try {
     await api.post('/api/hq/products', payload);
-    alert('자재가 성공적으로 등록되었습니다.');
+    toast.success('자재가 성공적으로 등록되었습니다.');
     router.push('/warehouse?tab=1');
   } catch (error) {
     console.error('Failed to create product:', error);
-    alert(`자재 등록에 실패했습니다: ${error.response?.data?.message || error.message}`);
+    toast.error(`자재 등록에 실패했습니다: ${error.response?.data?.message || error.message}`);
   }
 }
 

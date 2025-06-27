@@ -78,9 +78,9 @@ onMounted(async () => {
   if (!authStore.accessToken) return;
   try {
     // 창고 목록 API 엔드포인트로 변경
-    const { data } = await api.get("/api/hq/warehouses/list");
-    warehouses.value = data;
-    totalCount.value = data.length;
+    // const { data } = await api.get("/api/hq/warehouses/list");
+    // warehouses.value = data;
+    // totalCount.value = data.length;
   } catch (error) {
     console.error("창고 목록 불러오기 실패", error);
   }
@@ -101,7 +101,7 @@ const handleWarehouseClick = (warehouse) => {
 
 <style scoped>
 .sidebar {
-  width: 300px;
+  width: 230px;
   background: #f8f9fa;
   border-right: 1px solid #e9ecef;
   display: flex;

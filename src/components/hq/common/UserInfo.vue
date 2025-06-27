@@ -35,6 +35,9 @@
       @close="closeSignatureModal"
       @save="saveSignature"
     />
+
+    <!-- 내 정보 모달 -->
+    <MyInfo :isVisible="isMyInfoModalVisible" @close="closeMyInfoModal" />
   </div>
 </template>
 
@@ -45,6 +48,10 @@ import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
 import { useRouter } from "vue-router";
 import { UserIcon } from 'lucide-vue-next'
+import MyInfo from "./MyInfo.vue";
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const router = useRouter();
 
@@ -71,6 +78,7 @@ const auth = useAuthStore();
 const isDropdownOpen = ref(false);
 const dropdownRef = ref(null);
 const isSignatureModalVisible = ref(false);
+const isMyInfoModalVisible = ref(false);
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -81,7 +89,7 @@ const handleMenuClick = (menuItem) => {
 
   switch (menuItem) {
     case "마이 페이지":
-      // 마이 페이지로 이동
+      isMyInfoModalVisible.value = true;
       break;
     case "서명 관리":
       isSignatureModalVisible.value = true;
@@ -96,6 +104,10 @@ const handleMenuClick = (menuItem) => {
 const closeSignatureModal = () => {
   isSignatureModalVisible.value = false;
 };
+
+const closeMyInfoModal = () => {
+  isMyInfoModalVisible.value = false;
+}
 
 const saveSignature = async (signatureData) => {
   try {
@@ -128,10 +140,10 @@ const saveSignature = async (signatureData) => {
       auth.setAccessToken(newAccessToken.replace('Bearer ', ''));
     }
 
-    alert('서명이 성공적으로 저장되었습니다.')
+    toast.success('서명이 성공적으로 저장되었습니다.')
   } catch (error) {
     console.error("서명 저장 실패:", error);
-    alert("서명 저장에 실패했습니다.");
+    toast.error("서명 저장에 실패했습니다.");
   }
 };
 
@@ -143,7 +155,7 @@ const handleLogout = async () => {
       router.push("/login");
     } catch (error) {
       console.error("로그아웃 실패:", error);
-      alert("로그아웃에 실패했습니다.");
+      toast.error("로그아웃에 실패했습니다.");
     }
   }
 };

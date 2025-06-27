@@ -16,6 +16,7 @@
         <div class="orderlist-table-header">
           <div class="col-no">No.</div>
           <div class="col-code">문서번호</div>
+          <div class="col-franchise">가맹점명</div>
           <div class="col-date">반품일</div>
           <div class="col-desc">반품사유</div>
           <div class="col-amount">금액</div>
@@ -35,6 +36,9 @@
           >
             <div class="col-no">{{ index + 1 }}</div>
             <div class="col-code">{{ item.code }}</div>
+            <div class="col-franchise">{{
+              item.franchiseName || item.name
+            }}</div>
             <div class="col-date">{{ formatDate(item.createdAt) }}</div>
             <div class="col-desc">{{ item.description }}</div>
             <div class="col-amount">₩{{ formatAmount(item.totalAmount) }}</div>
@@ -192,7 +196,7 @@ onMounted(() => {
 
 .orderlist-table-header {
   display: grid;
-  grid-template-columns: 0.7fr 3fr 1.5fr 2fr 0.7fr;
+  grid-template-columns: 0.7fr 2.2fr 2fr 1.5fr 2fr 0.7fr;
   gap: 12px;
   padding: 16px;
   background-color: #e3effb;
@@ -206,7 +210,7 @@ onMounted(() => {
 
 .orderlist-table-row {
   display: grid;
-  grid-template-columns: 0.7fr 3fr 1.5fr 2fr 0.7fr;
+  grid-template-columns: 0.7fr 2.2fr 2fr 1.5fr 2fr 0.7fr;
   gap: 12px;
   padding: 16px;
   background-color: #ffffff;
@@ -276,6 +280,11 @@ onMounted(() => {
 }
 
 .col-code {
+  text-align: left;
+  color: #000000;
+}
+
+.col-franchise {
   text-align: left;
   color: #000000;
 }

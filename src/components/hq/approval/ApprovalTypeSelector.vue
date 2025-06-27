@@ -18,11 +18,35 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, watch, onMounted } from "vue";
 
 const emit = defineEmits(["type-selected"]);
 
-const selectedType = ref("ORDER");
+const props = defineProps({
+  initialType: { type: String, default: "ORDER" },
+  isEditMode: { type: Boolean, default: false },
+});
+
+const selectedType = ref(props.initialType);
+
+// 초기 타입 설정
+onMounted(() => {
+  if (props.initialType && props.initialType !== selectedType.value) {
+    selectedType.value = props.initialType;
+    console.log("ApprovalTypeSelector - initial type set:", props.initialType);
+  }
+});
+
+watch(
+  () => props.initialType,
+  (newType) => {
+    if (newType && newType !== selectedType.value) {
+      selectedType.value = newType;
+      console.log("ApprovalTypeSelector - type changed to:", newType);
+    }
+  },
+  { immediate: true }
+);
 
 // 결재 유형 옵션 (순서: 주문결재, 반품결재, 발주결재)
 const approvalTypes = ref([
@@ -33,6 +57,7 @@ const approvalTypes = ref([
 
 const selectType = (type) => {
   selectedType.value = type;
+  console.log("ApprovalTypeSelector - type selected:", type);
   emit("type-selected", type);
 };
 </script>

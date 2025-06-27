@@ -19,6 +19,9 @@
                 로그아웃
             </div>
         </div>
+
+        <!-- 내 정보 모달 -->
+        <MyInfo :isVisible="isMyInfoModalVisible" @close="closeMyInfoModal" />
     </div>
 </template>
 
@@ -27,7 +30,8 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
 import { useRouter } from "vue-router";
-import { UserIcon } from 'lucide-vue-next'
+import { UserIcon } from 'lucide-vue-next';
+import MyInfo from "./MyInfo.vue";
 
 const router = useRouter();
 
@@ -45,6 +49,7 @@ const props = defineProps({
 const auth = useAuthStore();
 const isDropdownOpen = ref(false);
 const dropdownRef = ref(null);
+const isMyInfoModalVisible = ref(false);
 
 const toggleDropdown = () => {
     isDropdownOpen.value = !isDropdownOpen.value;
@@ -55,7 +60,7 @@ const handleMenuClick = (menuItem) => {
 
     switch (menuItem) {
         case "마이 페이지":
-            // 마이 페이지로 이동
+            isMyInfoModalVisible.value = true;
             break;
         case "로그아웃":
             // 로그아웃 처리
@@ -82,6 +87,10 @@ const handleClickOutside = (event) => {
     }
 };
 
+const closeMyInfoModal = () => {
+  isMyInfoModalVisible.value = false;
+}
+
 onMounted(() => {
     document.addEventListener("click", handleClickOutside);
 });
@@ -93,86 +102,86 @@ onUnmounted(() => {
 
 <style scoped>
 .profile-dropdown {
-    position: relative;
+  position: relative;
 }
 
 .profile-section {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .navbar__username {
-    font-size: 1rem;
-    color: #fff;
-    font-weight: 400;
+  font-size: 0.9rem;
+  color: #fff;
+  font-weight: 1000;
 }
 
 .navbar__user {
-    width: 32px;
-    height: 32px;
-    background: #e6f0ff;
-    border-radius: 50%;
-    display: inline-block;
-    cursor: pointer;
-    transition: background-color 0.2s;
+  width: 28px;
+  height: 28px;
+  background: #e6f0ff;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .navbar__user:hover {
-    background: #d1e7ff;
+  background: #d1e7ff;
 }
 
 .navbar__profile-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-    display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .dropdown-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    width: 130px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 1px solid #e5e7eb;
-    padding: 8px 0;
-    z-index: 1000;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 100px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  padding: 4px 0;
+  z-index: 1000;
 }
 
 .dropdown-item {
-    padding: 12px 16px;
-    color: #374151;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
+  padding: 12px 16px;
+  color: #374151;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
 }
 
 .dropdown-item:hover {
-    background-color: #f3f4f6;
+  background-color: #f3f4f6;
 }
 
 .dropdown-item:first-child {
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .dropdown-item:last-child {
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .navbar__profile-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #6c757d;
-    background: #e6f0ff;
-    border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  background: #e6f0ff;
+  border-radius: 50%;
 }
 </style>

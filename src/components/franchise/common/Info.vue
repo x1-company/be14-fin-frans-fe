@@ -25,25 +25,73 @@
 
           <FranchiseInfo v-if="activeTabSwitch === 1" />
 
-                    <div v-if="activeTabSwitch === 2">
-                        <OrderRegister v-if="showOrderRegister" @back-to-list="showOrderRegister = false" />
-                        <OrderList v-else @show-register-view="showOrderRegister = true" />
-                    </div>
-                    
-                    <div v-if="activeTabSwitch === 3">
-                      
-                    </div>
+          <div v-if="activeTabSwitch === 2">
+            <OrderRegister v-if="showOrderRegister" @back-to-list="showOrderRegister = false" />
+            
+            <div v-else-if="orderDetailId">
+              <div v-if="loading">로딩 중...</div>
+              <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
+              <div v-else>
+                <FrOrderActionButtons
+                    :orderId="orderDetailId"
+                    :rejectedReason="order?.rejectedReason"
+                    :status="order?.status"
+                    :delivery-info="{
+                        deliveryCompany: order?.deliveryCompany,
+                        name: order?.driverName,
+                        phone: order?.driverPhone,
+                        trackingNumber: order?.trackingNumber
+                    }"
+                    @refreshOrder="fetchOrderDetail"
+                    @close="handleBackToList"
+                />
+                <OrderProgressBar :status="order?.status" />
+                <FranchiseInfoCard :order="order" />
+                <OrderInfoCard :order="order" />
+                <ProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
+                <DeliveryInfoCard :order="order" />
+              </div>
+            </div>
 
-          <div v-if="activeTabSwitch === 4" class="content-section">
-            <h3>매출관리 컨텐츠</h3>
-            <p>매출 관리 내용이 여기에 표시됩니다.</p>
-            <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
+            <OrderList 
+                v-else 
+                :franchiseId="franchiseId" 
+                :selectedFranchiseId="selectedFranchiseId"
+                @show-order-detail="handleShowOrderDetail"
+                @show-register-view="showOrderRegister = true" />
           </div>
+          
+          <div v-if="activeTabSwitch === 3">
+            <!-- 반품 상세 보기 -->
+            <div v-if="returnDetailId">
+              <div v-if="returnLoading">로딩 중...</div>
+              <div v-else-if="!returnData">반품 상세 데이터를 불러올 수 없습니다.</div>
+              <div v-else>
+                <!-- 뒤로가기 버튼 -->
+                <div class="detail-header">
+                  <button @click="handleBackToReturnList" class="back-button">
+                    ← 반품 목록으로 돌아가기
+                  </button>
+                </div>
+                
+                <!-- 반품 상세 컴포넌트들을 세로로 배치 -->
+                <ReturnProgressBar :status="returnData?.status" />
+                <ReturnInfoCard :returnData="returnData" />
+                <ProductTable 
+                  :products="returnData?.returnProducts" 
+                  :totalAmount="returnData?.totalAmount" 
+                />
+                <DeliveryInfoCard :returnData="returnData" />
+              </div>
+            </div>
 
-          <div v-if="activeTabSwitch === 5" class="content-section">
-            <h3>재고관리 컨텐츠</h3>
-            <p>재고 관리 내용이 여기에 표시됩니다.</p>
-            <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
+            <!-- 반품 목록 -->
+            <ReturnList 
+              v-else
+              :franchiseId="franchiseId" 
+              :selectedFranchiseId="selectedFranchiseId"
+              @show-return-detail="handleShowReturnDetail"
+            />
           </div>
         </div>
       </div>
@@ -52,16 +100,28 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from './InfoHeader.vue'
 import FranchiseInfo from '@/components/franchise/info/FranchiseInfo.vue'
 import OrderList from '@/components/franchise/order/OrderList.vue'
 import OrderRegister from '@/components/franchise/order/OrderRegister.vue'
-import ReturnList from '@/components/hq/return/list/ReturnList.vue'
+import FrOrderActionButtons from '@/components/hq/orders/detail/OrderActionButtons.vue'
+import OrderProgressBar from '@/components/hq/orders/detail/OrderProgressBar.vue'
+import FranchiseInfoCard from '@/components/hq/orders/detail/FranchiseInfoCard.vue'
+import DeliveryInfoCard from '@/components/franchise/return/detail/DeliveryInfoCard.vue'
+import OrderInfoCard from '@/components/hq/orders/detail/OrderInfoCard.vue'
+import ProductTable from '@/components/franchise/return/detail/ProductTable.vue'
+import ReturnList from '@/components/franchise/return/list/ReturnList.vue'
+import ReturnProgressBar from '@/components/franchise/return/detail/ReturnProgressBar.vue'
+import ReturnInfoCard from '@/components/franchise/return/detail/ReturnInfoCard.vue'
+import api from '@/lib/api'
 
 const props = defineProps({
   activeTab: String,
+  franchiseId: [String, Number],
+  selectedFranchiseId: [String, Number],
 });
 
 const emit = defineEmits(["tab-change"]);
@@ -77,8 +137,6 @@ const tabs = [
   "가맹점 정보",
   "주문관리",
   "반품관리",
-  "매출관리",
-  "재고관리",
 ];
 
 const tabInfo = ref([
@@ -86,11 +144,82 @@ const tabInfo = ref([
   { title: "가맹점 정보", desc: "가맹점 정보를 관리할 수 있습니다." },
   { title: "주문 관리", desc: "주문을 관리할 수 있습니다." },
   { title: "반품 관리", desc: "반품을 관리할 수 있습니다." },
-  { title: "매출 관리", desc: "매출을 관리할 수 있습니다." },
-  { title: "재고 관리", desc: "재고를 관리할 수 있습니다." },
 ]);
 
 const activeTabSwitch = ref(0);
+const showOrderRegister = ref(false);
+const orderDetailId = ref(null);
+const order = ref(null);
+const loading = ref(false);
+
+// 반품 관련 상태
+const returnDetailId = ref(null);
+const returnData = ref(null);
+const returnLoading = ref(false);
+
+const route = useRoute();
+
+const handleShowOrderDetail = (id) => {
+  orderDetailId.value = id;
+};
+
+const handleBackToList = () => {
+  orderDetailId.value = null;
+  order.value = null;
+};
+
+// 반품 상세 보기 핸들러
+const handleShowReturnDetail = (id) => {
+  returnDetailId.value = id;
+};
+
+// 반품 목록으로 돌아가기
+const handleBackToReturnList = () => {
+  returnDetailId.value = null;
+  returnData.value = null;
+};
+
+const fetchOrderDetail = async () => {
+  if (!orderDetailId.value) return;
+  loading.value = true;
+  try {
+    const response = await api.get(`/api/franchise/orders/${orderDetailId.value}`);
+    order.value = response.data;
+  } catch (error) {
+    console.error('Error fetching order details:', error);
+    order.value = null;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 반품 상세 데이터 가져오기
+const fetchReturnDetail = async () => {
+  if (!returnDetailId.value) return;
+  returnLoading.value = true;
+  try {
+    const response = await api.get(`/api/franchise/return/${returnDetailId.value}`);
+    returnData.value = response.data;
+  } catch (error) {
+    console.error('Error fetching return details:', error);
+    returnData.value = null;
+  } finally {
+    returnLoading.value = false;
+  }
+};
+
+watch(orderDetailId, (newId) => {
+  if (newId) {
+    fetchOrderDetail();
+  }
+});
+
+// 반품 상세 ID 변경 감지
+watch(returnDetailId, (newId) => {
+  if (newId) {
+    fetchReturnDetail();
+  }
+});
 
 // props.activeTab 값이 변경될 때 activeTabSwitch 업데이트
 watch(
@@ -104,14 +233,18 @@ watch(
   { immediate: true }
 );
 
-const showOrderRegister = ref(false);
-
-// activeTab이 '주문관리'가 아니게 되면, 목록 뷰로 리셋
+// activeTab이 '주문관리'가 아니게 되면, 뷰 리셋
 watch(
   () => activeTabSwitch.value,
   (newTabIndex) => {
     if (newTabIndex !== 2) {
       showOrderRegister.value = false;
+      orderDetailId.value = null;
+    }
+    // 반품관리 탭이 아니게 되면 반품 상세 뷰 리셋
+    if (newTabIndex !== 3) {
+      returnDetailId.value = null;
+      returnData.value = null;
     }
   }
 );
@@ -120,11 +253,25 @@ const title = computed(() => {
   if (activeTabSwitch.value === 2 && showOrderRegister.value) {
     return "주문 등록";
   }
+  if (activeTabSwitch.value === 2 && orderDetailId.value) {
+    return "주문 상세";
+  }
+  if (activeTabSwitch.value === 3 && returnDetailId.value) {
+    return "반품 상세";
+  }
+  
   return tabInfo.value[activeTabSwitch.value]?.title || "대시보드";
 });
+
 const desc = computed(() => {
   if (activeTabSwitch.value === 2 && showOrderRegister.value) {
     return "주문할 자재를 등록할 수 있습니다.";
+  }
+  if (activeTabSwitch.value === 2 && orderDetailId.value) {
+    return "주문의 상세 내역을 확인합니다.";
+  }
+  if (activeTabSwitch.value === 3 && returnDetailId.value) {
+    return "반품의 상세 내역을 확인합니다.";
   }
   return tabInfo.value[activeTabSwitch.value]?.desc || "대시보드입니다.";
 });
@@ -134,6 +281,26 @@ const updateTab = (newTabIndex) => {
   const selectedTab = tabs[newTabIndex];
   emit("tab-change", selectedTab);
 };
+
+onMounted(() => {
+  // 주문관리 탭 + orderId 쿼리 있을 때 자동 상세 오픈
+  if (route.query.tab === '주문관리' && route.query.orderId) {
+    activeTabSwitch.value = 2;
+    orderDetailId.value = route.query.orderId;
+    fetchOrderDetail();
+  }
+});
+
+watch(
+  () => [route.query.tab, route.query.orderId],
+  ([tab, orderId]) => {
+    if (tab === '주문관리' && orderId) {
+      activeTabSwitch.value = 2;
+      orderDetailId.value = orderId;
+      fetchOrderDetail();
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -144,20 +311,17 @@ const updateTab = (newTabIndex) => {
   height: 100%;
   background: #f8f9fa;
   overflow: hidden;
-  /* 전체 컨테이너는 overflow 숨김 */
 }
 
 .breadcrumb-container {
   flex-shrink: 0;
-  /* 브레드크럼은 고정 크기 */
-  padding: 20px 30px;
+  padding: 15px 30px;
   background: #f8f9fa;
 }
 
 .info-content-wrapper {
   flex: 1;
   overflow-y: auto;
-  /* 여기서 스크롤 가능하게 */
   padding: 0 24px 24px 24px;
 }
 
@@ -169,7 +333,6 @@ const updateTab = (newTabIndex) => {
   border-radius: 16px;
   box-shadow: 0 2px 16px 0 rgba(64, 102, 250, 0.06);
   min-height: fit-content;
-  /* 내용에 맞게 높이 조정 */
 }
 
 .tab-content {
@@ -194,5 +357,25 @@ const updateTab = (newTabIndex) => {
   margin: 0;
   color: #6c757d;
   line-height: 1.5;
+}
+
+.detail-header {
+  margin-bottom: 20px;
+}
+
+.back-button {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background: #e9ecef;
+  color: #212529;
 }
 </style>

@@ -33,6 +33,7 @@
         :selectedTemplate="selectedTemplate"
         :approvalId="approvalId"
         :approvalDetail="approvalDetail"
+        :activeTabSwitch="currentTabIndex === 1 ? 0 : currentTabIndex"
         @active-tab-change="handleActiveTabChange"
         @toggle-registration-mode="handleToggleRegistrationMode"
         @template-deleted="handleTemplateDeleted"
@@ -52,13 +53,16 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted } from "vue";
+import { ref, watch, nextTick, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import NavBar from "@/components/hq/common/NavBar.vue";
 import SideBar from "@/components/hq/approval/SideBar.vue";
 import TemplateSideBar from "@/components/hq/approval/TemplateSideBar.vue";
 import Info from "@/components/hq/approval/Info.vue";
 import api from "@/lib/api";
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const approvalList = ref([]);
 const mainTab = ref("상신"); // '상신' 또는 '수신'
@@ -77,6 +81,28 @@ const route = useRoute();
 const router = useRouter();
 const approvalId = ref(route.params.approvalId);
 const approvalDetail = ref(null);
+
+// 등록/수정 모드 감지
+const isRegisterMode = computed(() => {
+  return (
+    route.name === "approval-register" ||
+    route.path.includes("/approval/register")
+  );
+});
+
+// 등록 모드일 때 자동으로 등록 모드 활성화
+watch(
+  isRegisterMode,
+  (newValue) => {
+    if (newValue) {
+      console.log("등록 모드 감지됨:", route.path);
+      isRegistrationMode.value = true;
+      currentTabIndex.value = 1; // 전자결재 탭
+      activeTab.value = "전자결재";
+    }
+  },
+  { immediate: true }
+);
 
 const handleSelectMenu = (menuValue) => {
   const sentMenus = ["상신-전체", "임시저장", "결재중", "결재완료", "결재반려"];
@@ -97,6 +123,13 @@ const handleSelectMenu = (menuValue) => {
 
   currentTabIndex.value = 1;
   isRegistrationMode.value = false;
+
+  // 상세보기 모드일 때 사이드바 클릭하면 상세보기 종료
+  if (approvalId.value) {
+    approvalId.value = null;
+    approvalDetail.value = null;
+    router.push("/approval");
+  }
 };
 
 const handleTabChange = (tab) => {
@@ -119,9 +152,12 @@ const handleRegisterApproval = () => {
 };
 
 const handleToggleRegistrationMode = (value) => {
-  // 파라미터가 있으면 해당 값으로, 없으면 토글
   isRegistrationMode.value =
     value !== undefined ? value : !isRegistrationMode.value;
+  if (value === false) {
+    currentTabIndex.value = 1; // 전자결재 탭 인덱스
+    activeTab.value = "임시저장"; // 임시저장 목록 탭 이름
+  }
 };
 
 // 템플릿 삭제 처리
@@ -187,7 +223,7 @@ const handleReorderComplete = async () => {
     reorderChanges.value = [];
   } catch (error) {
     console.error("순서 변경 실패:", error);
-    alert("순서 변경에 실패했습니다.");
+    toast.error("순서 변경에 실패했습니다.");
 
     // 실패 시 사이드바 롤백
     if (templateSidebarRef.value) {
@@ -345,9 +381,6 @@ const fetchApprovalList = async () => {
       approvalList.value = [];
     }
   } else {
-    console.warn(
-      `No endpoint found for key: ${endpointKey} in ${mainTab.value}`
-    );
     approvalList.value = [];
   }
 };
@@ -376,16 +409,40 @@ onMounted(fetchCounts);
 watch(
   () => route.params.approvalId,
   async (newId) => {
+    console.log("라우터 파라미터 approvalId:", newId);
     approvalId.value = newId;
+
+    // 등록 모드일 때는 상세 정보를 가져오지 않음
+    if (isRegisterMode.value) {
+      console.log("등록 모드이므로 상세 정보를 가져오지 않습니다.");
+      approvalDetail.value = null;
+      return;
+    }
+
     if (newId) {
       try {
-        const response = await api.get(
-          `/api/hq/approvals/detail/${newId}/content`
-        );
-        // API 응답이 배열 형태일 수 있으므로 첫 번째 항목을 사용합니다.
-        approvalDetail.value = Array.isArray(response.data)
-          ? response.data[0]
-          : response.data;
+        // 문서 내용과 결재선 정보를 모두 가져오기
+        const [contentResponse, linesResponse] = await Promise.all([
+          api.get(`/api/hq/approvals/detail/${newId}/content`),
+          api.get(`/api/hq/approvals/detail/${newId}/lines`),
+        ]);
+
+        // 문서 내용
+        const documentContent = Array.isArray(contentResponse.data)
+          ? contentResponse.data[0]
+          : contentResponse.data;
+
+        // 결재선 정보
+        const approvalLines = linesResponse.data;
+
+        // 두 정보를 합쳐서 approvalDetail 생성
+        approvalDetail.value = {
+          ...documentContent,
+          lines: Array.isArray(approvalLines)
+            ? approvalLines
+            : approvalLines.line, // 객체면 .line을 사용
+        };
+        console.log("approvalDetail 세팅:", approvalDetail.value);
       } catch (error) {
         console.error("결재 상세 정보 조회 실패:", error);
         approvalDetail.value = null;

@@ -7,6 +7,8 @@
       :activeTab="activeTab"
       @tab-change="handleTabChange"
       @select-menu="handleSelectMenu"
+      @document-view="handleDocumentView"
+      @edit-document="handleEditDocument"
     />
 
     <!-- 수신 관련 메뉴일 때 ReceptionList 표시 -->
@@ -24,6 +26,7 @@
       :activeTab="activeTab"
       @tab-change="handleTabChange"
       @select-menu="handleSelectMenu"
+      @document-view="handleDocumentView"
     />
 
     <!-- 협조문서 관련 메뉴일 때 ReceptionCooperatorList 표시 -->
@@ -33,6 +36,7 @@
       :activeTab="activeTab"
       @tab-change="handleTabChange"
       @select-menu="handleSelectMenu"
+      @document-view="handleDocumentView"
     />
 
     <!-- 참조문서 관련 메뉴일 때 ReferenceList 표시 -->
@@ -51,12 +55,15 @@
 
 <script setup>
 import { defineProps, computed } from "vue";
+import { useRouter } from "vue-router";
 import ApprovalList from "@/components/hq/approval/ApprovalList.vue";
 import ReceptionList from "@/components/hq/approval/sidebarReception/ReceptionList.vue";
 import ReceptionApproverList from "@/components/hq/approval/sidebarReception/ReceptionApproverList.vue";
 import ReceptionCooperatorList from "@/components/hq/approval/sidebarReception/ReceptionCooperatorList.vue";
 import ReferenceList from "@/components/hq/approval/sidebarReception/ReferenceList.vue";
 import NotificationList from "@/components/hq/approval/sidebarReception/NotificationList.vue";
+
+const router = useRouter();
 
 // 둘다 있어야 메뉴와 탭들이 움직임
 const handleTabChange = (tabValue) => {
@@ -65,7 +72,10 @@ const handleTabChange = (tabValue) => {
 const handleSelectMenu = (menuValue) => {
   emit("select-menu", menuValue); // Info.vue 로 전달
 };
-const emit = defineEmits(["tab-change", "select-menu"]);
+const handleEditDocument = (document) => {
+  emit("edit-document", document);
+};
+const emit = defineEmits(["tab-change", "select-menu", "edit-document"]);
 
 const props = defineProps({
   approvalList: {
@@ -164,6 +174,12 @@ const shouldShowNotificationList = computed(() => {
   // 수신문서 관련 메뉴인 경우
   return props.activeMenu === "수신문서";
 });
+
+const handleDocumentView = (document) => {
+  if (document && document.approvalId) {
+    router.push(`/approval/${document.approvalId}`);
+  }
+};
 
 // const getStatusClass = (status) => {
 //   const statusMap = {

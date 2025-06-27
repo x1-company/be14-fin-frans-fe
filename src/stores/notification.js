@@ -52,12 +52,7 @@ export const useNotificationStore = defineStore("notification", () => {
     });
   });
 
-  // --- ACTIONS ---
-
   const setNotifications = (freshNotifications) => {
-    // 🚀 하드 삭제 방식: localStorage 관련 로직 제거
-    // const key = getDeletedIdsKey();
-    // _deletedIds.value = getDeletedIdsFromStorage(key);
     
     // 개발 환경에서만 로그 출력
     if (process.env.NODE_ENV === 'development') {
@@ -76,8 +71,7 @@ export const useNotificationStore = defineStore("notification", () => {
   };
 
   const addNotification = (notification) => {
-    // 🚀 하드 삭제 방식: 삭제된 ID 체크 제거
-    // 이미 존재하는 알림인지 확인만
+
     const existingNotification = _notifications.value.find(n => n.id === notification.id);
     if (existingNotification) {
       console.log('중복 알림 무시:', notification.id);
@@ -92,11 +86,7 @@ export const useNotificationStore = defineStore("notification", () => {
   };
 
   const removeNotification = (notificationId) => {
-    // 🚀 하드 삭제 방식: localStorage 저장 제거
-    // _deletedIds.value.add(notificationId);
-    // const key = getDeletedIdsKey();
-    // saveDeletedIdsToStorage(key, _deletedIds.value);
-    
+
     console.log('알림 삭제됨:', notificationId);
 
     const index = _notifications.value.findIndex(
@@ -113,11 +103,6 @@ export const useNotificationStore = defineStore("notification", () => {
   const clearReadNotifications = () => {
     const readNotifications = _notifications.value.filter(n => n.readAt);
     if (readNotifications.length === 0) return;
-    
-    // 🚀 하드 삭제 방식: localStorage 저장 제거
-    // readNotifications.forEach(n => _deletedIds.value.add(n.id));
-    // const key = getDeletedIdsKey();
-    // saveDeletedIdsToStorage(key, _deletedIds.value);
     
     console.log('읽은 알림들 삭제됨:', readNotifications.length, '개');
 
@@ -148,7 +133,6 @@ export const useNotificationStore = defineStore("notification", () => {
     _unreadCount.value = 0;
     _isConnected.value = false;
     _showRealtimeNotifications.value = true;
-    // 삭제된 ID 목록은 유지 (사용자별로 영구 저장)
   };
 
   const setConnectionStatus = (status) => {
