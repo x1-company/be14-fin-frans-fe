@@ -119,9 +119,18 @@ export default {
 .person-type-label {
   font-size: 13px;
   font-weight: 600;
-  color: #6f42c1;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   letter-spacing: 0.5px;
+  padding: 6px 18px;
+  border-radius: 12px;
+  display: inline-block;
+  text-align: center;
+  background: v-bind(
+    'props.person.type === "approver" ? "#e3f0ff" : props.person.type === "collaborator" ? "#e8f5e9" : "#f1f3f5"'
+  );
+  color: v-bind(
+    'props.person.type === "approver" ? "#1976d2" : props.person.type === "collaborator" ? "#2e7d32" : "#6c757d"'
+  );
 }
 .type-icon {
   margin-bottom: 4px;

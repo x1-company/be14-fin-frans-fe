@@ -1,5 +1,15 @@
 <template>
   <div class="template-sidebar">
+    <!-- Header -->
+    <div class="sidebar-header">
+      <div class="header-item">
+        <img
+          src="@/assets/approval.png"
+          alt="결재 관리"
+          class="sidebar__icon"
+        />결재 관리
+      </div>
+    </div>
     <!-- 템플릿 등록 버튼 -->
     <div class="register-button-container">
       <button @click="openRegisterModal" class="register-button">
@@ -9,26 +19,13 @@
 
     <!-- 검색창 -->
     <div class="search-container">
-      <div class="search-box">
-        <svg
-          class="search-icon"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <circle cx="11" cy="11" r="8"></circle>
-          <path d="m21 21-4.35-4.35"></path>
-        </svg>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="템플릿 검색..."
-          class="search-input"
-        />
-      </div>
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="템플릿 검색"
+        class="search-input"
+      />
+      <span class="search-icon">🔍</span>
     </div>
 
     <!-- 템플릿 목록 -->
@@ -51,31 +48,13 @@
         @dragleave="handleDragLeave"
         @drop="handleDrop(index, $event)"
       >
-        <div
-          v-if="isReorderMode && selectedTemplateId === template.id"
-          class="drag-handle"
-        >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 8h16M4 16h16"
-            ></path>
-          </svg>
+        <div class="template-card-header">
+          <img src="@/assets/approval-template.png" class="template-icon" />
+          <div class="template-card-info">
+            <div class="template-name">{{ template.name }}</div>
+          </div>
         </div>
-        <div class="template-header">
-          <h3 class="template-name">{{ template.name }}</h3>
-        </div>
-        <p class="template-description">{{ template.description }}</p>
-        <div class="template-footer">
-          <div class="template-users"> </div>
-        </div>
+        <div class="template-description">{{ template.description }}</div>
         <!-- 순서 변경 모드일 때 비활성화된 템플릿에 오버레이 표시 -->
         <div
           v-if="isReorderMode && selectedTemplateId !== template.id"
@@ -86,19 +65,15 @@
       </div>
     </div>
 
-    <!-- 로딩 상태 -->
+    <!-- 로딩/에러/빈 상태 등 기존 코드 유지 -->
     <div v-if="loading" class="loading-container">
       <div class="loading-spinner"></div>
       <p>템플릿을 불러오는 중...</p>
     </div>
-
-    <!-- 에러 상태 -->
     <div v-if="error" class="error-container">
       <p class="error-message">{{ error }}</p>
       <button @click="fetchTemplates" class="retry-button">다시 시도</button>
     </div>
-
-    <!-- 빈 상태 -->
     <div
       v-if="!loading && !error && templates.length === 0"
       class="empty-container"
@@ -119,8 +94,6 @@
       </svg>
       <p>등록된 템플릿이 없습니다.</p>
     </div>
-
-    <!-- 템플릿 등록 모달 -->
     <TemplateRegisterModal
       v-if="showRegisterModal"
       @close="closeRegisterModal"
@@ -354,6 +327,23 @@ defineExpose({
 </script>
 
 <style scoped>
+.sidebar-header {
+  padding: 20px 20px 0 20px;
+  background: white;
+}
+.header-item {
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.sidebar__icon {
+  width: 21px;
+  height: 18px;
+}
+
 .template-sidebar {
   width: 230px;
   height: 100%;
@@ -369,7 +359,6 @@ defineExpose({
   border-bottom: 1px solid #e9ecef;
   background: white;
 }
-
 .register-button {
   width: 100%;
   display: flex;
@@ -386,49 +375,31 @@ defineExpose({
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
-
 .register-button:hover {
   background: #5a67d8;
 }
 
+/* 검색창 스타일 OrderSideBar와 유사하게 */
 .search-container {
+  position: relative;
   padding: 16px;
   border-bottom: 1px solid #e9ecef;
   background: white;
 }
-
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  color: #6c757d;
-  z-index: 1;
-}
-
 .search-input {
   width: 100%;
-  padding: 10px 12px 10px 36px;
+  padding: 6px 25px 5px 10px;
   border: 1px solid #dee2e6;
-  border-radius: 8px;
-  font-size: 14px;
-  background: #f8f9fa;
-  transition: all 0.2s ease;
+  border-radius: 6px;
+  font-size: 12px;
+  box-sizing: border-box;
 }
-
-.search-input:focus {
-  outline: none;
-  border-color: #667eea;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.search-input::placeholder {
-  color: #adb5bd;
+.search-icon {
+  position: absolute;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
 }
 
 .template-list {
@@ -444,50 +415,56 @@ defineExpose({
 .template-card {
   background: white;
   border: 1px solid #e9ecef;
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
   position: relative;
   display: flex;
   flex-direction: column;
 }
-
-.template-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+.template-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-
+.template-icon {
+  width: 23px;
+  height: 22px;
+}
+.template-card-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.template-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 2px;
+}
+.template-description {
+  font-size: 12px;
+  color: #6c757d;
+  margin: 10px;
+}
 .template-card.selected {
   border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  background: #f8f9ff;
 }
-
 .template-card.draggable {
   cursor: move;
 }
-
-.template-card.draggable:hover {
-  transform: translateY(-2px);
-}
-
 .template-card.disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
-.template-card.disabled:hover {
-  border-color: #e9ecef;
-  box-shadow: none;
-  transform: none;
-}
-
 .template-card.drag-over {
   border-color: #667eea;
   background: #e8f0fe;
   transform: scale(1.02);
 }
-
 .disabled-overlay {
   position: absolute;
   top: 0;
@@ -498,70 +475,15 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 8px;
   z-index: 10;
 }
-
 .disabled-text {
   font-size: 12px;
   color: #6c757d;
   font-weight: 500;
   text-align: center;
   padding: 8px;
-}
-
-.drag-handle {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  color: #6c757d;
-  cursor: grab;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-  z-index: 5;
-}
-
-.drag-handle:hover {
-  background: #e9ecef;
-  color: #495057;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-}
-
-.template-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.template-name {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  color: inherit;
-}
-
-.template-description {
-  font-size: 14px;
-  color: #6c757d;
-  margin: 0 0 12px 0;
-  line-height: 1.4;
-}
-
-.template-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.template-users {
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .loading-container,
