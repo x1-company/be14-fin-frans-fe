@@ -11,9 +11,18 @@
       "
     />
     <div v-else>
-      <!-- 헤더 -->
-      <div class="header-section">
-        <h2 class="header-title">참조문서 목록</h2>
+      <!-- 탭 메뉴 -->
+      <div class="tab-container">
+        <div class="tab-list">
+          <button
+            v-for="tab in tabs"
+            :key="tab.value"
+            :class="['tab-button', { active: activeTab === tab.value }]"
+            @click="selectTab(tab.value)"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
       </div>
 
       <!-- 검색 영역 -->
@@ -121,8 +130,8 @@
         <!-- 빈 상태 -->
         <div v-if="filteredDocuments.length === 0" class="empty-state">
           <div class="empty-icon">📄</div>
-          <h3>참조 문서가 없습니다</h3>
-          <p>참조로 지정된 문서가 없습니다.</p>
+          <h3>문서가 없습니다</h3>
+          <p>{{ getEmptyMessage() }}</p>
         </div>
       </div>
     </div>
@@ -133,12 +142,21 @@
 import { ref, computed } from "vue";
 import ApprovalDetail from "@/components/hq/approval/Detail/ApprovalDetail.vue";
 
-const emit = defineEmits(["document-click", "document-view"]);
+const emit = defineEmits([
+  "document-click",
+  "document-view",
+  "tab-change",
+  "select-menu",
+]);
 
 const props = defineProps({
   approvalList: {
     type: Array,
     required: true,
+  },
+  activeTab: {
+    type: String,
+    default: "전체",
   },
 });
 
@@ -148,6 +166,9 @@ const searchQuery = ref("");
 // 상세 보기 모드 상태 관리
 const isDetailViewMode = ref(false);
 const selectedDocument = ref(null);
+
+// 탭 설정
+const tabs = [{ label: "전체", value: "전체" }];
 
 // 필터링된 문서
 const filteredDocuments = computed(() => {
@@ -197,6 +218,20 @@ const groupedDocuments = computed(() => {
 });
 
 // 메서드
+const selectTab = (tabValue) => {
+  emit("tab-change", tabValue);
+
+  // 사이드바 메뉴 선택을 위한 이벤트 전달
+  const menuMapping = {
+    전체: "참조-전체",
+  };
+
+  const menuToSelect = menuMapping[tabValue];
+  if (menuToSelect) {
+    emit("select-menu", menuToSelect);
+  }
+};
+
 const handleSearch = () => {
   // 검색 로직은 computed에서 처리됨
 };
@@ -254,6 +289,10 @@ const formatAmount = (amount) => {
   if (!amount) return "";
   return `₩${amount.toLocaleString()}`;
 };
+
+const getEmptyMessage = () => {
+  return "등록된 문서가 없습니다.";
+};
 </script>
 
 <style scoped>
@@ -264,59 +303,80 @@ const formatAmount = (amount) => {
   overflow: hidden;
 }
 
-/* 헤더 */
-.header-section {
-  padding: 24px 32px 16px 32px;
+/* 탭 메뉴 */
+.tab-container {
   border-bottom: 1px solid #e9ecef;
-  background: white;
+  background: #f8f9fa;
 }
 
-.header-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #212529;
+.tab-list {
+  display: flex;
+  padding: 0 24px;
+  background-color: white;
+}
+
+.tab-button {
+  padding: 8px 25px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: #6c757d;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: #495057;
+}
+
+.tab-button.active {
+  color: #4066fa;
+  border-bottom-color: #4066fa;
+  border-bottom: 2px solid #1976d2;
+  background: none;
 }
 
 /* 검색 영역 */
 .search-section {
-  padding: 24px 32px;
-  border-bottom: 1px solid #e9ecef;
-  background: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .search-box {
-  position: relative;
-  max-width: 400px;
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border-radius: 24px;
+  padding: 8px 16px;
+  width: 320px;
+  gap: 8px;
 }
 
 .search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
   width: 16px;
   height: 16px;
-  color: #6c757d;
+  color: #969696;
 }
 
 .search-box input {
-  width: 100%;
-  padding: 12px 12px 12px 40px;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
   font-size: 14px;
-  transition: border-color 0.2s ease;
+  color: #495057;
 }
 
-.search-box input:focus {
-  outline: none;
-  border-color: #4066fa;
+.search-box input::placeholder {
+  color: #969696;
 }
 
 /* 문서 목록 */
 .document-list {
-  padding: 24px 32px;
+  padding: 0 80px;
 }
 
 .date-group {
@@ -328,14 +388,12 @@ const formatAmount = (amount) => {
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  padding: 8px 0;
-  border-bottom: 1px solid #e9ecef;
+  color: #6c757d;
 }
 
 .calendar-icon {
   width: 16px;
   height: 16px;
-  color: #6c757d;
 }
 
 .date-text {
@@ -444,12 +502,13 @@ const formatAmount = (amount) => {
 }
 
 .detail-btn {
-  background: #6c757d;
-  color: white;
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
 }
 
 .detail-btn:hover {
-  background: #5a6268;
+  background: #e9ecef;
 }
 
 /* 빈 상태 */

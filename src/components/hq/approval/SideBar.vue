@@ -1,15 +1,15 @@
 <template>
   <div class="sidebar">
     <!-- Header -->
-    <!-- <div class="sidebar-header">
-      <div class="header-content">
-        <div class="logo"> </div>
-        <div class="header-text">
-          <span class="app-name">FRAMS</span>
-          <span class="app-subtitle">전자결재</span>
-        </div>
+    <div class="sidebar-header">
+      <div class="header-item">
+        <img
+          src="@/assets/approval.png"
+          alt="결재 관리"
+          class="sidebar__icon"
+        />결재 관리
       </div>
-    </div> -->
+    </div>
 
     <div class="register-button-container">
       <button @click="handleRegisterApproval" class="register-button">
@@ -271,7 +271,6 @@
       </div>
     </div>
   </div>
-  <!-- 생략 -->
 </template>
 
 <script setup>
@@ -367,57 +366,37 @@ const handleCollaborationDocsClick = () => {
 <style scoped>
 /* 메인 사이드바 컨테이너 */
 .sidebar {
-  width: 230px;
-  background: #f8f9fa;
+  width: 230px; /* 최소 너비 추가 */
+  flex-shrink: 0; /* 줄어들지 않게 */
+  background: #ffffff;
   border-right: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100%; /* 화면 전체 높이로 고정 */
+  overflow-x: hidden; /* 가로 스크롤 방지 */
+  position: relative; /* 겹침 방지 */
+  z-index: 2;
 }
 
 /* 헤더 */
 .sidebar-header {
-  padding: 16px;
-  border-bottom: 1px solid #e9ecef;
+  padding: 20px 20px 0 20px;
+  /* border-bottom: 1px solid #e9ecef; */
+  background: white;
 }
 
-.header-content {
+.header-item {
+  font-weight: 500;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-bottom: 16px;
 }
 
-.logo {
-  width: 32px;
-  height: 32px;
-  background: #007bff;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.logo-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.app-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: #212529;
-}
-
-.app-subtitle {
-  font-size: 12px;
-  color: #6c757d;
+.sidebar__icon {
+  width: 21px;
+  height: 18px;
 }
 
 /* 탭 헤더 */

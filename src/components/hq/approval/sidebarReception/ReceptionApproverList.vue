@@ -428,7 +428,7 @@ const goBack = () => {
   font-size: 15px;
   font-weight: 500;
   color: #6c757d;
-  border-bottom: 3px solid transparent;
+  border-bottom: 1px solid transparent;
   transition: all 0.2s ease;
 }
 
