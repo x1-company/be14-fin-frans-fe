@@ -1,7 +1,7 @@
 <template>
   <div class="return-form">
     <!-- 상단 탭 UI -->
-    <div class="return-form__tabs">
+    <div class="return-form__tabs" v-if="!showReturnRegister">
       <div
         v-for="(tab, idx) in tabs"
         :key="tab.value"
