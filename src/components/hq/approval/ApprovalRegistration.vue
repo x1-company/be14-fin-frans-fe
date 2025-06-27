@@ -84,6 +84,7 @@ const emit = defineEmits([
   "cancel",
   "approval-submitted",
   "counts-refresh",
+  "draft-saved",
 ]);
 
 const props = defineProps({
@@ -201,7 +202,15 @@ const processAndSubmit = async (isRequest) => {
   const currentFormRef = getCurrentFormRef();
   if (currentFormRef && currentFormRef.getFormData) {
     const currentFormData = currentFormRef.getFormData();
-    formData.value = { ...formData.value, ...currentFormData };
+    // title이 비어있지 않을 때만 병합
+    if (currentFormData.title && currentFormData.title.trim()) {
+      formData.value.title = currentFormData.title;
+    }
+    formData.value = {
+      ...formData.value,
+      ...currentFormData,
+      title: formData.value.title || currentFormData.title || "",
+    };
     formData.value.approvalDocuments = { ...currentFormData.approvalDocuments };
   }
 
@@ -229,8 +238,14 @@ const processAndSubmit = async (isRequest) => {
       return;
     }
   } else {
-    if (!formData.value.title.trim()) {
-      formData.value.title = "임시 저장 문서";
+    // 임시저장 시에도 제목은 필수
+    console.log("임시저장 제목 검증:", formData.value.title);
+    if (
+      !formData.value.title.trim() ||
+      formData.value.title.trim().length < 2
+    ) {
+      showToast.error("제목을 2자 이상 입력해주세요.");
+      return;
     }
   }
 
@@ -298,8 +313,37 @@ const processAndSubmit = async (isRequest) => {
         );
       }
     } else {
-      // 등록 모드: POST /api/hq/approvals
-      response = await api.post("/api/hq/approvals", requestData);
+      // 등록 모드
+      if (isRequest) {
+        // 결재 요청: POST /api/hq/approvals
+        response = await api.post("/api/hq/approvals", requestData);
+      } else {
+        // 임시저장: POST /api/hq/approvals/drafts
+        const draftRequestData = {
+          title: formData.value.title,
+          remarks: formData.value.remarks,
+          isRequest: false,
+          categoryType:
+            selectedType.value === "PURCHASE"
+              ? "PURCHASE_ORDER"
+              : selectedType.value,
+          approvalDocumentId: formData.value.approvalDocuments.documentIds,
+          approvalLines: (() => {
+            const approvalLines = [];
+            let seq = 1;
+            formData.value.approvalLines.forEach((line) => {
+              approvalLines.push({
+                userId: line.userId || line.id,
+                seq: seq++,
+                type: line.type,
+              });
+            });
+            return approvalLines;
+          })(),
+          files: uploadedFiles,
+        };
+        response = await api.post("/api/hq/approvals/drafts", draftRequestData);
+      }
     }
 
     console.log("결재 등록/수정 응답:", response.data);
@@ -327,7 +371,7 @@ const processAndSubmit = async (isRequest) => {
       } else {
         // 임시저장이거나 ID가 없는 경우 기존 동작
         console.log("임시저장 또는 ID 없음, 등록 모드 종료");
-        emit("cancel", true);
+        emit("draft-saved");
       }
     } else {
       throw new Error(

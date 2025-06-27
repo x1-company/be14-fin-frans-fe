@@ -47,7 +47,7 @@
                     <td>{{ doc.documentNo || doc.code || "-" }}</td>
                     <td>{{ doc.franchiseName || doc.name || "-" }}</td>
                     <td>{{ doc.createdAt || doc.date || "-" }}</td>
-                    <td>{{ doc.amount || doc.totalAmount || "-" }}</td>
+                    <td>{{ formatCurrency(doc.amount || doc.totalAmount) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -260,18 +260,18 @@
           <!-- 저장/등록 버튼 영역 -->
           <div class="action-buttons">
             <button
-              class="temp-save-button"
-              @click="handleTempSave"
+              class="edit-button"
+              @click="handleEdit"
               :disabled="isSubmitting"
             >
-              임시저장
+              수정
             </button>
             <button
-              class="submit-button"
-              @click="handleSubmit"
+              class="register-button"
+              @click="handleRegister"
               :disabled="isSubmitting"
             >
-              {{ props.isEditMode ? "수정" : "등록" }}
+              등록
             </button>
           </div>
         </div>
@@ -305,16 +305,18 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
 import UnifiedDocumentList from "./modal/UnifiedDocumentList.vue";
 import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
 import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
 import { useToast } from "@/composables/useToast";
 
 const toast = useToast();
+ 
 
 const props = defineProps({
   type: String,
@@ -369,6 +371,8 @@ const formData = ref({
 // authStore에서 사용자 서명 자동 설정
 const authStore = useAuthStore();
 
+const toast = useToast();
+
 // 컴포넌트 마운트 시 사용자 서명 자동 설정
 onMounted(async () => {
   console.log("[ApprovalEdit] mounted, props:", { ...props });
@@ -376,16 +380,25 @@ onMounted(async () => {
   // 수정 모드이고 approvalId가 있으면 기존 데이터 로드
   if (props.isEditMode && props.approvalId) {
     try {
-      const response = await api.get(`/api/hq/approvals/${props.approvalId}`);
-      if (response.status === 200 && response.data?.data) {
-        const approvalData = response.data.data;
-
-        // 폼 데이터 설정
+      const response = await api.get(
+        `/api/hq/approvals/draft/${props.approvalId}`
+      );
+      console.log(response);
+      if (response.status === 200 && response.data) {
+        const approvalData = response.data;
         formData.value = {
           title: approvalData.title || "",
           remarks: approvalData.remarks || "",
-          approvalLines: approvalData.lines || [],
-          files: approvalData.files || [],
+          approvalLines: (approvalData.lines || []).map((line) => ({
+            ...line,
+            name: line.approverName || line.name,
+            dept: line.deptName || line.dept,
+            position: line.positionName || line.position,
+          })),
+          files: (approvalData.files || []).map((f) => ({
+            name: f.name || f.fileName,
+            url: f.url,
+          })),
           approvalDocuments: {
             documentIds: Array.isArray(approvalData.approvalDocuments)
               ? approvalData.approvalDocuments.map((doc) => doc.documentId)
@@ -394,15 +407,23 @@ onMounted(async () => {
           },
           signUrl: approvalData.signUrl || "",
         };
+        await nextTick();
+        emitFormData();
 
         // 문서 ID가 있으면 문서 정보도 가져오기
         if (
           Array.isArray(approvalData.approvalDocuments) &&
           approvalData.approvalDocuments.length > 0
         ) {
-          fetchDocuments(
-            approvalData.approvalDocuments.map((doc) => doc.documentId)
-          );
+          // 문서 정보가 이미 배열로 들어온 경우 바로 할당
+          documents.value = approvalData.approvalDocuments.map((doc) => ({
+            ...doc,
+            date: formatDate(doc.createdAt),
+            createdAt: formatDate(doc.createdAt),
+            name: doc.franchiseName || doc.name,
+            amount: doc.amount || doc.totalAmount,
+            code: doc.documentNo || doc.code,
+          }));
         }
       }
     } catch (error) {
@@ -433,7 +454,8 @@ const filteredDocuments = computed(() => {
 });
 
 const formatCurrency = (amount) => {
-  return `₩${amount.toLocaleString()}`;
+  if (!amount && amount !== 0) return "-";
+  return `₩${parseInt(amount, 10).toLocaleString()}`;
 };
 
 const formatFileSize = (bytes) => {
@@ -501,9 +523,7 @@ const handleFileSelect = (event) => {
   files.forEach((file) => {
     formData.value.files.push({
       name: file.name,
-      size: file.size,
-      file: file,
-      url: "",
+      url: file.url,
     });
   });
   emitFormData();
@@ -529,6 +549,7 @@ const handleSelectDocuments = (selectedDocuments) => {
         id: doc.id || doc.code,
         code: doc.code,
         date: formatDate(doc.createdAt),
+        createdAt: formatDate(doc.createdAt),
         amount: doc.totalAmount,
       };
 
@@ -607,8 +628,16 @@ watch(
         formData.value = {
           title: newData.title || "",
           remarks: newData.remarks || "",
-          approvalLines: newData.lines || [],
-          files: newData.files || [],
+          approvalLines: (newData.lines || []).map((line) => ({
+            ...line,
+            name: line.approverName || line.name,
+            dept: line.deptName || line.dept,
+            position: line.positionName || line.position,
+          })),
+          files: (newData.files || []).map((f) => ({
+            name: f.name || f.fileName,
+            url: f.url,
+          })),
           approvalDocuments: {
             documentIds: Array.isArray(newData.approvalDocuments)
               ? newData.approvalDocuments.map((doc) => doc.documentId)
@@ -739,7 +768,9 @@ const updateRemarksCount = () => {
   }
 };
 
-const handleTempSave = async () => {
+const router = useRouter();
+
+const handleEdit = async () => {
   if (isSubmitting.value) return;
 
   try {
@@ -787,10 +818,17 @@ const handleTempSave = async () => {
 
     console.log("임시저장 전송 데이터 확인:", requestData);
 
-    const response = await api.post("/api/hq/approvals", requestData);
+    const response = await api.put(
+      `/api/hq/approvals/${props.approvalId}`,
+      requestData
+    );
 
     if (response.status === 200 || response.status === 201) {
       toast.success("임시저장이 완료되었습니다.");
+      emit("approval-submitted", response.data);
+      router.push("/approval").then(() => {
+        window.location.reload();
+      });
     }
   } catch (error) {
     console.error("임시저장 실패:", error);
@@ -800,26 +838,32 @@ const handleTempSave = async () => {
   }
 };
 
-const handleSubmit = async () => {
+const handleRegister = async () => {
   if (isSubmitting.value) return;
 
-  if (!formData.value.title.trim()) {
-    toast.warning("제목을 입력해주세요.");
+  // 디버깅용: formData 값 확인
+  console.log(
+    "handleRegister formData:",
+    JSON.parse(JSON.stringify(formData.value))
+  );
+
+  if (!formData.value.title || !formData.value.title.trim()) {
+    toast.error("제목을 입력해주세요.");
     return;
   }
-
-  if (!formData.value.remarks.trim()) {
-    toast.warning("내용을 입력해주세요.");
+  if (
+    !formData.value.approvalLines ||
+    formData.value.approvalLines.length === 0
+  ) {
+    toast.error("결재선을 지정해주세요.");
     return;
   }
-
-  if (formData.value.approvalLines.length === 0) {
-    toast.warning("결재선을 지정해주세요.");
-    return;
-  }
-
-  if (formData.value.approvalDocuments.length === 0) {
-    toast.warning("주문 문서를 선택해주세요.");
+  if (
+    !formData.value.approvalDocuments ||
+    !formData.value.approvalDocuments.documentIds ||
+    formData.value.approvalDocuments.documentIds.length === 0
+  ) {
+    toast.error("주문 문서를 선택해주세요.");
     return;
   }
 
@@ -861,28 +905,18 @@ const handleSubmit = async () => {
       approvalLines: approvalLines,
       files: files,
       approvalDocuments: {
-        approvalDocuments: {
-          documents: formData.value.approvalDocuments,
-          ...formData.value.approvalDocuments,
-        },
-        categoryType: categoryType.value,
+        categoryType: formData.value.approvalDocuments.categoryType,
+        documentIds: formData.value.approvalDocuments.documentIds,
       },
     };
 
-    console.log("전송 데이터 확인:", requestData);
+    console.log("결재등록 PATCH body:", requestData);
 
-    let response;
-
-    if (props.isEditMode && props.approvalId) {
-      // 수정 모드: PUT 요청
-      response = await api.put(
-        `/api/hq/approvals/${props.approvalId}`,
-        requestData
-      );
-    } else {
-      // 등록 모드: POST 요청
-      response = await api.post("/api/hq/approvals", requestData);
-    }
+    // PUT 요청
+    const response = await api.put(
+      `/api/hq/approvals/${props.approvalId}`,
+      requestData
+    );
 
     if (response.status === 200 || response.status === 201) {
       const message = props.isEditMode
@@ -890,6 +924,7 @@ const handleSubmit = async () => {
         : "결재가 등록되었습니다.";
       toast.success(message);
       emit("approval-submitted", response.data);
+      router.push(`/approval/${props.approvalId}`);
     }
   } catch (error) {
     console.error("결재 등록/수정 실패:", error);
@@ -1026,6 +1061,7 @@ const fetchDocuments = async (documentIds) => {
           id: doc.id || doc.code,
           code: doc.code,
           date: formatDate(doc.createdAt),
+          createdAt: formatDate(doc.createdAt),
           amount: doc.totalAmount,
         };
 
@@ -1061,7 +1097,7 @@ const approvalLineDetails = computed(() => {
   return Array.isArray(props.initialData?.lines) ? props.initialData.lines : [];
 });
 
-// 모달 닫기 핸들러 추가
+// 모달 닫기 핸들러 수정
 const handleCloseModal = () => {
   emit("close");
 };
@@ -1516,8 +1552,8 @@ defineExpose({
   margin-top: 32px;
 }
 
-.temp-save-button,
-.submit-button {
+.edit-button,
+.register-button {
   padding: 12px 24px;
   border-radius: 6px;
   border: none;
@@ -1527,24 +1563,24 @@ defineExpose({
   transition: all 0.2s;
 }
 
-.temp-save-button {
+.edit-button {
   background: #f3f4f6;
   color: #374151;
 }
 
-.temp-save-button:disabled {
+.edit-button:disabled {
   background: #e5e7eb;
   color: #9ca3af;
   cursor: not-allowed;
 }
 
-.submit-button {
+.register-button {
   background: #4066fa;
   color: white;
   border: 1px solid #4066fa;
 }
 
-.submit-button:disabled {
+.register-button:disabled {
   background: #b3c6fa;
   color: #f3f4f6;
   cursor: not-allowed;

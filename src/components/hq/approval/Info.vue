@@ -10,7 +10,7 @@
             :title="title"
             :desc="desc"
             :tabs="['전자결재', '결재템플릿']"
-            :activeTab="activeTabSwitch"
+            :activeTab="props.activeTabSwitch"
             @select-tab="updateTab"
             @update-breadcrumb="updateBreadcrumb"
           />
@@ -36,10 +36,10 @@
 
           <!-- 전자결재 목록 -->
           <InfoForm
-            v-else-if="activeTabSwitch == 0 && !isRegistrationMode"
+            v-else-if="props.activeTabSwitch == 0 && !isRegistrationMode"
             :approvalList="approvalList"
-            :activeTab="activeTab"
-            :activeMenu="activeMenu"
+            :activeTab="props.activeTab"
+            :activeMenu="props.activeMenu"
             @tab-change="handleTabChange"
             @select-menu="handleSelectMenu"
             @refresh-list="$emit('refresh-list')"
@@ -48,17 +48,18 @@
 
           <!-- 결재 등록 -->
           <ApprovalRegistration
-            v-else-if="activeTabSwitch === 0 && isRegistrationMode"
+            v-else-if="props.activeTabSwitch === 0 && isRegistrationMode"
             :selectedTemplate="props.selectedTemplate"
             :approvalId="props.approvalId"
             @cancel="(value) => handleToggleRegistrationMode(value)"
             @approval-submitted="handleApprovalSubmitted"
             @counts-refresh="handleCountsRefresh"
+            @draft-saved="handleDraftSaved"
           />
 
           <!-- 결재템플릿 -->
           <ApprovalTemplate
-            v-else-if="activeTabSwitch === 1"
+            v-else-if="props.activeTabSwitch === 1"
             :selectedTemplate="props.selectedTemplate"
             :reorderChanges="props.reorderChanges"
             @template-deleted="handleTemplateDeleted"
@@ -141,9 +142,6 @@ const tabInfo = ref([
   { title: "결재템플릿", desc: "결재 템플릿을 관리할 수 있습니다." },
 ]);
 
-const activeTabSwitch = ref(0); // 기본값 0 (전자결재 탭)
-
-// props로 받은 activeTab 값이 변경될 때 activeTabSwitch 업데이트
 const props = defineProps({
   approvalList: Array,
   selectedTemplate: { type: Object, default: null },
@@ -154,23 +152,11 @@ const props = defineProps({
   reorderChanges: Array,
   approvalId: [String, Number],
   approvalDetail: Object,
+  activeTabSwitch: Number,
 });
 
-// props.activeTab 값이 변경될 때 activeTabSwitch 업데이트
-watch(
-  () => props.activeTab,
-  (newValue) => {
-    if (newValue === "결재템플릿" || newValue === "1") {
-      activeTabSwitch.value = 1;
-    } else {
-      activeTabSwitch.value = 0;
-    }
-  },
-  { immediate: true }
-);
-
-const title = computed(() => tabInfo.value[activeTabSwitch.value].title);
-const desc = computed(() => tabInfo.value[activeTabSwitch.value].desc);
+const title = computed(() => tabInfo.value[props.activeTabSwitch].title);
+const desc = computed(() => tabInfo.value[props.activeTabSwitch].desc);
 
 const emit = defineEmits([
   "tab-change",
@@ -185,14 +171,12 @@ const emit = defineEmits([
   "approval-submitted",
   "close-detail",
   "select-menu",
-  "counts-refresh", // 새로 추가된 이벤트
+  "counts-refresh",
 ]);
 
 const updateTab = (newTabIndex) => {
-  activeTabSwitch.value = newTabIndex;
   updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
 
-  // 결재템플릿 탭(인덱스 1)일 때는 currentTabIndex를 2로 설정
   if (newTabIndex === 1) {
     emit("active-tab-change", 2);
   } else {
@@ -207,14 +191,10 @@ const updateTab = (newTabIndex) => {
 
 const handleToggleRegistrationMode = (value) => {
   if (value === true) {
-    activeTabSwitch.value = 0;
-    updateBreadcrumb(["HOME", "결재관리", "전자결재"]);
-    emit("active-tab-change", 0);
+    emit("toggle-registration-mode", value);
   }
-  emit("toggle-registration-mode", value);
 };
 
-// 템플릿 관련 이벤트 핸들러
 const handleTemplateDeleted = () => {
   emit("template-deleted");
 };
@@ -243,9 +223,13 @@ const handleSelectMenu = (menu) => {
   emit("select-menu", menu);
 };
 
-// 카운트 새로고침 이벤트 핸들러 추가
 const handleCountsRefresh = () => {
   emit("counts-refresh");
+};
+
+const handleDraftSaved = () => {
+  emit("toggle-registration-mode", false);
+  emit("refresh-list");
 };
 </script>
 
