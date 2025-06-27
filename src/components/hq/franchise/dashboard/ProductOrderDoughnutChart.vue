@@ -11,7 +11,7 @@
       데이터가 없습니다.
     </div>
     <div v-if="filteredData.length" class="custom-legend" style="margin-top: 18px; display: flex; flex-wrap: wrap; gap: 18px 32px; justify-content: center;">
-      <div v-for="(label, idx) in doughnutData.labels" :key="label" style="display: flex; align-items: center; min-width: 120px;">
+      <div v-for="(label, idx) in doughnutData.labels" :key="idx" style="display: flex; align-items: center; min-width: 120px;">
         <span :style="{display:'inline-block', width:'18px', height:'18px', background: doughnutData.datasets[0].backgroundColor[idx], marginRight:'8px', borderRadius:'4px'}"></span>
         <span>{{ label }}</span>
       </div>
@@ -56,7 +56,7 @@ const filteredData = computed(() =>
 )
 
 const colorPalette = [
-  '#A8DADC', '#89CFF0', '#B0E0E6', '#CAE4DB', '#D3E4CD', '#F0E2E6', '#F7D6BF', '#E8D9F0', '#FFD6A5', '#B5EAD7', '#FFDAC1', '#E2F0CB'
+  '#3366FF', '#FFB800', '#FF5C5C', '#00C49A', '#888888', '#FF7F50', '#8A2BE2', '#FF69B4', '#00BFFF', '#FFD700', '#32CD32', '#FF6347'
 ]
 
 const doughnutData = computed(() => {

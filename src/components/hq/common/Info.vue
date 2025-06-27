@@ -30,14 +30,14 @@
               <button class="stats-tab-btn" :class="{ active: statsTab === 1 }" @click="selectStatsTab(1)">자재별 분석</button>
                     </div>
 
-            <div class="doughnut-top-row">
-              <div class="doughnut-top-right">
-                <label style="font-weight:500; margin-right:8px;">월 선택:</label>
-                <select v-model="selectedMonth" @change="handleMonthChange" class="month-dropdown">
-                  <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
-                </select>
-              </div>
-                    </div>
+                    <div class="doughnut-top-row">
+  <div class="doughnut-top-right" v-if="statsTab === 1 || !props.selectedFranchiseId">
+    <label style="font-weight:500; margin-right:8px;">월 선택:</label>
+    <select v-model="selectedMonth" @change="handleMonthChange" class="month-dropdown">
+      <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
+    </select>
+  </div>
+</div>
 
             <div class="stats-graph-card">
               <template v-if="statsTab === 0">
