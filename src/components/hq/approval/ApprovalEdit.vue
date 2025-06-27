@@ -316,7 +316,6 @@ import { useRouter } from "vue-router";
 import { useToast } from "@/composables/useToast";
 
 const toast = useToast();
- 
 
 const props = defineProps({
   type: String,
@@ -370,8 +369,6 @@ const formData = ref({
 
 // authStore에서 사용자 서명 자동 설정
 const authStore = useAuthStore();
-
-const toast = useToast();
 
 // 컴포넌트 마운트 시 사용자 서명 자동 설정
 onMounted(async () => {
