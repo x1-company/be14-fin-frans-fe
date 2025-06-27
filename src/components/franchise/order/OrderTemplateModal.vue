@@ -165,6 +165,24 @@
           </div>
         </div>
       </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div v-if="showDeleteModal" class="custom-modal-overlay">
+        <div class="custom-modal confirm-modal">
+          <div class="modal-header-confirm">
+            <span class="modal-icon">🗑️</span>
+            <span class="modal-title-confirm danger">템플릿 삭제</span>
+            <button class="modal-close-btn" @click="showDeleteModal = false">&times;</button>
+          </div>
+          <div class="modal-message-box danger">
+            <span>해당 주문 템플릿을 삭제 하시겠습니까?</span>
+          </div>
+          <div class="modal-actions-confirm">
+            <button class="btn-cancel" @click="showDeleteModal = false">취소</button>
+            <button class="btn-danger" @click="doDeleteTemplate">삭제</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -208,6 +226,9 @@ const registerForm = ref({
 });
 const registerSearchQuery = ref('');
 const registerSearchResults = ref([]);
+
+const showDeleteModal = ref(false);
+const deleteTarget = ref({ id: null, name: '' });
 
 const fetchTemplates = async () => {
   isLoading.value = true;
@@ -253,21 +274,9 @@ const toggleManageMode = () => {
   isManageMode.value = !isManageMode.value;
 };
 
-const confirmDelete = async (templateId, templateName) => {
-  if (confirm(`'${templateName}' 템플릿을 정말 삭제하시겠습니까?`)) {
-    try {
-      await api.delete(`/api/franchise/orders/template/${templateId}`);
-      toast.success('템플릿이 삭제되었습니다.');
-      fetchTemplates();
-      // If the deleted template was being viewed, go back to list
-      if (detailedTemplate.value && detailedTemplate.value.id === templateId) {
-        detailedTemplate.value = null;
-      }
-    } catch (error) {
-      console.error('Failed to delete template:', error);
-      toast.error('템플릿 삭제에 실패했습니다.');
-    }
-  }
+const confirmDelete = (templateId, templateName) => {
+  deleteTarget.value = { id: templateId, name: templateName };
+  showDeleteModal.value = true;
 };
 
 const showTemplateDetails = async (templateId) => {
@@ -463,6 +472,22 @@ const registerTemplate = async () => {
     fetchTemplates();
   } catch (error) {
     toast.error('템플릿 등록에 실패했습니다.');
+  }
+};
+
+const doDeleteTemplate = async () => {
+  try {
+    await api.delete(`/api/franchise/orders/template/${deleteTarget.value.id}`);
+    toast.success('템플릿이 삭제되었습니다.');
+    fetchTemplates();
+    if (detailedTemplate.value && detailedTemplate.value.id === deleteTarget.value.id) {
+      detailedTemplate.value = null;
+    }
+  } catch (error) {
+    toast.error('템플릿 삭제에 실패했습니다.');
+  } finally {
+    showDeleteModal.value = false;
+    deleteTarget.value = { id: null, name: '' };
   }
 };
 </script>
@@ -829,5 +854,106 @@ textarea.form-input {
 }
 .register-btn:hover {
   background: #3453c7;
+}
+
+.custom-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.custom-modal.confirm-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 0 0 18px 0;
+  min-width: 330px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.modal-header-confirm {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 22px 18px 0 18px;
+  position: relative;
+}
+.modal-icon {
+  font-size: 1.4rem;
+  color: #e53935;
+  margin-right: 4px;
+}
+.modal-title-confirm {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e53935;
+}
+.modal-title-confirm.danger {
+  color: #e53935;
+}
+.modal-close-btn {
+  position: absolute;
+  right: 24px;
+  top: 28px;
+  background: none;
+  border: none;
+  font-size: 1.7rem;
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.modal-message-box.danger {
+  background: #f8d7da;
+  color: #b71c1c;
+  border-radius: 10px;
+  padding: 16px 12px;
+  margin: 18px 18px 0 18px;
+  font-size: 0.9rem;
+  text-align: center;
+  width: calc(100% - 36px);
+}
+.modal-actions-confirm {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  width: 100%;
+  padding-right: 18px;
+}
+.btn-cancel {
+  background: #f5f5f5;
+  color: #333;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 22px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-cancel:hover {
+  background: #e0e0e0;
+}
+.btn-danger {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 22px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-danger:hover {
+  background: #b71c1c;
 }
 </style> 
