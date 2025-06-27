@@ -130,7 +130,7 @@
                   수정하기
                 </button>
                 <button
-                  v-else-if="!canEdit(document)"
+                  v-else
                   class="action-btn detail-btn"
                   @click.stop="
                     () => {

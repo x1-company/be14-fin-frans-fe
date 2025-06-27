@@ -344,6 +344,7 @@ const emit = defineEmits([
   "add-file",
   "remove-file",
   "close",
+  "refresh-list",
 ]);
 
 const showModal = ref(false);
@@ -1140,7 +1141,8 @@ const approvalLineDetails = computed(() => {
 
 // 모달 닫기 핸들러 수정
 const handleCloseModal = () => {
-  emit("close");
+  router.push("/approval");
+  emit("refresh-list");
 };
 
 defineExpose({
