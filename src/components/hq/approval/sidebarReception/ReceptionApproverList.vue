@@ -417,19 +417,18 @@ const goBack = () => {
 .tab-list {
   display: flex;
   padding: 0 24px;
-  border-bottom: 1.5px solid #e0e0e0;
   background-color: white;
 }
 
 .tab-button {
-  padding: 16px 32px;
+  padding: 8px 25px;
   border: none;
   background: none;
   cursor: pointer;
   font-size: 15px;
   font-weight: 500;
   color: #6c757d;
-  border-bottom: 3px solid transparent;
+  border-bottom: 1px solid transparent;
   transition: all 0.2s ease;
 }
 
@@ -440,48 +439,49 @@ const goBack = () => {
 .tab-button.active {
   color: #4066fa;
   border-bottom-color: #4066fa;
-  font-weight: 600;
+  border-bottom: 2px solid #1976d2;
+  background: none;
 }
 
 /* 검색 영역 */
 .search-section {
-  padding: 24px 32px;
-  border-bottom: 1px solid #e9ecef;
-  background: white;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .search-box {
-  position: relative;
-  max-width: 400px;
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border-radius: 24px;
+  padding: 8px 16px;
+  width: 320px;
+  gap: 8px;
 }
 
 .search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
   width: 16px;
   height: 16px;
-  color: #6c757d;
+  color: #969696;
 }
 
 .search-box input {
-  width: 100%;
-  padding: 12px 12px 12px 40px;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
   font-size: 14px;
-  transition: border-color 0.2s ease;
+  color: #495057;
 }
 
-.search-box input:focus {
-  outline: none;
-  border-color: #4066fa;
+.search-box input::placeholder {
+  color: #969696;
 }
 
 /* 문서 목록 */
 .document-list {
-  padding: 24px 32px;
+  padding: 0 80px;
 }
 
 .date-group {
@@ -493,14 +493,12 @@ const goBack = () => {
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  padding: 8px 0;
-  border-bottom: 1px solid #e9ecef;
+  color: #6c757d;
 }
 
 .calendar-icon {
   width: 16px;
   height: 16px;
-  color: #6c757d;
 }
 
 .date-text {

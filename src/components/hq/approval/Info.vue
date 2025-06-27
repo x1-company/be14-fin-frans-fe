@@ -37,7 +37,7 @@
           <!-- 전자결재 목록 -->
           <InfoForm
             v-else-if="props.activeTabSwitch == 0 && !isRegistrationMode"
-            :approvalList="approvalList"
+            :approvalList="safeApprovalList"
             :activeTab="props.activeTab"
             :activeMenu="props.activeMenu"
             @tab-change="handleTabChange"
@@ -177,13 +177,13 @@ const emit = defineEmits([
 const updateTab = (newTabIndex) => {
   updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
 
+  // 탭 인덱스에 따라 적절한 이벤트 발생
   if (newTabIndex === 1) {
+    // 결재템플릿 탭
     emit("active-tab-change", 2);
-  } else {
-    emit("active-tab-change", newTabIndex);
-  }
-
-  if (newTabIndex === 0) {
+  } else if (newTabIndex === 0) {
+    // 전자결재 탭
+    emit("active-tab-change", 1);
     emit("tab-change", "상신-전체");
     emit("toggle-registration-mode", false);
   }
@@ -231,6 +231,14 @@ const handleDraftSaved = () => {
   emit("toggle-registration-mode", false);
   emit("refresh-list");
 };
+
+const safeApprovalList = computed(() =>
+  (props.approvalList || []).map((item) => ({
+    ...item,
+    title: item?.title || "-",
+    desc: item?.desc || "-",
+  }))
+);
 </script>
 
 <style scoped>
@@ -258,7 +266,7 @@ const handleDraftSaved = () => {
 
 .header-banner {
   color: white;
-  padding: 32px 24px;
+  /* padding: 32px 24px; */
 }
 
 .page-title {
@@ -309,7 +317,7 @@ const handleDraftSaved = () => {
 .info-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 0 24px;
 }
 
 .content-header {

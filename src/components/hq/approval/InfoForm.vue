@@ -180,37 +180,6 @@ const handleDocumentView = (document) => {
     router.push(`/approval/${document.approvalId}`);
   }
 };
-
-// const getStatusClass = (status) => {
-//   const statusMap = {
-//     DRAFT: "status-draft",
-//     IN_PROGRESS: "status-progress",
-//     APPROVED: "status-approved",
-//     REJECTED: "status-rejected",
-//   };
-//   return statusMap[status] || "";
-// };
-
-// const getStatusText = (status) => {
-//   const statusMap = {
-//     DRAFT: "임시저장",
-//     IN_PROGRESS: "결재 중",
-//     APPROVED: "결재완료",
-//     REJECTED: "결재반려",
-//   };
-//   return statusMap[status] || status;
-// };
-
-// const formatDate = (dateString) => {
-//   const date = new Date(dateString);
-//   return date.toLocaleDateString("ko-KR", {
-//     year: "numeric",
-//     month: "2-digit",
-//     day: "2-digit",
-//     hour: "2-digit",
-//     minute: "2-digit",
-//   });
-// };
 </script>
 
 <style scoped>
@@ -218,7 +187,7 @@ const handleDocumentView = (document) => {
   background: #fff;
   border-radius: 0 0 12px 12px;
   box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
-  padding: 24px 32px;
+  padding: 12px 10px;
   width: 100%;
   box-sizing: border-box;
 }
