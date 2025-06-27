@@ -48,7 +48,7 @@
                 <OrderProgressBar :status="order?.status" />
                 <FranchiseInfoCard :order="order" />
                 <OrderInfoCard :order="order" />
-                <ProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
+                <OrderProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
                 <OrderDeliveryInfoCard :order="order" />
               </div>
             </div>
@@ -113,6 +113,7 @@ import OrderProgressBar from '@/components/hq/orders/detail/OrderProgressBar.vue
 import FranchiseInfoCard from '@/components/hq/orders/detail/FranchiseInfoCard.vue'
 import DeliveryInfoCard from '@/components/franchise/return/detail/DeliveryInfoCard.vue'
 import OrderInfoCard from '@/components/hq/orders/detail/OrderInfoCard.vue'
+import OrderProductTable from '@/components/hq/orders/detail/ProductTable.vue'
 import ProductTable from '@/components/franchise/return/detail/ProductTable.vue'
 import ReturnList from '@/components/franchise/return/list/ReturnList.vue'
 import ReturnProgressBar from '@/components/franchise/return/detail/ReturnProgressBar.vue'
