@@ -539,11 +539,11 @@ const handleAddDocument = () => {
 const handleSelectDocuments = (selectedDocuments) => {
   selectedDocuments.forEach((doc) => {
     const existingDoc = documents.value.find(
-      (existing) => existing.id === (doc.id || doc.code)
+      (existing) => existing.id === doc.id
     );
     if (!existingDoc) {
       let documentData = {
-        id: doc.id || doc.code,
+        id: doc.id,
         code: doc.code,
         date: formatDate(doc.createdAt),
         createdAt: formatDate(doc.createdAt),
@@ -567,7 +567,7 @@ const handleSelectDocuments = (selectedDocuments) => {
       }
 
       documents.value.unshift(documentData);
-      formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
+      formData.value.approvalDocuments.documentIds.push(doc.id);
     }
   });
   showOrderListModal.value = false;
@@ -769,6 +769,27 @@ const router = useRouter();
 
 const handleEdit = async () => {
   if (isSubmitting.value) return;
+
+  // 제목, 결재선, 결재문서 모두 필수
+  if (!formData.value.title || !formData.value.title.trim()) {
+    toast.error("제목을 입력해주세요.");
+    return;
+  }
+  if (
+    !formData.value.approvalLines ||
+    formData.value.approvalLines.length === 0
+  ) {
+    toast.error("결재선을 지정해주세요.");
+    return;
+  }
+  if (
+    !formData.value.approvalDocuments ||
+    !formData.value.approvalDocuments.documentIds ||
+    formData.value.approvalDocuments.documentIds.length === 0
+  ) {
+    toast.error("주문 문서를 선택해주세요.");
+    return;
+  }
 
   try {
     isSubmitting.value = true;

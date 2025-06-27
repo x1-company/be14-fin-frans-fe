@@ -420,11 +420,11 @@ const handleAddDocument = () => {
 const handleSelectDocuments = (selectedDocuments) => {
   selectedDocuments.forEach((doc) => {
     const existingDoc = documents.value.find(
-      (existing) => existing.id === (doc.id || doc.code)
+      (existing) => existing.id === doc.id
     );
     if (!existingDoc) {
       let documentData = {
-        id: doc.id || doc.code,
+        id: doc.id,
         code: doc.code,
         date: formatDate(doc.createdAt),
         amount: doc.totalAmount,
@@ -447,7 +447,7 @@ const handleSelectDocuments = (selectedDocuments) => {
       }
 
       documents.value.unshift(documentData);
-      formData.value.approvalDocuments.documentIds.push(doc.id || doc.code);
+      formData.value.approvalDocuments.documentIds.push(doc.id);
     }
   });
   showOrderListModal.value = false;
