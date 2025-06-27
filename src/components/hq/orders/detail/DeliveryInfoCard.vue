@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <div v-if="order" class="card">
     <div class="card-title">
       <span class="icon">🚚</span>
       배송 정보

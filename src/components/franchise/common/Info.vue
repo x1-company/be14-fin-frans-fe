@@ -49,7 +49,7 @@
                 <FranchiseInfoCard :order="order" />
                 <OrderInfoCard :order="order" />
                 <ProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
-                <DeliveryInfoCard :order="order" />
+                <OrderDeliveryInfoCard :order="order" />
               </div>
             </div>
 
@@ -108,6 +108,7 @@ import FranchiseInfo from '@/components/franchise/info/FranchiseInfo.vue'
 import OrderList from '@/components/franchise/order/OrderList.vue'
 import OrderRegister from '@/components/franchise/order/OrderRegister.vue'
 import FrOrderActionButtons from '@/components/hq/orders/detail/OrderActionButtons.vue'
+import OrderDeliveryInfoCard from '@/components/hq/orders/detail/DeliveryInfoCard.vue'
 import OrderProgressBar from '@/components/hq/orders/detail/OrderProgressBar.vue'
 import FranchiseInfoCard from '@/components/hq/orders/detail/FranchiseInfoCard.vue'
 import DeliveryInfoCard from '@/components/franchise/return/detail/DeliveryInfoCard.vue'
