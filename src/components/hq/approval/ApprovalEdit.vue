@@ -921,6 +921,8 @@ const handleRegister = async () => {
         : "결재가 등록되었습니다.";
       toast.success(message);
       emit("approval-submitted", response.data);
+
+      // 결재 상세 페이지로 이동
       router.push(`/approval/${props.approvalId}`);
     }
   } catch (error) {
@@ -1097,6 +1099,8 @@ const approvalLineDetails = computed(() => {
 // 모달 닫기 핸들러 수정
 const handleCloseModal = () => {
   emit("close");
+  emit("refresh-list");
+  router.push("/approval");
 };
 
 defineExpose({

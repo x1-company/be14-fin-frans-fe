@@ -37,7 +37,7 @@
           <!-- 전자결재 목록 -->
           <InfoForm
             v-else-if="props.activeTabSwitch == 0 && !isRegistrationMode"
-            :approvalList="approvalList"
+            :approvalList="safeApprovalList"
             :activeTab="props.activeTab"
             :activeMenu="props.activeMenu"
             @tab-change="handleTabChange"
@@ -231,6 +231,14 @@ const handleDraftSaved = () => {
   emit("toggle-registration-mode", false);
   emit("refresh-list");
 };
+
+const safeApprovalList = computed(() =>
+  (props.approvalList || []).map((item) => ({
+    ...item,
+    title: item?.title || "-",
+    desc: item?.desc || "-",
+  }))
+);
 </script>
 
 <style scoped>

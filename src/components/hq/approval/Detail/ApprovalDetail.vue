@@ -350,7 +350,8 @@ const fetchDocumentContent = async () => {
 
 // 뒤로가기
 const goBack = () => {
-  router.back();
+  emit("refresh-list");
+  router.push("/approval");
 };
 
 // 날짜 포맷팅
