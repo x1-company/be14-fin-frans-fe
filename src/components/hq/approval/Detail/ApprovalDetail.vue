@@ -38,6 +38,23 @@
             수정하기
           </button>
           <button
+            v-if="canResubmitDocument"
+            class="resubmit-button"
+            @click="showResubmitModal = true"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"
+              ></path>
+              <path d="M21 3v5h-5"></path>
+              <path
+                d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"
+              ></path>
+              <path d="M3 21v-5h5"></path>
+            </svg>
+            재기안
+          </button>
+          <button
             v-if="canPrintDocument"
             class="print-button"
             @click="showPdfModal = true"
@@ -286,6 +303,22 @@
         </div>
       </div>
     </div>
+
+    <!-- 재기안 모달 -->
+    <ApprovalEdit
+      v-if="showResubmitModal"
+      :approvalId="document.approvalId"
+      :type="
+        document.categoryType ||
+        document.approvalDocuments?.categoryType ||
+        'ORDER'
+      "
+      :initialData="document"
+      :isEditMode="true"
+      :isResubmitMode="true"
+      @close="closeResubmitModal"
+      @approval-submitted="handleResubmitSuccess"
+    />
   </div>
 </template>
 
@@ -298,6 +331,7 @@ import ApprovalActionButtons from "./ApprovalActionButtons.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/composables/useToast";
 import ApprovalPdfModal from "@/views/hq/approval/pdf/ApprovalPdfModal.vue";
+import ApprovalEdit from "../ApprovalEdit.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -305,6 +339,7 @@ const toast = useToast();
 
 const showPdfModal = ref(false);
 const showEditConfirmModal = ref(false);
+const showResubmitModal = ref(false);
 
 // 결재문서/결재선 탭 선택 상태
 const activeTab = ref("document"); // 'document' or 'approvalLine'
@@ -507,6 +542,12 @@ const canEditDocument = computed(() => {
   return firstLine.status === "WAITING";
 });
 
+// 재기안 버튼 노출 여부
+const canResubmitDocument = computed(() => {
+  if (!props.document) return false;
+  return props.document.status === "REJECTED";
+});
+
 // 수정 확인 모달 핸들러
 const closeEditConfirmModal = () => {
   showEditConfirmModal.value = false;
@@ -537,6 +578,18 @@ const confirmEditDocument = async () => {
     console.error("문서 상태 변경 실패:", error);
     toast.error("문서 상태 변경에 실패했습니다.");
   }
+};
+
+// 재기안 모달 핸들러
+const closeResubmitModal = () => {
+  showResubmitModal.value = false;
+};
+
+const handleResubmitSuccess = () => {
+  closeResubmitModal();
+  toast.success("재기안이 완료되었습니다.");
+  emit("refresh-list");
+  router.push("/approval");
 };
 </script>
 
@@ -630,12 +683,53 @@ const confirmEditDocument = async () => {
 }
 
 .edit-button {
-  background: #ffc107;
-  color: #212529;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .edit-button:hover {
-  background: #e0a800;
+  background: #e9ecef;
+  color: #212529;
+}
+
+.edit-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.resubmit-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #4066fa;
+  color: white;
+  border: 1px solid #4066fa;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resubmit-button:hover {
+  background: #3056e0;
+  border-color: #3056e0;
+}
+
+.resubmit-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .print-button {
