@@ -3,7 +3,7 @@
     <div class="modal-content">
       <!-- Header -->
       <div class="modal-header">
-        <h2>{{ detailedTemplate ? '템플릿 상세 정보' : (isRegisterMode ? '주문 템플릿 등록' : '주문 템플릿 목록') }}</h2>
+        <h2>{{ detailedTemplate ? '📂 템플릿 상세 정보' : (isRegisterMode ? '📂 주문 템플릿 등록' : '📂 주문 템플릿 목록') }}</h2>
         <div>
           <button v-if="!detailedTemplate && !isRegisterMode" @click="toggleManageMode" class="manage-btn">
             {{ isManageMode ? '완료' : '관리' }}
