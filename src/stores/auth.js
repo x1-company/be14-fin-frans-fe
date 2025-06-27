@@ -14,6 +14,18 @@ export const useAuthStore = defineStore("auth", {
     accessToken: localStorage.getItem("accessToken") || "",
   }),
   getters: {
+    isAuthenticated(state) {
+      if (!state.accessToken) return false;
+
+      try {
+        const decoded = jwtDecode(state.accessToken);
+        // 토큰 만료 시간 체크
+        const currentTime = Date.now() / 1000;
+        return decoded.exp > currentTime;
+      } catch (e) {
+        return false;
+      }
+    },
     decodedToken(state) {
       try {
         return state.accessToken ? jwtDecode(state.accessToken) : null;

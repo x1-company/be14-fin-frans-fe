@@ -61,3 +61,8 @@ router.isReady().then(() => {
     console.log("초기 알림 초기화 생략: 로그인 상태가 아님");
   }
 });
+
+// 브라우저 탭 닫기/새로고침 시 SSE 연결 해제
+window.addEventListener('beforeunload', () => {
+  notificationService.disconnect();
+});

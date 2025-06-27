@@ -1,11 +1,11 @@
 <template>
-  <div class="info-container">
-    <div class="breadcrumb-container">
-      <Breadcrumb :items="breadcrumbItems" />
-    </div>
+    <div class="info-container">
+        <div class="breadcrumb-container">
+            <Breadcrumb :items="breadcrumbItems" />
+        </div>
 
-    <div class="info-content-wrapper">
-      <div class="info-wrapper">
+        <div class="info-content-wrapper">
+            <div class="info-wrapper">
         <InfoHeader
           :title="title"
           :desc="desc"
@@ -15,176 +15,177 @@
           @update-breadcrumb="updateBreadcrumb"
         />
 
-        <!-- 탭별 컨텐츠 영역 -->
-        <FranchiseDashboard
-          v-if="activeTabSwitch === 0"
-          :in-progress-order="dashboardCardData.inProgressOrder"
-          :in-progress-approval="dashboardCardData.inProgressApproval"
-          :completed-order="dashboardCardData.completedOrder"
-        />
+                <div class="tab-content">
+          <FranchiseDashboard
+            v-if="activeTabSwitch === 0"
+            :in-progress-order="dashboardCardData.inProgressOrder"
+            :in-progress-approval="dashboardCardData.inProgressApproval"
+            :completed-order="dashboardCardData.completedOrder"
+          />
 
-        <!-- 월별 주문금액 통계 그래프 (가맹점별/월별) -->
-        <div v-if="activeTabSwitch === 0" class="stats-graph-section">
-          <div class="stats-tab-bar">
-            <button class="stats-tab-btn" :class="{ active: statsTab === 0 }" @click="selectStatsTab(0)">주문 금액 분석</button>
-            <button class="stats-tab-btn" :class="{ active: statsTab === 1 }" @click="selectStatsTab(1)">자재별 분석</button>
-          </div>
+          <!-- 월별 주문금액 통계 그래프 (가맹점별/월별) -->
+          <div v-if="activeTabSwitch === 0" class="stats-graph-section">
+            <div class="stats-tab-bar">
+              <button class="stats-tab-btn" :class="{ active: statsTab === 0 }" @click="selectStatsTab(0)">주문 금액 분석</button>
+              <button class="stats-tab-btn" :class="{ active: statsTab === 1 }" @click="selectStatsTab(1)">자재별 분석</button>
+                    </div>
 
-          <div class="doughnut-top-row">
-            <div class="doughnut-top-right">
-              <label style="font-weight:500; margin-right:8px;">월 선택:</label>
-              <select v-model="selectedMonth" @change="handleMonthChange" class="month-dropdown">
-                <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
-              </select>
+            <div class="doughnut-top-row">
+              <div class="doughnut-top-right">
+                <label style="font-weight:500; margin-right:8px;">월 선택:</label>
+                <select v-model="selectedMonth" @change="handleMonthChange" class="month-dropdown">
+                  <option v-for="m in 12" :key="m" :value="m">{{ m }}월</option>
+                </select>
+              </div>
+                    </div>
+
+            <div class="stats-graph-card">
+              <template v-if="statsTab === 0">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <h3 style="margin:0;">월별 주문 금액 총액</h3>
+                  <button
+                    v-if="props.selectedFranchiseId"
+                    @click="toggleTrend"
+                    :class="['trend-btn', { active: trendVisible }]"
+                  >
+                    {{ trendVisible ? '동향 닫기' : '동향 보기' }}
+                  </button>
+                </div>
+                <FranchiseOrderAmountBar
+                  v-if="props.selectedFranchiseId"
+                  :chart-data="orderAmountChartData"
+                  :trend-visible="trendVisible"
+                  :selected-franchise-id="props.selectedFranchiseId"
+                />
+                <OrderAmountBarChart
+                  v-else
+                  :chart-data="orderAmountChartData"
+                  :month="selectedMonth"
+                  :is-franchise-selected="false"
+                  :trend-visible="trendVisible"
+                  @month-change="handleMonthChange"
+                />
+              </template>
+
+              <template v-else-if="statsTab === 1">
+                <div class="doughnut-charts-row">
+                  <div class="doughnut-chart-col">
+                    <h3 class="doughnut-title">자재별 주문량</h3>
+                    <span class="doughnut-desc">{{ selectedMonth }}월 기준 자재별 주문 비율</span>
+                    <FranchiseProductOrderDoughnut
+                      v-if="props.selectedFranchiseId"
+                      :chart-data="productOrderChartData"
+                      :month="selectedMonth"
+                      :selected-franchise-id="props.selectedFranchiseId"
+                      @month-change="handleMonthChange"
+                    />
+                    <ProductOrderDoughnutChart
+                      v-else
+                      :chart-data="productOrderChartData"
+                      :month="selectedMonth"
+                      :is-franchise-selected="false"
+                      :selected-franchise-id="props.selectedFranchiseId"
+                      @month-change="handleMonthChange"
+                    />
+                    </div>
+                    
+                  <div class="doughnut-chart-col">
+                    <h3 class="doughnut-title">자재별 반품량</h3>
+                    <span class="doughnut-desc">{{ selectedMonth }}월 기준 자재별 반품 비율</span>
+                    <FranchiseReturnProductDoughnut
+                      v-if="props.selectedFranchiseId"
+                      :chart-data="returnProductChartData"
+                      :month="selectedMonth"
+                      :selected-franchise-id="props.selectedFranchiseId"
+                      @month-change="handleMonthChange"
+                    />
+                    <ReturnProductDoughnutChart
+                      v-else
+                      :chart-data="returnProductChartData"
+                      :month="selectedMonth"
+                      :is-franchise-selected="false"
+                      :selected-franchise-id="props.selectedFranchiseId"
+                      @month-change="handleMonthChange"
+                    />
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
 
-          <div class="stats-graph-card">
-            <template v-if="statsTab === 0">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <h3 style="margin:0;">월별 주문 금액 총액</h3>
-                <button
-                  v-if="props.selectedFranchiseId"
-                  @click="toggleTrend"
-                  :class="['trend-btn', { active: trendVisible }]"
-                >
-                  {{ trendVisible ? '동향 닫기' : '동향 보기' }}
-                </button>
-              </div>
-              <FranchiseOrderAmountBar
-                v-if="props.selectedFranchiseId"
-                :chart-data="orderAmountChartData"
-                :trend-visible="trendVisible"
-                :selected-franchise-id="props.selectedFranchiseId"
+          <FranchiseInfo v-else-if="activeTabSwitch === 1" :selectedFranchiseId="selectedFranchiseId" />
+
+          <OrderList
+            v-else-if="activeTabSwitch === 2 && !orderDetailId"
+            :franchiseId="franchiseId"
+            :selectedFranchiseId="selectedFranchiseId"
+            @show-order-detail="handleShowOrderDetail"
+          />
+
+          <div v-else-if="activeTabSwitch === 2 && orderDetailId">
+            <div v-if="loading"></div>
+            <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
+            <div v-else>
+              <!-- 상세 컴포넌트들 -->
+              <OrderActionButtons
+                :orderId="orderDetailId"
+                :rejectedReason="order?.rejectedReason"
+                :status="order?.status"
+                :delivery-info="{
+                  deliveryCompany: order?.deliveryCompany,
+                  name: order?.driverName,
+                  phone: order?.driverPhone,
+                  trackingNumber: order?.trackingNumber
+                }"
+                @refreshOrder="fetchOrderDetail"
+                @close="handleBackToList"
               />
-              <OrderAmountBarChart
-                v-else
-                :chart-data="orderAmountChartData"
-                :month="selectedMonth"
-                :is-franchise-selected="false"
-                :trend-visible="trendVisible"
-                @month-change="handleMonthChange"
+              <OrderProgressBar :status="order?.status" />
+              <FranchiseInfoCard :order="order" />
+              <OrderInfoCard :order="order" />
+              <ProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
+              <DeliveryInfoCard :order="order" />
+              <PaymentInfoCard :order="order" />
+            </div>
+          </div>
+
+          <ReturnList
+            v-else-if="activeTabSwitch === 3 && !returnDetailId"
+            :franchiseId="franchiseId"
+            :selectedFranchiseId="selectedFranchiseId"
+            @select-return="handleShowReturnDetail"
+          />
+
+          <div v-else-if="activeTabSwitch === 3 && returnDetailId">
+            <div v-if="returnLoading"></div>
+            <div v-else-if="!returnDetail">반품 상세 데이터를 불러올 수 없습니다.</div>
+            <div v-else>
+              <!-- 반품 상세 컴포넌트들 -->
+              <ReturnActionButtons
+                :returnId="returnDetailId"
+                :rejectedReason="returnDetail?.rejectedReason"
+                :status="returnDetail?.status"
+                :delivery-info="{
+                  deliveryCompany: returnDetail?.deliveryCompany,
+                  name: returnDetail?.driverName,
+                  phone: returnDetail?.driverPhone,
+                  trackingNumber: returnDetail?.trackingNumber
+                }"
+                @refreshReturn="fetchReturnDetail"
+                @close="handleReturnBackToList"
               />
-            </template>
-
-            <template v-else-if="statsTab === 1">
-              <div class="doughnut-charts-row">
-                <div class="doughnut-chart-col">
-                  <h3 class="doughnut-title">자재별 주문량</h3>
-                  <span class="doughnut-desc">{{ selectedMonth }}월 기준 자재별 주문 비율</span>
-                  <FranchiseProductOrderDoughnut
-                    v-if="props.selectedFranchiseId"
-                    :chart-data="productOrderChartData"
-                    :month="selectedMonth"
-                    :selected-franchise-id="props.selectedFranchiseId"
-                    @month-change="handleMonthChange"
-                  />
-                  <ProductOrderDoughnutChart
-                    v-else
-                    :chart-data="productOrderChartData"
-                    :month="selectedMonth"
-                    :is-franchise-selected="false"
-                    :selected-franchise-id="props.selectedFranchiseId"
-                    @month-change="handleMonthChange"
-                  />
+              <ReturnProgressBar :status="returnDetail?.status" />
+              <ReturnFranchiseInfoCard :returnData="returnDetail" />
+              <ReturnInfoCard :returnData="returnDetail" />
+              <ReturnProductTable :products="returnDetail?.returnProducts || []" :totalAmount="returnDetail?.totalAmount" />
+              <ReturnDeliveryInfoCard :returnData="returnDetail" />
+              <ReturnApprovalInfoCard :returnData="returnDetail" />
+            </div>
+                    </div>
                 </div>
-
-                <div class="doughnut-chart-col">
-                  <h3 class="doughnut-title">자재별 반품량</h3>
-                  <span class="doughnut-desc">{{ selectedMonth }}월 기준 자재별 반품 비율</span>
-                  <FranchiseReturnProductDoughnut
-                    v-if="props.selectedFranchiseId"
-                    :chart-data="returnProductChartData"
-                    :month="selectedMonth"
-                    :selected-franchise-id="props.selectedFranchiseId"
-                    @month-change="handleMonthChange"
-                  />
-                  <ReturnProductDoughnutChart
-                    v-else
-                    :chart-data="returnProductChartData"
-                    :month="selectedMonth"
-                    :is-franchise-selected="false"
-                    :selected-franchise-id="props.selectedFranchiseId"
-                    @month-change="handleMonthChange"
-                  />
-                </div>
-              </div>
-            </template>
-          </div>
+            </div>
         </div>
-
-        <FranchiseInfo v-if="activeTabSwitch === 1" :selectedFranchiseId="selectedFranchiseId" />
-
-        <OrderList
-          v-if="activeTabSwitch === 2 && !orderDetailId"
-          :franchiseId="franchiseId"
-          :selectedFranchiseId="selectedFranchiseId"
-          @show-order-detail="handleShowOrderDetail"
-        />
-
-        <div v-if="activeTabSwitch === 2 && orderDetailId">
-          <div v-if="loading"></div>
-          <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
-          <div v-else>
-            <!-- 상세 컴포넌트들 -->
-            <OrderActionButtons
-              :orderId="orderDetailId"
-              :rejectedReason="order?.rejectedReason"
-              :status="order?.status"
-              :delivery-info="{
-                deliveryCompany: order?.deliveryCompany,
-                name: order?.driverName,
-                phone: order?.driverPhone,
-                trackingNumber: order?.trackingNumber
-              }"
-              @refreshOrder="fetchOrderDetail"
-              @close="handleBackToList"
-            />
-            <OrderProgressBar :status="order?.status" />
-            <FranchiseInfoCard :order="order" />
-            <OrderInfoCard :order="order" />
-            <ProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
-            <DeliveryInfoCard :order="order" />
-            <PaymentInfoCard :order="order" />
-          </div>
-        </div>
-
-        <ReturnList
-          v-if="activeTabSwitch === 3 && !returnDetailId"
-          :franchiseId="franchiseId"
-          :selectedFranchiseId="selectedFranchiseId"
-          @select-return="handleShowReturnDetail"
-        />
-
-        <div v-if="activeTabSwitch === 3 && returnDetailId">
-          <div v-if="returnLoading"></div>
-          <div v-else-if="!returnDetail">반품 상세 데이터를 불러올 수 없습니다.</div>
-          <div v-else>
-            <!-- 반품 상세 컴포넌트들 -->
-            <ReturnActionButtons
-              :returnId="returnDetailId"
-              :rejectedReason="returnDetail?.rejectedReason"
-              :status="returnDetail?.status"
-              :delivery-info="{
-                deliveryCompany: returnDetail?.deliveryCompany,
-                name: returnDetail?.driverName,
-                phone: returnDetail?.driverPhone,
-                trackingNumber: returnDetail?.trackingNumber
-              }"
-              @refreshReturn="fetchReturnDetail"
-              @close="handleReturnBackToList"
-            />
-            <ReturnProgressBar :status="returnDetail?.status" />
-            <ReturnFranchiseInfoCard :returnData="returnDetail" />
-            <ReturnInfoCard :returnData="returnDetail" />
-            <ReturnProductTable :products="returnDetail?.returnProducts || []" :totalAmount="returnDetail?.totalAmount" />
-            <ReturnDeliveryInfoCard :returnData="returnDetail" />
-            <ReturnApprovalInfoCard :returnData="returnDetail" />
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
 </template>
 
 
@@ -287,7 +288,7 @@ const desc = computed(() => {
     }
     if (activeTabSwitch.value === 2 && orderDetailId.value) {
     return "주문의 상세 내역을 확인합니다.";
-  }
+    }
     return tabInfo.value[activeTabSwitch.value]?.desc || '대시보드입니다.'
 })
 

@@ -13,19 +13,27 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '@/lib/api';
+import { useAuthStore } from '@/stores/auth';
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const emit = defineEmits(['supplier-selected']);
+const auth = useAuthStore()
 
 const suppliers = ref([]);
 const selectedSupplier = ref(null);
 
 const fetchSuppliers = async () => {
+  if (!auth.isAuthenticated) {
+    return;
+  }
   try {
     const response = await api.get('/api/hq/suppliers/list'); // 본사에서 사용하는 전체 공급처 목록 API
     suppliers.value = response.data;
   } catch (error) {
     console.error('공급처 목록 조회 실패:', error);
-    alert('공급처 목록을 불러오는데 실패했습니다.');
+    toast.error('공급처 목록을 불러오는데 실패했습니다.');
   }
 };
 

@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import TopBar from '@/components/auth/TopBar.vue'
 import LoginForm from '@/components/auth/LoginForm.vue'
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const showModal = ref(false)
 const lockedUserCode = ref('')
@@ -36,11 +39,11 @@ const handleConfirmReset = async () => {
       resetEmail.value = result.maskedEmail
       resetMessage.value = result.message
     } else {
-      alert("비밀번호 초기화에 실패했습니다. 관리자에게 문의 바랍니다.")
+      toast.error("비밀번호 초기화에 실패했습니다. 관리자에게 문의 바랍니다.")
       showModal.value = false
     }
   } catch (error) {
-    alert("비밀번호 초기화 중 오류가 발생했습니다.")
+    toast.error("비밀번호 초기화 중 오류가 발생했습니다.")
     showModal.value = false
   } finally {
     isLoading.value = false

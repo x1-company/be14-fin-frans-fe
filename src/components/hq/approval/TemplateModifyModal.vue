@@ -208,6 +208,9 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { getTopDepartmentNameById, topLevelDepartmentIds } from '@/enums/hqEnums'
 import api from '@/lib/api'
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const props = defineProps({
   template: Object,
@@ -328,7 +331,7 @@ const selectUser = (user) => {
   // 이미 추가된 사용자인지 확인
   const isAlreadyAdded = templateForm.value.lines.some(line => line.user_id === user.id)
   if (isAlreadyAdded) {
-    alert('이미 추가된 사용자입니다.')
+    toast.warning('이미 추가된 사용자입니다.')
     return
   }
 
@@ -492,11 +495,11 @@ const handleSubmit = async () => {
 
     await api.put(`/api/hq/approvals/templates/${props.template.id}`, submitData)
     
-    alert('템플릿이 성공적으로 수정되었습니다.')
+    toast.success('템플릿이 성공적으로 수정되었습니다.')
     emit('success')
   } catch (error) {
     console.error('템플릿 수정 실패:', error)
-    alert('템플릿 수정에 실패했습니다.')
+    toast.error('템플릿 수정에 실패했습니다.')
   } finally {
     isSubmitting.value = false
   }

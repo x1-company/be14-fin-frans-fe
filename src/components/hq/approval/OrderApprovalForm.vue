@@ -254,6 +254,9 @@ import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
 import draggable from "vuedraggable";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
+import { useToast } from "@/composables/useToast";
+
+const toast = useToast();
 
 const props = defineProps({
   type: String,
@@ -615,7 +618,7 @@ const handleSelectTemplate = async (template) => {
       type: line.type,
     }));
   } catch (error) {
-    alert("템플릿 결재선 정보를 불러오지 못했습니다.");
+    toast.error("템플릿 결재선 정보를 불러오지 못했습니다.");
     console.error(error);
   }
   showTemplateModal.value = false;
@@ -686,11 +689,11 @@ const handleTempSave = async () => {
     const response = await api.post("/api/hq/approvals/drafts", requestData);
 
     if (response.status === 200 || response.status === 201) {
-      alert("임시저장이 완료되었습니다.");
+      toast.success("임시저장이 완료되었습니다.");
     }
   } catch (error) {
     console.error("임시저장 실패:", error);
-    alert("임시저장에 실패했습니다. 다시 시도해주세요.");
+    toast.error("임시저장에 실패했습니다. 다시 시도해주세요.");
   } finally {
     isSubmitting.value = false;
   }
@@ -700,22 +703,22 @@ const handleSubmit = async () => {
   if (isSubmitting.value) return;
 
   if (!formData.value.title.trim()) {
-    alert("제목을 입력해주세요.");
+    toast.warning("제목을 입력해주세요.");
     return;
   }
 
   if (!formData.value.remarks.trim()) {
-    alert("내용을 입력해주세요.");
+    toast.warning("내용을 입력해주세요.");
     return;
   }
 
   if (formData.value.approvalLines.length === 0) {
-    alert("결재선을 지정해주세요.");
+    toast.warning("결재선을 지정해주세요.");
     return;
   }
 
   if (formData.value.approvalDocuments.documentIds.length === 0) {
-    alert("주문 문서를 선택해주세요.");
+    toast.warning("주문 문서를 선택해주세요.");
     return;
   }
 
@@ -767,12 +770,12 @@ const handleSubmit = async () => {
     const response = await api.post("/api/hq/approvals", requestData);
 
     if (response.status === 200 || response.status === 201) {
-      alert("결재가 등록되었습니다.");
+      toast.success("결재가 등록되었습니다.");
       emit("approval-submitted", response.data);
     }
   } catch (error) {
     console.error("결재 등록 실패:", error);
-    alert("결재 등록에 실패했습니다. 다시 시도해주세요.");
+    toast.error("결재 등록에 실패했습니다. 다시 시도해주세요.");
   } finally {
     isSubmitting.value = false;
   }

@@ -253,7 +253,9 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { LoaderIcon, Search, X } from 'lucide-vue-next'
 import api from '@/lib/api'
+import { useToast } from "@/composables/useToast";
 
+const toast = useToast()
 const isLoading = ref(false)
 const searchLoading = ref(false)
 const searchQuery = ref('')
@@ -440,7 +442,7 @@ const handleSubmit = async () => {
 
     await api.post('/api/hq/user/supplier', submitData)
 
-    alert('공급처 계정이 성공적으로 등록되었습니다.')
+    toast.success('공급처 계정이 성공적으로 등록되었습니다.')
     resetForm()
   } catch (error) {
     console.error('계정 등록 실패:', error)

@@ -315,6 +315,9 @@ import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import { useToast } from "@/composables/useToast";
 
+const toast = useToast();
+ 
+
 const props = defineProps({
   type: String,
   approvalId: {
@@ -751,7 +754,7 @@ const handleSelectTemplate = async (template) => {
       type: line.type,
     }));
   } catch (error) {
-    alert("템플릿 결재선 정보를 불러오지 못했습니다.");
+    toast.error("템플릿 결재선 정보를 불러오지 못했습니다.");
     console.error(error);
   }
   showTemplateModal.value = false;
@@ -916,13 +919,19 @@ const handleRegister = async () => {
     );
 
     if (response.status === 200 || response.status === 201) {
-      toast.success("결재가 등록되었습니다.");
+      const message = props.isEditMode
+        ? "결재가 수정되었습니다."
+        : "결재가 등록되었습니다.";
+      toast.success(message);
       emit("approval-submitted", response.data);
       router.push(`/approval/${props.approvalId}`);
     }
   } catch (error) {
-    console.error("결재 등록 실패:", error);
-    toast.error("결재 등록에 실패했습니다. 다시 시도해주세요.");
+    console.error("결재 등록/수정 실패:", error);
+    const message = props.isEditMode
+      ? "결재 수정에 실패했습니다."
+      : "결재 등록에 실패했습니다.";
+    toast.error(message + " 다시 시도해주세요.");
   } finally {
     isSubmitting.value = false;
   }
