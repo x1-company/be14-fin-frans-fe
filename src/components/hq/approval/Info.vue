@@ -177,13 +177,13 @@ const emit = defineEmits([
 const updateTab = (newTabIndex) => {
   updateBreadcrumb(["HOME", "결재관리", tabInfo.value[newTabIndex].title]);
 
+  // 탭 인덱스에 따라 적절한 이벤트 발생
   if (newTabIndex === 1) {
+    // 결재템플릿 탭
     emit("active-tab-change", 2);
-  } else {
-    emit("active-tab-change", newTabIndex);
-  }
-
-  if (newTabIndex === 0) {
+  } else if (newTabIndex === 0) {
+    // 전자결재 탭
+    emit("active-tab-change", 1);
     emit("tab-change", "상신-전체");
     emit("toggle-registration-mode", false);
   }
