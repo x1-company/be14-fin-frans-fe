@@ -34,7 +34,7 @@
           </select>
         </div>
         <button class="deadline-btn" @click="showDeadlineModal = true">
-          주문 마감 시간 관리
+          🕙 주문 마감 시간 관리
         </button>
       </div>
       <OrderDeadlineModal 
@@ -550,12 +550,14 @@
     color: #fff;
     border: none;
     border-radius: 6px;
-    padding: 8px 18px;
-    font-size: 0.95rem;
+    padding: 8px 16px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    margin-left: 12px;
     transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   .deadline-btn:hover {
     background: #2746b6;
