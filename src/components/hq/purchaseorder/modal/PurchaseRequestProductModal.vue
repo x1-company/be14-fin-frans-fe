@@ -26,8 +26,8 @@
               </tr>
               <tr v-for="product in products" :key="product.id">
                 <td><input type="checkbox" :value="product" v-model="selectedProducts" /></td>
-                <td>{{ product.code }}</td>
-                <td>{{ product.name }}</td>
+                <td>{{ product.productCode }}</td>
+                <td>{{ product.productName }}</td>
                 <td>{{ product.quantity }}</td>
                 <td>{{ product.purchaseUnit }}</td>
               </tr>
@@ -67,14 +67,13 @@ async function fetchProducts() {
   selectedProducts.value = [];
   try {
     // Assumed endpoint to get products from a purchase request, filtered by supplier
-    const response = await api.get(`/api/hq/purchase/${props.purchaseRequest.id}/products`, {
+    const response = await api.get(`/api/hq/purchase/requests/${props.purchaseRequest.id}`, {
       params: { supplierId: props.supplierId }
     });
+
+    console.log(response.data)
     // The response should contain product details along with the requested quantity
-    products.value = response.data.map(p => ({
-      ...p,
-      purchaseRequestId: props.purchaseRequest.id
-    }));
+    products.value = response.data.products
   } catch (error) {
     console.error('Failed to fetch products for purchase request:', error);
     // showToast('자재 목록을 불러오는 데 실패했습니다.', 'error');
