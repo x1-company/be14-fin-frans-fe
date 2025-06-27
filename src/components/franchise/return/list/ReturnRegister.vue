@@ -1104,9 +1104,13 @@ onMounted(() => {
 }
 .product-table th,
 .product-table td {
-  padding: 7px 6px;
+  padding: 10px 6px;
   text-align: center;
   color: #333;
+  white-space: nowrap;
+  vertical-align: middle;
+  height: 40px;
+  line-height: 1.4;
 }
 .product-table th {
   background: #f9fafb;
