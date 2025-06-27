@@ -64,10 +64,10 @@
         <div class="section-header">
           <h2 class="section-title">자재 정보</h2>
           <div class="button-group">
-            <button class="btn btn-danger" @click="deleteMaterials">
+            <button class="btn btn-danger" @click="deleteMaterials" :disabled="selectedMaterials.length === 0">
               <Trash2Icon class="icon" /> 삭제
             </button>
-            <button class="btn btn-primary" @click="isProductModalVisible = true">
+            <button class="btn btn-primary" @click="openPurchaseRequestModal">
               <PlusIcon class="icon" /> 추가
             </button>
           </div>
@@ -77,6 +77,7 @@
           <table class="materials-table">
             <thead>
               <tr>
+                <th><input type="checkbox" @change="selectAll" :checked="allSelected" /></th>
                 <th>No.</th>
                 <th>자재 번호</th>
                 <th>자재명</th>
@@ -84,13 +85,15 @@
                 <th>수량</th>
                 <th>단위</th>
                 <th>비고</th>
+                <th>구매요청번호</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="materials.length === 0">
-                <td colspan="7" class="no-materials">자재를 추가해주세요.</td>
+                <td colspan="9" class="no-materials">자재를 추가해주세요.</td>
               </tr>
               <tr v-for="(material, index) in materials" :key="material.id">
+                <td><input type="checkbox" v-model="selectedMaterials" :value="material.id" /></td>
                 <td class="text-center">{{ index + 1 }}</td>
                 <td class="text-center">{{ material.code }}</td>
                 <td class="text-center">{{ material.name }}</td>
@@ -102,6 +105,7 @@
                 <td class="text-center">
                    <input type="text" v-model="material.remarks" class="form-input" />
                 </td>
+                <td class="text-center">{{ material.purchaseRequestId || '-' }}</td>
               </tr>
             </tbody>
           </table>
@@ -114,9 +118,16 @@
       </div>
     </div>
 
-    <PurchaseOrderProductModal
+    <!-- Modals -->
+    <PurchaseRequestListModal
+      :is-visible="isRequestListModalVisible"
+      @close="isRequestListModalVisible = false"
+      @request-selected="handleRequestSelected"
+    />
+    <PurchaseRequestProductModal
       :is-visible="isProductModalVisible"
       :supplier-id="supplier.id"
+      :purchase-request="selectedRequest"
       @close="isProductModalVisible = false"
       @add-products="handleAddProducts"
     />
@@ -128,7 +139,8 @@ import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { Trash2 as Trash2Icon, Plus as PlusIcon } from 'lucide-vue-next';
 import api from '@/lib/api';
-import PurchaseOrderProductModal from './modal/PurchaseOrderProductModal.vue';
+import PurchaseRequestListModal from './modal/PurchaseRequestListModal.vue';
+import PurchaseRequestProductModal from './modal/PurchaseRequestProductModal.vue';
 import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
@@ -142,7 +154,9 @@ const emit = defineEmits(['cancel-register', 'registration-complete']);
 const authStore = useAuthStore();
 const { showToast } = useToast();
 
+const isRequestListModalVisible = ref(false);
 const isProductModalVisible = ref(false);
+const selectedRequest = ref(null);
 
 const orderInfo = ref({
   title: '',
@@ -159,6 +173,19 @@ onMounted(() => {
 });
 
 const materials = ref([]);
+const selectedMaterials = ref([]);
+
+const allSelected = computed(() => {
+  return materials.value.length > 0 && selectedMaterials.value.length === materials.value.length;
+});
+
+function selectAll(event) {
+  if (event.target.checked) {
+    selectedMaterials.value = materials.value.map(m => m.id);
+  } else {
+    selectedMaterials.value = [];
+  }
+}
 
 const totalAmount = computed(() => {
   return materials.value.reduce(
@@ -173,12 +200,23 @@ function handleAddProducts(selectedProducts) {
     if (!existing) {
       materials.value.push({
         ...newProduct,
-        productId: newProduct.id,
-        quantity: 1, // 기본 수량
-        remarks: '' // 비고
+        productId: newProduct.id
       });
+    } else {
+      showToast(`${newProduct.name} 은/는 이미 추가된 자재입니다.`, 'info');
     }
   });
+  isProductModalVisible.value = false;
+}
+
+function openPurchaseRequestModal() {
+  isRequestListModalVisible.value = true;
+}
+
+function handleRequestSelected(request) {
+  selectedRequest.value = request;
+  isRequestListModalVisible.value = false;
+  isProductModalVisible.value = true;
 }
 
 async function registerOrder() {
@@ -203,7 +241,7 @@ async function registerOrder() {
       productId: m.productId,
       quantity: m.quantity,
       remarks: m.remarks,
-      purchaseRequestId: null // 직접 등록 시에는 null
+      purchaseRequestId: m.purchaseRequestId
     })),
   };
 
@@ -223,10 +261,13 @@ function formatCurrency(value) {
 }
 
 function deleteMaterials() {
-  console.log('자재 삭제');
-  // 여기에 선택된 자재를 삭제하는 로직을 구현해야 합니다.
-  // 현재는 체크박스가 없으므로, 이 기능은 비워둡니다.
-  showToast('삭제할 자재를 선택하는 기능은 아직 구현되지 않았습니다.', 'info');
+  if (selectedMaterials.value.length === 0) {
+    showToast('삭제할 자재를 선택해주세요.', 'info');
+    return;
+  }
+  materials.value = materials.value.filter(m => !selectedMaterials.value.includes(m.id));
+  selectedMaterials.value = [];
+  showToast('선택한 자재가 삭제되었습니다.', 'success');
 }
 
 function cancel() {

@@ -26,15 +26,12 @@
   const emit = defineEmits(["update-breadcrumb"]);
   
   const selectTab = (index, tabText) => {
-    // 실제 탭 전환 로직이 추가되면 activeTab을 변경해야 합니다.
-    // 현재는 props로 activeTab을 받으므로 직접 변경하지 않습니다.
     emit("update-breadcrumb", ["HOME", "공급처관리", tabText]);
   };
   </script>
   
   <style scoped>
   .info-header {
-    /* margin: 10px 30px 0px 30px; */
     background: #4066fa;
     border-radius: 12px 12px 0 0;
     padding: 28px 0px 0 0px;
@@ -43,24 +40,24 @@
   }
   .info-header__title {
     font-size: 1.8rem;
-    padding-left: 32px; /* info-form과 같은 패딩으로 정렬 */
+    padding-left: 32px;
     font-weight: bold;
     margin-bottom: 24px;
   }
   .info-header__edit-button {
     background: none;
-    border: 1px solid #ffffffa0; /* 흰색 테두리 */
+    border: 1px solid #ffffffa0;
     color: #fff;
     padding: 8px 16px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 500;
-    margin-right: 30px; /* 오른쪽 여백 추가 */
+    margin-right: 30px;
     transition: background-color 0.2s, border-color 0.2s;
   }
   .info-header__edit-button:hover {
-    background-color: #ffffff20; /* 호버 시 약간 밝아지게 */
+    background-color: #ffffff20;
     border-color: #fff;
   }
   .info-header__desc {
