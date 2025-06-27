@@ -395,8 +395,8 @@ const handleCollaborationDocsClick = () => {
 }
 
 .sidebar__icon {
-  width: 21px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
 }
 
 /* 탭 헤더 */

@@ -340,8 +340,8 @@ defineExpose({
   margin-bottom: 16px;
 }
 .sidebar__icon {
-  width: 21px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
 }
 
 .template-sidebar {
