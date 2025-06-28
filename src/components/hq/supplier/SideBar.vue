@@ -74,7 +74,9 @@ const handleCompanyClick = (company) => {
       >
         <div class="company-header">
           <img src="@/assets/menu-supplier-2.png" class="supplier-icon" />
-          <span class="company-name">{{ company.name }}</span>
+          <div class="company-name-wrap">
+            <span class="company-name">{{ company.name }}</span>
+          </div>
           <span class="company-category">공급처</span>
         </div>
         <div class="company-details">
@@ -134,7 +136,7 @@ const handleCompanyClick = (company) => {
 
 .supplier-icon {
   width: 28px;
-  height: 28px;
+  margin-bottom: 5px;
   /* object-fit: contain; */
 }
 
@@ -198,26 +200,42 @@ const handleCompanyClick = (company) => {
 }
 
 .company-header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  min-height: 32px;
+}
+
+.company-name-wrap {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  margin-top: 5px;
 }
 
 .company-name {
   font-size: 13px;
   font-weight: 600;
   color: #212529;
+  margin-left: 6px;
+  word-break: break-all;
+  white-space: normal;
+  line-height: 1.3;
 }
 
 .company-category {
+  position: absolute;
+  right: 0;
+  top: 0;
   background-color: #7daff0;
   color: white;
   padding: 2px 6px;
   border-radius: 12px;
   font-size: 10px;
   font-weight: 650;
-  margin-left: auto;
+  margin-left: 0;
+  margin-top: 5px;
 }
 
 .company-details {
