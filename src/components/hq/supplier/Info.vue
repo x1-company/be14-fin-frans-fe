@@ -7,6 +7,9 @@ import InfoHeader from "@/components/hq/supplier/InfoHeader.vue";
 import InfoForm from "@/components/hq/supplier/InfoForm.vue";
 import PurchaseOrderInfo from "@/components/hq/purchaseorder/Info.vue";
 import PurchaseOrderRegister from "@/components/hq/purchaseorder/PurchaseOrderRegister.vue";
+import ProductListTable from '@/components/hq/supplier/ProductListTable.vue';
+import ProductRegister from '@/components/hq/warehouse/ProductRegister.vue';
+import ProductDetail from '@/components/hq/warehouse/ProductDetail.vue';
 
 const props = defineProps({
   company: Object,
@@ -22,19 +25,20 @@ const tabs = [
     desc: "공급처의 기본 정보와 계약 현황을 확인하고 관리할 수 있습니다.",
   },
   {
-    key: "delivery-info",
-    label: "납품관리",
-    desc: "해당 공급처의 납품 현황을 관리합니다.",
-  },
-  {
     key: "purchase-order",
     label: "발주관리",
     desc: "해당 공급처의 발주 현황을 확인하고 관리할 수 있습니다.",
+  },
+  {
+    key: "material",
+    label: "자재관리",
+    desc: "공급처별 자재를 관리합니다.",
   },
 ];
 
 const activeTab = ref("supplier-info");
 const purchaseOrderViewMode = ref("list"); // 'list' or 'register'
+const materialViewMode = ref('list'); 
 
 const pageTitle = computed(() => {
   if (activeTab.value === "purchase-order") {
@@ -53,7 +57,7 @@ const selectedSupplierId = computed(() => props.company?.id);
 
 watch(
   () => props.company,
-  async (newCompany) => {
+  async (newCompany, oldCompany) => {
     if (newCompany && newCompany.id) {
       try {
         const { data } = await api.get(
@@ -68,11 +72,22 @@ watch(
       supplier.value = null;
     }
     // When company changes, reset to supplier info tab
-    activeTab.value = "supplier-info";
+    // 회사가 바뀌었을 때, 기존에 자재관리(material) 또는 발주관리(purchase-order) 탭이 아니면 supplier-info로 리셋
+    if (activeTab.value !== "material" && activeTab.value !== "purchase-order") {
+      activeTab.value = "supplier-info";
+    }
     purchaseOrderViewMode.value = "list";
+    materialViewMode.value = 'list';
   },
   { immediate: true }
 );
+
+function handleShowRegister() {
+  materialViewMode.value = 'register';
+}
+function handleRegisterDone() {
+  materialViewMode.value = 'list';
+}
 
 function handleTabChange(tabKey) {
   activeTab.value = tabKey;
@@ -89,7 +104,6 @@ const updateBreadcrumb = (newItems) => {
     <div class="breadcrumb-container">
       <Breadcrumb :items="breadcrumbItems" />
     </div>
-
     <div class="info-content">
       <div class="info-group">
         <InfoHeader
@@ -116,18 +130,48 @@ const updateBreadcrumb = (newItems) => {
             </div>
           </div>
           <div v-else-if="activeTab === 'purchase-order'">
-            <div v-if="supplier">
-              <PurchaseOrderInfo
-                v-if="purchaseOrderViewMode === 'list'"
-                :supplier="supplier"
-                :key="supplier.id"
-                @show-register-view="purchaseOrderViewMode = 'register'"
+            <template v-if="selectedSupplierId">
+              <div v-if="supplier">
+                <PurchaseOrderInfo
+                  v-if="purchaseOrderViewMode === 'list'"
+                  :supplier="supplier"
+                  :key="supplier.id"
+                  @show-register-view="purchaseOrderViewMode = 'register'"
+                />
+                <PurchaseOrderRegister
+                  v-if="purchaseOrderViewMode === 'register'"
+                  :supplier="supplier"
+                  @cancel-register="purchaseOrderViewMode = 'list'"
+                />
+              </div>
+              <div v-else class="p-8 text-center text-gray-500">
+                공급처 정보를 불러오는 중입니다...
+              </div>
+            </template>
+            <div v-else class="no-selection">
+              <div class="no-selection-icon">🏢</div>
+              <h3>공급처를 선택해주세요</h3>
+              <p>왼쪽 목록에서 공급처를 선택하면 발주 목록을 확인할 수 있습니다.</p>
+            </div>
+          </div>
+          <div v-else-if="activeTab === 'material'">
+            <template v-if="selectedSupplierId">
+              <ProductListTable
+                v-if="materialViewMode === 'list'"
+                :supplierId="selectedSupplierId"
+                @show-register="handleShowRegister"
+                />
+                <ProductRegister
+                v-else
+                :supplierId="selectedSupplierId"
+                @register-done="handleRegisterDone"
+                @cancel="handleRegisterDone"
               />
-              <PurchaseOrderRegister
-                v-if="purchaseOrderViewMode === 'register'"
-                :supplier="supplier"
-                @cancel-register="purchaseOrderViewMode = 'list'"
-              />
+            </template>
+            <div v-else class="no-selection">
+              <div class="no-selection-icon">🏢</div>
+              <h3>공급처를 선택해주세요</h3>
+              <p>왼쪽 목록에서 공급처를 선택하면 자재 목록을 확인할 수 있습니다.</p>
             </div>
             <div v-else class="no-selection">
               <div class="no-selection-icon">🏢</div>
@@ -149,6 +193,7 @@ const updateBreadcrumb = (newItems) => {
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .info-container {

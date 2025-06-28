@@ -445,7 +445,7 @@ const formatDate = (dateString) => {
 .supplier-title h2 {
   margin: 0;
   color: #212529;
-  font-size: 1.5rem;
+  font-size: 18px;
   font-weight: 600;
 }
 .supplier-code {
