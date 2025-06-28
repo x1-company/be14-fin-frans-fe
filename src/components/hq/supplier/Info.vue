@@ -129,8 +129,13 @@ const updateBreadcrumb = (newItems) => {
                 @cancel-register="purchaseOrderViewMode = 'list'"
               />
             </div>
-            <div v-else class="p-8 text-center text-gray-500">
-              공급처 정보를 불러오는 중입니다...
+            <div v-else class="no-selection">
+              <div class="no-selection-icon">🏢</div>
+              <h3>공급처를 선택해주세요</h3>
+              <p
+                >왼쪽 목록에서 공급처를 선택하면 상세 정보를 확인할 수
+                있습니다.</p
+              >
             </div>
           </div>
           <div

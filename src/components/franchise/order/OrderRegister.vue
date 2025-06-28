@@ -201,7 +201,7 @@ const addToOrderList = (product) => {
         const orderItem = {
             ...product,
             quantity: product.quantity || 1,
-            totalAmount: product.sale_price
+            totalAmount: product.sale_price * (product.quantity || 1)
         }
         orderList.value.push(orderItem)
     }
