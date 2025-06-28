@@ -4,6 +4,11 @@
     <div v-else-if="error" class="error-container">
       데이터를 불러오는 데 실패했습니다.
     </div>
+    <PurchaseOrderDetail
+      v-if="selectedOrderId"
+      :orderId="selectedOrderId"
+      @close="selectedOrderId = null"
+    />
     <InfoForm
       v-else
       :orders="filteredOrders"
@@ -11,6 +16,7 @@
       :activeFilterTab="activeFilterTab"
       :onFilterTabChange="handleFilterTabChange"
       @show-register-view="showRegisterView"
+      @show-detail="handleShowDetail"
     />
   </div>
 </template>
@@ -18,6 +24,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import InfoForm from './InfoForm.vue';
+import PurchaseOrderDetail from './PurchaseOrderDetail.vue';
 import api from '@/lib/api';
 
 const props = defineProps({
@@ -40,6 +47,12 @@ const filterTabs = [
   '취소된 발주 목록',
   '반려된 발주 목록'
 ];
+
+const selectedOrderId = ref(null);
+
+function handleShowDetail(orderId) {
+  selectedOrderId.value = orderId;
+}
 
 async function fetchOrders(supplierId) {
   if (!supplierId) {
@@ -80,6 +93,7 @@ watch(
       orders.value = [];
     }
     activeFilterTab.value = 0;
+    selectedOrderId.value = null;
   },
   { immediate: true }
 );
