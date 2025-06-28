@@ -171,6 +171,7 @@ const isRequestListModalVisible = ref(false);
 const isProductModalVisible = ref(false);
 const selectedRequest = ref(null);
 const isDraftListModalVisible = ref(false);
+const currentDraftId = ref(null);
 
 const orderInfo = ref({
   title: '',
@@ -239,6 +240,31 @@ function handleRequestSelected(request) {
   isProductModalVisible.value = true;
 }
 
+function handleLoadDraft(draft) {
+  currentDraftId.value = draft.id;
+  orderInfo.value.title = draft.title;
+  orderInfo.value.deliveryDate = draft.requestedDeliveryDate;
+  orderInfo.value.orderNumber = draft.code || '자동생성';
+  orderInfo.value.status = draft.status || '임시저장';
+  orderInfo.value.manager = draft.manager || authStore.userName;
+  orderInfo.value.managerEmail = draft.managerEmail || authStore.userEmail;
+  materials.value = (draft.products || []).map(m => ({
+    productId: Number(m.productId || m.id),
+    code: m.productCode,
+    name: m.productName,
+    purchasePrice: m.purchasePrice,
+    quantity: Number(m.quantity),
+    purchaseUnit: m.purchaseUnit,
+    productTypeName: m.productTypeName,
+    productGroupName: m.productGroupName,
+    productAttributeName: m.productAttributeName,
+    standard: m.standard,
+    remarks: m.remarks || '',
+    purchaseRequestId: Number(m.purchaseRequestId),
+    supplierId: Number(m.supplierId || (draft.supplier && draft.supplier.id) || props.supplier.id)
+  }));
+}
+
 async function registerOrder() {
   if (!orderInfo.value.title) {
     if (typeof toast === 'function') {
@@ -265,16 +291,51 @@ async function registerOrder() {
     return;
   }
 
+  if (currentDraftId.value) {
+    // 임시저장 정식 등록 (PUT, body 필요)
+    const updatePayload = {
+      title: orderInfo.value.title,
+      requestedDeliveryDate: orderInfo.value.deliveryDate,
+      products: materials.value.map(m => ({
+        productId: Number(m.productId),
+        quantity: Number(m.quantity),
+        remarks: m.remarks,
+        purchaseRequestId: Number(m.purchaseRequestId),
+        supplierId: Number(m.supplierId)
+      }))
+    };
+    console.log('임시저장 정식등록 payload', JSON.stringify(updatePayload, null, 2));
+    try {
+      await api.put(`/api/hq/purchaseorder/${currentDraftId.value}/request`, updatePayload);
+      if (typeof toast === 'function') {
+        toast('임시저장 발주가 정식 등록되었습니다.', 'success');
+      } else {
+        alert('임시저장 발주가 정식 등록되었습니다.');
+      }
+      setTimeout(() => {
+        emit('cancel-register');
+      });
+    } catch (error) {
+      console.error('Error registering purchase order:', error);
+      if (typeof toast === 'function') {
+        toast(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`, 'error');
+      } else {
+        alert(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`);
+      }
+    }
+    return;
+  }
+
   const payload = {
     title: orderInfo.value.title,
-    supplierId: props.supplier.id,
+    supplierId: Number(props.supplier.id),
     requestedDeliveryDate: orderInfo.value.deliveryDate,
     products: materials.value.map(m => ({
-      productId: m.productId,
-      quantity: m.quantity,
+      productId: Number(m.productId),
+      quantity: Number(m.quantity),
       remarks: m.remarks,
-      purchaseRequestId: m.purchaseRequestId,
-      supplierId: m.supplierId
+      purchaseRequestId: Number(m.purchaseRequestId),
+      supplierId: Number(m.supplierId)
     })),
   };
   console.log('등록 payload', JSON.stringify(payload, null, 2));
@@ -288,7 +349,7 @@ async function registerOrder() {
     }
     setTimeout(() => {
       emit('cancel-register');
-    }); // 1초 후 목록으로 전환
+    });
   } catch (error) {
     console.error('Error registering purchase order:', error);
     if (typeof toast === 'function') {
@@ -320,31 +381,6 @@ function deleteMaterials() {
 
 function cancel() {
   emit('cancel-register');
-}
-
-function handleLoadDraft(draft) {
-  // 폼 전체 덮어쓰기: orderInfo, materials 등 draft 데이터로 교체
-  orderInfo.value.title = draft.title;
-  orderInfo.value.deliveryDate = draft.requestedDeliveryDate;
-  orderInfo.value.orderNumber = draft.code || '자동생성';
-  orderInfo.value.status = draft.status || '임시저장';
-  orderInfo.value.manager = draft.manager || authStore.userName;
-  orderInfo.value.managerEmail = draft.managerEmail || authStore.userEmail;
-  materials.value = (draft.products || []).map(m => ({
-    productId: m.productId || m.id, // id 필드가 productId 역할
-    code: m.productCode,
-    name: m.productName,
-    purchasePrice: m.purchasePrice,
-    quantity: m.quantity,
-    purchaseUnit: m.purchaseUnit,
-    productTypeName: m.productTypeName,
-    productGroupName: m.productGroupName,
-    productAttributeName: m.productAttributeName,
-    remarks: m.remarks || '',
-    standard: m.standard,
-    supplierId: m.supplierId, // 임시저장 상세의 supplierId 그대로
-    purchaseRequestId: m.purchaseRequestId // 임시저장 상세의 purchaseRequestId 그대로
-  }));
 }
 </script>
 

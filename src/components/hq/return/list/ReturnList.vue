@@ -155,8 +155,8 @@ function statusText(status) {
     case 'REJECTED': return '반려';
     case 'REVIEW_COMPLETED': return '검토 완료';
     case 'APPROVED': return '결재 완료';
-    case 'PICKING_UP': return '반품 수거 중';
-    case 'PICKED_UP': return '반품 수거 완료';
+    case 'PICKING_UP': return '수거 중';
+    case 'PICKED_UP': return '수거 완료';
     case 'COMPLETED': return '반품 완료';
     default: return status;
   }
@@ -387,8 +387,8 @@ onMounted(fetchReturns);
   background: #e6ffe6;
 }
 .status-approved {
-  background: #e6f9ed;
-  color: #16a34a;
+  background: #e0f0ff;
+  color: #2563eb;
 }
 .status-pickingup {
   background: #e0f7fa;

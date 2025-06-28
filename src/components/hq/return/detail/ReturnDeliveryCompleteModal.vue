@@ -6,7 +6,7 @@
         <div class="modal-header">
           <span class="modal-title">
             <span class="icon">📅</span>
-            배송 완료일 입력
+            반품 수거일 입력
           </span>
           <button class="close-btn" @click="onCancel">×</button>
         </div>
@@ -30,7 +30,7 @@
             </div>
           </div>
           <div class="input-group">
-            <label>배송 완료일</label>
+            <label>반품 수거 완료일</label>
             <Datepicker
               v-model="selectedDate"
               :format="formatDate"
@@ -83,7 +83,7 @@
               <span class="value">{{ deliveryInfo?.trackingNumber || '-' }}</span>
             </div>
             <div class="info-row highlight">
-              <span class="label">배송 완료일:</span>
+              <span class="label">반품 수거 완료일:</span>
               <span class="value">{{ formatDate(selectedDate) }}</span>
             </div>
           </div>

@@ -55,6 +55,13 @@
 
 <script setup>
 import { computed } from "vue";
+import waitingForReceiptImg from "@/assets/WAITING_FOR_RECEIPT.png";
+import reviewCompletedImg from "@/assets/REVIEW_COMPLETED.png";
+import approvedImg from "@/assets/APPROVED.png";
+import pickingUpImg from "@/assets/PICKING_UP.png";
+import pickedUpImg from "@/assets/PICKED_UP.png";
+import completedImg from "@/assets/COMPLETED.png";
+import rejectedImg from "@/assets/REJECTED.png";
 
 const props = defineProps({
   status: String,
@@ -99,23 +106,21 @@ const statusToStep = {
 const currentStep = computed(() => statusToStep[props.status] ?? 0);
 
 function getIcon(key, isActive) {
-  if (key === "REJECTED") {
-    return new URL("@/assets/rejected.png", import.meta.url).href;
-  }
-
   switch (key) {
     case "WAITING_FOR_RECEIPT":
-      return new URL(`@/assets/WAITING_FOR_RECEIPT.png`, import.meta.url).href;
+      return waitingForReceiptImg;
     case "REVIEW_COMPLETED":
-      return new URL(`@/assets/REVIEW_COMPLETED.png`, import.meta.url).href;
+      return reviewCompletedImg;
     case "APPROVED":
-      return new URL(`@/assets/APPROVED.png`, import.meta.url).href;
+      return approvedImg;
     case "PICKING_UP":
-      return new URL(`@/assets/PICKING_UP.png`, import.meta.url).href;
+      return pickingUpImg;
     case "PICKED_UP":
-      return new URL(`@/assets/PICKED_UP.png`, import.meta.url).href;
+      return pickedUpImg;
     case "COMPLETED":
-      return new URL(`@/assets/COMPLETED.png`, import.meta.url).href;
+      return completedImg;
+    case "REJECTED":
+      return rejectedImg;
     default:
       return "";
   }
