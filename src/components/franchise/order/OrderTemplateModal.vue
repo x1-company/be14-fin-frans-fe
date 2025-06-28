@@ -2,92 +2,102 @@
   <div v-if="isVisible" class="modal-overlay" @click.self="closeModal">
     <div class="modal-content">
       <!-- Header -->
-      <div class="modal-header">
+      <div class="modal-header" v-if="!isEditMode">
         <h2>{{ detailedTemplate ? '📂 템플릿 상세 정보' : (isRegisterMode ? '📂 주문 템플릿 등록' : '📂 주문 템플릿 목록') }}</h2>
         <div>
-          <button v-if="!detailedTemplate && !isRegisterMode" @click="toggleManageMode" class="manage-btn">
-            {{ isManageMode ? '완료' : '관리' }}
-          </button>
-          <button v-if="!detailedTemplate && !isRegisterMode" @click="openRegister" class="register-btn">등록</button>
           <button @click="closeModal" class="close-btn">&times;</button>
         </div>
+      </div>
+      <!-- 템플릿 검색 input -->
+      <div v-if="!detailedTemplate && !isRegisterMode" class="template-search-bar">
+        <input v-model="templateSearch" @input="onTemplateSearch" class="template-search-input" placeholder="템플릿 이름 또는 설명으로 검색" />
+        <button @click="openRegister" class="register-btn" type="button">+   새 템플릿</button>
       </div>
 
       <!-- Body -->
       <div class="modal-body">
-        <!-- Detail View -->
-        <div v-if="isDetailLoading" class="loading-spinner"></div>
-        <div v-else-if="detailedTemplate">
-          <!-- Edit Mode -->
-          <div v-if="isEditMode && editableTemplate">
-            <div class="edit-form">
-              <div class="form-group">
-                <label for="templateName">템플릿 이름</label>
-                <input id="templateName" type="text" v-model="editableTemplate.name" class="form-input" />
-              </div>
-              <div class="form-group">
-                <label for="templateDesc">템플릿 설명</label>
-                <textarea id="templateDesc" v-model="editableTemplate.description" class="form-input" rows="3"></textarea>
-              </div>
-              <div class="form-group">
-                <label for="productSearch">자재 추가</label>
-                <div class="search-container-modal">
-                  <button @click="openMaterialModal" class="search-btn-modal" type="button">자재 검색</button>
-                </div>
-              </div>
-            </div>
-            
-            <h4 class="product-list-title">자재 목록 ({{ editableTemplate.products.length }}개)</h4>
-            <ul class="product-list editable">
-              <li v-for="product in editableTemplate.products" :key="product.code" class="product-item">
-                <div class="product-info-left">
-                  <div class="product-name-code">
-                    <span class="product-name">{{ product.name }}</span>
-                    <span class="product-code">({{ product.code }})</span>
-                  </div>
-                </div>
-                <div class="product-edit-actions">
-                  <input type="number" v-model.number="product.quantity" min="1" class="quantity-input-modal" />
-                  <span class="x-mark">x</span>
-                  <span class="product-unit">{{ product.unit || '' }}</span>
-                  <button @click="removeProductFromTemplate(product.code)" class="delete-btn-modal">삭제</button>
-                </div>
-              </li>
-            </ul>
-            <div class="detail-actions">
-              <button @click="cancelEdit" class="btn-secondary">취소</button>
-              <button @click="updateTemplate" class="btn-primary">수정 완료</button>
+        <!-- Edit Mode -->
+        <div v-if="isEditMode && editableTemplate">
+          <h2 class="edit-title">📂 템플릿 수정</h2>
+          <hr class="edit-divider" />
+          <div class="form-group">
+            <label for="editName">템플릿 이름</label>
+            <input id="editName" type="text" v-model="editableTemplate.name" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label for="editDesc">템플릿 설명</label>
+            <textarea id="editDesc" v-model="editableTemplate.description" class="form-input" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="editProductSearch">자재 추가</label>
+            <div class="search-container-modal">
+              <button @click="openMaterialModal" class="search-btn-modal" type="button">자재 검색</button>
             </div>
           </div>
-          <!-- View Mode -->
-          <div v-else>
-            <div class="detail-header">
-              <h3>{{ detailedTemplate.name }}</h3>
-              <p>{{ detailedTemplate.description }}</p>
-            </div>
-            <ul class="product-list">
-              <li v-for="product in detailedTemplate.products" :key="product.code" class="product-item">
-                <div class="product-info-left">
-                  <div class="product-name-code">
-                    <span class="product-name">{{ product.name }}</span>
-                    <span class="product-code">({{ product.code }})</span>
-                  </div>
-                  <div class="product-meta">
-                    <span>사양: {{ product.spec }}</span>
-                    <span>공급처: {{ product.supplierName }}</span>
-                  </div>
+          <h4 class="product-list-title">자재 목록 ({{ editableTemplate.products.length }}개)</h4>
+          <ul class="product-list editable">
+            <li v-for="(product, idx) in editableTemplate.products" :key="product.code" class="product-item">
+              <div class="product-info-left">
+                <div class="product-name-code">
+                  <span class="product-name">{{ product.name }}</span>
+                  <span class="product-code">({{ product.code }})</span>
                 </div>
-                <div class="product-info-right">
-                  <div class="product-price">{{ formatPrice(product.salePrice) }}원</div>
-                  <div class="product-quantity">{{ product.quantity }} <span class="x-mark">x</span> {{ product.unit || '' }}</div>
+              </div>
+              <div class="product-edit-actions">
+                <input type="number" v-model.number="product.quantity" min="1" class="quantity-input-modal" />
+                <span class="x-mark">x</span>
+                <span class="product-unit">{{ product.unit || '' }}</span>
+                <button @click="removeProductFromTemplate(product.code)" class="delete-btn-modal">삭제</button>
+              </div>
+            </li>
+          </ul>
+          <div class="detail-actions">
+            <button @click="cancelEdit" class="btn-secondary">취소</button>
+            <button @click="updateTemplate" class="btn-primary">저장</button>
+          </div>
+        </div>
+        <!-- Detail View -->
+        <div v-else-if="detailedTemplate && !isEditMode">
+          <!-- 상단 정보 카드 -->
+          <div class="template-detail-card">
+            <div class="template-detail-header">
+              <div>
+                <div class="template-detail-title">{{ detailedTemplate.name }}</div>
+                <div class="template-detail-desc">{{ detailedTemplate.description }}</div>
+                <div class="template-detail-meta">
+                  <span class="badge">{{ detailedTemplate.products.length }}개 자재</span>
+                  <span class="badge badge-green">총 {{ formatPrice(getTemplateTotalAmount(detailedTemplate)) }}원</span>
                 </div>
-              </li>
-            </ul>
-            <div class="detail-actions">
-              <button @click="detailedTemplate = null" class="btn-secondary">목록으로</button>
-              <button @click="startEdit" class="btn-secondary">수정</button>
-              <button @click="applyTemplate" class="btn-primary">이 템플릿 적용하기</button>
+              </div>
+              <div class="template-detail-total">
+                <span class="total-amount">{{ formatPrice(getTemplateTotalAmount(detailedTemplate)) }}원</span>
+                <span class="total-label">총 금액</span>
+              </div>
             </div>
+          </div>
+          <!-- 자재 목록 -->
+          <div class="material-list-section">
+            <div class="material-list-title">자재 목록</div>
+            <div v-for="(product, idx) in detailedTemplate.products" :key="product.code" class="material-list-row">
+              <div class="material-index">{{ idx + 1 }}</div>
+              <div class="material-info">
+                <span class="material-name">{{ product.name }}</span>
+                <span class="material-code">{{ product.code }}</span>
+                <div class="material-meta">
+                  사양: {{ product.spec }} &nbsp; 공급처: {{ product.supplierName }}
+                </div>
+              </div>
+              <div class="material-amount">
+                <div class="amount-value">{{ formatPrice(product.salePrice * product.quantity) }}원</div>
+                <div class="amount-meta">{{ product.quantity }} x {{ product.unit }} (단가: {{ formatPrice(product.salePrice) }}원)</div>
+              </div>
+            </div>
+          </div>
+          <!-- 하단 버튼 -->
+          <div class="detail-actions detail-actions-row">
+            <button @click="detailedTemplate = null" class="btn-secondary">목록으로</button>
+            <button @click="startEdit" class="btn-secondary">수정</button>
+            <button @click="applyTemplate" class="btn-primary">이 템플릿 적용하기</button>
           </div>
         </div>
 
@@ -98,7 +108,7 @@
             사용 가능한 템플릿이 없습니다.
           </div>
           <ul v-else class="template-list">
-            <li v-for="template in templates" :key="template.id" @click="showTemplateDetails(template.id)" class="template-item">
+            <li v-for="template in filteredTemplates" :key="template.id" @click="showTemplateDetails(template.id)" class="template-item">
               <div style="display: flex; flex-direction: column; flex: 1;">
                 <div class="template-name">{{ template.name }}</div>
                 <div class="template-description" style="margin-bottom:0;">{{ template.description }}</div>
@@ -107,8 +117,8 @@
                 {{ template.products ? template.products.length : 0 }}개 자재 /
                 총 {{ formatPrice(getTemplateTotalAmount(template)) }}원
               </div>
-              <button v-if="isManageMode" @click.stop="confirmDelete(template.id, template.name)" class="delete-icon-btn">
-                🗑️
+              <button @click.stop="confirmDelete(template.id, template.name)" class="delete-icon-btn" style="margin-left:16px;">
+                <img src="@/assets/trash.png" alt="삭제" style="width: 22px; height: 22px; vertical-align: middle;" />
               </button>
             </li>
           </ul>
@@ -160,7 +170,7 @@
       <div v-if="showDeleteModal" class="custom-modal-overlay">
         <div class="custom-modal confirm-modal">
           <div class="modal-header-confirm">
-            <span class="modal-icon">🗑️</span>
+            <span class="modal-icon"><img src="@/assets/trash.png" alt="삭제" style="width: 22px; height: 22px; vertical-align: middle;" /></span>
             <span class="modal-title-confirm danger">템플릿 삭제</span>
             <button class="modal-close-btn" @click="showDeleteModal = false">&times;</button>
           </div>
@@ -233,6 +243,9 @@ const deleteTarget = ref({ id: null, name: '' });
 const isMaterialModalVisible = ref(false);
 const allProducts = ref([]);
 
+const templateSearch = ref("");
+const filteredTemplates = ref([]);
+
 const fetchTemplates = async () => {
   isLoading.value = true;
   try {
@@ -271,6 +284,18 @@ watch(() => props.isVisible, (newVal) => {
     registerSearchResults.value = [];
   }
 });
+
+watch([templates, templateSearch], () => {
+  if (!templateSearch.value.trim()) {
+    filteredTemplates.value = templates.value;
+  } else {
+    const q = templateSearch.value.trim().toLowerCase();
+    filteredTemplates.value = templates.value.filter(t =>
+      (t.name && t.name.toLowerCase().includes(q)) ||
+      (t.description && t.description.toLowerCase().includes(q))
+    );
+  }
+}, { immediate: true });
 
 const closeModal = () => {
   emit('close');
@@ -553,6 +578,10 @@ const handleMaterialSelect = (selected) => {
   }
   isMaterialModalVisible.value = false;
 };
+
+const onTemplateSearch = () => {
+  // 입력시 바로 반영 (watch로 처리)
+};
 </script>
 
 <style scoped>
@@ -732,21 +761,23 @@ const handleMaterialSelect = (selected) => {
   gap: 8px;
 }
 
-.btn-secondary, .btn-primary {
-  padding: 8px 16px;
+.btn-secondary {
+  padding: 8px 40px;
   border-radius: 6px;
   border: 1px solid;
   cursor: pointer;
   font-weight: bold;
-}
-
-.btn-secondary {
   background-color: #fff;
   border-color: #ccc;
   color: #333;
 }
 
 .btn-primary {
+  padding: 8px 40px;
+  border-radius: 6px;
+  border: 1px solid;
+  cursor: pointer;
+  font-weight: bold;
   background-color: #4066fa;
   border-color: #4066fa;
   color: #fff;
@@ -832,8 +863,9 @@ const handleMaterialSelect = (selected) => {
 
 .form-group label {
   margin-bottom: 6px;
-  font-weight: 500;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: 20px;
 }
 
 .form-input {
@@ -841,7 +873,7 @@ const handleMaterialSelect = (selected) => {
   padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .form-input:focus {
@@ -883,6 +915,7 @@ textarea.form-input {
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
+    margin-bottom: 10px;
     transition: background-color 0.2s;
 }
 
@@ -912,7 +945,7 @@ textarea.form-input {
   background: #4066fa;
   color: #fff;
   border: none;
-  padding: 4px 14px;
+  padding: 8px 14px;
   border-radius: 6px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -1022,5 +1055,220 @@ textarea.form-input {
 }
 .btn-danger:hover {
   background: #b71c1c;
+}
+
+.template-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 18px 0;
+}
+.template-search-input {
+  flex: 1;
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 15px;
+  background: #f6f7fa;
+}
+.template-search-input:focus {
+  outline: none;
+  border-color: #4066fa;
+  box-shadow: 0 0 0 2px rgba(64, 102, 250, 0.1);
+}
+.template-search-btn {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 7px 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s;
+}
+.template-search-btn:hover {
+  background: #f5faff;
+}
+
+.template-detail-card {
+  background: #f6faff;
+  border: 1.5px solid #bcdcff;
+  border-radius: 14px;
+  padding: 15px 28px 5px 28px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(64,102,250,0.04);
+}
+.template-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.template-detail-title {
+  font-size: 0.97rem;
+  font-weight: 650;
+  margin-bottom: 4px;
+}
+.template-detail-desc {
+  color: #2a2a2a;
+  font-size: 0.88rem;
+  margin-bottom: 10px;
+}
+.template-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+}
+.badge {
+  background: #eaf3ff;
+  color: #4066fa;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  margin-left: -8px;
+  display: inline-block;
+}
+.badge-green {
+  background: #e6f9ed;
+  color: #16a34a;
+}
+.template-detail-date {
+  color: #888;
+  font-size: 0.98rem;
+  margin-left: 8px;
+}
+.template-detail-total {
+  text-align: right;
+  min-width: 120px;
+}
+.total-amount {
+  color: #4066fa;
+  font-size: 1rem;
+  font-weight: 600;
+  display: block;
+}
+.total-label {
+  color: #888;
+  font-size: 0.7rem;
+  margin-top: 1.5px;
+  display: block;
+}
+.material-list-section {
+  margin-top: 18px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.material-list-title {
+  color: #000000;
+  font-weight: 650;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+.material-list-row {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(64,102,250,0.06);
+  display: flex;
+  align-items: center;
+  padding: 9px 25px;
+  margin-bottom: 12px;
+  border: 1.5px solid #e3e8f0;
+}
+.material-index {
+  font-weight: 600;
+  color: #4154ff;
+  background: #cbd6ff;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  margin-right: 18px;
+  box-shadow: 0 2px 8px rgba(64,102,250,0.10);
+  /* border: 2.5px solid #eaf3ff; */
+  letter-spacing: 0.5px;
+  transition: background 0.2s;
+}
+.material-info {
+  flex: 1;
+}
+.material-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-right: 8px;
+}
+.material-code {
+  font-weight: 600;
+  color: #4066fa;
+  background: #e6f0ff;
+  border-radius: 6px;
+  padding: 2px 4px;
+  font-size: 0.7rem;
+  margin-left: 6px;
+}
+.material-meta {
+  color: #888;
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+.material-amount {
+  text-align: right;
+  min-width: 120px;
+}
+.amount-value {
+  font-weight: 700;
+  color: #222;
+  font-size: 1.05rem;
+}
+.amount-meta {
+  color: #5f5f5f;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+.detail-actions-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.edit-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+  margin-top: 0;
+}
+.edit-info-card {
+  background: #f7f8fa;
+  border: 1.5px solid #e3e8f0;
+  border-radius: 12px;
+  padding: 24px 20px 18px 20px;
+  margin-bottom: 24px;
+}
+.edit-info-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.edit-info-icon {
+  font-size: 1.15rem;
+  color: #4066fa;
+}
+.edit-info-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #4066fa;
+}
+
+.edit-divider {
+  border: none;
+  border-top: 1px solid #ededed;
+  margin: 12px 0 18px 0;
 }
 </style> 
