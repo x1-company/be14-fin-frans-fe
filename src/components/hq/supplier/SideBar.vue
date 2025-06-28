@@ -38,25 +38,18 @@ const handleCompanyClick = (company) => {
 
 <template>
   <div class="sidebar">
-    <!-- Fixed Header -->
     <div class="sidebar-header">
-      <div class="header-item">
-        <span class="star-icon">★</span>
-        <span>즐겨찾기</span>
-        <button class="add-btn">+</button>
-      </div>
-
       <div class="header-item">
         <img
           src="@/assets/menu-supplier.png"
           alt="공급처 관리"
           class="sidebar__icon"
-          style="width: 20px; height: 20px"
         />공급처 관리
       </div>
 
-      <div class="count-info">
-        <span>전체 {{ totalCount }}</span>
+      <div class="sidebar-total"
+        >전체
+        <span class="total-count">{{ totalCount }}</span>
       </div>
 
       <div class="search-container">
@@ -80,7 +73,7 @@ const handleCompanyClick = (company) => {
         @click="handleCompanyClick(company)"
       >
         <div class="company-header">
-          <img src="@/assets/menu-supplier-2.png" class="sidebar__info-icon" />
+          <img src="@/assets/menu-supplier-2.png" class="supplier-icon" />
           <span class="company-name">{{ company.name }}</span>
           <span class="company-category">공급처</span>
         </div>
@@ -101,12 +94,16 @@ const handleCompanyClick = (company) => {
 
 <style scoped>
 .sidebar {
-  width: 230px;
-  background: #f8f9fa;
+  width: 230px; /* 최소 너비 추가 */
+  flex-shrink: 0; /* 줄어들지 않게 */
+  background: #ffffff;
   border-right: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100%; /* 화면 전체 높이로 고정 */
+  overflow-x: hidden; /* 가로 스크롤 방지 */
+  position: relative; /* 겹침 방지 */
+  z-index: 2;
 }
 
 .sidebar-header {
@@ -116,26 +113,41 @@ const handleCompanyClick = (company) => {
 }
 
 .header-item {
+  font-weight: 500;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  font-size: 14px;
 }
 
-.add-btn {
-  margin-left: auto;
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  color: #6c757d;
+.sidebar__icon {
+  width: 22px;
+  height: 22px;
 }
 
-.count-info {
-  font-size: 12px;
-  color: #6c757d;
-  margin-bottom: 16px;
+.sidebar__info-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+}
+
+.supplier-icon {
+  width: 28px;
+  height: 28px;
+  /* object-fit: contain; */
+}
+
+.sidebar-total {
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  margin-left: 5px;
+}
+
+.total-count {
+  color: #6c47ff;
+  font-weight: 450;
+  margin-left: 2px;
 }
 
 .search-container {
@@ -144,10 +156,10 @@ const handleCompanyClick = (company) => {
 
 .search-input {
   width: 100%;
-  padding: 8px 32px 8px 12px;
+  padding: 6px 25px 5px 10px;
   border: 1px solid #dee2e6;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 12px;
   box-sizing: border-box;
 }
 
@@ -188,6 +200,7 @@ const handleCompanyClick = (company) => {
 .company-header {
   display: flex;
   align-items: center;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -198,7 +211,7 @@ const handleCompanyClick = (company) => {
 }
 
 .company-category {
-  background: #667eea;
+  background-color: #7daff0;
   color: white;
   padding: 2px 6px;
   border-radius: 12px;
