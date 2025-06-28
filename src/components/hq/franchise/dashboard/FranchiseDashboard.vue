@@ -20,11 +20,20 @@
     </div>
     <div class="dashboard-card completed-order">
       <div class="card-header">
-        <span>완료된 주문/반품 이력</span>
+        <span>완료된 주문 결재 요청</span>
         <span class="card-icon">📈</span>
       </div>
       <div class="card-main">
         <span class="card-value">{{ completedOrder.count }}</span>
+        <span v-if="typeof completedOrder.diff === 'number'" class="card-diff"
+          :class="{
+            up: completedOrder.diff > 0,
+            down: completedOrder.diff < 0,
+            zero: completedOrder.diff === 0
+          }"
+        >
+          {{ completedOrder.diff > 0 ? '+' : '' }}{{ completedOrder.diff }}
+        </span>
       </div>
     </div>
   </div>
@@ -107,13 +116,16 @@ function goToApproval() {
 .card-diff {
   font-size: 1.1rem;
   font-weight: 500;
-  color: #888;
+  margin-left: 8px;
 }
 .card-diff.up {
   color: #3cb371;
 }
 .card-diff.down {
   color: #e74c3c;
+}
+.card-diff.zero {
+  color: #888;
 }
 .card-footer {
   font-size: 0.95rem;
