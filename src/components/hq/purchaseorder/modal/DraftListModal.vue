@@ -25,7 +25,7 @@
           <input 
             type="text" 
             class="search-input" 
-            placeholder="발주서 검색"
+            placeholder="발주 검색"
             v-model="searchQuery"
           />
         </div>
@@ -68,16 +68,17 @@
           <thead>
             <tr>
               <th style="width: 40px">선택</th>
-              <th style="width: 150px">구매요청번호</th>
+              <th style="width: 150px">발주번호</th>
               <th>제목</th>
-              <th style="width: 100px">담당자</th>
+              <th style="width: 100px">금액</th>
+              <th style="width: 120px">상태</th>
               <th style="width: 120px">요청일</th>
-              <th style="width: 120px">납기희망일</th>
+              <th style="width: 120px">납기일</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="filteredDraftList.length === 0">
-              <td colspan="6" class="no-data">저장된 임시 발주서가 없습니다.</td>
+              <td colspan="7" class="no-data">저장된 임시 발주가 없습니다.</td>
             </tr>
             <tr 
               v-for="draft in filteredDraftList" 
@@ -97,7 +98,8 @@
               <td class="draft-name-cell">
                 <div class="draft-name">{{ draft.title }}</div>
               </td>
-              <td class="text-center">{{ draft.userName }}</td>
+              <td class="text-center">{{ formatCurrency(draft.totalAmount) }}</td>
+              <td class="text-center">{{ draft.status }}</td>
               <td class="text-center">{{ formatDate(draft.createdAt) }}</td>
               <td class="text-center">{{ formatDate(draft.requestedDeliveryDate) }}</td>
             </tr>
@@ -113,9 +115,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { 
   FileText as FileTextIcon, 
   X as XIcon, 
-  Search as SearchIcon,
-  Calendar as CalendarIcon,
-  Clock as ClockIcon
+  Search as SearchIcon
 } from 'lucide-vue-next';
 import api from '@/lib/api';
 import { useToast } from "@/composables/useToast";
@@ -126,6 +126,10 @@ const props = defineProps({
   isVisible: {
     type: Boolean,
     default: false
+  },
+  supplierId: {
+    type: [String, Number],
+    required: true
   }
 });
 
@@ -136,7 +140,7 @@ const draftList = ref([]);
 
 async function fetchDrafts() {
   try {
-    const response = await api.get('/api/hq/purchase/requests/draft');
+    const response = await api.get('/api/hq/purchaseorder/draft');
     draftList.value = response.data.content.map(d => ({ ...d, selected: false }));
   } catch (error) {
     console.error("임시저장 목록을 불러오는 데 실패했습니다.", error);
@@ -144,26 +148,21 @@ async function fetchDrafts() {
   }
 }
 
-// 필터링된 목록
 const filteredDraftList = computed(() => {
-  if (!searchQuery.value) return draftList.value;
-  
-  return draftList.value.filter(draft => 
-    draft.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    (draft.description && draft.description.toLowerCase().includes(searchQuery.value.toLowerCase()))
+  let filtered = draftList.value.filter(draft => String(draft.supplierId) === String(props.supplierId));
+  if (!searchQuery.value) return filtered;
+  return filtered.filter(draft => 
+    draft.title.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 
-// 선택 관련 computed
 const selectedDrafts = computed(() => filteredDraftList.value.filter(draft => draft.selected));
 const selectedCount = computed(() => selectedDrafts.value.length);
-
 const isAllSelected = computed(() => 
   filteredDraftList.value.length > 0 && 
   selectedCount.value === filteredDraftList.value.length
 );
 
-// 전체 선택/해제
 function toggleSelectAll(event) {
   const checked = event.target.checked;
   filteredDraftList.value.forEach(draft => {
@@ -175,7 +174,6 @@ function toggleSelection(draft) {
     draft.selected = !draft.selected;
 }
 
-// 유틸리티 함수들
 function formatDate(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -186,24 +184,25 @@ function formatDate(dateString) {
   }).replace(/\./g, '.').replace(/\s/g, '');
 }
 
-function formatTime(dateString) {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleTimeString('ko-KR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
+function formatCurrency(value) {
+  if (value === null || value === undefined) return '0';
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-// 액션 함수들
 function closeModal() {
   emit('close');
 }
 
-function loadSelected() {
+async function loadSelected() {
   if (selectedCount.value === 1) {
-    emit('load-draft', selectedDrafts.value[0]);
+    const draft = selectedDrafts.value[0];
+    try {
+      const response = await api.get(`/api/hq/purchaseorder/draft/${draft.id}`);
+      emit('load-draft', response.data);
+    } catch (error) {
+      toast.error('임시저장 상세 불러오기에 실패했습니다.');
+      return;
+    }
     closeModal();
   }
 }
@@ -218,7 +217,7 @@ async function deleteSelected() {
   if (confirm(`선택한 ${idsToDelete.length}개의 임시저장을 삭제하시겠습니까?`)) {
     try {
       for (const id of idsToDelete) {
-        await api.delete(`/api/hq/purchase/requests/${id}`);
+        await api.delete(`/api/hq/purchaseorder/draft/${id}`);
       }
       toast.success('선택한 항목이 삭제되었습니다.');
       await fetchDrafts();
@@ -229,7 +228,6 @@ async function deleteSelected() {
   }
 }
 
-// 모달이 열릴 때 데이터 로드 및 초기화
 watch(() => props.isVisible, (newValue) => {
   if (newValue) {
     fetchDrafts();

@@ -2,7 +2,7 @@
   <div class="purchase-detail-container">
     <!-- Header with action buttons -->
     <div class="action-buttons">
-      <button class="btn btn-primary">임시 저장 불러오기</button>
+      <button class="btn btn-primary" @click="isDraftListModalVisible = true">임시 저장 불러오기</button>
       <button class="btn btn-primary">임시 저장</button>
       <button class="btn btn-primary" @click="registerOrder">등록</button>
       <button class="btn" @click="cancel">취소</button>
@@ -123,6 +123,12 @@
     </div>
 
     <!-- Modals -->
+    <DraftListModal
+      :is-visible="isDraftListModalVisible"
+      :supplier-id="supplier.id"
+      @close="isDraftListModalVisible = false"
+      @load-draft="handleLoadDraft"
+    />
     <PurchaseRequestListModal
       :is-visible="isRequestListModalVisible"
       @close="isRequestListModalVisible = false"
@@ -147,6 +153,7 @@ import PurchaseRequestListModal from './modal/PurchaseRequestListModal.vue';
 import PurchaseRequestProductModal from './modal/PurchaseRequestProductModal.vue';
 import { useToast } from '@/composables/useToast';
 import { useRouter } from 'vue-router';
+import DraftListModal from './modal/DraftListModal.vue';
 
 const props = defineProps({
   supplier: {
@@ -163,6 +170,7 @@ const router = useRouter();
 const isRequestListModalVisible = ref(false);
 const isProductModalVisible = ref(false);
 const selectedRequest = ref(null);
+const isDraftListModalVisible = ref(false);
 
 const orderInfo = ref({
   title: '',
@@ -265,9 +273,11 @@ async function registerOrder() {
       productId: m.productId,
       quantity: m.quantity,
       remarks: m.remarks,
-      purchaseRequestId: m.purchaseRequestId
+      purchaseRequestId: m.purchaseRequestId,
+      supplierId: m.supplierId
     })),
   };
+  console.log('등록 payload', JSON.stringify(payload, null, 2));
 
   try {
     await api.post('/api/hq/purchaseorder/request', payload);
@@ -310,6 +320,31 @@ function deleteMaterials() {
 
 function cancel() {
   emit('cancel-register');
+}
+
+function handleLoadDraft(draft) {
+  // 폼 전체 덮어쓰기: orderInfo, materials 등 draft 데이터로 교체
+  orderInfo.value.title = draft.title;
+  orderInfo.value.deliveryDate = draft.requestedDeliveryDate;
+  orderInfo.value.orderNumber = draft.code || '자동생성';
+  orderInfo.value.status = draft.status || '임시저장';
+  orderInfo.value.manager = draft.manager || authStore.userName;
+  orderInfo.value.managerEmail = draft.managerEmail || authStore.userEmail;
+  materials.value = (draft.products || []).map(m => ({
+    productId: m.productId || m.id, // id 필드가 productId 역할
+    code: m.productCode,
+    name: m.productName,
+    purchasePrice: m.purchasePrice,
+    quantity: m.quantity,
+    purchaseUnit: m.purchaseUnit,
+    productTypeName: m.productTypeName,
+    productGroupName: m.productGroupName,
+    productAttributeName: m.productAttributeName,
+    remarks: m.remarks || '',
+    standard: m.standard,
+    supplierId: m.supplierId, // 임시저장 상세의 supplierId 그대로
+    purchaseRequestId: m.purchaseRequestId // 임시저장 상세의 purchaseRequestId 그대로
+  }));
 }
 </script>
 
