@@ -196,7 +196,7 @@ const props = defineProps({
   isVisible: Boolean,
 });
 
-const emit = defineEmits(['close', 'select-template']);
+const emit = defineEmits(['close', 'template']);
 
 const templates = ref([]);
 const isLoading = ref(false);

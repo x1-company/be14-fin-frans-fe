@@ -13,26 +13,13 @@
         <div class="actions-container">
             <!-- 검색 영역 -->
             <div class="search-section">
-                <div class="search-container">
+                <!-- 기존 검색창 숨김 -->
+                <!-- <div class="search-container">
                     <input v-model="searchQuery" @keyup.enter="searchProducts" type="text" placeholder="자재명을 입력하세요"
                         class="search-input" />
                     <button @click="searchProducts" class="search-btn">검색</button>
-                </div>
-
-                <!-- 검색 결과 드롭다운 -->
-                <div v-if="searchResults.length > 0" class="search-results">
-                    <div v-for="product in searchResults" :key="product.id" @click="addToOrderList(product)"
-                        class="search-result-item">
-                        <div class="product-info">
-                            <span class="product-code">{{ product.code }}</span>
-                            <span class="product-name">{{ product.name }}</span>
-                            <span class="product-spec">{{ product.spec }}</span>
-                        </div>
-                        <div class="product-price">
-                            {{ formatPrice(product.sale_price) }}원/{{ product.unit }}
-                        </div>
-                    </div>
-                </div>
+                </div> -->
+                <button @click="isMaterialModalVisible = true" class="search-btn">자재 검색</button>
             </div>
             <div class="right-actions">
                 <button class="recent-order-btn" @click="loadRecentOrder">
@@ -133,6 +120,14 @@
             @close="isTemplateModalVisible = false"
             @select-template="handleSelectTemplate"
         />
+        <!-- 자재 선택 모달 -->
+        <MaterialSelectModal
+            v-if="isMaterialModalVisible"
+            :products="allProducts"
+            :visible="isMaterialModalVisible"
+            @close="isMaterialModalVisible = false"
+            @register="(products) => { products.forEach(addToOrderList); isMaterialModalVisible = false; }"
+        />
     </div>
 </template>
 
@@ -141,6 +136,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from "@/stores/auth.js"
 import Outbutton from './button/Outbutton.vue'
 import OrderTemplateModal from './OrderTemplateModal.vue'
+import MaterialSelectModal from './MaterialSelectModal.vue'
 import api from "@/lib/api"
 import { useToast } from "@/composables/useToast"
 
@@ -156,49 +152,59 @@ const isLoading = ref(false)
 const isSubmitting = ref(false)
 const isTemplateModalVisible = ref(false)
 const isConfirmModalVisible = ref(false)
+const isMaterialModalVisible = ref(false)
+const allProducts = ref([]) // 전체 자재 목록 추가
 
 // 검색 디바운스를 위한 타이머
 let searchTimer = null
 
-// 자재 검색
-const searchProducts = async () => {
-    if (!searchQuery.value.trim()) {
-        searchResults.value = []
-        return
-    }
-
-    isLoading.value = true
+// 자재 목록 전체 불러오기 (onMounted)
+onMounted(async () => {
     try {
-        const response = await api.get(`/api/franchise/products/name/${encodeURIComponent(searchQuery.value)}`)
-        searchResults.value = response.data.filter(product => product.isActive)
-    } catch (error) {
-        console.error('자재 검색 실패:', error)
-        searchResults.value = []
-    } finally {
-        isLoading.value = false
+        const res = await api.get('/api/franchise/products/list')
+        allProducts.value = res.data.filter(product => product.isActive)
+    } catch (e) {
+        toast.error('자재 목록을 불러오지 못했습니다.')
+    }
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-section')) {
+            searchResults.value = []
+        }
+    })
+})
+
+// 자재 검색 (수정)
+const searchProducts = () => {
+    if (!searchQuery.value.trim()) {
+        // 검색어 없으면 전체 목록
+        searchResults.value = allProducts.value
+    } else {
+        // 검색어 있으면 필터링
+        const q = searchQuery.value.trim().toLowerCase()
+        searchResults.value = allProducts.value.filter(
+            p =>
+                (p.name && p.name.toLowerCase().includes(q)) ||
+                (p.code && p.code.toLowerCase().includes(q))
+        )
     }
 }
 
-// 주문 목록에 추가
+// 주문 목록에 추가 (수정: 수량 반영)
 const addToOrderList = (product) => {
     // 이미 추가된 상품인지 확인
     const existingItem = orderList.value.find(item => item.id === product.id)
     if (existingItem) {
-        existingItem.quantity += 1
+        existingItem.quantity += product.quantity || 1
         updateAmount(existingItem)
-        toast.error('이미 추가된 상품입니다. 수량을 1 증가시켰습니다.')
+        toast.error('이미 추가된 상품입니다. 수량을 증가시켰습니다.')
     } else {
         const orderItem = {
             ...product,
-            quantity: 1,
+            quantity: product.quantity || 1,
             totalAmount: product.sale_price
         }
         orderList.value.push(orderItem)
     }
-
-    // 검색 결과 초기화
-    searchResults.value = []
-    searchQuery.value = ''
 }
 
 // 주문 목록에서 제거
@@ -317,17 +323,17 @@ const formatPrice = (price) => {
 
 // 임시 분류 데이터 (실제로는 API에서 가져와야 함)
 const getProductGroupName = (id) => {
-    const groups = { 1: '조미료', 2: '육류', 3: '채소' }
+    const groups = { 1: '상온', 2: '냉장', 3: '냉동', 4: '기타' }
     return groups[id] || '기타'
 }
 
 const getProductTypeName = (id) => {
-    const types = { 1: '원재료', 2: '반제품', 3: '완제품' }
+    const types = { 1: '원재료', 2: '상품', 3: '저장품', 4: '소모품', 5: '시설소모품', 6: '경품', 7: '기타' }
     return types[id] || '기타'
 }
 
 const getProductAttributeName = (id) => {
-    const attributes = { 1: '냉장', 2: '상온', 3: '냉동' }
+    const attributes = { 1: '신선식품', 2: '비신선식품', 3: '비식품' }
     return attributes[id] || '기타'
 }
 
@@ -340,15 +346,6 @@ const getTagClass = (category) => {
     };
     return `${baseClass} ${categoryMap[category] || ''}`;
 }
-
-// 컴포넌트 외부 클릭 시 검색 결과 숨기기
-onMounted(() => {
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-section')) {
-            searchResults.value = []
-        }
-    })
-})
 
 const openConfirmModal = () => { isConfirmModalVisible.value = true; };
 const closeConfirmModal = () => { isConfirmModalVisible.value = false; };
