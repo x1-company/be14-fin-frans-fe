@@ -1,15 +1,11 @@
 <template>
   <div class="detail-form-card">
     <div class="card-header">
-      <div class="detail-form-title">자재 등록</div>
-      <div class="detail-form-btns">
-        <button class="btn-outline" @click="cancelRegister">취소</button>
-        <button class="btn-blue" @click="saveProduct">등록</button>
-      </div>
+      <div class="detail-form-title"></div>
     </div>
     <div class="detail-form-supplier">
       공급처
-      <select v-model="formData.supplierId" class="form-select">
+      <select v-model="formData.supplierId" class="form-select" :disabled="!!props.supplierId">
         <option value="">공급처를 선택하세요</option>
         <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
       </select>
@@ -76,18 +72,30 @@
         </div>
       </div>
     </div>
+    <div class="detail-form-btns">
+      <button class="btn-outline" @click="cancelRegister">취소</button>
+      <button class="btn-blue" @click="saveProduct">등록</button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import api from '@/lib/api';
 import { useToast } from "@/composables/useToast";
 
 const toast = useToast();
 
+const props = defineProps({
+  supplierId: {
+    type: [String, Number],
+    default: null,
+  },
+});
+
 const router = useRouter();
+const route = useRoute();
 
 const formData = ref({
   code: '',
@@ -98,7 +106,7 @@ const formData = ref({
   purchasePrice: null,
   salePrice: null,
   isActive: true,
-  supplierId: null,
+  supplierId: props.supplierId || null,
   productGroupId: null,
   productTypeId: null,
   productAttributeId: null,
@@ -136,9 +144,11 @@ const fetchSuppliers = async () => {
   }
 };
 
+const emit = defineEmits(['register-done', 'cancel']);
+
 function cancelRegister() {
   if (confirm('등록을 취소하시겠습니까?')) {
-    router.push('/warehouse?tab=1');
+    emit('cancel');
   }
 }
 
@@ -172,7 +182,7 @@ async function saveProduct() {
   try {
     await api.post('/api/hq/products', payload);
     toast.success('자재가 성공적으로 등록되었습니다.');
-    router.push('/warehouse?tab=1');
+    emit('register-done');
   } catch (error) {
     console.error('Failed to create product:', error);
     toast.error(`자재 등록에 실패했습니다: ${error.response?.data?.message || error.message}`);
@@ -181,15 +191,22 @@ async function saveProduct() {
 
 onMounted(async () => {
   await fetchSuppliers();
+  let sid = props.supplierId;
+  if (!sid && route.query.supplierId) {
+    sid = route.query.supplierId;
+  }
+  if (sid) {
+    formData.value.supplierId = sid;
+  }
 });
 </script>
 
 <style scoped>
 .detail-form-card {
   background: #fff;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 16px 16px;
   box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
-  padding: 40px 100px 32px 100px;
+  padding: 32px 60px 24px 60px;
   margin-top: 0;
   margin-bottom: 0;
   color: #222;
@@ -198,96 +215,97 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 .detail-form-title {
-  font-size: 1.3rem;
+  font-size: 1.05rem;
   font-weight: bold;
   margin-bottom: 0;
   color: #222;
 }
 .detail-form-supplier {
-  font-size: 1.1rem;
-  margin-bottom: 40px;
+  font-size: 0.98rem;
+  margin-bottom: 24px;
   color: #222;
 }
 .detail-form-supplier .form-select {
   margin-left: 8px;
-  width: 250px;
-  height: 36px;
-  font-size: 1rem;
+  width: 180px;
+  height: 28px;
+  font-size: 0.92rem;
+  border-radius: 6px;
 }
 .detail-form-grid {
   display: flex;
-  gap: 48px;
-  margin-bottom: 24px;
+  gap: 32px;
+  margin-bottom: 12px;
 }
 .form-col {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 10px;
   color: #222;
   font-family: inherit;
 }
 .form-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 .form-row label {
-  font-size: 1rem;
+  font-size: 0.92rem;
   color: #222;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   font-weight: 500;
 }
 .form-row input, .form-select {
-  height: 36px;
-  border: 1px solid #d1d5db;
+  height: 28px;
+  border: 1px solid #e2e4ea;
   border-radius: 6px;
-  padding: 0 12px;
-  font-size: 1rem;
+  padding: 0 10px;
+  font-size: 0.92rem;
   background: #fff;
   color: #222;
   font-family: inherit;
 }
 .detail-form-btns {
   display: flex;
-  gap: 16px;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  margin-bottom: 0;
 }
 .btn-blue {
   background: #4066fa;
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 8px 24px;
-  font-size: 1rem;
+  padding: 0 16px;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
+  height: 30px;
   transition: background 0.2s;
 }
 .btn-blue:hover {
-  background: #3453c7;
+  background: #2746b6;
 }
 .btn-outline {
   background: #fff;
   color: #4066fa;
-  border: 1px solid #4066fa;
+  border: 1px solid #b7c4f8;
   border-radius: 6px;
-  padding: 8px 24px;
-  font-size: 1rem;
+  padding: 0 16px;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
+  height: 30px;
   transition: background 0.2s, color 0.2s;
 }
 .btn-outline:hover {
   background: #4066fa10;
-  color: #3453c7;
-}
-.form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
+  color: #2746b6;
 }
 </style> 

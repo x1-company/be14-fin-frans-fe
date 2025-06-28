@@ -323,7 +323,6 @@ onMounted(fetchReturns);
   background: #fff;
   width: auto;
 }
-
 .return-form__table-wrapper {
   margin-bottom: 10px;
 }
@@ -333,15 +332,14 @@ onMounted(fetchReturns);
   overflow: hidden;
   margin-bottom: 10px;
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   background: #fff;
 }
 .return-form__table th, .return-form__table td {
   text-align: center;
   vertical-align: middle;
-  padding: 0 8px;
-  height: 48px;
+  padding: 12px 16px;
+  height: 44px;
   font-size: 14px;
   white-space: nowrap;
   border-bottom: 1px solid #eef0f4;
@@ -349,10 +347,13 @@ onMounted(fetchReturns);
 .return-form__table th {
   background: #f8f9fa;
   color: #495057;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   height: 40px;
   border-bottom: 1px solid #eef0f4;
+}
+.return-form__table tbody tr:hover {
+  background: #f8f9fa;
 }
 .return-form__table tr:last-child td {
   border-bottom: none;
@@ -362,6 +363,7 @@ onMounted(fetchReturns);
   text-decoration: underline;
   cursor: pointer;
   transition: color 0.2s;
+  font-size: 15.2px;
 }
 .return-link:hover {
   color: #2d4dd1;
@@ -372,7 +374,6 @@ onMounted(fetchReturns);
   border-radius: 16px;
   font-size: 12px;
   font-weight: 500;
-  
 }
 .status-waiting {
   background: #fffcc4;
@@ -473,7 +474,7 @@ onMounted(fetchReturns);
   border-bottom: none;
 }
 :deep(.dp__input) {
-  font-size: 0.8rem !important;  /* 원하는 크기로 */
+  font-size: 0.8rem !important;
   height: 33px !important;
   padding: 0 4px !important;
   width: 270px !important;
@@ -482,7 +483,7 @@ onMounted(fetchReturns);
   border-radius: 6px !important;
   border: 1px solid #e9ecef !important;
   text-align: center !important;
-  }
+}
 .empty-message {
   text-align: center;
   color: #6c757d;
