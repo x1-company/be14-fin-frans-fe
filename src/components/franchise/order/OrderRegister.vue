@@ -43,7 +43,7 @@
                     <div class="col col-no">No.</div>
                     <div class="col col-code">자재 번호</div>
                     <div class="col col-name">자재명</div>
-                    <div class="col col-price">구매 단가</div>
+                    <div class="col col-price">판매 단가</div>
                     <div class="col col-quantity">수량</div>
                     <div class="col col-unit">단위</div>
                     <div class="col col-spec">규격</div>
