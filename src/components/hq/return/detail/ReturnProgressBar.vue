@@ -8,7 +8,7 @@
         active: idx === currentStep && !isRejected,
         completed: idx < currentStep,
         inactive: idx > currentStep,
-        rejected: isRejected && idx === currentStep
+        rejected: isRejected && idx === currentStep,
       }"
     >
       <div class="circle">
@@ -20,7 +20,13 @@
         />
         <img
           v-else
-          :src="getIcon(step.key, (idx === currentStep && !isRejected) || (idx < currentStep && !isRejected))"
+          :src="
+            getIcon(
+              step.key,
+              (idx === currentStep && !isRejected) ||
+                (idx < currentStep && !isRejected)
+            )
+          "
           :alt="step.label"
           class="icon"
         />
@@ -30,7 +36,7 @@
         :class="{
           rejected: isRejected && idx === currentStep,
           active: idx === currentStep && !isRejected,
-          completed: idx < currentStep
+          completed: idx < currentStep,
         }"
       >
         {{ step.label }}
@@ -40,7 +46,7 @@
         class="bar"
         :class="{
           completed: idx < currentStep && !isRejected,
-          rejected: isRejected && idx === 0
+          rejected: isRejected && idx === 0,
         }"
       ></div>
     </div>
@@ -48,38 +54,43 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import waitingForReceiptImg from '@/assets/waiting_for_receipt.png';
-import reviewCompletedImg from '@/assets/review_completed.png';
-import approvedImg from '@/assets/approved.png';
-import pickingUpImg from '@/assets/picking_up.png';
-import pickedUpImg from '@/assets/picked_up.png';
-import completedImg from '@/assets/completed.png';
-import rejectedImg from '@/assets/rejected.png';
+import { computed } from "vue";
+import waitingForReceiptImg from "@/assets/WAITING_FOR_RECEIPT.png";
+import reviewCompletedImg from "@/assets/REVIEW_COMPLETED.png";
+import approvedImg from "@/assets/APPROVED.png";
+import pickingUpImg from "@/assets/PICKING_UP.png";
+import pickedUpImg from "@/assets/PICKED_UP.png";
+import completedImg from "@/assets/COMPLETED.png";
+import rejectedImg from "@/assets/REJECTED.png";
 
 const props = defineProps({
-  status: String
+  status: String,
 });
 
-const isRejected = computed(() => props.status === 'REJECTED');
+const isRejected = computed(() => props.status === "REJECTED");
 
 const statusLabels = {
-  WAITING_FOR_RECEIPT: '접수 대기',
-  REVIEW_COMPLETED: '검토 완료',
-  APPROVED: '결재 완료',
-  PICKING_UP: '반품 수거 중',
-  PICKED_UP: '반품 수거 완료',
-  REJECTED: '반려',
-  COMPLETED: '반품 완료'
+  WAITING_FOR_RECEIPT: "접수 대기",
+  REVIEW_COMPLETED: "검토 완료",
+  APPROVED: "결재 완료",
+  PICKING_UP: "반품 수거 중",
+  PICKED_UP: "반품 수거 완료",
+  REJECTED: "반려",
+  COMPLETED: "반품 완료",
 };
 
 const steps = computed(() => [
-  { key: 'WAITING_FOR_RECEIPT', label: statusLabels.WAITING_FOR_RECEIPT },
-  { key: isRejected.value ? 'REJECTED' : 'REVIEW_COMPLETED', label: isRejected.value ? statusLabels.REJECTED : statusLabels.REVIEW_COMPLETED },
-  { key: 'APPROVED', label: statusLabels.APPROVED },
-  { key: 'PICKING_UP', label: statusLabels.PICKING_UP },
-  { key: 'PICKED_UP', label: statusLabels.PICKED_UP },
-  { key: 'COMPLETED', label: statusLabels.COMPLETED }
+  { key: "WAITING_FOR_RECEIPT", label: statusLabels.WAITING_FOR_RECEIPT },
+  {
+    key: isRejected.value ? "REJECTED" : "REVIEW_COMPLETED",
+    label: isRejected.value
+      ? statusLabels.REJECTED
+      : statusLabels.REVIEW_COMPLETED,
+  },
+  { key: "APPROVED", label: statusLabels.APPROVED },
+  { key: "PICKING_UP", label: statusLabels.PICKING_UP },
+  { key: "PICKED_UP", label: statusLabels.PICKED_UP },
+  { key: "COMPLETED", label: statusLabels.COMPLETED },
 ]);
 
 const statusToStep = {
@@ -89,29 +100,29 @@ const statusToStep = {
   PICKING_UP: 3,
   PICKED_UP: 4,
   COMPLETED: 5,
-  REJECTED: 1
+  REJECTED: 1,
 };
 
 const currentStep = computed(() => statusToStep[props.status] ?? 0);
 
 function getIcon(key, isActive) {
   switch (key) {
-    case 'WAITING_FOR_RECEIPT':
+    case "WAITING_FOR_RECEIPT":
       return waitingForReceiptImg;
-    case 'REVIEW_COMPLETED':
+    case "REVIEW_COMPLETED":
       return reviewCompletedImg;
-    case 'APPROVED':
+    case "APPROVED":
       return approvedImg;
-    case 'PICKING_UP':
+    case "PICKING_UP":
       return pickingUpImg;
-    case 'PICKED_UP':
+    case "PICKED_UP":
       return pickedUpImg;
-    case 'COMPLETED':
+    case "COMPLETED":
       return completedImg;
-    case 'REJECTED':
+    case "REJECTED":
       return rejectedImg;
     default:
-      return '';
+      return "";
   }
 }
 </script>
@@ -179,17 +190,17 @@ function getIcon(key, isActive) {
   transform: translateY(-50%);
 }
 .bar.completed {
-  background: #4285F4;
+  background: #4285f4;
 }
 .completed .circle {
-  background: #4285F4;
+  background: #4285f4;
 }
 .completed .label {
-  color: #4285F4;
+  color: #4285f4;
   font-weight: 700;
 }
 .active .circle {
-  background: #4285F4;
+  background: #4285f4;
 }
 .active .label {
   color: #1976d2;

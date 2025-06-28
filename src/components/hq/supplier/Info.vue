@@ -174,6 +174,20 @@ const updateBreadcrumb = (newItems) => {
               <h3>공급처를 선택해주세요</h3>
               <p>왼쪽 목록에서 공급처를 선택하면 자재 목록을 확인할 수 있습니다.</p>
             </div>
+            <div v-else class="no-selection">
+              <div class="no-selection-icon">🏢</div>
+              <h3>공급처를 선택해주세요</h3>
+              <p
+                >왼쪽 목록에서 공급처를 선택하면 상세 정보를 확인할 수
+                있습니다.</p
+              >
+            </div>
+          </div>
+          <div
+            v-else-if="activeTab === 'delivery-info'"
+            class="p-8 text-center text-gray-500"
+          >
+            납품관리 기능은 현재 준비중입니다.
           </div>
         </div>
       </div>
