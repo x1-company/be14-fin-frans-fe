@@ -88,6 +88,18 @@ const router = useRouter();
 const approvalId = ref(route.params.approvalId);
 const approvalDetail = ref(null);
 
+// 쿼리스트링(tab)으로 진입 시 결재중/결재완료 탭 자동 활성화
+if (route.query.tab === '결재중') {
+  activeTab.value = '결재중';
+  activeMenu.value = '결재중';
+  currentTabIndex.value = 1;
+}
+if (route.query.tab === '결재완료') {
+  activeTab.value = '결재완료';
+  activeMenu.value = '결재완료';
+  currentTabIndex.value = 1;
+}
+
 // 등록/수정 모드 감지
 const isRegisterMode = computed(() => {
   return (

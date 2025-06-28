@@ -34,7 +34,7 @@
           <span class="cart-badge">🛒 {{ selectedProducts.length }}개</span>
         </div>
         <div class="selected-box-out">
-          <div v-if="selectedProducts.length === 0" class="empty-selected">선택된 자재가 없습니다.</div>
+          <div v-if="selectedProducts.length === 0" class="empty-selected">선택된 자재가 없습니다. <br> 왼쪽에서 자재를 선택해주세요</div>
           <div v-for="p in selectedProducts" :key="p.id" class="selected-card">
             <span class="selected-code">{{ p.code }}</span>
             <span class="selected-name">{{ p.name }}</span>
@@ -201,7 +201,7 @@ function registerSelected() {
   color: #b0b8c1;
   text-align: center;
   font-size: 13px;
-  padding: 20px 0;
+  padding: 110px 0 50px 0;
 }
 .selected-card {
   display: flex;

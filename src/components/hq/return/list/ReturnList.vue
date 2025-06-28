@@ -48,6 +48,9 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="returns.length === 0">
+            <td class="empty-message" colspan="7">반품 내역이 없습니다.</td>
+          </tr>
           <tr v-for="(ret, idx) in returns" :key="ret.id">
             <td>{{ idx + 1 + (page-1)*pageSize }}</td>
             <td>
@@ -321,40 +324,38 @@ onMounted(fetchReturns);
   width: auto;
 }
 
-.return-form__table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+.return-form__table-wrapper {
   margin-bottom: 10px;
-  background: #fff;
-  text-align: center;
-  font-weight: 500;
+}
+.return-form__table {
   border: 1px solid #eef0f4;
   border-radius: 10px;
   overflow: hidden;
-}
-.return-form__table th,
-.return-form__table td {
-  border: none;
-  padding: 10px 6px;
-  text-align: center;
-  font-size: 0.9rem;
-  height: 40px;
+  margin-bottom: 10px;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
   background: #fff;
-  color: #222;
-  height: 48px;
 }
-
+.return-form__table th, .return-form__table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0 8px;
+  height: 48px;
+  font-size: 14px;
+  white-space: nowrap;
+  border-bottom: 1px solid #eef0f4;
+}
 .return-form__table th {
   background: #f8f9fa;
-  font-weight: 500;
   color: #495057;
+  font-size: 13px;
+  font-weight: 500;
+  height: 40px;
+  border-bottom: 1px solid #eef0f4;
 }
 .return-form__table tr:last-child td {
   border-bottom: none;
-}
-.return-form__table tr:hover td {
-  background: #f8f9fa;
 }
 .return-link {
   color: #4066fa;
@@ -386,8 +387,8 @@ onMounted(fetchReturns);
   background: #e6ffe6;
 }
 .status-approved {
-  background: #e6f9ed;
-  color: #16a34a;
+  background: #e0f0ff;
+  color: #2563eb;
 }
 .status-pickingup {
   background: #e0f7fa;
@@ -482,4 +483,11 @@ onMounted(fetchReturns);
   border: 1px solid #e9ecef !important;
   text-align: center !important;
   }
+.empty-message {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 40px;
+  font-size: 14px;
+}
 </style>

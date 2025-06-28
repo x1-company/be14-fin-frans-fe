@@ -18,13 +18,22 @@
         <span class="card-value">{{ inProgressApproval.count }}</span>
       </div>
     </div>
-    <div class="dashboard-card completed-order">
+    <div class="dashboard-card completed-order" @click="goToApprovalCompleted">
       <div class="card-header">
-        <span>완료된 주문/반품 이력</span>
+        <span>완료된 주문 결재 요청</span>
         <span class="card-icon">📈</span>
       </div>
       <div class="card-main">
         <span class="card-value">{{ completedOrder.count }}</span>
+        <span v-if="typeof completedOrder.diff === 'number'" class="card-diff"
+          :class="{
+            up: completedOrder.diff > 0,
+            down: completedOrder.diff < 0,
+            zero: completedOrder.diff === 0
+          }"
+        >
+          {{ completedOrder.diff > 0 ? '+' : '' }}{{ completedOrder.diff }}
+        </span>
       </div>
     </div>
   </div>
@@ -48,7 +57,10 @@ const props = defineProps({
 })
 const router = useRouter()
 function goToApproval() {
-  router.push('/approval')
+  router.push({ path: '/approval', query: { tab: '결재중' } })
+}
+function goToApprovalCompleted() {
+  router.push({ path: '/approval', query: { tab: '결재완료' } })
 }
 </script>
 
@@ -73,7 +85,7 @@ function goToApproval() {
   transition: transform 0.18s, box-shadow 0.18s;
 }
 .dashboard-card:hover {
-  transform: translateY(-3px) scale(1.01);
+  transform: translateY(-2px) scale(1.01);
   box-shadow: 0 4px 18px 0 rgba(64, 102, 250, 0.10);
 }
 .card-header {
@@ -107,13 +119,16 @@ function goToApproval() {
 .card-diff {
   font-size: 1.1rem;
   font-weight: 500;
-  color: #888;
+  margin-left: 8px;
 }
 .card-diff.up {
   color: #3cb371;
 }
 .card-diff.down {
   color: #e74c3c;
+}
+.card-diff.zero {
+  color: #888;
 }
 .card-footer {
   font-size: 0.95rem;

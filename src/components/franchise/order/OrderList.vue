@@ -352,7 +352,7 @@
     text-overflow: ellipsis;
   }
   .col-no        { flex-basis: 7%; }
-  .col-code      { flex-basis: 20%; color: #222; font-family: monospace; overflow: visible; text-overflow: unset; white-space: nowrap; }
+  .col-code      { flex-basis: 20%; color: #222; overflow: visible; text-overflow: unset; white-space: nowrap; }
   .col-name      { flex-basis: 25%; text-align: center; font-weight: 500; }
   .col-status    { flex-basis: 15%; }
   .col-date      { flex-basis: 15%; }

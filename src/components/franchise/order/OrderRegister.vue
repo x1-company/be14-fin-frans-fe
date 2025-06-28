@@ -22,9 +22,9 @@
                 <button @click="isMaterialModalVisible = true" class="search-btn">자재 검색</button>
             </div>
             <div class="right-actions">
-                <button class="recent-order-btn" @click="loadRecentOrder">
+                <!-- <button class="recent-order-btn" @click="loadRecentOrder">
                     📋 최근 주문 불러오기
-                </button>
+                </button> -->
                 <button class="recent-order-btn" @click="loadOrderTemplate">
                     📄 주문 템플릿 불러오기
                 </button>
@@ -633,7 +633,6 @@ const confirmSubmitOrder = async () => {
 .empty-message {
     text-align: center;
     color: #6c757d;
-    font-style: italic;
     padding: 40px;
 }
 
