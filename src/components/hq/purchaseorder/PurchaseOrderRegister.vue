@@ -84,16 +84,18 @@
                 <th>구매 단가</th>
                 <th>수량</th>
                 <th>단위</th>
+                <th>자재 구분</th>
+                <th>자재 분류</th>
+                <th>자재 속성</th>
                 <th>비고</th>
-                <th>구매요청번호</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="materials.length === 0">
-                <td colspan="9" class="no-materials">자재를 추가해주세요.</td>
+                <td colspan="11" class="no-materials">자재를 추가해주세요.</td>
               </tr>
-              <tr v-for="(material, index) in materials" :key="material.id">
-                <td><input type="checkbox" v-model="selectedMaterials" :value="material.id" /></td>
+              <tr v-for="(material, index) in materials" :key="material.productId">
+                <td><input type="checkbox" v-model="selectedMaterials" :value="material.productId" /></td>
                 <td class="text-center">{{ index + 1 }}</td>
                 <td class="text-center">{{ material.code }}</td>
                 <td class="text-center">{{ material.name }}</td>
@@ -102,10 +104,12 @@
                   <input type="number" v-model.number="material.quantity" class="form-input quantity-input" min="1" />
                 </td>
                 <td class="text-center">{{ material.purchaseUnit }}</td>
+                <td class="text-center">{{ material.productTypeName }}</td>
+                <td class="text-center">{{ material.productGroupName }}</td>
+                <td class="text-center">{{ material.productAttributeName }}</td>
                 <td class="text-center">
                    <input type="text" v-model="material.remarks" class="form-input" />
                 </td>
-                <td class="text-center">{{ material.purchaseRequestId || '-' }}</td>
               </tr>
             </tbody>
           </table>
@@ -142,6 +146,7 @@ import api from '@/lib/api';
 import PurchaseRequestListModal from './modal/PurchaseRequestListModal.vue';
 import PurchaseRequestProductModal from './modal/PurchaseRequestProductModal.vue';
 import { useToast } from '@/composables/useToast';
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   supplier: {
@@ -152,7 +157,8 @@ const props = defineProps({
 
 const emit = defineEmits(['cancel-register', 'registration-complete']);
 const authStore = useAuthStore();
-const { showToast } = useToast();
+const { showToast, toast } = useToast();
+const router = useRouter();
 
 const isRequestListModalVisible = ref(false);
 const isProductModalVisible = ref(false);
@@ -181,7 +187,7 @@ const allSelected = computed(() => {
 
 function selectAll(event) {
   if (event.target.checked) {
-    selectedMaterials.value = materials.value.map(m => m.id);
+    selectedMaterials.value = materials.value.map(m => m.productId);
   } else {
     selectedMaterials.value = [];
   }
@@ -196,14 +202,20 @@ const totalAmount = computed(() => {
 
 function handleAddProducts(selectedProducts) {
   selectedProducts.forEach(newProduct => {
-    const existing = materials.value.find(m => m.id === newProduct.id);
+    const existing = materials.value.find(m => m.productId === newProduct.productId);
     if (!existing) {
       materials.value.push({
         ...newProduct,
-        productId: newProduct.id
+        productId: newProduct.productId,
+        code: newProduct.productCode,
+        name: newProduct.productName,
+        quantity: newProduct.quantity || 1,
+        remarks: newProduct.remarks || '',
       });
     } else {
-      showToast(`${newProduct.name} 은/는 이미 추가된 자재입니다.`, 'info');
+      if (typeof toast === 'function') {
+        toast(`${newProduct.productName} 은/는 이미 추가된 자재입니다.`, 'info');
+      }
     }
   });
   isProductModalVisible.value = false;
@@ -221,15 +233,27 @@ function handleRequestSelected(request) {
 
 async function registerOrder() {
   if (!orderInfo.value.title) {
-    showToast('발주 제목을 입력해주세요.', 'warning');
+    if (typeof toast === 'function') {
+      toast('발주 제목을 입력해주세요.', 'warning');
+    } else {
+      alert('발주 제목을 입력해주세요.');
+    }
     return;
   }
   if (!orderInfo.value.deliveryDate) {
-    showToast('납기희망일을 선택해주세요.', 'warning');
+    if (typeof toast === 'function') {
+      toast('납기희망일을 선택해주세요.', 'warning');
+    } else {
+      alert('납기희망일을 선택해주세요.');
+    }
     return;
   }
   if (materials.value.length === 0) {
-    showToast('자재를 하나 이상 추가해주세요.', 'warning');
+    if (typeof toast === 'function') {
+      toast('자재를 하나 이상 추가해주세요.', 'warning');
+    } else {
+      alert('자재를 하나 이상 추가해주세요.');
+    }
     return;
   }
 
@@ -247,11 +271,21 @@ async function registerOrder() {
 
   try {
     await api.post('/api/hq/purchaseorder/request', payload);
-    showToast('발주가 성공적으로 등록되었습니다.', 'success');
-    emit('registration-complete');
+    if (typeof toast === 'function') {
+      toast('발주가 성공적으로 등록되었습니다.', 'success');
+    } else {
+      alert('발주가 성공적으로 등록되었습니다.');
+    }
+    setTimeout(() => {
+      emit('cancel-register');
+    }); // 1초 후 목록으로 전환
   } catch (error) {
     console.error('Error registering purchase order:', error);
-    showToast(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`, 'error');
+    if (typeof toast === 'function') {
+      toast(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`, 'error');
+    } else {
+      alert(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`);
+    }
   }
 }
 
@@ -262,12 +296,16 @@ function formatCurrency(value) {
 
 function deleteMaterials() {
   if (selectedMaterials.value.length === 0) {
-    showToast('삭제할 자재를 선택해주세요.', 'info');
+    if (typeof toast === 'function') {
+      toast('삭제할 자재를 선택해주세요.', 'info');
+    }
     return;
   }
-  materials.value = materials.value.filter(m => !selectedMaterials.value.includes(m.id));
+  materials.value = materials.value.filter(m => !selectedMaterials.value.includes(m.productId));
   selectedMaterials.value = [];
-  showToast('선택한 자재가 삭제되었습니다.', 'success');
+  if (typeof toast === 'function') {
+    toast('선택한 자재가 삭제되었습니다.', 'success');
+  }
 }
 
 function cancel() {

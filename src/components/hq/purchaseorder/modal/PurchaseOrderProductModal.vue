@@ -12,18 +12,19 @@
             <thead>
               <tr>
                 <th style="width: 5%"><input type="checkbox" @change="toggleSelectAll" :checked="isAllSelectedOnPage" /></th>
-                <th style="width: 8%">No.</th>
-                <th style="width: 15%">자재 코드</th>
-                <th style="width: 22%">자재명</th>
-                <th style="width: 15%">공급처</th>
+                <th style="width: 5%">No.</th>
+                <th style="width: 10%">자재 코드</th>
+                <th style="width: 15%">자재명</th>
                 <th style="width: 10%">구매 단가</th>
                 <th style="width: 10%">구매 단위</th>
-                <th style="width: 15%">규격</th>
+                <th style="width: 10%">자재 구분</th>
+                <th style="width: 10%">자재 분류</th>
+                <th style="width: 10%">자재 속성</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="products.length === 0">
-                <td colspan="8" class="no-data">해당 공급처의 자재가 없습니다.</td>
+                <td colspan="9" class="no-data">해당 공급처의 자재가 없습니다.</td>
               </tr>
               <tr
                 v-for="(product, index) in products"
@@ -35,10 +36,11 @@
                 <td>{{ index + 1 }}</td>
                 <td>{{ product.code }}</td>
                 <td>{{ product.name }}</td>
-                <td>{{ product.supplierName }}</td>
                 <td class="text-right">{{ formatCurrency(product.purchasePrice) }}</td>
                 <td>{{ product.purchaseUnit }}</td>
-                <td>{{ product.spec }}</td>
+                <td>{{ product.productTypeName }}</td>
+                <td>{{ product.productGroupName }}</td>
+                <td>{{ product.productAttributeName }}</td>
               </tr>
             </tbody>
           </table>

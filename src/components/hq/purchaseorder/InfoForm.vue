@@ -53,7 +53,7 @@
             <tr v-if="orders.length === 0">
               <td colspan="7" class="no-data">발주 내역이 없습니다.</td>
             </tr>
-            <tr v-for="(order, index) in filteredOrders" :key="order.id">
+            <tr v-for="(order, index) in filteredOrders" :key="order.id" @click="emit('show-detail', order.id)" style="cursor:pointer;">
               <td>{{ index + 1 }}</td>
               <td class="order-number">{{ order.orderNumber }}</td>
               <td>{{ order.title }}</td>
@@ -105,7 +105,7 @@
     }
   });
   
-  const emit = defineEmits(['show-register-view']);
+  const emit = defineEmits(['show-register-view', 'show-detail']);
   
   const filteredOrders = computed(() => {
     // 필터 로직 구현 (필요시)

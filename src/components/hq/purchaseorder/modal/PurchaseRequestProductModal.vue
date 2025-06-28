@@ -66,17 +66,20 @@ async function fetchProducts() {
   loading.value = true;
   selectedProducts.value = [];
   try {
-    // Assumed endpoint to get products from a purchase request, filtered by supplier
-    const response = await api.get(`/api/hq/purchase/requests/${props.purchaseRequest.id}`, {
-      params: { supplierId: props.supplierId }
-    });
-
-    console.log(response.data)
-    // The response should contain product details along with the requested quantity
-    products.value = response.data.products
+    const response = await api.get(`/api/hq/purchase/requests/${props.purchaseRequest.id}`);
+    
+    if (response.data && response.data.products) {
+      const allProducts = response.data.products;
+      // TODO: 백엔드 응답의 Product DTO에 supplierId가 포함되어야 합니다.
+      // 현재는 supplierId가 없으므로, 임시로 필터링 없이 모든 자재를 보여줍니다.
+      // 추후 supplierId가 추가되면 아래 주석을 해제하고 필드명을 맞춰주세요.
+      products.value = allProducts.filter(p => p.supplierId == props.supplierId);
+    } else {
+      products.value = [];
+    }
   } catch (error) {
     console.error('Failed to fetch products for purchase request:', error);
-    // showToast('자재 목록을 불러오는 데 실패했습니다.', 'error');
+    products.value = [];
   } finally {
     loading.value = false;
   }

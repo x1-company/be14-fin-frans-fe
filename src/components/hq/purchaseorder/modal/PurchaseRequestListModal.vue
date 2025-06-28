@@ -60,7 +60,7 @@ const { showToast } = useToast();
 async function fetchPurchaseRequests() {
   loading.value = true;
   try {
-    const response = await api.get('/api/hq/purchase/requests/status', {
+    const response = await api.get('/api/hq/purchase/requests', {
       params: { status: 'APPROVED' }
     });
     purchaseRequests.value = response.data.content || [];
