@@ -526,20 +526,61 @@ const canPrintDocument = computed(() => {
 
 // 문서 수정 버튼 노출 여부
 const canEditDocument = computed(() => {
-  if (!props.document) return false;
+  console.log("=== canEditDocument 디버깅 ===");
+  console.log("document:", props.document);
+  console.log("document.status:", props.document?.status);
+  console.log("document.drafterId:", props.document?.drafterId);
+  console.log("props.currentUserId:", props.currentUserId);
+  console.log("document.lines:", props.document?.lines);
+
+  if (!props.document) {
+    console.log("❌ document가 없음");
+    return false;
+  }
 
   // 결재중 상태에서만
   if (props.document.status !== "IN_PROGRESS") {
+    console.log("❌ 상태가 IN_PROGRESS가 아님:", props.document.status);
+    return false;
+  }
+
+  // 현재 사용자가 기안자인지
+  if (String(props.document.drafterId) !== String(props.currentUserId)) {
+    console.log(
+      "❌ 기안자가 아님 - drafterId:",
+      props.document.drafterId,
+      "currentUserId:",
+      props.currentUserId
+    );
     return false;
   }
 
   // 첫 번째 결재자/협조자가 WAITING인지
-  const firstLine = props.document.lines.find(
+  const firstLine = props.document.lines?.find(
     (line) => line.type === "APPROVER" || line.type === "COOPERATOR"
   );
-  if (!firstLine) return false;
+  console.log("첫 번째 결재자/협조자:", firstLine);
 
-  return firstLine.status === "WAITING";
+  if (!firstLine) {
+    console.log("❌ 첫 번째 결재자/협조자가 없음");
+    return false;
+  }
+
+  const isWaiting = firstLine.status === "WAITING";
+  console.log(
+    "첫 번째 결재자/협조자 상태:",
+    firstLine.status,
+    "WAITING인가?",
+    isWaiting
+  );
+
+  if (isWaiting) {
+    console.log("✅ 수정하기 버튼 표시 조건 만족!");
+  } else {
+    console.log("❌ 첫 번째 결재자/협조자가 WAITING이 아님");
+  }
+
+  return isWaiting;
 });
 
 // 재기안 버튼 노출 여부
