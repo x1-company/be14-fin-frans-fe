@@ -584,12 +584,16 @@ function handleReturnBackToList() {
 
 async function fetchDashboardStats() {
   try {
-    // 실제 API 호출
-    const { data } = await api.get('/api/hq/franchise/approval/in-progress/count');
+    // 진행중인 결재 요청
+    const { data: inProgressData } = await api.get('/api/hq/franchise/approval/in-progress/count');
+    // 완료된 주문 결재 요청
+    const { data: approvedData } = await api.get('/api/hq/franchise/approval/approved/count');
+    const thisMonth = approvedData.orderThisMonthCount ?? 0;
+    const lastMonth = approvedData.orderLastMonthCount ?? 0;
     dashboardCardData.value = {
-      inProgressOrder: { count: data.orderApprovalCount ?? 0, diff: 0 },
-      inProgressApproval: { count: data.returnApprovalCount ?? 0, diff: 0 },
-      completedOrder: dashboardCardData.value.completedOrder // 기존 값 유지 또는 별도 API 필요
+      inProgressOrder: { count: inProgressData.orderApprovalCount ?? 0, diff: 0 },
+      inProgressApproval: { count: inProgressData.returnApprovalCount ?? 0, diff: 0 },
+      completedOrder: { count: thisMonth, diff: thisMonth - lastMonth }
     };
   } catch (error) {
     console.error('대시보드 통계 데이터 조회 실패', error)
