@@ -73,7 +73,7 @@
             <div class="col col-select">
               <input 
                 type="checkbox" 
-                :checked="isProductSelected(product.id)"
+                :checked="isProductSelected(product.productId)"
                 @change="toggleProductSelection(product)"
               />
             </div>
@@ -338,8 +338,10 @@ const fetchOrderProducts = async (orderId) => {
 
 // 상품 선택/해제
 const toggleProductSelection = (product) => {
+  // productId가 없으면 추가하지 않음 (방어코드)
+  if (!product.productId) return;
   const existingIndex = returnItems.value.findIndex(item => item.productId === product.productId);
-  
+
   if (existingIndex >= 0) {
     returnItems.value.splice(existingIndex, 1);
   } else {

@@ -7,12 +7,14 @@
     </div>
     <!-- 평소 상태: ReturnActionButtons에서 검토/반려 등 노출 -->
     <ReturnActionButtons
+      v-if="returnDetail"
       :returnId="props.returnId"
       :rejectedReason="returnDetail.rejectedReason"
       :status="returnDetail.status"
       :isEditing="isEditing"
+      :return-data="returnDetail"
       @update:isEditing="val => isEditing = val; if (val) startEdit();"
-      @refreshOrder="fetchReturnDetail"
+      @refreshReturn="fetchReturnDetail"
       @close="handleClose"
     />
     <div class="progress-bar-wrapper">
@@ -43,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import ReturnActionButtons from './ReturnActionButtons.vue';
 import ReturnProgressBar from './ReturnProgressBar.vue';
 import FranchiseInfoCard from './FranchiseInfoCard.vue';

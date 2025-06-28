@@ -13,8 +13,20 @@
       </div>
     </div>
     <!-- 검색창 및 필터 -->
-    <div class="return-form__header">
+    <div v-if="!showReturnRegister" class="return-form__header">
       <div class="return-form__search-group">
+        <Datepicker
+          v-model="searchDate"
+          :format="'yyyy-MM-dd'"
+          placeholder="반품 날짜 범위 선택"
+          :clearable="true"
+          input-class-name="custom-datepicker-input"
+          style="width: 270px"
+          locale="ko"
+          :enable-time-picker="false"
+          auto-apply
+          range
+        />
         <input v-model="search" placeholder="검색어를 입력해주세요" />
         <select v-model="filter">
           <option value="returnNo">반품 번호</option>
@@ -76,6 +88,8 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import Datepicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 import api from '@/lib/api';
 
 const props = defineProps({
@@ -223,7 +237,7 @@ async function fetchReturns() {
   }
 }
 
-watch([search, filter], () => {
+watch([search, filter, searchDate], () => {
   page.value = 1;
   fetchReturns();
 });
@@ -249,18 +263,18 @@ onMounted(fetchReturns);
 }
 .return-form__tabs {
   display: flex;
-  gap: 57px;
+  gap: 50px;
   border-bottom: 1.5px solid #e9ecef;
-  margin-top: -15px;
-  margin-bottom: 15px;
-  padding-left: 15px;
+  margin-top: -30px;
+  margin-bottom: 10px;
+  padding-left: 10px;
 }
 .return-form__tab {
   position: relative;
-  font-size: 1.05rem;
+  font-size: 0.9rem;
   color: #888;
   font-weight: 500;
-  padding: 8px 0 12px 0;
+  padding: 4px 0 7px 0;
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -273,7 +287,7 @@ onMounted(fetchReturns);
   left: 0;
   bottom: -2px;
   width: 100%;
-  height: 3px;
+  height: 2px;
   background: #4066fa;
   border-radius: 2px 2px 0 0;
 }
@@ -281,47 +295,66 @@ onMounted(fetchReturns);
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-bottom: 16px;
-  gap: 16px;
+  margin-bottom: 10px;
+  gap: 10px;
 }
 .return-form__search-group {
   display: flex;
-  gap: 8px;
+  gap: 5px;
   align-items: center;
 }
 .return-form__search-group input {
-  height: 36px;
+  height: 35px;
   border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 0 14px;
-  font-size: 1rem;
-  width: 220px;
+  border-radius: 6px;
+  padding: 12px 8px;
+  font-size: 0.8rem;
+  width: 180px;
 }
 .return-form__search-group select {
-  height: 36px;
+  height: 35px;
   border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 0 12px;
-  font-size: 1rem;
+  border-radius: 6px;
+  padding: 0 7px;
+  font-size: 0.8rem;
   background: #fff;
+  width: auto;
 }
-.return-form__table-wrapper {
-  overflow-x: auto;
-}
+
 .return-form__table {
   width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 16px;
-}
-.return-form__table th, .return-form__table td {
-  border: 1px solid #ffffff;
-  padding: 12px 8px;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 10px;
+  background: #fff;
   text-align: center;
-  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid #eef0f4;
+  border-radius: 10px;
+  overflow: hidden;
 }
+.return-form__table th,
+.return-form__table td {
+  border: none;
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 0.9rem;
+  height: 40px;
+  background: #fff;
+  color: #222;
+  height: 48px;
+}
+
 .return-form__table th {
-  background: #f4f6fb;
-  font-weight: bold;
+  background: #f8f9fa;
+  font-weight: 500;
+  color: #495057;
+}
+.return-form__table tr:last-child td {
+  border-bottom: none;
+}
+.return-form__table tr:hover td {
+  background: #f8f9fa;
 }
 .return-link {
   color: #4066fa;
@@ -334,17 +367,11 @@ onMounted(fetchReturns);
 }
 .return-status {
   display: inline-block;
-  min-width: 80px;
-  text-align: center;
-  padding: 4px 10px;
-  border-radius: 24px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin: 4px 0;
-  background: #fff;
-  letter-spacing: 1px;
-  box-sizing: border-box;
-  border: none;
+  padding: 3px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  
 }
 .status-waiting {
   background: #fffcc4;
@@ -376,19 +403,19 @@ onMounted(fetchReturns);
 }
 .return-form__pagination {
   display: flex;
-  gap: 8px;
+  gap: 5px;
   align-items: center;
   justify-content: center;
-  margin: 16px 0;
+  margin: 10px 0;
 }
-.page-btn {
-  min-width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1.5px solid #e2e4ea;
+.return-form__pagination .page-btn {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e4ea;
   background: #fff;
   color: #222;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -396,36 +423,38 @@ onMounted(fetchReturns);
   cursor: pointer;
   transition: border 0.2s, color 0.2s;
   user-select: none;
+  padding: 0;
 }
-.page-btn.active {
+.return-form__pagination .page-btn.active {
   border: 2px solid #6c47ff;
   color: #6c47ff;
   font-weight: 700;
   background: #f8f6ff;
 }
-.page-btn.ellipsis {
+.return-form__pagination .page-btn.ellipsis {
   cursor: default;
   color: #bdbdbd;
   border: none;
   background: transparent;
   pointer-events: none;
 }
-.page-arrow {
-  min-width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1.5px solid #e2e4ea;
+.return-form__pagination .page-arrow {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e4ea;
   background: #f5f6fa;
   color: #bdbdbd;
-  font-size: 1.3rem;
+  font-size: 1.05rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
+  padding: 0;
 }
-.page-arrow:disabled {
+.return-form__pagination .page-arrow:disabled {
   background: #e2e4ea;
   color: #bdbdbd;
   cursor: not-allowed;
@@ -434,6 +463,23 @@ onMounted(fetchReturns);
   text-align: right;
   color: #888;
   margin-top: 8px;
-  font-size: 0.98rem;
+  font-size: 0.92rem;
 }
+.return-form__table tbody td {
+  border-bottom: 1px solid #f2f2f2;
+}
+.return-form__table tbody tr:last-child td {
+  border-bottom: none;
+}
+:deep(.dp__input) {
+  font-size: 0.8rem !important;  /* 원하는 크기로 */
+  height: 33px !important;
+  padding: 0 4px !important;
+  width: 270px !important;
+  min-width: 0 !important;
+  max-width: 270px !important;
+  border-radius: 6px !important;
+  border: 1px solid #e9ecef !important;
+  text-align: center !important;
+  }
 </style>
