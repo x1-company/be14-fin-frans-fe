@@ -46,12 +46,12 @@
                     <div class="col col-price">판매 단가</div>
                     <div class="col col-quantity">수량</div>
                     <div class="col col-unit">단위</div>
-                    <div class="col col-spec">규격</div>
+                    <!-- <div class="col col-spec">규격</div> -->
                     <div class="col col-group">자재 분류</div>
                     <div class="col col-type">자재 구분</div>
                     <div class="col col-attr">자재 속성</div>
                     <div class="col col-amount">금액</div>
-                    <div class="col col-supplier">협력 업체</div>
+                    <div class="col col-supplier">공급처</div>
                     <div class="col col-delete">삭제</div>
                 </div>
                 <div class="product-table-body">
@@ -68,7 +68,7 @@
                                 class="quantity-input" />
                         </div>
                         <div class="col col-unit">{{ item.unit }}</div>
-                        <div class="col col-spec">{{ item.spec }}</div>
+                        <!-- <div class="col col-spec">{{ item.spec }}</div> -->
                         <div class="col col-group"><span :class="getTagClass('group')">{{ getProductGroupName(item.productGroupId) }}</span></div>
                         <div class="col col-type"><span :class="getTagClass('type')">{{ getProductTypeName(item.productTypeId) }}</span></div>
                         <div class="col col-attr"><span :class="getTagClass('attr')">{{ getProductAttributeName(item.productAttributeId) }}</span></div>
@@ -608,19 +608,19 @@ const confirmSubmitOrder = async () => {
     white-space: nowrap;
 }
 
-.col-no       { flex-basis: 4%; }
-.col-code     { flex-basis: 8%; font-family: monospace; color: #6c757d; }
-.col-name     { flex-basis: 12%; text-align: left; font-weight: 500; }
-.col-price    { flex-basis: 8%; text-align: right; }
-.col-quantity { flex-basis: 8%; }
-.col-unit     { flex-basis: 5%; }
-.col-spec     { flex-basis: 8%; }
-.col-group    { flex-basis: 8%; }
-.col-type     { flex-basis: 8%; }
-.col-attr     { flex-basis: 8%; }
-.col-amount   { flex-basis: 8%; text-align: right; font-weight: 500; }
-.col-supplier { flex-basis: 8%; }
-.col-delete   { flex-basis: 4%; }
+.col-no       { flex-basis: 4%; text-align: left;}
+.col-code     { flex-basis: 8%; }
+.col-name     { flex-basis: 15%; }
+.col-price    { flex-basis: 8%; text-align: center;}
+.col-quantity { flex-basis: 9%; text-align: center;}
+.col-unit     { flex-basis: 9%; text-align: center;}
+/* .col-spec     { flex-basis: 8%; } */
+.col-group    { flex-basis: 9%; text-align: center;}
+.col-type     { flex-basis: 9%; text-align: center;}
+.col-attr     { flex-basis: 9%; text-align: center;}
+.col-amount   { flex-basis: 10%; font-weight: 500; }
+.col-supplier { flex-basis: 10%; }
+.col-delete   { flex-basis: 6%; }
 
 .product-tag {
     display: inline-block;
