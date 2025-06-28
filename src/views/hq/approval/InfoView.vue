@@ -316,7 +316,7 @@ const fetchApprovalList = async () => {
     },
     수신: {
       "수신-전체": "/api/hq/approvals/list/received/all",
-      "결재-전체": "/api/hq/approvals/list/received/all",
+      "결재-전체": "/api/hq/approvals/list/received/approval/all",
       결재대기: "/api/hq/approvals/list/received/pending",
       결재예정: "/api/hq/approvals/list/received/upcoming",
       결재중: "/api/hq/approvals/list/received/in-progress",
