@@ -19,14 +19,14 @@
                         class="search-input" />
                     <button @click="searchProducts" class="search-btn">검색</button>
                 </div> -->
-                <button @click="isMaterialModalVisible = true" class="search-btn">자재 검색</button>
             </div>
             <div class="right-actions">
                 <!-- <button class="recent-order-btn" @click="loadRecentOrder">
                     📋 최근 주문 불러오기
                 </button> -->
+                <button @click="isMaterialModalVisible = true" class="search-btn">🔍 &nbsp;&nbsp;자재 검색</button>
                 <button class="recent-order-btn" @click="loadOrderTemplate">
-                    📄 주문 템플릿 불러오기
+                    📄&nbsp;&nbsp; 주문 템플릿 불러오기
                 </button>
             </div>
         </div>
@@ -459,19 +459,23 @@ const confirmSubmitOrder = async () => {
 }
 
 .search-btn {
-    background: #4066fa;
-    color: white;
-    border: none;
-    padding: 8px 20px;
+    padding: 7px 13px;
     border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    font-size: 13px;
     font-weight: 600;
-    transition: background-color 0.2s;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #1976d2;
+    border-color: #bbdefb;
 }
 
 .search-btn:hover {
-    background: #3453c7;
+    background: #f5faff;
 }
 
 .search-results {
