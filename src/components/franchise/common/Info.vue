@@ -65,8 +65,9 @@
               <div v-else>
                 <!-- 뒤로가기 버튼 -->
                 <div class="detail-header">
+                  <div class="spacer"></div>
                   <button @click="handleBackToReturnList" class="back-button">
-                    ← 반품 목록으로 돌아가기
+                    <span class="icon">✕</span> 닫기
                   </button>
                 </div>
                 
@@ -359,22 +360,44 @@ watch(
 }
 
 .detail-header {
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.spacer {
+  flex: 1;
 }
 
 .back-button {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid #bbdefb;
+  color: #1976d2;
+  background: #fff;
   border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 14px;
-  color: #495057;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 60px;
+  min-height: 35px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s, color 0.15s, border 0.15s;
+  box-shadow: none;
+}
+
+.back-button .icon {
+  font-size: 13px;
+  vertical-align: middle;
+  margin-right: 4px;
+  color: #1976d2;
 }
 
 .back-button:hover {
-  background: #e9ecef;
-  color: #212529;
+  background: #f0f7ff;
+  color: #1976d2;
+  /* border-color: #1565c0; */
 }
 </style>
