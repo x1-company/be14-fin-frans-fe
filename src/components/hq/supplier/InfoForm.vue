@@ -1,54 +1,240 @@
 <template>
-  <div class="info-form">
-    <div
-      v-for="(section, sectionIdx) in getFormSections(supplierDetail)"
-      :key="sectionIdx"
-      class="info-section"
-    >
-      <div class="info-section__header">
-        <img
-          v-if="section.icon"
-          :src="section.icon"
-          class="info-section__icon"
-        />
-        <span>{{ section.title }}</span>
+  <div class="supplier-info">
+    <div v-if="!supplierDetail" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>공급처 정보를 불러오는 중...</p>
+    </div>
+    <div v-else>
+      <!-- 상단 헤더 -->
+      <div class="supplier-header">
+        <div class="supplier-title">
+          <h2>{{ supplierDetail.name }}</h2>
+          <span class="supplier-code">{{ supplierDetail.code }}</span>
+          <span
+            class="status-badge"
+            :class="{
+              active: supplierDetail.isActive,
+              inactive: !supplierDetail.isActive,
+            }"
+          >
+            {{ supplierDetail.isActive ? "거래중" : "거래중단" }}
+          </span>
+        </div>
         <button
-          v-if="section.title === '기본 정보'"
-          class="info-section__edit-button"
-          >수정</button
+          class="btn btn-primary edit-btn-top"
+          @click="showEditModal = true"
+          >정보 수정</button
         >
       </div>
-      <div class="info-section__body">
-        <div
-          v-for="(row, rowIdx) in section.items"
-          :key="rowIdx"
-          :class="[
-            'info-section__row',
-            { 'has-underline': row.some((item) => item.underline) },
-          ]"
-        >
-          <div
-            v-for="(item, itemIdx) in row"
-            :key="itemIdx"
-            class="info-section__item"
-          >
-            <label v-if="item.label">{{ item.label }}</label>
-            <div class="info-item-content">
-              <img v-if="item.icon" :src="item.icon" class="info-item__icon" />
-              <span v-if="item.type === 'badge'" class="info-item__badge">{{
-                item.value
+      <div class="info-grid">
+        <!-- 기본 정보 -->
+        <div class="info-card">
+          <h3 class="card-title">기본 정보</h3>
+          <div class="info-rows">
+            <div class="info-row">
+              <span class="label">공급처명</span>
+              <span class="value">{{ supplierDetail.name }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">공급처 코드</span>
+              <span class="value">{{ supplierDetail.code }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">사업자번호</span>
+              <span class="value">{{
+                formatBusinessNumber(supplierDetail.businessNumber)
               }}</span>
-              <template v-else-if="item.label === '주소'">
-                <div>
-                  <div>{{ item.value }}</div>
-                  <div class="info-item__zipcode"
-                    >우편번호: {{ item.zipcode }}</div
-                  >
-                </div>
-              </template>
-              <span v-else>{{ item.value }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">대표자명</span>
+              <span class="value">{{ supplierDetail.ceoName }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">계약일자</span>
+              <span class="value">{{
+                formatDate(supplierDetail.signedAt)
+              }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">거래 상태</span>
+              <span class="value">
+                <span
+                  class="status-indicator"
+                  :class="{
+                    active: supplierDetail.isActive,
+                    inactive: !supplierDetail.isActive,
+                  }"
+                >
+                  {{ supplierDetail.isActive ? "거래중" : "거래중단" }}
+                </span>
+              </span>
             </div>
           </div>
+        </div>
+        <!-- 주소 정보 -->
+        <div class="info-card">
+          <h3 class="card-title">주소 정보</h3>
+          <div class="info-rows">
+            <div class="info-row">
+              <span class="label">우편번호</span>
+              <span class="value">{{ supplierDetail.zipcode }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">주소</span>
+              <span class="value">{{ supplierDetail.address }}</span>
+            </div>
+          </div>
+        </div>
+        <!-- 연락처 정보 -->
+        <div class="info-card">
+          <h3 class="card-title">연락처 정보</h3>
+          <div class="info-rows">
+            <div class="info-row">
+              <span class="label">회사 연락처</span>
+              <span class="value">{{
+                formatPhoneNumber(supplierDetail.companyPhone)
+              }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">담당자 연락처</span>
+              <span class="value">{{
+                formatPhoneNumber(supplierDetail.supplierPhone)
+              }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">담당자 이메일</span>
+              <span class="value">{{ supplierDetail.supplierEmail }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">담당자 이름</span>
+              <span class="value">{{ supplierDetail.supplierName }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 공급처 정보 수정 모달 -->
+      <div
+        v-if="showEditModal"
+        class="modal-overlay"
+        @click.self="showEditModal = false"
+      >
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h3>공급처 정보 수정</h3>
+            <button class="close-button" @click="showEditModal = false"
+              >&times;</button
+            >
+          </div>
+          <form class="modal-body modal-grid" @submit.prevent="saveEdit">
+            <div class="form-fields">
+              <div class="form-group">
+                <label class="edit-label"
+                  >공급처명 <span class="required">*</span></label
+                >
+                <input
+                  v-model="editData.name"
+                  class="edit-input"
+                  placeholder="공급처명을 입력하세요"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label">우편번호</label>
+                <input
+                  v-model="editData.zipcode"
+                  class="edit-input"
+                  placeholder="우편번호"
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label">주소</label>
+                <input
+                  v-model="editData.address"
+                  class="edit-input"
+                  placeholder="주소를 입력하세요"
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label"
+                  >사업자번호 <span class="required">*</span></label
+                >
+                <input
+                  v-model="editData.businessNumber"
+                  class="edit-input"
+                  placeholder="123-45-67890"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label"
+                  >대표자명 <span class="required">*</span></label
+                >
+                <input
+                  v-model="editData.ceoName"
+                  class="edit-input"
+                  placeholder="대표자명을 입력하세요"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label">계약일자</label>
+                <input
+                  v-model="editData.signedAt"
+                  class="edit-input"
+                  type="date"
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label">회사 연락처</label>
+                <input
+                  v-model="editData.companyPhone"
+                  class="edit-input"
+                  placeholder="010-1234-5678"
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label">담당자 이름</label>
+                <input
+                  v-model="editData.supplierName"
+                  class="edit-input"
+                  placeholder="담당자 이름"
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label">담당자 연락처</label>
+                <input
+                  v-model="editData.supplierPhone"
+                  class="edit-input"
+                  placeholder="01012345678"
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label">담당자 이메일</label>
+                <input
+                  v-model="editData.supplierEmail"
+                  class="edit-input"
+                  placeholder="example@email.com"
+                  type="email"
+                />
+              </div>
+              <div class="form-group">
+                <label class="edit-label">거래 상태</label>
+                <select v-model="editData.isActive" class="edit-input">
+                  <option :value="true">거래중</option>
+                  <option :value="false">거래중단</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer modal-footer-grid">
+              <button class="btn btn-primary" type="submit">저장</button>
+              <button
+                class="btn btn-secondary"
+                type="button"
+                @click="showEditModal = false"
+                >취소</button
+              >
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -57,17 +243,8 @@
 
 <script setup>
 import { ref, watch, onMounted } from "vue";
-import axios from "axios";
 import api from "@/lib/api";
-
-// 아이콘 이미지 임포트
-import basicInfoIcon from "@/assets/Info.png";
-import contactInfoIcon from "@/assets/phone1.png";
-import phoneIcon from "@/assets/phone.png";
-import userIcon from "@/assets/user.png";
-import calendarIcon from "@/assets/calendar.png";
-import addressIcon from "@/assets/address.png";
-import mailIcon from "@/assets/email.png";
+import { useToast } from "@/composables/useToast";
 
 const props = defineProps({
   supplierId: {
@@ -77,82 +254,10 @@ const props = defineProps({
 });
 
 const supplierDetail = ref(null);
+const showEditModal = ref(false);
+const editData = ref({});
+const toast = useToast();
 
-// InfoForm이 기대하는 sections 형태로 데이터 변환
-function getFormSections(detail) {
-  if (!detail) return [];
-
-  return [
-    {
-      title: "기본 정보",
-      icon: basicInfoIcon,
-      items: [
-        [
-          { label: "공급처코드", value: detail.code },
-          { label: "사업자번호", value: detail.businessNumber },
-        ],
-        [
-          {
-            label: "거래상태",
-            value: detail.isActive ? "거래중" : "거래중단",
-            type: "badge",
-          },
-          {
-            label: "계약일자",
-            value: detail.signedAt ? detail.signedAt.split("T")[0] : "",
-            icon: calendarIcon,
-          },
-        ],
-        [
-          { label: "공급처명", value: detail.name },
-          {
-            label: "주소",
-            value: detail.address,
-            icon: addressIcon,
-            zipcode: detail.zipcode,
-            span: 2,
-          },
-        ],
-        [{ label: "대표자", value: detail.ceoName }],
-      ],
-    },
-    {
-      title: "연락처 정보",
-      icon: contactInfoIcon,
-      items: [
-        [
-          {
-            label: "회사 연락처",
-            value: detail.companyPhone,
-            icon: phoneIcon,
-            underline: true,
-          },
-        ],
-        [
-          {
-            label: "담당자 연락처",
-            value: detail.supplierPhone || "",
-            icon: phoneIcon,
-          },
-          {
-            label: "담당자 이메일",
-            value: detail.supplierEmail || "",
-            icon: mailIcon,
-          },
-        ],
-        [
-          {
-            label: "담당자 이름",
-            value: detail.supplierName || "",
-            icon: userIcon,
-          },
-        ],
-      ],
-    },
-  ];
-}
-
-// 상세 정보 가져오는 함수
 async function fetchSupplierDetail(id) {
   if (!id) {
     supplierDetail.value = null;
@@ -161,18 +266,18 @@ async function fetchSupplierDetail(id) {
   try {
     const res = await api.get(`/api/hq/suppliers/detail/${id}`);
     supplierDetail.value = res.data;
+    // 모달용 데이터도 동기화
+    editData.value = { ...res.data };
   } catch (e) {
     supplierDetail.value = null;
     console.error(`공급처 상세 조회 실패 (ID: ${id})`, e);
   }
 }
 
-// 컴포넌트 마운트 시 초기 데이터 로드
 onMounted(() => {
   fetchSupplierDetail(props.supplierId);
 });
 
-// supplierId prop이 변경될 때마다 데이터 다시 로드
 watch(
   () => props.supplierId,
   (newId) => {
@@ -181,135 +286,347 @@ watch(
   { immediate: true }
 );
 
-const tabs = ["전체", "임시저장", "결재 중", "결재 완료", "결재 반려"];
-const activeTab = ref("전체");
+const saveEdit = async () => {
+  try {
+    // 필요한 필드만 추려서 보냄
+    const payload = {
+      name: editData.value.name,
+      ceoName: editData.value.ceoName,
+      companyPhone: editData.value.companyPhone,
+      address: editData.value.address,
+      zipcode: editData.value.zipcode,
+      businessNumber: editData.value.businessNumber,
+      signedAt: editData.value.signedAt,
+      isActive: editData.value.isActive,
+      supplierName: editData.value.supplierName,
+      supplierEmail: editData.value.supplierEmail,
+      supplierPhone: editData.value.supplierPhone,
+    };
+    await api.put(
+      `/api/hq/suppliers/modification/${props.supplierId}`,
+      payload
+    );
+    showEditModal.value = false;
+    fetchSupplierDetail(props.supplierId); // 저장 후 다시 조회
+  } catch (e) {
+    // toast.error("저장에 실패했습니다.");
+  }
+};
 
-// 예시 데이터
-const groupedApprovals = ref({
-  "2025.05.30": [
-    /* ... */
-  ],
-  "2025.06.01": [
-    /* ... */
-  ],
-});
-
-function onTabChange(tab) {
-  activeTab.value = tab;
-  // 실제로는 탭에 따라 데이터 필터링
-}
+// 사업자등록번호 포맷팅 (000-00-00000)
+const formatBusinessNumber = (businessNumber) => {
+  if (!businessNumber) return "-";
+  return businessNumber.replace(/(\d{3})(\d{2})(\d{5})/, "$1-$2-$3");
+};
+// 전화번호 포맷팅 (000-0000-0000)
+const formatPhoneNumber = (phone) => {
+  if (!phone) return "-";
+  return phone.replace(/(\d{2,3})(\d{3,4})(\d{4})/, "$1-$2-$3");
+};
+// 날짜 포맷팅
+const formatDate = (dateString) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 </script>
 
 <style scoped>
-.info-form {
-  /* background: #f8faff; */
-  background: #fff;
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
-  padding: 40px 32px;
+.supplier-info {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  padding: 30px;
 }
-
-.info-section {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  padding: 24px 32px;
-}
-
-.info-section__header {
+.loading-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #222;
-  margin-bottom: 20px;
-  gap: 10px;
+  justify-content: center;
+  height: 300px;
+  color: #6c757d;
 }
-
-.info-section__icon {
-  width: 24px;
-  height: 24px;
-}
-
-.info-section__body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.info-section__row {
-  display: flex;
-  gap: 40px;
-}
-
-.info-section__row.has-underline {
-  border-bottom: 1px solid #eee;
-  padding-bottom: 16px;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
   margin-bottom: 16px;
 }
-
-.info-section__item {
-  flex: 1;
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.info-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+.card-title {
+  margin: 0 0 16px 0;
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #667eea;
+}
+.info-rows {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
-
-.info-section__item label {
-  font-size: 0.95rem;
-  color: #888;
-  margin-bottom: 2px;
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
 }
-
-.info-item-content {
+.info-row .label {
+  color: #6c757d;
+  font-size: 15px;
+  font-weight: 500;
+  min-width: 100px;
+}
+.info-row .value {
+  color: #212529;
+  font-size: 15px;
+  font-weight: 400;
+  text-align: right;
+  flex: 1;
+  word-break: break-all;
+}
+.status-indicator {
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.status-indicator.active {
+  background: #d4edda;
+  color: #155724;
+}
+.status-indicator.inactive {
+  background: #f8d7da;
+  color: #721c24;
+}
+.supplier-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.supplier-title {
   display: flex;
   align-items: center;
-  font-size: 1.05rem;
-  color: #222;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.supplier-title h2 {
+  margin: 0;
+  color: #212529;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.supplier-code {
+  background: #f8f9fa;
+  color: #6c757d;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-family: monospace;
+}
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
 }
-
-.info-item__icon {
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
-  opacity: 0.7;
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
 }
-
-.info-item__badge {
-  background: #e3f8ea;
-  color: #3bb77e;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border-radius: 6px;
-  padding: 2px 8px;
+.status-badge.inactive {
+  background: #f8d7da;
+  color: #721c24;
 }
-
-.info-section__edit-button {
-  background: none;
-  border: 1px solid #ffffffa0; /* 흰색 테두리 */
+.btn.edit-btn-top {
+  background: #4066fa;
   color: #fff;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 15px;
   font-weight: 500;
-  margin-left: auto; /* 기본 정보 타이틀 옆으로 보내기 */
-  color: #4066fa; /* 파란색으로 변경 */
-  border-color: #4066fa; /* 파란색 테두리 */
-  transition: background-color 0.2s, border-color 0.2s;
+  cursor: pointer;
+  transition: background 0.2s;
 }
-.info-section__edit-button:hover {
-  background-color: #4066fa10; /* 호버 시 약간 밝아지게 */
-  border-color: #4066fa;
+.btn.edit-btn-top:hover {
+  background: #3056e0;
 }
-
-.info-item__zipcode {
-  color: #b0b8c1;
-  font-size: 0.98rem;
-  margin-top: 2px;
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 900px;
+  max-width: 98vw;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+.modal-header {
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+}
+.close-button {
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.close-button:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+.modal-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.edit-label {
+  font-size: 14px;
+  color: #495057;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.edit-input {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+.modal-footer {
+  padding: 0 24px 24px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.btn.btn-primary {
+  background: #4066fa;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn.btn-primary:hover {
+  background: #3056e0;
+}
+.btn.btn-secondary {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn.btn-secondary:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.required {
+  color: #dc3545;
+  font-size: 13px;
+  margin-left: 2px;
+}
+@media (max-width: 768px) {
+  .supplier-info {
+    padding: 15px;
+  }
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  /* gap: 20px 24px; */
+}
+.modal-footer.modal-footer-grid {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+}
+@media (max-width: 900px) {
+  .modal-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .modal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.form-fields {
+  display: contents;
 }
 </style>
