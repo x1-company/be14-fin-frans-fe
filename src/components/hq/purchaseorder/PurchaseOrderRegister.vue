@@ -3,7 +3,7 @@
     <!-- Header with action buttons -->
     <div class="action-buttons">
       <button class="btn btn-primary" @click="isDraftListModalVisible = true">임시 저장 불러오기</button>
-      <button class="btn btn-primary">임시 저장</button>
+      <button class="btn btn-primary" @click="saveDraft">임시 저장</button>
       <button class="btn btn-primary" @click="registerOrder">등록</button>
       <button class="btn" @click="cancel">취소</button>
     </div>
@@ -211,7 +211,11 @@ const totalAmount = computed(() => {
 
 function handleAddProducts(selectedProducts) {
   selectedProducts.forEach(newProduct => {
-    const existing = materials.value.find(m => m.productId === newProduct.productId);
+    console.log('구매요청 자재 추가 newProduct:', newProduct);
+    console.log('구매요청 자재 추가 newProduct.productId:', newProduct.productId);
+    const existing = materials.value.find(
+      m => m.productId === newProduct.productId && m.purchaseRequestId === newProduct.purchaseRequestId
+    );
     if (!existing) {
       materials.value.push({
         ...newProduct,
@@ -356,6 +360,64 @@ async function registerOrder() {
       toast(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`, 'error');
     } else {
       alert(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`);
+    }
+  }
+}
+
+async function saveDraft() {
+  if (!orderInfo.value.title) {
+    if (typeof toast === 'function') {
+      toast('발주 제목을 입력해주세요.', 'warning');
+    } else {
+      alert('발주 제목을 입력해주세요.');
+    }
+    return;
+  }
+  if (!orderInfo.value.deliveryDate) {
+    if (typeof toast === 'function') {
+      toast('납기희망일을 선택해주세요.', 'warning');
+    } else {
+      alert('납기희망일을 선택해주세요.');
+    }
+    return;
+  }
+  if (materials.value.length === 0) {
+    if (typeof toast === 'function') {
+      toast('자재를 하나 이상 추가해주세요.', 'warning');
+    } else {
+      alert('자재를 하나 이상 추가해주세요.');
+    }
+    return;
+  }
+
+  const payload = {
+    title: orderInfo.value.title,
+    supplierId: Number(props.supplier.id),
+    requestedDeliveryDate: orderInfo.value.deliveryDate,
+    products: materials.value.map(m => ({
+      productId: Number(m.productId),
+      quantity: Number(m.quantity),
+      remarks: m.remarks,
+      purchaseRequestId: Number(m.purchaseRequestId),
+      supplierId: Number(props.supplier.id)
+    })),
+  };
+  try {
+    await api.post('/api/hq/purchaseorder/draft', payload);
+    if (typeof toast === 'function') {
+      toast('임시저장 되었습니다.', 'success');
+    } else {
+      alert('임시저장 되었습니다.');
+    }
+    setTimeout(() => {
+      emit('cancel-register');
+    },);
+  } catch (error) {
+    console.error('Error saving draft:', error);
+    if (typeof toast === 'function') {
+      toast(`임시저장에 실패했습니다: ${error.response?.data?.message || error.message}`, 'error');
+    } else {
+      alert(`임시저장에 실패했습니다: ${error.response?.data?.message || error.message}`);
     }
   }
 }
