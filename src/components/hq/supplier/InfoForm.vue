@@ -308,6 +308,7 @@ const saveEdit = async () => {
     );
     showEditModal.value = false;
     fetchSupplierDetail(props.supplierId); // 저장 후 다시 조회
+    toast.success("공급처 정보가 성공적으로 수정되었습니다.");
   } catch (e) {
     // toast.error("저장에 실패했습니다.");
   }
