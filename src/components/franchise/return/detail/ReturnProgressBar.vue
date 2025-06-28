@@ -49,7 +49,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import waitingForReceiptImg from '@/assets/waiting_for_receipt.png';
+import waitingForReceiptImg from '@/assets/WAITING_FOR_RECEIPT.png';
 import reviewCompletedImg from '@/assets/review_completed.png';
 import approvedImg from '@/assets/approved.png';
 import pickingUpImg from '@/assets/picking_up.png';
