@@ -137,6 +137,7 @@
                   phone: order?.driverPhone,
                   trackingNumber: order?.trackingNumber
                 }"
+                :order="order"
                 @refreshOrder="fetchOrderDetail"
                 @close="handleBackToList"
               />
