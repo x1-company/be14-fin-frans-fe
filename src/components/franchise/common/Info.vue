@@ -17,11 +17,7 @@
 
         <!-- 탭별 컨텐츠 영역 -->
         <div class="tab-content">
-          <div v-if="activeTabSwitch === 0" class="content-section">
-            <h3>대시보드 컨텐츠</h3>
-            <p>대시보드 내용이 여기에 표시됩니다.</p>
-            <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
-          </div>
+          <FranchiseDashboard v-if="activeTabSwitch === 0" />
 
           <FranchiseInfo v-if="activeTabSwitch === 1" />
 
@@ -105,6 +101,7 @@ import { useRoute } from 'vue-router'
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from './InfoHeader.vue'
 import FranchiseInfo from '@/components/franchise/info/FranchiseInfo.vue'
+import FranchiseDashboard from '@/components/franchise/dashboard/FranchiseDashboard.vue'
 import OrderList from '@/components/franchise/order/OrderList.vue'
 import OrderRegister from '@/components/franchise/order/OrderRegister.vue'
 import FrOrderActionButtons from '../order/button/FrOrderActionButtons.vue'
