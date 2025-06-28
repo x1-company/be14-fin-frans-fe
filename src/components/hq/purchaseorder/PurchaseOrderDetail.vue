@@ -3,7 +3,7 @@
     <!-- Header with action buttons -->
     <div class="header-actions">
       <button class="btn btn-primary">발주서 출력</button>
-      <button class="btn btn-secondary">수정</button>
+      <button class="btn btn-secondary" @click="editOrder">수정</button>
       <button class="btn btn-secondary">취소</button>
       <button class="btn btn-secondary" @click="$emit('close')">닫기</button>
     </div>
@@ -135,7 +135,7 @@ import { ref, onMounted } from 'vue'
 import api from '@/lib/api'
 
 const props = defineProps({ orderId: Number })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'edit'])
 
 const detail = ref({
   products: [],
@@ -171,6 +171,10 @@ function getStatusText(status) {
     CANCELED: '발주 취소'
   }
   return map[status] || status
+}
+
+function editOrder() {
+  emit('edit', detail.value)
 }
 </script>
 
