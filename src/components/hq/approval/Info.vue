@@ -32,6 +32,7 @@
             :currentUserId="authStore.userId"
             @close-detail="$emit('close-detail')"
             @refresh-list="$emit('refresh-list')"
+            @document-type="handleDocumentType"
           />
 
           <!-- 전자결재 목록 -->
@@ -92,6 +93,9 @@ const isEditMode = ref(false);
 const editApprovalId = ref(null);
 const editApprovalType = ref("ORDER");
 const editApprovalDoc = ref(null);
+
+// 현재 문서 타입 저장
+const currentDocumentType = ref("ORDER");
 
 // approvalDocuments가 documentIds만 있을 때 상세 문서 배열을 fetch하는 함수
 async function fetchDocumentsByIds(documentIds) {
@@ -172,6 +176,7 @@ const emit = defineEmits([
   "close-detail",
   "select-menu",
   "counts-refresh",
+  "document-type",
 ]);
 
 const updateTab = (newTabIndex) => {
@@ -230,6 +235,13 @@ const handleCountsRefresh = () => {
 const handleDraftSaved = () => {
   emit("toggle-registration-mode", false);
   emit("refresh-list");
+};
+
+const handleDocumentType = (type) => {
+  currentDocumentType.value = type;
+  console.log("현재 문서 타입:", type);
+  // 상위 컴포넌트로 문서 타입 전달
+  emit("document-type", type);
 };
 
 const safeApprovalList = computed(() =>

@@ -90,7 +90,10 @@
                   <h3 class="document-title">{{ document.title }}</h3>
                   <div class="document-meta">
                     <span class="document-type">{{
-                      getDocumentTypeText(document.code)
+                      getDocumentTypeLabel(
+                        document.categoryType ||
+                          document.approvalDocuments?.categoryType
+                      )
                     }}</span>
                     <span class="document-author"
                       >{{ document.drafterName }} /
@@ -399,11 +402,17 @@ const getDocumentTypeClass = (code) => {
   return "type-default";
 };
 
-const getDocumentTypeText = (code) => {
-  if (code?.startsWith("APP")) return "결재서";
-  if (code?.startsWith("APR")) return "요청서";
-  if (code?.startsWith("RPT")) return "보고서";
-  return "문서";
+const getDocumentTypeLabel = (categoryType) => {
+  switch (categoryType) {
+    case "ORDER":
+      return "주문서";
+    case "RETURN":
+      return "반품서";
+    case "PURCHASE_ORDER":
+      return "발주서";
+    default:
+      return "결재서";
+  }
 };
 
 const getWeekday = (date) => {
