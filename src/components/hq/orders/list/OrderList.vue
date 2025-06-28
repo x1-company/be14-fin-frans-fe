@@ -562,4 +562,15 @@
   .deadline-btn:hover {
     background: #2746b6;
   }
+  :deep(.dp__input) {
+  font-size: 0.8rem !important;  /* 원하는 크기로 */
+  height: 33px !important;
+  padding: 0 4px !important;
+  width: 270px !important;
+  min-width: 0 !important;
+  max-width: 270px !important;
+  border-radius: 6px !important;
+  border: 1px solid #e9ecef !important;
+  text-align: center !important;
+  }
   </style>
