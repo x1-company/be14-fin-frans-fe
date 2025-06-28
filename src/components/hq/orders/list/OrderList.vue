@@ -420,7 +420,7 @@
     text-align: center;
     color: #6c757d;
     font-style: italic;
-    padding: 40px;
+    padding: 10px;
   }
   .order-link {
     color: #4066fa;
@@ -572,5 +572,11 @@
   border-radius: 6px !important;
   border: 1px solid #e9ecef !important;
   text-align: center !important;
+  }
+  .order-table-body {
+    min-height: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   </style>
