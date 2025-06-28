@@ -436,6 +436,7 @@ onMounted(async () => {
           files: (approvalData.files || []).map((f) => ({
             name: f.name || f.fileName,
             url: f.url,
+            size: f.size,
           })),
           approvalDocuments: {
             documentIds: Array.isArray(approvalData.approvalDocuments)
@@ -678,6 +679,7 @@ watch(
           files: (newData.files || []).map((f) => ({
             name: f.name || f.fileName,
             url: f.url,
+            size: f.size,
           })),
           approvalDocuments: {
             documentIds: Array.isArray(newData.approvalDocuments)
@@ -849,11 +851,13 @@ const handleEdit = async () => {
         uploadedFiles.push({
           name: file.name,
           url: uploadedUrl,
+          size: file.size,
         });
       } else if (file.url) {
         uploadedFiles.push({
           name: file.name,
           url: file.url,
+          size: file.size,
         });
       }
     }
@@ -952,12 +956,14 @@ const handleRegister = async () => {
         uploadedFiles.push({
           name: file.name,
           url: uploadedUrl[0],
+          size: file.size,
         });
       } else {
         // 이미 업로드된 파일
         uploadedFiles.push({
           name: file.name,
           url: file.url,
+          size: file.size,
         });
       }
     }
@@ -1228,11 +1234,13 @@ const handleResubmit = async () => {
         uploadedFiles.push({
           name: file.name,
           url: uploadedUrl,
+          size: file.size,
         });
       } else if (file.url) {
         uploadedFiles.push({
           name: file.name,
           url: file.url,
+          size: file.size,
         });
       }
     }
