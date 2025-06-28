@@ -173,7 +173,8 @@
                 :returnId="returnDetailId"
                 :rejectedReason="returnDetail?.rejectedReason"
                 :status="returnDetail?.status"
-                 :isEditing="isEditing"Add commentMore actions
+                :isEditing="isEditing"Add commentMore actions
+                :returnData="returnDetail"
                 @update:isEditing="val => { isEditing = val; if (val) startEdit(); }"
                 @refreshReturn="fetchReturnDetail"
                 @close="handleReturnBackToList"
