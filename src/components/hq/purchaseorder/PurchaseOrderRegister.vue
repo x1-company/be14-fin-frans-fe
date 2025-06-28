@@ -409,6 +409,9 @@ async function saveDraft() {
     } else {
       alert('임시저장 되었습니다.');
     }
+    setTimeout(() => {
+      emit('cancel-register');
+    },);
   } catch (error) {
     console.error('Error saving draft:', error);
     if (typeof toast === 'function') {
