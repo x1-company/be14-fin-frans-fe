@@ -309,9 +309,9 @@ const desc = computed(() => {
 })
 
 const dashboardCardData = ref({
-  inProgressOrder: { count: 3, diff: 0 },
-  inProgressApproval: { count: 1, diff: 0 },
-  completedOrder: { count: 200, diff: 0 }
+  inProgressOrder: { count: 0, diff: 0 },
+  inProgressApproval: { count: 0, diff: 0 },
+  completedOrder: { count: 0, diff: 0 }
 })
 
 const dashboardStats = ref({
