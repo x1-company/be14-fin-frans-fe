@@ -37,7 +37,7 @@
         @click="showDeliveryCompleteModal = true"
         >
         <span class="icon">✓</span>
-        배송 완료 처리
+        반품 수거 완료 처리
         </button>
 
         <button

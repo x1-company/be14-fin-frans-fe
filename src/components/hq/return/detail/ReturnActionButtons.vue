@@ -43,7 +43,7 @@
     />
     <ReturnDeliveryCompleteModal
       :visible="showDeliveryCompleteModal"
-      :delivery-info="latestDeliveryInfo"
+      :returnData="props.returnData"
       @confirm="handleDeliveryComplete"
       @cancel="showDeliveryCompleteModal = false"
     />
@@ -91,8 +91,8 @@ const toast = useToast();
 // 최신 배송 정보 추출 (returnData에서)
 const latestDeliveryInfo = computed(() => ({
   deliveryCompany: props.returnData?.deliveryCompany || '',
-  name: props.returnData?.driverName || '',
-  phone: props.returnData?.driverPhone || '',
+  driverName: props.returnData?.driverName || '',
+  driverPhone: props.returnData?.driverPhone || '',
   trackingNumber: props.returnData?.trackingNumber || ''
 }));
 
