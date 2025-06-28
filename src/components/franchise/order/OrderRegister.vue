@@ -558,8 +558,8 @@ const confirmSubmitOrder = async () => {
 }
 
 .total-amount {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: #4066fa;
 }
 
