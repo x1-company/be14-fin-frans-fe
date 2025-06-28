@@ -68,7 +68,7 @@
                 />
               </div>
               <div class="form-group">
-                <label>내용</label>
+                <label>비고</label>
                 <textarea
                   v-model="formData.remarks"
                   placeholder="결재 내용을 입력하세요"
@@ -244,7 +244,20 @@
                   <div class="file-icon">📄</div>
                   <div class="file-details">
                     <div class="file-name">{{ file.name }}</div>
-                    <div class="file-size">{{ formatFileSize(file.size) }}</div>
+                    <div class="file-size">
+                      <template
+                        v-if="file.size !== undefined && file.size !== null"
+                      >
+                        {{ formatFileSize(file.size) }}
+                      </template>
+                      <template v-else-if="file.url">
+                        <span v-if="file._sizeLoading">...</span>
+                        <span v-else>{{
+                          fetchAndShowFileSize(file, index)
+                        }}</span>
+                      </template>
+                      <template v-else>-</template>
+                    </div>
                   </div>
                 </div>
                 <div class="file-actions">
@@ -259,20 +272,33 @@
 
           <!-- 저장/등록 버튼 영역 -->
           <div class="action-buttons">
-            <button
-              class="edit-button"
-              @click="handleEdit"
-              :disabled="isSubmitting"
-            >
-              수정
-            </button>
-            <button
-              class="register-button"
-              @click="handleRegister"
-              :disabled="isSubmitting"
-            >
-              등록
-            </button>
+            <!-- 재기안 모드일 때는 재기안 버튼만 표시 -->
+            <template v-if="props.isResubmitMode">
+              <button
+                class="register-button"
+                @click="handleResubmit"
+                :disabled="isSubmitting"
+              >
+                재기안
+              </button>
+            </template>
+            <!-- 일반 수정 모드일 때는 수정/등록 버튼 표시 -->
+            <template v-else>
+              <button
+                class="edit-button"
+                @click="handleEdit"
+                :disabled="isSubmitting"
+              >
+                수정
+              </button>
+              <button
+                class="register-button"
+                @click="handleRegister"
+                :disabled="isSubmitting"
+              >
+                등록
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -335,6 +361,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isResubmitMode: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits([
@@ -378,9 +408,19 @@ onMounted(async () => {
   // 수정 모드이고 approvalId가 있으면 기존 데이터 로드
   if (props.isEditMode && props.approvalId) {
     try {
-      const response = await api.get(
-        `/api/hq/approvals/draft/${props.approvalId}`
+      // 재기안 모드일 때는 re-draft API 사용, 그렇지 않으면 기존 draft API 사용
+      const endpoint = props.isResubmitMode
+        ? `/api/hq/approvals/re-draft/${props.approvalId}`
+        : `/api/hq/approvals/draft/${props.approvalId}`;
+
+      console.log(
+        "[ApprovalEdit] API endpoint:",
+        endpoint,
+        "isResubmitMode:",
+        props.isResubmitMode
       );
+
+      const response = await api.get(endpoint);
       console.log(response);
       if (response.status === 200 && response.data) {
         const approvalData = response.data;
@@ -396,6 +436,7 @@ onMounted(async () => {
           files: (approvalData.files || []).map((f) => ({
             name: f.name || f.fileName,
             url: f.url,
+            size: f.size,
           })),
           approvalDocuments: {
             documentIds: Array.isArray(approvalData.approvalDocuments)
@@ -457,6 +498,7 @@ const formatCurrency = (amount) => {
 };
 
 const formatFileSize = (bytes) => {
+  if (!bytes || isNaN(bytes)) return "-";
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -521,7 +563,9 @@ const handleFileSelect = (event) => {
   files.forEach((file) => {
     formData.value.files.push({
       name: file.name,
-      url: file.url,
+      size: file.size,
+      file: file,
+      url: "",
     });
   });
   emitFormData();
@@ -635,6 +679,7 @@ watch(
           files: (newData.files || []).map((f) => ({
             name: f.name || f.fileName,
             url: f.url,
+            size: f.size,
           })),
           approvalDocuments: {
             documentIds: Array.isArray(newData.approvalDocuments)
@@ -799,20 +844,20 @@ const handleEdit = async () => {
     const uploadedFiles = [];
     for (const file of formData.value.files) {
       if (!file.url && file.file) {
-        // 새로 추가된 파일만 업로드
         const uploadedUrlArr = await uploadFiles([file.file]);
         const uploadedUrl = Array.isArray(uploadedUrlArr)
           ? uploadedUrlArr[0]
           : uploadedUrlArr;
         uploadedFiles.push({
           name: file.name,
-          url: uploadedUrl, // 반드시 url 할당
+          url: uploadedUrl,
+          size: file.size,
         });
       } else if (file.url) {
-        // 이미 업로드된 파일
         uploadedFiles.push({
           name: file.name,
           url: file.url,
+          size: file.size,
         });
       }
     }
@@ -911,12 +956,14 @@ const handleRegister = async () => {
         uploadedFiles.push({
           name: file.name,
           url: uploadedUrl[0],
+          size: file.size,
         });
       } else {
         // 이미 업로드된 파일
         uploadedFiles.push({
           name: file.name,
           url: file.url,
+          size: file.size,
         });
       }
     }
@@ -966,6 +1013,8 @@ const handleRegister = async () => {
         : "결재가 등록되었습니다.";
       toast.success(message);
       emit("approval-submitted", response.data);
+
+      // 결재 상세 페이지로 이동
       router.push(`/approval/${props.approvalId}`);
     }
   } catch (error) {
@@ -1141,8 +1190,138 @@ const approvalLineDetails = computed(() => {
 
 // 모달 닫기 핸들러 수정
 const handleCloseModal = () => {
-  router.push("/approval");
+  emit("close");
   emit("refresh-list");
+  router.push("/approval");
+};
+
+// 재기안 핸들러
+const handleResubmit = async () => {
+  if (isSubmitting.value) return;
+
+  // 제목, 결재선, 결재문서 모두 필수
+  if (!formData.value.title || !formData.value.title.trim()) {
+    toast.error("제목을 입력해주세요.");
+    return;
+  }
+  if (
+    !formData.value.approvalLines ||
+    formData.value.approvalLines.length === 0
+  ) {
+    toast.error("결재선을 지정해주세요.");
+    return;
+  }
+  if (
+    !formData.value.approvalDocuments ||
+    !formData.value.approvalDocuments.documentIds ||
+    formData.value.approvalDocuments.documentIds.length === 0
+  ) {
+    toast.error("주문 문서를 선택해주세요.");
+    return;
+  }
+
+  try {
+    isSubmitting.value = true;
+
+    // 파일 업로드 및 files 배열 생성 (handleEdit와 동일)
+    const uploadedFiles = [];
+    for (const file of formData.value.files) {
+      if (!file.url && file.file) {
+        const uploadedUrlArr = await uploadFiles([file.file]);
+        const uploadedUrl = Array.isArray(uploadedUrlArr)
+          ? uploadedUrlArr[0]
+          : uploadedUrlArr;
+        uploadedFiles.push({
+          name: file.name,
+          url: uploadedUrl,
+          size: file.size,
+        });
+      } else if (file.url) {
+        uploadedFiles.push({
+          name: file.name,
+          url: file.url,
+          size: file.size,
+        });
+      }
+    }
+
+    const approvalLines = [];
+    let seq = 1;
+    approvalAndCollaboratorLines.value.forEach((line) => {
+      approvalLines.push({
+        userId: line.userId || line.id,
+        seq: seq++,
+        type: line.type,
+      });
+    });
+    formData.value.approvalLines
+      .filter((line) => line.type === "RECIPIENT" || line.type === "REFERENCE")
+      .forEach((line) => {
+        approvalLines.push({
+          userId: line.userId || line.id,
+          seq: 0,
+          type: line.type,
+        });
+      });
+
+    const requestData = {
+      title: formData.value.title,
+      remarks: formData.value.remarks,
+      isRequest: true,
+      approvalLines: approvalLines,
+      files: uploadedFiles,
+      approvalDocuments: {
+        categoryType: formData.value.approvalDocuments.categoryType,
+        documentIds: formData.value.approvalDocuments.documentIds,
+      },
+    };
+
+    const response = await api.put(
+      `/api/hq/approvals/${props.approvalId}`,
+      requestData
+    );
+
+    if (response.status === 200 || response.status === 201) {
+      toast.success("재기안이 완료되었습니다.");
+      emit("approval-submitted", response.data);
+      router.push("/approval").then(() => {
+        window.location.reload();
+      });
+    }
+  } catch (error) {
+    console.error("재기안 실패:", error);
+    toast.error("재기안에 실패했습니다. 다시 시도해주세요.");
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+// 파일 크기 동적 조회 함수
+const fetchFileSize = async (file, index) => {
+  if (!file.url || file.size) return;
+  try {
+    const response = await fetch(file.url, { method: "HEAD" });
+    const size = response.headers.get("Content-Length");
+    if (size) {
+      // 반응형으로 할당
+      formData.value.files[index].size = Number(size);
+    } else {
+      formData.value.files[index].size = null;
+    }
+  } catch (e) {
+    formData.value.files[index].size = null;
+  }
+};
+
+// fetchAndShowFileSize 함수 추가
+const fetchAndShowFileSize = (file, index) => {
+  if (!file._sizeLoading) {
+    file._sizeLoading = true;
+    fetchFileSize(file, index).then(() => {
+      file._sizeLoading = false;
+    });
+  }
+  return "...";
 };
 
 defineExpose({
@@ -1377,6 +1556,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 20px;
+  margin-top: 32px;
 }
 
 .form-group {

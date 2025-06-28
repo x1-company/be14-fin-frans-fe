@@ -1,7 +1,7 @@
 <template>
   <div class="return-form">
     <!-- 상단 탭 UI -->
-    <div class="return-form__tabs">
+    <div class="return-form__tabs" v-if="!showReturnRegister">
       <div
         v-for="(tab, idx) in tabs"
         :key="tab.value"
@@ -44,37 +44,41 @@
     />
 
     <!-- 반품 목록 테이블 -->
-    <div v-else class="return-table">
-      <div class="return-table-header">
-        <div class="col col-no">No.</div>
-        <div class="col col-code">반품 번호</div>
-        <div class="col col-name">품목명</div>
-        <div class="col col-status">반품 상태</div>
-        <div class="col col-date">반품일</div>
-        <div class="col col-amount">총 반품 금액</div>
-        <div class="col col-franchise">가맹점 명</div>
-      </div>
-      <div class="return-table-body">
-        <div v-if="returns.length === 0" class="empty-message">반품 내역이 없습니다.</div>
-        <div v-for="(returnItem, idx) in returns" :key="returnItem.id" class="return-row">
-          <div class="col col-no">{{ idx + 1 + (page-1)*pageSize }}</div>
-          <div class="col col-code">
+    <table v-else class="return-table">
+      <thead>
+        <tr>
+          <th class="col-no">No.</th>
+          <th class="col-code">반품 번호</th>
+          <th class="col-name">품목명</th>
+          <th class="col-status">반품 상태</th>
+          <th class="col-date">반품일</th>
+          <th class="col-amount">총 반품 금액</th>
+          <th class="col-franchise">가맹점 명</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="returns.length === 0">
+          <td class="empty-message" colspan="7">반품 내역이 없습니다.</td>
+        </tr>
+        <tr v-for="(returnItem, idx) in returns" :key="returnItem.id">
+          <td class="col-no">{{ idx + 1 + (page-1)*pageSize }}</td>
+          <td class="col-code">
             <a href="#" class="return-link" @click.prevent="showReturnDetail(returnItem.id)">
               {{ returnItem.code }}
             </a>
-          </div>
-          <div class="col col-name">{{ formatproductSummary(returnItem.productSummary) }}</div>
-          <div class="col col-status">
+          </td>
+          <td class="col-name">{{ formatproductSummary(returnItem.productSummary) }}</td>
+          <td class="col-status">
             <span :class="['return-status', returnStatusClass(returnItem.status)]">
               {{ statusText(returnItem.status) }}
             </span>
-          </div>
-          <div class="col col-date">{{ returnItem.createdAt.slice(0, 10) }}</div>
-          <div class="col col-amount">{{ returnItem.totalAmount.toLocaleString() }}원</div>
-          <div class="col col-franchise">{{ returnItem.franchiseName }}</div>
-        </div>
-      </div>
-    </div>
+          </td>
+          <td class="col-date">{{ returnItem.createdAt.slice(0, 10) }}</td>
+          <td class="col-amount">{{ returnItem.totalAmount.toLocaleString() }}원</td>
+          <td class="col-franchise">{{ returnItem.franchiseName }}</td>
+        </tr>
+      </tbody>
+    </table>
 
     <div v-if="!showReturnRegister" class="return-form__pagination">
       <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
@@ -337,13 +341,21 @@ const formatproductSummary = (text) => {
   border-radius: 10px;
   overflow: hidden;
   margin-bottom: 10px;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
 }
-.return-table-header, .return-row {
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
+.return-table th, .return-table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0 8px;
+  height: 48px;
+  font-size: 14px;
+  white-space: nowrap;
+  border-bottom: 1px solid #eef0f4;
 }
-.return-table-header {
+.return-table th {
   background: #f8f9fa;
   color: #495057;
   font-size: 13px;
@@ -351,40 +363,22 @@ const formatproductSummary = (text) => {
   height: 40px;
   border-bottom: 1px solid #eef0f4;
 }
-.return-table-body .return-row {
-  border-bottom: 1px solid #eef0f4;
-}
-.return-table-body .return-row:last-child {
+.return-table tr:last-child td {
   border-bottom: none;
 }
-.return-row {
-  height: 48px;
-  font-size: 14px;
-  background: #fff;
-  transition: background 0.2s;
-}
-.return-row:hover {
-  background: #f8f9fa;
-}
-.col {
-  text-align: center;
-  padding: 0 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.col-no        { flex-basis: 7%; }
-.col-code      { flex-basis: 20%; color: #222; font-family: monospace; overflow: visible; text-overflow: unset; white-space: nowrap; }
-.col-name      { flex-basis: 25%; text-align: center; font-weight: 500; }
-.col-status    { flex-basis: 15%; }
-.col-date      { flex-basis: 15%; }
-.col-amount    { flex-basis: 15%; text-align: right; font-weight: 500; }
-.col-franchise { flex-basis: 20%; }
+.col-no        { width: 7%; }
+.col-code      { width: 20%; color: #222; }
+.col-name      { width: 25%; font-weight: 500; }
+.col-status    { width: 15%; }
+.col-date      { width: 15%; }
+.col-amount    { width: 15%; text-align: right; font-weight: 500; }
+.col-franchise { width: 20%; }
 .empty-message {
   text-align: center;
   color: #6c757d;
   font-style: italic;
-  padding: 40px;
+  padding: 40px 0;
+  background: #fff;
 }
 .return-link {
   color: #4066fa;
@@ -506,4 +500,18 @@ const formatproductSummary = (text) => {
   outline: none !important;
   box-shadow: none !important;
 }
+
+:deep(.dp__input) {
+  font-size: 0.8rem !important;  /* 원하는 크기로 */
+  height: 33px !important;
+  padding: 0 4px !important;
+  width: 270px !important;
+  min-width: 0 !important;
+  max-width: 270px !important;
+  border-radius: 6px !important;
+  border: 1px solid #e9ecef !important;
+  text-align: center !important;
+}
+
+
 </style>

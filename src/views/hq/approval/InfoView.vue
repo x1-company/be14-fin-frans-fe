@@ -33,7 +33,13 @@
         :selectedTemplate="selectedTemplate"
         :approvalId="approvalId"
         :approvalDetail="approvalDetail"
-        :activeTabSwitch="currentTabIndex === 1 ? 0 : currentTabIndex"
+        :activeTabSwitch="
+          currentTabIndex === 2
+            ? 1
+            : currentTabIndex === 1
+            ? 0
+            : currentTabIndex
+        "
         @active-tab-change="handleActiveTabChange"
         @toggle-registration-mode="handleToggleRegistrationMode"
         @template-deleted="handleTemplateDeleted"
@@ -138,6 +144,11 @@ const handleTabChange = (tab) => {
 
 const handleActiveTabChange = (tabIndex) => {
   currentTabIndex.value = tabIndex;
+
+  // 결재템플릿 탭으로 이동할 때 등록 모드 비활성화
+  if (tabIndex === 2) {
+    isRegistrationMode.value = false;
+  }
 };
 
 const handleTemplateSelect = (template) => {
@@ -305,7 +316,7 @@ const fetchApprovalList = async () => {
     },
     수신: {
       "수신-전체": "/api/hq/approvals/list/received/all",
-      "결재-전체": "/api/hq/approvals/list/received/all",
+      "결재-전체": "/api/hq/approvals/list/received/approval/all",
       결재대기: "/api/hq/approvals/list/received/pending",
       결재예정: "/api/hq/approvals/list/received/upcoming",
       결재중: "/api/hq/approvals/list/received/in-progress",

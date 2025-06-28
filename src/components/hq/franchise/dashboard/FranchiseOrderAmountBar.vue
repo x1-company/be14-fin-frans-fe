@@ -37,8 +37,7 @@ const props = defineProps({
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 const PASTEL_COLORS = [
-  '#A3CEF1', '#B6E2D3', '#F9F6C9', '#F7D6E0', '#D7C0F7', '#FFD6A5',
-  '#B5EAD7', '#FFDAC1', '#E2F0CB', '#C7CEEA', '#FFB7B2', '#B5B9F7'
+'#3366FF', '#FFB800', '#FF5C5C', '#00C49A', '#888888', '#FF7F50', '#8A2BE2', '#FF69B4', '#00BFFF', '#FFD700', '#32CD32', '#FF6347'
 ];
 
 const formatYAxis = value => {

@@ -17,11 +17,7 @@
 
         <!-- 탭별 컨텐츠 영역 -->
         <div class="tab-content">
-          <div v-if="activeTabSwitch === 0" class="content-section">
-            <h3>대시보드 컨텐츠</h3>
-            <p>대시보드 내용이 여기에 표시됩니다.</p>
-            <p>컴포넌트 생성 후 여기에 넣으면 됩니다</p>
-          </div>
+          <FranchiseDashboard v-if="activeTabSwitch === 0" />
 
           <FranchiseInfo v-if="activeTabSwitch === 1" />
 
@@ -29,7 +25,7 @@
             <OrderRegister v-if="showOrderRegister" @back-to-list="showOrderRegister = false" />
             
             <div v-else-if="orderDetailId">
-              <div v-if="loading">로딩 중...</div>
+              <div v-if="loading"></div>
               <div v-else-if="!order">주문 상세 데이터를 불러올 수 없습니다.</div>
               <div v-else>
                 <FrOrderActionButtons
@@ -48,8 +44,8 @@
                 <OrderProgressBar :status="order?.status" />
                 <FranchiseInfoCard :order="order" />
                 <OrderInfoCard :order="order" />
-                <ProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
-                <DeliveryInfoCard :order="order" />
+                <OrderProductTable :products="order?.products" :totalAmount="order?.totalAmount" />
+                <OrderDeliveryInfoCard :order="order" />
               </div>
             </div>
 
@@ -105,13 +101,16 @@ import { useRoute } from 'vue-router'
 import Breadcrumb from "@/components/hq/common/Breadcrumb.vue"
 import InfoHeader from './InfoHeader.vue'
 import FranchiseInfo from '@/components/franchise/info/FranchiseInfo.vue'
+import FranchiseDashboard from '@/components/franchise/dashboard/FranchiseDashboard.vue'
 import OrderList from '@/components/franchise/order/OrderList.vue'
 import OrderRegister from '@/components/franchise/order/OrderRegister.vue'
-import FrOrderActionButtons from '@/components/hq/orders/detail/OrderActionButtons.vue'
+import FrOrderActionButtons from '../order/button/FrOrderActionButtons.vue'
+import OrderDeliveryInfoCard from '@/components/hq/orders/detail/DeliveryInfoCard.vue'
 import OrderProgressBar from '@/components/hq/orders/detail/OrderProgressBar.vue'
 import FranchiseInfoCard from '@/components/hq/orders/detail/FranchiseInfoCard.vue'
 import DeliveryInfoCard from '@/components/franchise/return/detail/DeliveryInfoCard.vue'
 import OrderInfoCard from '@/components/hq/orders/detail/OrderInfoCard.vue'
+import OrderProductTable from '@/components/hq/orders/detail/ProductTable.vue'
 import ProductTable from '@/components/franchise/return/detail/ProductTable.vue'
 import ReturnList from '@/components/franchise/return/list/ReturnList.vue'
 import ReturnProgressBar from '@/components/franchise/return/detail/ReturnProgressBar.vue'
@@ -163,7 +162,7 @@ const handleShowOrderDetail = (id) => {
   orderDetailId.value = id;
 };
 
-const handleBackToList = () => {
+function handleBackToList() {
   orderDetailId.value = null;
   order.value = null;
 };

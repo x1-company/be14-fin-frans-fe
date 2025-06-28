@@ -15,7 +15,7 @@
       <span class="icon">🚚</span> 배송 정보 입력
     </button>
     <button
-      v-if="isDelivering"
+      v-if="isDelivering || isPickingUp"
       class="btn delivery-complete"
       @click="showDeliveryCompleteModal = true"
     >
@@ -35,14 +35,15 @@
       @reject="handleReject"
       @cancel="showRejectModal = false"
     />
-    <DeliveryInfoModal
+    <ReturnDeliveryInfoModal
       :visible="showDeliveryModal"
+      :initial-info="latestDeliveryInfo"
       @confirm="handleDeliveryConfirm"
       @cancel="showDeliveryModal = false"
     />
-    <DeliveryCompleteModal
+    <ReturnDeliveryCompleteModal
       :visible="showDeliveryCompleteModal"
-      :delivery-info="deliveryInfo"
+      :delivery-info="latestDeliveryInfo"
       @confirm="handleDeliveryComplete"
       @cancel="showDeliveryCompleteModal = false"
     />
@@ -57,17 +58,21 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import RejectModal from '@/components/hq/orders/modal/RejectModal.vue';
 import DeliveryInfoModal from '@/components/hq/orders/modal/DeliveryInfoModal.vue';
-import DeliveryCompleteModal from '@/components/hq/orders/modal/DeliveryCompleteModal.vue';
+import ReturnDeliveryCompleteModal from './ReturnDeliveryCompleteModal.vue';
+import ReturnDeliveryInfoModal from './ReturnDeliveryInfoModal.vue';
+import api from '@/lib/api';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
   returnId: [String, Number],
   rejectedReason: String,
   status: String,
   deliveryInfo: Object,
-  isEditing: Boolean
+  isEditing: Boolean,
+  returnData: Object
 });
 
 const showRejectModal = ref(false);
@@ -77,8 +82,33 @@ const showEditDeliveryModal = ref(false);
 
 const isApproved = computed(() => props.status === 'APPROVED');
 const isDelivering = computed(() => props.status === 'DELIVERING');
+const isPickingUp = computed(() => props.status === 'PICKING_UP');
 
-const emit = defineEmits(['update:isEditing', 'refreshOrder', 'close']);
+const emit = defineEmits(['update:isEditing', 'refreshReturn', 'close']);
+
+const toast = useToast();
+
+// 최신 배송 정보 추출 (returnData에서)
+const latestDeliveryInfo = computed(() => ({
+  deliveryCompany: props.returnData?.deliveryCompany || '',
+  name: props.returnData?.driverName || '',
+  phone: props.returnData?.driverPhone || '',
+  trackingNumber: props.returnData?.trackingNumber || ''
+}));
+
+// 진단용: 두 모달이 열릴 때 latestDeliveryInfo 값 로그
+watch(
+  () => [showDeliveryModal.value, showDeliveryCompleteModal.value, latestDeliveryInfo.value],
+  ([showInfo, showComplete, info]) => {
+    if (showInfo) {
+      console.log('INFO MODAL OPEN - latestDeliveryInfo:', info);
+    }
+    if (showComplete) {
+      console.log('COMPLETE MODAL OPEN - latestDeliveryInfo:', info);
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 function handleClose() {
   emit('close');
@@ -88,25 +118,66 @@ function startReview() {
 }
 
 async function handleReject(reason) {
-  showRejectModal.value = false;
-  // 반려 요청(구현 예시, 실제 api 연결 필요)
-  // await api.patch(`/api/hq/return/${props.returnId}/reject`, { reason });
-  emit('refreshOrder');
+  try {
+    await api.patch(`/api/hq/return/${props.returnId}/reject`, {
+      rejectReason: reason
+    });
+    showRejectModal.value = false;
+    emit('refreshReturn');
+    toast.success('반려 처리가 완료되었습니다.');
+  } catch (e) {
+    console.error('반려 요청 실패:', e);
+    toast.error('반려 처리에 실패했습니다. 다시 시도해 주세요.');
+  }
 }
 
 async function handleDeliveryConfirm(deliveryInfo) {
-  // 배송 정보 등록(구현 예시)
-  emit('refreshOrder');
+  try {
+    await api.patch(`/api/hq/return/${props.returnId}/delivery`, {
+      deliveryCompany: deliveryInfo.deliveryCompany,
+      trackingNumber: deliveryInfo.trackingNumber,
+      name: deliveryInfo.name,
+      phone: deliveryInfo.phone
+    });
+    showDeliveryModal.value = false;
+    emit('refreshReturn');
+    toast.success('배송 정보가 등록되었습니다.');
+  } catch (e) {
+    toast.error('배송 정보 등록에 실패했습니다.');
+  }
 }
 
 async function handleDeliveryComplete(deliveryInfo) {
-  // 배송 완료 처리(구현 예시)
-  emit('refreshOrder');
+  try {
+    await api.patch(`/api/hq/return/${props.returnId}/delivery`, {
+      deliveryCompany: deliveryInfo.deliveryCompany,
+      trackingNumber: deliveryInfo.trackingNumber,
+      name: deliveryInfo.name,
+      phone: deliveryInfo.phone,
+      deliveredAt: deliveryInfo.deliveredAt
+    });
+    showDeliveryCompleteModal.value = false;
+    emit('refreshReturn');
+    toast.success('배송 완료 처리되었습니다.');
+  } catch (e) {
+    toast.error('배송 완료 처리에 실패했습니다.');
+  }
 }
 
 async function handleEditDeliveryConfirm(deliveryInfo) {
-  // 배송 정보 수정(구현 예시)
-  emit('refreshOrder');
+  try {
+    await api.patch(`/api/hq/return/${props.returnId}/delivery`, {
+      deliveryCompany: deliveryInfo.deliveryCompany,
+      trackingNumber: deliveryInfo.trackingNumber,
+      name: deliveryInfo.name,
+      phone: deliveryInfo.phone
+    });
+    showEditDeliveryModal.value = false;
+    emit('refreshReturn');
+    toast.success('배송 정보가 수정되었습니다.');
+  } catch (e) {
+    toast.error('배송 정보 수정에 실패했습니다.');
+  }
 }
 </script>
 

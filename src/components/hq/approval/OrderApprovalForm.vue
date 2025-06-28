@@ -58,8 +58,8 @@
             @input="emitFormData"
           />
         </div>
-        <div class="form-group">
-          <label>내용</label>
+        <div class="form-group form-group-remarks">
+          <label>비고</label>
           <textarea
             v-model="formData.remarks"
             placeholder="결재 내용을 입력하세요"
@@ -248,6 +248,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import UnifiedDocumentList from "./modal/UnifiedDocumentList.vue";
 import ApprovalLineModal from "./modal/ApprovalLineModal.vue";
 import ApprovalTemplateModal from "./modal/ApprovalTemplateModal.vue";
@@ -257,6 +258,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/composables/useToast";
 
 const toast = useToast();
+const router = useRouter();
 
 const props = defineProps({
   type: String,
@@ -280,6 +282,7 @@ const emit = defineEmits([
   "document-approve",
   "add-file",
   "remove-file",
+  "refresh-list",
 ]);
 
 const showModal = ref(false);
@@ -653,12 +656,14 @@ const handleTempSave = async () => {
         uploadedFiles.push({
           name: file.name,
           url: uploadedUrl[0],
+          size: file.size,
         });
       } else {
         // 이미 업로드된 파일
         uploadedFiles.push({
           name: file.name,
           url: file.url,
+          size: file.size,
         });
       }
     }
@@ -744,12 +749,14 @@ const handleSubmit = async () => {
         uploadedFiles.push({
           name: file.name,
           url: uploadedUrl[0],
+          size: file.size,
         });
       } else {
         // 이미 업로드된 파일
         uploadedFiles.push({
           name: file.name,
           url: file.url,
+          size: file.size,
         });
       }
     }
@@ -792,6 +799,12 @@ const handleSubmit = async () => {
     if (response.status === 200 || response.status === 201) {
       toast.success("결재가 등록되었습니다.");
       emit("approval-submitted", response.data);
+
+      // 목록 새로고침 이벤트 발생
+      emit("refresh-list");
+
+      // 결재 상세 페이지로 이동
+      router.push(`/approval/${response.data.approvalId || response.data.id}`);
     }
   } catch (error) {
     console.error("결재 등록 실패:", error);
@@ -1115,6 +1128,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 20px;
+  margin-top: 32px;
 }
 
 .form-group {
