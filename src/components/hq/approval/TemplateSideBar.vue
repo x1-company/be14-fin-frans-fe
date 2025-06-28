@@ -28,8 +28,41 @@
       <span class="search-icon">🔍</span>
     </div>
 
+    <!-- 로딩/에러/빈 상태 등 기존 코드 유지 -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>템플릿을 불러오는 중...</p>
+    </div>
+    <div v-if="error" class="error-container">
+      <p class="error-message">{{ error }}</p>
+      <button @click="fetchTemplates" class="retry-button">다시 시도</button>
+    </div>
+    <div
+      v-if="!loading && !error && templates.length === 0"
+      class="empty-container"
+      style="background-color: white"
+    >
+      <svg
+        class="empty-icon"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+      >
+        <path
+          d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+        ></path>
+        <polyline points="14,2 14,8 20,8"></polyline>
+      </svg>
+      <p>등록된 템플릿이 없습니다.</p>
+    </div>
     <!-- 템플릿 목록 -->
-    <div class="template-list">
+    <div
+      class="template-list"
+      v-if="!loading && !error && templates.length > 0"
+    >
       <div
         v-for="(template, index) in filteredTemplates"
         :key="template?.id || `template-${index}`"
@@ -63,36 +96,6 @@
           <span class="disabled-text">선택된 템플릿만 이동 가능</span>
         </div>
       </div>
-    </div>
-
-    <!-- 로딩/에러/빈 상태 등 기존 코드 유지 -->
-    <div v-if="loading" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>템플릿을 불러오는 중...</p>
-    </div>
-    <div v-if="error" class="error-container">
-      <p class="error-message">{{ error }}</p>
-      <button @click="fetchTemplates" class="retry-button">다시 시도</button>
-    </div>
-    <div
-      v-if="!loading && !error && templates.length === 0"
-      class="empty-container"
-    >
-      <svg
-        class="empty-icon"
-        width="48"
-        height="48"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1"
-      >
-        <path
-          d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-        ></path>
-        <polyline points="14,2 14,8 20,8"></polyline>
-      </svg>
-      <p>등록된 템플릿이 없습니다.</p>
     </div>
     <TemplateRegisterModal
       v-if="showRegisterModal"
@@ -356,7 +359,6 @@ defineExpose({
 
 .register-button-container {
   padding: 12px 16px;
-  border-bottom: 1px solid #e9ecef;
   background: white;
 }
 .register-button {
@@ -493,10 +495,12 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
+  justify-content: flex-start;
+  padding: 80px 20px 40px 20px;
   text-align: center;
   color: #6c757d;
+  background-color: white;
+  min-height: 180px;
 }
 
 .loading-spinner {
