@@ -26,9 +26,9 @@
         </div>
         <div class="info-row">
           <div class="label">담당자</div>
-          <div class="value">{{ detail.manager }}</div>
+          <div class="value">{{ detail.userName }}</div>
           <div class="label">담당자 이메일</div>
-          <div class="value">{{ detail.managerEmail }}</div>
+          <div class="value">{{ detail.userEmail }}</div>
         </div>
       </div>
     </div>
@@ -39,27 +39,27 @@
       <div class="info-grid">
         <div class="info-row">
           <div class="label">공급처 명</div>
-          <div class="value">{{ detail.supplierName }}</div>
+          <div class="value">{{ detail.supplier?.name || '' }}</div>
           <div class="label">대표자명</div>
-          <div class="value">{{ detail.supplierCeo }}</div>
+          <div class="value">{{ detail.supplier?.ceoName || '' }}</div>
         </div>
         <div class="info-row">
           <div class="label">사업자 번호</div>
-          <div class="value">{{ detail.supplierBusinessNumber }}</div>
+          <div class="value">{{ detail.supplier?.businessNumber || '' }}</div>
           <div class="label">우편번호</div>
-          <div class="value">{{ detail.supplierZipcode }}</div>
+          <div class="value">{{ detail.supplier?.zipcode || '' }}</div>
         </div>
         <div class="info-row">
           <div class="label">공급처 번호</div>
-          <div class="value">{{ detail.supplierCode }}</div>
+          <div class="value">{{ detail.supplier?.code || '' }}</div>
           <div class="label">전화번호</div>
-          <div class="value">{{ detail.supplierPhone }}</div>
+          <div class="value">{{ detail.supplier?.companyPhone || '' }}</div>
         </div>
         <div class="info-row">
           <div class="label">주소</div>
-          <div class="value">{{ detail.supplierAddress }}</div>
+          <div class="value">{{ detail.supplier?.address || '' }}</div>
           <div class="label">계약일자</div>
-          <div class="value contract-date">{{ detail.supplierSignedAt }}</div>
+          <div class="value contract-date">{{ formatDateOnly(detail.supplier?.signedAt) }}</div>
         </div>
       </div>
     </div>
@@ -81,27 +81,29 @@
               <th>자재 구분</th>
               <th>자재 분류</th>
               <th>자재 속성</th>
+              <th>비고</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, idx) in detail.products" :key="item.productId">
+            <tr v-for="(item, idx) in detail.products || []" :key="item.id">
               <td>{{ idx + 1 }}</td>
               <td>{{ item.productCode }}</td>
               <td>{{ item.productName }}</td>
               <td>{{ formatNumber(item.purchasePrice) }}</td>
               <td>{{ formatNumber(item.quantity) }}</td>
               <td>{{ item.purchaseUnit }}</td>
-              <td>{{ item.spec }}</td>
+              <td>{{ item.standard }}</td>
               <td>{{ item.productTypeName }}</td>
               <td>{{ item.productGroupName }}</td>
               <td>{{ item.productAttributeName }}</td>
+              <td>{{ item.remarks || '' }}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- 결제 정보 Section -->
+    <!-- 결제 정보 Section (임시, 데이터 없으면 빈 값) -->
     <div class="section">
       <h2 class="section-title">결제 정보</h2>
       <div class="info-grid">
@@ -136,12 +138,19 @@ const props = defineProps({ orderId: Number })
 const emit = defineEmits(['close'])
 
 const detail = ref({
-  products: []
+  products: [],
+  supplier: {}
 })
 
 function formatNumber(val) {
   if (val == null) return ''
   return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+}
+
+function formatDateOnly(val) {
+  if (!val) return ''
+  // ISO 형식일 경우 날짜만 추출
+  return val.split('T')[0]
 }
 
 onMounted(async () => {
