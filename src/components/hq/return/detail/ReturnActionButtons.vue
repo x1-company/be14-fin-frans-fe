@@ -1,5 +1,12 @@
 <template>
   <div class="return-actions">
+    <button
+      v-if="isPickedUp"
+      class="btn complete"
+      @click="showCompleteModal = true"
+    >
+      <span class="icon">✓</span>반품 수거 완료 
+    </button>
     <!-- 접수 대기 상태에서만 반려/검토 버튼 노출 -->
     <template v-if="props.status === 'WAITING_FOR_RECEIPT' && !props.isEditing">
       <button class="btn reject" @click="showRejectModal = true">반려</button>
@@ -12,14 +19,15 @@
       class="btn delivery"
       @click="showDeliveryModal = true"
     >
-      <span class="icon">🚚</span> 배송 정보 입력
+      <span class="icon">🚚</span> 반품 수거 정보 입력
     </button>
     <button
       v-if="isDelivering || isPickingUp"
       class="btn delivery-complete"
       @click="showDeliveryCompleteModal = true"
     >
-      <span class="icon">✓</span> 반품 수거 완료 처리
+      <span class="icon">🚚</span>
+      <span>반품 수거 정보 입력</span>
     </button>
     <button
       v-if="isDelivering"
@@ -54,6 +62,11 @@
       @confirm="handleEditDeliveryConfirm"
       @cancel="showEditDeliveryModal = false"
     />
+    <PickedUpCompleteModal
+      :visible="showCompleteModal"
+      @confirm="handleCompleteReturn"
+      @cancel="showCompleteModal = false"
+    />
   </div>
 </template>
 
@@ -65,6 +78,7 @@ import ReturnDeliveryCompleteModal from './ReturnDeliveryCompleteModal.vue';
 import ReturnDeliveryInfoModal from './ReturnDeliveryInfoModal.vue';
 import api from '@/lib/api';
 import { useToast } from '@/composables/useToast';
+import PickedUpCompleteModal from '@/components/hq/return/modal/PickedUpCompleteModal.vue';
 
 const props = defineProps({
   returnId: [String, Number],
@@ -79,10 +93,12 @@ const showRejectModal = ref(false);
 const showDeliveryModal = ref(false);
 const showDeliveryCompleteModal = ref(false);
 const showEditDeliveryModal = ref(false);
+const showCompleteModal = ref(false);
 
 const isApproved = computed(() => props.status === 'APPROVED');
 const isDelivering = computed(() => props.status === 'DELIVERING');
 const isPickingUp = computed(() => props.status === 'PICKING_UP');
+const isPickedUp = computed(() => props.status === 'PICKED_UP');
 
 const emit = defineEmits(['update:isEditing', 'refreshReturn', 'close']);
 
@@ -149,18 +165,14 @@ async function handleDeliveryConfirm(deliveryInfo) {
 
 async function handleDeliveryComplete(deliveryInfo) {
   try {
-    await api.patch(`/api/hq/return/${props.returnId}/delivery`, {
-      deliveryCompany: deliveryInfo.deliveryCompany,
-      trackingNumber: deliveryInfo.trackingNumber,
-      name: deliveryInfo.name,
-      phone: deliveryInfo.phone,
+    await api.patch(`/api/hq/return/${props.returnId}/delivered-at`, {
       deliveredAt: deliveryInfo.deliveredAt
     });
     showDeliveryCompleteModal.value = false;
     emit('refreshReturn');
-    toast.success('배송 완료 처리되었습니다.');
+    toast.success('배송 완료일이 저장되었습니다.');
   } catch (e) {
-    toast.error('배송 완료 처리에 실패했습니다.');
+    toast.error('배송 완료일 저장에 실패했습니다.');
   }
 }
 
@@ -177,6 +189,17 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
     toast.success('배송 정보가 수정되었습니다.');
   } catch (e) {
     toast.error('배송 정보 수정에 실패했습니다.');
+  }
+}
+
+async function handleCompleteReturn() {
+  try {
+    await api.patch(`/api/hq/return/${props.returnId}/complete`);
+    showCompleteModal.value = false;
+    emit('refreshReturn');
+    toast.success('반품이 완료 처리되었습니다.');
+  } catch (e) {
+    toast.error('반품 완료 처리에 실패했습니다.');
   }
 }
 </script>
@@ -231,6 +254,11 @@ async function handleEditDeliveryConfirm(deliveryInfo) {
   background-color: #e3f2fd;
 }
 .btn.delivery-complete {
+  color: #388e3c;
+  border-color: #c8e6c9;
+  background-color: #e8f5e9;
+}
+.btn.complete {
   color: #388e3c;
   border-color: #c8e6c9;
   background-color: #e8f5e9;
