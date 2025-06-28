@@ -20,7 +20,7 @@ const activeTab = ref(0);
             title="구매관리"
             desc="구매 요청 현황을 확인하고 관리할 수 있습니다."
           />
-          <InfoForm :activeTab="activeTab" @change-tab="activeTab = $event" />
+          <InfoForm />
         </div>
       </div>
     </div>

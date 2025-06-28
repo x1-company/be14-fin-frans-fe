@@ -29,17 +29,6 @@
           </div>
         </div>
   
-        <div class="purchase-tabs">
-          <span 
-            v-for="(tab, idx) in tabLabels" 
-            :key="tab" 
-            :class="['purchase-tab', { active: idx === activeTab }]"
-            @click="changeTab(idx)"
-          >
-            {{ tab }}
-          </span>
-        </div>
-  
         <div class="purchase-table-wrapper">
           <table class="purchase-table">
             <thead>
@@ -68,23 +57,24 @@
         </div>
         <!-- Pagination -->
         <div class="pagination">
-          <button @click="changePage(currentPage - 1)" :disabled="currentPage <= 1"> &lt; </button>
-          <button
-            v-for="page in totalPages"
-            :key="page"
-            :class="{ active: page === currentPage }"
-            @click="changePage(page)"
+          <button class="page-arrow" :disabled="currentPage === 1" @click="changePage(currentPage - 1)">&lt;</button>
+          <span
+            v-for="p in paginationPages"
+            :key="p"
+            :class="['page-btn', {active: p === currentPage, ellipsis: p === '...'}]"
+            @click="typeof p === 'number' && changePage(p)"
           >
-            {{ page }}
-          </button>
-          <button @click="changePage(currentPage + 1)" :disabled="currentPage >= totalPages"> > </button>
+            {{ p }}
+          </span>
+          <button class="page-arrow" :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">&gt;</button>
         </div>
+        <div class="order-form__total">총 {{ totalCount }}개 항목</div>
       </div>
     </div>
   </template>
   
   <script setup>
-  import { ref, onMounted, watch } from 'vue';
+  import { ref, onMounted, watch, computed } from 'vue';
   import api from '@/lib/api';
   import { Search as SearchIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
   import { useRouter } from 'vue-router';
@@ -102,6 +92,35 @@
   const currentPage = ref(1);
   const totalPages = ref(1);
   const router = useRouter();
+  
+  const totalCount = computed(() => purchaseList.value.length ? purchaseList.value.length + (totalPages.value - 1) * 10 : 0);
+  
+  // 페이지네이션 버튼 배열 생성
+  const paginationPages = computed(() => {
+    const pages = [];
+    const total = totalPages.value;
+    const current = currentPage.value;
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      if (current <= 4) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+        pages.push('...');
+        pages.push(total);
+      } else if (current >= total - 3) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = total - 4; i <= total; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = current - 1; i <= current + 1; i++) pages.push(i);
+        pages.push('...');
+        pages.push(total);
+      }
+    }
+    return pages;
+  });
   
   function changeTab(idx) {
     activeTab.value = idx;
@@ -221,18 +240,18 @@
   
   .register-btn {
     padding: 8px 16px;
-    background-color: #6a7bff;
+    background-color: #4066fa;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 600;
     transition: background-color 0.2s;
   }
   
   .register-btn:hover {
-    background-color: #5566d4;
+    background-color: #2746b6;
   }
   
   .purchase-filters {
@@ -321,37 +340,6 @@
     font-size: 0.9rem;
   }
   
-  .purchase-tabs {
-    display: flex;
-    gap: 20px;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 24px;
-  }
-  
-  .purchase-tab {
-    padding: 12px 4px;
-    cursor: pointer;
-    font-size: 1rem;
-    color: #888;
-    position: relative;
-    transition: color 0.2s;
-  }
-  
-  .purchase-tab.active {
-    color: #333;
-    font-weight: 600;
-  }
-  
-  .purchase-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: #6a7bff;
-  }
-  
   .purchase-table-wrapper {
     overflow-x: auto;
   }
@@ -389,30 +377,64 @@
   
   .pagination {
     display: flex;
-    justify-content: center;
+    gap: 5px;
     align-items: center;
-    margin-top: 24px;
+    justify-content: center;
+    margin: 10px 0;
   }
   
-  .pagination button {
-    border: 1px solid #ddd;
-    background-color: #fff;
-    color: #555;
-    padding: 6px 12px;
-    margin: 0 4px;
-    cursor: pointer;
+  .page-btn {
+    min-width: 28px;
+    height: 28px;
     border-radius: 6px;
+    border: 1px solid #e2e4ea;
+    background: #fff;
+    color: #222;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border 0.2s, color 0.2s;
+    user-select: none;
   }
   
-  .pagination button:disabled {
-    color: #bbb;
+  .page-btn.active {
+    border: 2px solid #6c47ff;
+    color: #6c47ff;
+    font-weight: 700;
+    background: #f8f6ff;
+  }
+  
+  .page-btn.ellipsis {
+    cursor: default;
+    color: #bdbdbd;
+    border: none;
+    background: transparent;
+    pointer-events: none;
+  }
+  
+  .page-arrow {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #e2e4ea;
+    background: #f5f6fa;
+    color: #bdbdbd;
+    font-size: 1.05rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  
+  .page-arrow:disabled {
+    background: #e2e4ea;
+    color: #bdbdbd;
     cursor: not-allowed;
-  }
-  
-  .pagination button.active {
-    background-color: #6a7bff;
-    color: white;
-    border-color: #6a7bff;
   }
   
   .purchase-row {
@@ -420,5 +442,12 @@
   }
   .purchase-row:hover {
     background: #f3f4f6;
+  }
+  
+  .order-form__total {
+    text-align: right;
+    color: #888;
+    margin-top: 4px;
+    font-size: 0.92rem;
   }
   </style>

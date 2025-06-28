@@ -183,8 +183,7 @@ function editOrder() {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  background-color: #f8f9fa;
-  font-family: 'Malgun Gothic', sans-serif;
+  /* font-family: 'Malgun Gothic', sans-serif; */
 }
 .header-actions {
   display: flex;
