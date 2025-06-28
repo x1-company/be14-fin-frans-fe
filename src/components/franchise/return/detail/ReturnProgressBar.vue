@@ -50,12 +50,12 @@
 <script setup>
 import { computed } from 'vue';
 import waitingForReceiptImg from '@/assets/WAITING_FOR_RECEIPT.png';
-import reviewCompletedImg from '@/assets/review_completed.png';
-import approvedImg from '@/assets/approved.png';
-import pickingUpImg from '@/assets/picking_up.png';
-import pickedUpImg from '@/assets/picked_up.png';
-import completedImg from '@/assets/completed.png';
-import rejectedImg from '@/assets/rejected.png';
+import reviewCompletedImg from '@/assets/REVIEW_COMPLETED.png';
+import approvedImg from '@/assets/APPROVED.png';
+import pickingUpImg from '@/assets/PICKING_UP.png';
+import pickedUpImg from '@/assets/PICKED_UP.png';
+import completedImg from '@/assets/COMPLETED.png';
+import rejectedImg from '@/assets/REJECTED.png';
 
 const props = defineProps({
   status: String
