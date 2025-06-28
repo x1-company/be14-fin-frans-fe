@@ -69,7 +69,7 @@ const fetchPurchaseData = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const { data } = await api.get("/api/hq/purchaseOrder/requestPending");
+    const { data } = await api.get("/api/hq/purchaseorder/requestPending");
     purchaseData.value = data;
   } catch (err) {
     error.value = err.message;
