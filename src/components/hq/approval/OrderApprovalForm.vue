@@ -656,12 +656,14 @@ const handleTempSave = async () => {
         uploadedFiles.push({
           name: file.name,
           url: uploadedUrl[0],
+          size: file.size,
         });
       } else {
         // 이미 업로드된 파일
         uploadedFiles.push({
           name: file.name,
           url: file.url,
+          size: file.size,
         });
       }
     }
@@ -747,12 +749,14 @@ const handleSubmit = async () => {
         uploadedFiles.push({
           name: file.name,
           url: uploadedUrl[0],
+          size: file.size,
         });
       } else {
         // 이미 업로드된 파일
         uploadedFiles.push({
           name: file.name,
           url: file.url,
+          size: file.size,
         });
       }
     }
