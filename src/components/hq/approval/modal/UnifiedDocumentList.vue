@@ -160,7 +160,7 @@ const apiEndpoint = computed(() => {
     case "RETURN":
       return "/api/hq/franchise/return/reviewCompleted";
     case "PURCHASE_ORDER":
-      return "/api/hq/purchaseOrder/requestPending";
+      return "/api/hq/purchaseorder/requestPending";
     default:
       return "/api/hq/orders/reviewCompleted";
   }
