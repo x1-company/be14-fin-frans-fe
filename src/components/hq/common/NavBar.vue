@@ -5,11 +5,9 @@
     </div>
     <div class="navbar__right">
       <ul class="navbar__menu">
-        <li :class="{ active: activeMenu === '대시보드' }" @click="selectMenuItem('대시보드')">대시보드</li>
         <li :class="{ active: activeMenu === '가맹점관리' }" @click="navigateToHqFranchise">가맹점관리</li>
         <li :class="{ active: activeMenu === '공급처관리' }" @click="navigateToSupplier">공급처관리</li>
         <li :class="{ active: activeMenu === '구매관리' }" @click="navigateToPurchase">구매관리</li>
-        <li :class="{ active: activeMenu === '창고관리' }" @click="navigateToWarehouse">창고관리</li>
         <li :class="{ active: activeMenu === '결재관리' }" @click="navigateToApproval">결재관리</li>
       </ul>
       <div class="notification-wrapper" ref="notificationWrapper">
@@ -51,21 +49,13 @@ const notificationWrapper = ref(null);
 
 const activeMenu = computed(() => {
   const path = route.path;
-  if (path === '/') return '대시보드';
   if (path.startsWith('/hq/franchise')) return '가맹점관리';
   if (path.startsWith('/hq-supplier')) return '공급처관리';
   if (path.startsWith('/purchase')) return '구매관리';
-  if (path.startsWith('/warehouse')) return '창고관리';
   if (path.startsWith('/approval')) return '결재관리';
   return '';
 });
 
-const selectMenuItem = (itemText) => {
-  if (itemText === '대시보드') {
-    router.push('/');
-  }
-  emit("update-breadcrumb", ["HOME", itemText]);
-};
 
 const navigateToWarehouse = () => {
   router.push("/warehouse");

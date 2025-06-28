@@ -333,15 +333,14 @@ onMounted(fetchReturns);
   overflow: hidden;
   margin-bottom: 10px;
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   background: #fff;
 }
 .return-form__table th, .return-form__table td {
   text-align: center;
   vertical-align: middle;
-  padding: 0 8px;
-  height: 48px;
+  padding: 12px 16px;
+  height: 44px;
   font-size: 14px;
   white-space: nowrap;
   border-bottom: 1px solid #eef0f4;
@@ -349,10 +348,13 @@ onMounted(fetchReturns);
 .return-form__table th {
   background: #f8f9fa;
   color: #495057;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   height: 40px;
   border-bottom: 1px solid #eef0f4;
+}
+.return-form__table tbody tr:hover {
+  background: #f8f9fa;
 }
 .return-form__table tr:last-child td {
   border-bottom: none;
@@ -362,6 +364,7 @@ onMounted(fetchReturns);
   text-decoration: underline;
   cursor: pointer;
   transition: color 0.2s;
+  font-size: 15.2px;
 }
 .return-link:hover {
   color: #2d4dd1;

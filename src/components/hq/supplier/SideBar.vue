@@ -31,8 +31,14 @@ const filteredCompanies = computed(() => {
 });
 
 const handleCompanyClick = (company) => {
-  selectedCompany.value = company;
-  emit("select-company", company);
+  if (selectedCompany.value?.id === company.id) {
+    // 이미 선택된 공급처를 다시 클릭 → 전체 보기(선택 해제)
+    selectedCompany.value = null;
+    emit("select-company", null);
+  } else {
+    selectedCompany.value = company;
+    emit("select-company", company);
+  }
 };
 </script>
 

@@ -161,6 +161,10 @@ const showRegisterView = () => {
 <style scoped>
 .purchase-order-content {
   width: 100%;
+  background: #fff;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
+  padding: 32px;
 }
 .loading-container,
 .error-container {
