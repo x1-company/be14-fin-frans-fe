@@ -317,7 +317,7 @@
   }
   
   .order-number {
-    color: #4066fa;
+    color: #4066fa !important;
     font-weight: 500;
   }
   
@@ -390,7 +390,7 @@
     user-select: none;
   }
   
-    .page-btn.active {
+  .page-btn.active {
     border: 2px solid #6c47ff;
     color: #6c47ff;
     font-weight: 700;
