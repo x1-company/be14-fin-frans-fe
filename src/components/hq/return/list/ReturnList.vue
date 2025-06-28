@@ -387,8 +387,8 @@ onMounted(fetchReturns);
   background: #e6ffe6;
 }
 .status-approved {
-  background: #e6f9ed;
-  color: #16a34a;
+  background: #e0f0ff;
+  color: #2563eb;
 }
 .status-pickingup {
   background: #e0f7fa;

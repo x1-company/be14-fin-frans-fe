@@ -173,7 +173,14 @@ const handlePrint = () => {
           padding: 0;
           box-sizing: border-box;
         }
-        
+        .print-btn {
+          display: none !important;
+        }
+        @media print {
+          .print-btn {
+            display: none !important;
+          }
+        }
         body {
           font-family: 'Malgun Gothic', sans-serif;
           font-size: 12px;
@@ -198,7 +205,16 @@ const handlePrint = () => {
         .document-info {
           display: flex;
           justify-content: space-between;
-          font-size: 11px;
+          font-size: 12px;
+          color: #666;
+        }
+        .info-left {
+          text-align: left;
+          flex: 1;
+        }
+        .info-right {
+          text-align: right;
+          flex: 1;
         }
         
         .section {
@@ -306,16 +322,6 @@ const handlePrint = () => {
           pointer-events: none;
           border: none;
         }
-        
-        @media print {
-          body {
-            padding: 0;
-          }
-          
-          .print-btn {
-            display: none;
-          }
-        }
       </style>
     </head>
     <body>
@@ -417,6 +423,14 @@ const handlePrint = () => {
   font-size: 12px;
   color: #666;
 }
+.info-left {
+  text-align: left;
+  flex: 1;
+}
+.info-right {
+  text-align: right;
+  flex: 1;
+}
 
 .section {
   margin-bottom: 25px;
@@ -464,9 +478,9 @@ const handlePrint = () => {
   border-right: none;
 }
 
-.full-width {
+/* .full-width {
   flex: 2;
-}
+} */
 
 .product-table {
   width: 100%;
@@ -548,5 +562,11 @@ const handlePrint = () => {
 
 .print-btn:hover {
   background: #555;
+}
+
+@media print {
+  .print-btn {
+    display: none !important;
+  }
 }
 </style>
