@@ -1,30 +1,22 @@
 <template>
   <div class="dashboard-card-list">
-    <div class="dashboard-card in-progress-order">
+    <div class="dashboard-card in-progress-order" @click="goToApproval">
       <div class="card-header">
-        <span>진행중인 주문/반품 요청</span>
+        <span>진행중인 주문 결재 요청</span>
         <span class="card-icon">🛒</span>
       </div>
       <div class="card-main">
         <span class="card-value">{{ inProgressOrder.count }}</span>
-        <span class="card-diff" :class="{ up: inProgressOrder.diff > 0, down: inProgressOrder.diff < 0 }">
-          {{ inProgressOrder.diff > 0 ? '+' : '' }}{{ inProgressOrder.diff }}
-        </span>
       </div>
-      <div class="card-footer">전월 대비</div>
     </div>
-    <div class="dashboard-card in-progress-approval">
+    <div class="dashboard-card in-progress-approval" @click="goToApproval">
       <div class="card-header">
-        <span>진행중인 결재 요청</span>
+        <span>진행중인 반품 결재 요청</span>
         <span class="card-icon">📦</span>
       </div>
       <div class="card-main">
         <span class="card-value">{{ inProgressApproval.count }}</span>
-        <span class="card-diff" :class="{ up: inProgressApproval.diff > 0, down: inProgressApproval.diff < 0 }">
-          {{ inProgressApproval.diff > 0 ? '+' : '' }}{{ inProgressApproval.diff }}
-        </span>
       </div>
-      <div class="card-footer">전월 대비</div>
     </div>
     <div class="dashboard-card completed-order">
       <div class="card-header">
@@ -33,16 +25,13 @@
       </div>
       <div class="card-main">
         <span class="card-value">{{ completedOrder.count }}</span>
-        <span class="card-diff" :class="{ up: completedOrder.diff > 0, down: completedOrder.diff < 0 }">
-          {{ completedOrder.diff > 0 ? '+' : '' }}{{ completedOrder.diff }}
-        </span>
       </div>
-      <div class="card-footer">전월 대비</div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 const props = defineProps({
   inProgressOrder: {
     type: Object,
@@ -57,6 +46,10 @@ const props = defineProps({
     default: () => ({ count: 0, diff: 0 })
   }
 })
+const router = useRouter()
+function goToApproval() {
+  router.push('/approval')
+}
 </script>
 
 <style scoped>
@@ -76,6 +69,12 @@ const props = defineProps({
   min-width: 220px;
   min-height: 120px;
   justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.dashboard-card:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 4px 18px 0 rgba(64, 102, 250, 0.10);
 }
 .card-header {
   display: flex;

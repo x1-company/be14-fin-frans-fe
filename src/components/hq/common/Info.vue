@@ -309,9 +309,9 @@ const desc = computed(() => {
 })
 
 const dashboardCardData = ref({
-  inProgressOrder: { count: 3, diff: 2 },
-  inProgressApproval: { count: 1, diff: -1 },
-  completedOrder: { count: 200, diff: 15 }
+  inProgressOrder: { count: 3, diff: 0 },
+  inProgressApproval: { count: 1, diff: 0 },
+  completedOrder: { count: 200, diff: 0 }
 })
 
 const dashboardStats = ref({
@@ -584,18 +584,13 @@ function handleReturnBackToList() {
 
 async function fetchDashboardStats() {
   try {
-    // 대시보드 카드 데이터는 별도 API가 필요할 수 있으므로 임시로 하드코딩된 값 사용
-    // 실제로는 별도의 대시보드 통계 API를 호출해야 함
+    // 실제 API 호출
+    const { data } = await api.get('/api/hq/franchise/approval/in-progress/count');
     dashboardCardData.value = {
-      inProgressOrder: { count: 3, diff: 2 },
-      inProgressApproval: { count: 1, diff: -1 },
-      completedOrder: { count: 200, diff: 15 }
-    }
-
-    // 기존의 중복된 API 호출 제거
-    // orderAmountStats, returnProductStats, productOrderStats는 
-    // 각각의 전용 함수에서 이미 호출되고 있음
-
+      inProgressOrder: { count: data.orderApprovalCount ?? 0, diff: 0 },
+      inProgressApproval: { count: data.returnApprovalCount ?? 0, diff: 0 },
+      completedOrder: dashboardCardData.value.completedOrder // 기존 값 유지 또는 별도 API 필요
+    };
   } catch (error) {
     console.error('대시보드 통계 데이터 조회 실패', error)
   }
