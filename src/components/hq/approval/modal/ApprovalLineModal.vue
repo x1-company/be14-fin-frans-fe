@@ -40,14 +40,18 @@
               {{ tab }}
             </button>
           </div>
-          <button class="add-btn" @click="addSelectedMembers">추가</button>
         </div>
 
         <div class="main-content">
           <!-- Left Sidebar -->
           <div class="sidebar">
             <div class="sidebar-content">
-              <h3 class="sidebar-title">직원 검색</h3>
+              <div class="sidebar-title-row">
+                <h3 class="sidebar-title">직원 검색</h3>
+                <button class="add-btn" @click="addSelectedMembers"
+                  >추가</button
+                >
+              </div>
               <div class="sidebar-info">
                 <span>선택된 직원: {{ selectedSearchUsers.length }}명</span>
                 <span class="reset-link" @click="selectedSearchUsers = []"
@@ -523,28 +527,24 @@ const toggleUserSelection = (user) => {
   gap: 0;
 }
 .add-btn {
-  margin-left: auto;
-  margin-right: 8px;
+  margin: 0 0 0 12px;
   background: #2563eb;
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 10px 32px;
-  font-size: 16px;
+  padding: 6px 14px;
+  font-size: 13px;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
   cursor: pointer;
   transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
   letter-spacing: 1px;
+  margin-top: -18px;
 }
 .add-btn:hover {
   background: #1746a2;
   box-shadow: 0 4px 16px rgba(37, 99, 235, 0.18);
-  transform: translateY(-50%) scale(1.04);
+  transform: scale(1.04);
 }
 .draggable-list {
   margin-bottom: 8px;
@@ -822,8 +822,8 @@ const toggleUserSelection = (user) => {
 .empty-box {
   border: 2px dashed #d1d5db;
   border-radius: 8px;
-  padding: 32px;
-  min-height: 400px;
+  padding: 16px;
+  min-height: 80px;
   background-color: rgba(249, 250, 251, 0.3);
   display: flex;
   align-items: center;
@@ -832,7 +832,7 @@ const toggleUserSelection = (user) => {
 
 .empty-text {
   color: #6b7280;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* Footer */
@@ -1028,5 +1028,12 @@ const toggleUserSelection = (user) => {
 }
 .remove-user-btn:hover {
   color: #ef4444;
+}
+
+.sidebar-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
 </style>

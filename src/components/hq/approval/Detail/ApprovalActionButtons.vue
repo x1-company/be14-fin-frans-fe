@@ -220,6 +220,12 @@ const closeApproveModal = () => {
 const confirmReject = async () => {
   if (!rejectReason.value.trim() || !props.document) return;
 
+  // 서명 유효성 검사
+  if (!props.document.signUrl) {
+    toast.error("서명이 필요합니다. 서명 후 반려해주세요.");
+    return;
+  }
+
   isProcessing.value = true;
   try {
     const payload = {
@@ -255,6 +261,12 @@ const confirmReject = async () => {
 
 const confirmApprove = async () => {
   if (!props.document) return;
+
+  // 서명 유효성 검사
+  if (!props.document.signUrl) {
+    toast.error("서명이 필요합니다. 서명 후 승인해주세요.");
+    return;
+  }
 
   isProcessing.value = true;
   try {
