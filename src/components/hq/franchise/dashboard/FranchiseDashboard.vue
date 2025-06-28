@@ -48,7 +48,7 @@ const props = defineProps({
 })
 const router = useRouter()
 function goToApproval() {
-  router.push('/approval')
+  router.push({ path: '/approval', query: { tab: '결재중' } })
 }
 </script>
 
@@ -73,7 +73,7 @@ function goToApproval() {
   transition: transform 0.18s, box-shadow 0.18s;
 }
 .dashboard-card:hover {
-  transform: translateY(-3px) scale(1.01);
+  transform: translateY(-2px) scale(1.01);
   box-shadow: 0 4px 18px 0 rgba(64, 102, 250, 0.10);
 }
 .card-header {
