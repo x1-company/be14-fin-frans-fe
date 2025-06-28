@@ -18,7 +18,7 @@
         <span class="card-value">{{ inProgressApproval.count }}</span>
       </div>
     </div>
-    <div class="dashboard-card completed-order">
+    <div class="dashboard-card completed-order" @click="goToApprovalCompleted">
       <div class="card-header">
         <span>완료된 주문 결재 요청</span>
         <span class="card-icon">📈</span>
@@ -58,6 +58,9 @@ const props = defineProps({
 const router = useRouter()
 function goToApproval() {
   router.push({ path: '/approval', query: { tab: '결재중' } })
+}
+function goToApprovalCompleted() {
+  router.push({ path: '/approval', query: { tab: '결재완료' } })
 }
 </script>
 
