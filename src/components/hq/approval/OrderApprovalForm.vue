@@ -650,20 +650,21 @@ const handleTempSave = async () => {
     // 파일 업로드 및 files 배열 생성
     const uploadedFiles = [];
     for (const file of formData.value.files) {
+      const fileSize = file.size ?? (file.file ? file.file.size : 0);
       if (!file.url && file.file) {
         // 새로 추가된 파일만 업로드
         const uploadedUrl = await uploadFiles([file.file]);
         uploadedFiles.push({
           name: file.name,
-          url: uploadedUrl[0],
-          size: file.size,
+          url: Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl,
+          size: fileSize,
         });
       } else {
         // 이미 업로드된 파일
         uploadedFiles.push({
           name: file.name,
           url: file.url,
-          size: file.size,
+          size: fileSize,
         });
       }
     }
@@ -743,20 +744,21 @@ const handleSubmit = async () => {
     // 파일 업로드 및 files 배열 생성
     const uploadedFiles = [];
     for (const file of formData.value.files) {
+      const fileSize = file.size ?? (file.file ? file.file.size : 0);
       if (!file.url && file.file) {
         // 새로 추가된 파일만 업로드
         const uploadedUrl = await uploadFiles([file.file]);
         uploadedFiles.push({
           name: file.name,
-          url: uploadedUrl[0],
-          size: file.size,
+          url: Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl,
+          size: fileSize,
         });
       } else {
         // 이미 업로드된 파일
         uploadedFiles.push({
           name: file.name,
           url: file.url,
-          size: file.size,
+          size: fileSize,
         });
       }
     }
