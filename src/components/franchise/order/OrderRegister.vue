@@ -633,7 +633,6 @@ const confirmSubmitOrder = async () => {
 .empty-message {
     text-align: center;
     color: #6c757d;
-    font-style: italic;
     padding: 40px;
 }
 
