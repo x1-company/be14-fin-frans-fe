@@ -32,15 +32,8 @@
               <div class="form-group">
                 <label for="productSearch">자재 추가</label>
                 <div class="search-container-modal">
-                  <input id="productSearch" type="text" v-model="templateSearchQuery" @keyup.enter="searchProductsForTemplate"
-                    placeholder="추가할 자재 검색" class="search-input-modal" />
-                  <button @click="searchProductsForTemplate" class="search-btn-modal">검색</button>
+                  <button @click="openMaterialModal" class="search-btn-modal" type="button">자재 검색</button>
                 </div>
-                <ul v-if="templateSearchResults.length > 0" class="search-results-modal">
-                  <li v-for="product in templateSearchResults" :key="product.id" @click="addProductToTemplate(product)">
-                    {{ product.name }} ({{ product.code }})
-                  </li>
-                </ul>
               </div>
             </div>
             
@@ -106,9 +99,13 @@
           </div>
           <ul v-else class="template-list">
             <li v-for="template in templates" :key="template.id" @click="showTemplateDetails(template.id)" class="template-item">
-              <div>
+              <div style="display: flex; flex-direction: column; flex: 1;">
                 <div class="template-name">{{ template.name }}</div>
-                <div class="template-description">{{ template.description }}</div>
+                <div class="template-description" style="margin-bottom:0;">{{ template.description }}</div>
+              </div>
+              <div class="template-meta" style="color:#4066fa; font-size:0.95em; margin-left:12px; min-width:120px; text-align:right;">
+                {{ template.products ? template.products.length : 0 }}개 자재 /
+                총 {{ formatPrice(getTemplateTotalAmount(template)) }}원
               </div>
               <button v-if="isManageMode" @click.stop="confirmDelete(template.id, template.name)" class="delete-icon-btn">
                 🗑️
@@ -131,15 +128,8 @@
             <div class="form-group">
               <label for="registerProductSearch">자재 추가</label>
               <div class="search-container-modal">
-                <input id="registerProductSearch" type="text" v-model="registerSearchQuery" @keyup.enter="searchProductsForRegister"
-                  placeholder="추가할 자재 검색" class="search-input-modal" />
-                <button @click="searchProductsForRegister" class="search-btn-modal">검색</button>
+                <button @click="openMaterialModal" class="search-btn-modal" type="button">자재 검색</button>
               </div>
-              <ul v-if="registerSearchResults.length > 0" class="search-results-modal">
-                <li v-for="product in registerSearchResults" :key="product.id" @click="addProductToRegister(product)">
-                  {{ product.name }} ({{ product.code }})
-                </li>
-              </ul>
             </div>
           </div>
           <h4 class="product-list-title">자재 목록 ({{ registerForm.details.length }}개)</h4>
@@ -183,6 +173,15 @@
           </div>
         </div>
       </div>
+
+      <!-- MaterialSelectModal 모달 추가 -->
+      <MaterialSelectModal
+        v-if="isMaterialModalVisible"
+        :products="allProducts"
+        :visible="isMaterialModalVisible"
+        @close="isMaterialModalVisible = false"
+        @register="handleMaterialSelect"
+      />
     </div>
   </div>
 </template>
@@ -191,6 +190,7 @@
 import { ref, watch } from 'vue';
 import api from "@/lib/api";
 import { useToast } from '@/composables/useToast';
+import MaterialSelectModal from './MaterialSelectModal.vue';
 
 const props = defineProps({
   isVisible: Boolean,
@@ -230,11 +230,24 @@ const registerSearchResults = ref([]);
 const showDeleteModal = ref(false);
 const deleteTarget = ref({ id: null, name: '' });
 
+const isMaterialModalVisible = ref(false);
+const allProducts = ref([]);
+
 const fetchTemplates = async () => {
   isLoading.value = true;
   try {
     const response = await api.get('/api/franchise/orders/templates');
-    templates.value = response.data;
+    const list = response.data;
+    // 각 템플릿의 상세 정보 비동기 병렬 호출
+    const detailPromises = list.map(async (t) => {
+      try {
+        const detailRes = await api.get(`/api/franchise/orders/templates/${t.id}`);
+        return { ...t, products: detailRes.data.products || [] };
+      } catch {
+        return { ...t, products: [] };
+      }
+    });
+    templates.value = await Promise.all(detailPromises);
   } catch (error) {
     console.error('Failed to fetch order templates:', error);
     toast.error('주문 템플릿을 불러오는 데 실패했습니다.');
@@ -489,6 +502,56 @@ const doDeleteTemplate = async () => {
     showDeleteModal.value = false;
     deleteTarget.value = { id: null, name: '' };
   }
+};
+
+// 템플릿의 총 금액 계산 함수 추가
+const getTemplateTotalAmount = (template) => {
+  if (!template.products) return 0;
+  return template.products.reduce((sum, p) => {
+    const price = Number(p.salePrice) || 0;
+    const qty = Number(p.quantity) || 0;
+    return sum + price * qty;
+  }, 0);
+};
+
+const openMaterialModal = async () => {
+  try {
+    const res = await api.get('/api/franchise/products/list');
+    allProducts.value = res.data.filter(product => product.isActive);
+    isMaterialModalVisible.value = true;
+  } catch (e) {
+    toast.error('자재 목록을 불러오지 못했습니다.');
+  }
+};
+
+const handleMaterialSelect = (selected) => {
+  // 수정 모드
+  if (isEditMode.value && editableTemplate.value) {
+    selected.forEach(product => {
+      if (!editableTemplate.value.products.some(p => p.id === product.id)) {
+        editableTemplate.value.products.push({
+          ...product,
+          quantity: product.quantity || 1
+        });
+      }
+    });
+  }
+  // 등록 모드
+  if (isRegisterMode.value) {
+    selected.forEach(product => {
+      if (!registerForm.value.details.some(p => p.productId === product.id)) {
+        registerForm.value.details.push({
+          productId: product.id,
+          name: product.name,
+          code: product.code,
+          quantity: product.quantity || 1,
+          purchaseUnit: product.unit,
+          unit: product.unit
+        });
+      }
+    });
+  }
+  isMaterialModalVisible.value = false;
 };
 </script>
 
@@ -812,11 +875,15 @@ textarea.form-input {
   border-radius: 6px;
 }
 .search-btn-modal {
-  padding: 8px 16px;
-  background: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
+  background: #4066fa;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
 }
 
 .search-results-modal {
