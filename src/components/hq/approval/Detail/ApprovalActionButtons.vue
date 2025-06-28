@@ -263,7 +263,7 @@ const confirmApprove = async () => {
   if (!props.document) return;
 
   // 서명 유효성 검사
-  if (!props.document.signUrl) {
+  if (!authStore.userSignUrl) {
     toast.error("서명이 필요합니다. 서명 후 승인해주세요.");
     return;
   }
