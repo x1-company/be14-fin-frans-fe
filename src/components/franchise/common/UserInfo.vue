@@ -73,7 +73,7 @@ const handleLogout = async () => {
     if (confirm("로그아웃 하시겠습니까?")) {
         // 로그아웃 로직
         await api.post("/api/auth/logout");
-        auth.clearAccessToken();
+        await auth.clearAccessToken();
 
         // 로그인 페이지로 리다이렉트
         router.push("/login");
