@@ -368,11 +368,6 @@ function handleYearChange(year) {
 }
 
 async function fetchOrderAmountStats() {
-  console.log('🔍 fetchOrderAmountStats 시작')
-  console.log('🔍 sidebarTab:', props.sidebarTab)
-  console.log('🔍 selectedFranchiseId:', props.selectedFranchiseId)
-  console.log('🔍 year:', selectedYear.value, 'month:', selectedMonth.value)
-  
   try {
     let url = ''
     let params = { year: selectedYear.value, month: selectedMonth.value }
@@ -382,25 +377,20 @@ async function fetchOrderAmountStats() {
         // 부서 담당에서 특정 가맹점 선택 시
         url = `/api/hq/statistics/franchise/order-amount/department/${props.selectedFranchiseId}`
         params = {} // year, month 파라미터 제거 (1~12월 전체 조회)
-        console.log('✅ department/{franchiseId} API 호출:', url, params)
       } else {
         // 부서 담당에서 전체 조회 시
         url = '/api/hq/statistics/franchise/order-amount/department'
-        console.log('✅ department API 호출:', url, params)
       }
     } else if (props.selectedFranchiseId) {
       // 직원 담당에서 특정 가맹점 선택 시
       url = `/api/hq/statistics/franchise/order-amount/manager/${props.selectedFranchiseId}`
       params = { year: selectedYear.value, month: selectedMonth.value }
-      console.log('⚠️ manager/{franchiseId} API 호출:', url, params)
     } else {
       // 직원 담당에서 전체 조회 시
       url = '/api/hq/statistics/franchise/order-amount/manager'
-      console.log('⚠️ manager API 호출:', url, params)
     }
     
     const { data } = await api.get(url, { params })
-    console.log('📊 API 응답 데이터:', data)
     
     if (props.selectedFranchiseId) {
       orderAmountChartData.value = data || []
@@ -410,17 +400,12 @@ async function fetchOrderAmountStats() {
         orderAmount: item.orderAmount || item.amount || 0
       }))
     }
-    console.log('📊 최종 chartData:', orderAmountChartData.value)
   } catch (e) {
     orderAmountChartData.value = []
-    console.error('❌ 월별 주문금액 통계 조회 실패', e)
   }
 }
 
 async function fetchReturnProductStats() {
-  console.log('🔍 fetchReturnProductStats 시작')
-  console.log('🔍 sidebarTab:', props.sidebarTab)
-  
   try {
     let url = ''
     let params = { year: selectedYear.value, month: selectedMonth.value }
@@ -430,37 +415,27 @@ async function fetchReturnProductStats() {
         // 부서 담당에서 특정 가맹점 선택 시
         url = `/api/hq/statistics/franchise/return-product/department/${props.selectedFranchiseId}`
         params = {} // year, month 파라미터 제거 (1~12월 전체 조회)
-        console.log('✅ department/{franchiseId} API 호출:', url, params)
       } else {
         // 부서 담당에서 전체 조회 시
         url = '/api/hq/statistics/franchise/return-product/department'
-        console.log('✅ department API 호출:', url, params)
       }
     } else if (props.selectedFranchiseId) {
       // 직원 담당에서 특정 가맹점 선택 시
       url = `/api/hq/statistics/franchise/return-product/manager/${props.selectedFranchiseId}`
       params = { year: selectedYear.value, month: selectedMonth.value }
-      console.log('⚠️ manager/{franchiseId} API 호출:', url, params)
     } else {
       // 직원 담당에서 전체 조회 시
       url = '/api/hq/statistics/franchise/return-product/manager'
-      console.log('⚠️ manager API 호출:', url, params)
     }
     
     const { data } = await api.get(url, { params })
-    console.log('📊 API 응답 데이터:', data)
     returnProductChartData.value = data || []
-    console.log('📊 최종 returnProductChartData:', returnProductChartData.value)
   } catch (e) {
     returnProductChartData.value = []
-    console.error('❌ 월별 자재별 반품량 통계 조회 실패', e)
   }
 }
 
 async function fetchProductOrderStats() {
-  console.log('🔍 fetchProductOrderStats 시작')
-  console.log('🔍 sidebarTab:', props.sidebarTab)
-  
   try {
     let url = ''
     let params = { year: selectedYear.value, month: selectedMonth.value }
@@ -470,30 +445,23 @@ async function fetchProductOrderStats() {
         // 부서 담당에서 특정 가맹점 선택 시
         url = `/api/hq/statistics/franchise/product-order/department/${props.selectedFranchiseId}`
         params = {} // year, month 파라미터 제거 (1~12월 전체 조회)
-        console.log('✅ department/{franchiseId} API 호출:', url, params)
       } else {
         // 부서 담당에서 전체 조회 시
         url = '/api/hq/statistics/franchise/product-order/department'
-        console.log('✅ department API 호출:', url, params)
       }
     } else if (props.selectedFranchiseId) {
       // 직원 담당에서 특정 가맹점 선택 시
       url = `/api/hq/statistics/franchise/product-order/manager/${props.selectedFranchiseId}`
       params = { year: selectedYear.value, month: selectedMonth.value }
-      console.log('⚠️ manager/{franchiseId} API 호출:', url, params)
     } else {
       // 직원 담당에서 전체 조회 시
       url = '/api/hq/statistics/franchise/product-order/manager'
-      console.log('⚠️ manager API 호출:', url, params)
     }
     
     const { data } = await api.get(url, { params })
-    console.log('📊 API 응답 데이터:', data)
     productOrderChartData.value = data || []
-    console.log('📊 최종 productOrderChartData:', productOrderChartData.value)
   } catch (e) {
     productOrderChartData.value = []
-    console.error('❌ 월별 자재별 주문량 통계 조회 실패', e)
   }
 }
 
@@ -567,11 +535,9 @@ async function fetchOrderDetail() {
   loading.value = true;
   try {
     const res = await api.get(`/api/hq/orders/${orderDetailId.value}`);
-    console.log('order detail api result:', res); // 이 로그로 실제 데이터 확인
     order.value = res.data ? res.data : res;
   } catch (e) {
     order.value = null;
-    console.error('order detail fetch error', e);
   } finally {
     loading.value = false;
   }
@@ -664,7 +630,6 @@ async function fetchDashboardStats() {
       completedOrder: { count: thisMonth, diff: thisMonth - lastMonth }
     };
   } catch (error) {
-    console.error('대시보드 통계 데이터 조회 실패', error)
   }
 }
 

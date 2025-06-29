@@ -63,7 +63,7 @@ const props = defineProps({
   },
   duration: {
     type: Number,
-    default: 7000, // 7초 후 자동으로 사라짐
+    default: 4000, // 7초 후 자동으로 사라짐
   },
 });
 
