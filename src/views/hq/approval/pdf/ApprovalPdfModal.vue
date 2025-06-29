@@ -25,10 +25,16 @@
               }}</span>
             </div>
             <div class="date-item">
-              <span class="date-label">승인일자:</span>
-              <span class="date-value">{{
-                formatDate(approval.processedAt)
-              }}</span>
+              <span class="date-label">처리일자:</span>
+              <span
+                class="date-value"
+                :class="{
+                  'status-approved': approval.status === 'APPROVED',
+                  'status-rejected': approval.status === 'REJECTED',
+                }"
+              >
+                {{ formatDate(approval.processedAt) }}
+              </span>
             </div>
           </div>
         </div>
@@ -44,9 +50,15 @@
               </div>
               <div class="info-item">
                 <span class="info-label">결재 상태:</span>
-                <span class="info-value status-approved">{{
-                  getApprovalStatusText(approval.status)
-                }}</span>
+                <span
+                  class="info-value"
+                  :class="{
+                    'status-approved': approval.status === 'APPROVED',
+                    'status-rejected': approval.status === 'REJECTED',
+                  }"
+                >
+                  {{ getApprovalStatusText(approval.status) }}
+                </span>
               </div>
             </div>
             <div class="info-row">
@@ -138,8 +150,10 @@
           <p class="generation-info">
             생성일시: {{ formatDateTime(new Date()) }}
           </p>
-          <div style="text-align: center; margin-top: 20px;">
-            <button class="pdf-download-btn" @click="generatePdf">PDF 다운로드</button>
+          <div style="text-align: center; margin-top: 20px">
+            <button class="pdf-download-btn" @click="generatePdf"
+              >PDF 다운로드</button
+            >
           </div>
         </div>
       </div>
@@ -455,6 +469,11 @@ function getCategoryText(type) {
   font-size: 16px;
 }
 
+.info-value.status-rejected {
+  color: #ef4444;
+  font-weight: 500;
+}
+
 /* 자재 정보 테이블 */
 .material-section {
   margin-bottom: 40px;
@@ -670,5 +689,10 @@ function getCategoryText(type) {
   color: #059669;
   margin-bottom: 8px;
   letter-spacing: 1px;
+}
+
+.status-rejected {
+  color: #ef4444;
+  font-weight: 500;
 }
 </style>
