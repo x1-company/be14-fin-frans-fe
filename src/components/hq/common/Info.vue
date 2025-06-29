@@ -21,6 +21,10 @@
             :in-progress-order="dashboardCardData.inProgressOrder"
             :in-progress-approval="dashboardCardData.inProgressApproval"
             :completed-order="dashboardCardData.completedOrder"
+            :sidebarTab="props.sidebarTab"
+            :orderAmountChartData="orderAmountChartData"
+            :productOrderChartData="productOrderChartData"
+            :returnProductChartData="returnProductChartData"
           />
 
           <!-- 월별 주문금액 통계 그래프 (가맹점별/월별) -->
@@ -173,7 +177,7 @@
                 :returnId="returnDetailId"
                 :rejectedReason="returnDetail?.rejectedReason"
                 :status="returnDetail?.status"
-                :isEditing="isEditing"Add commentMore actions
+                :isEditing="isEditing"
                 :returnData="returnDetail"
                 @update:isEditing="val => { isEditing = val; if (val) startEdit(); }"
                 @refreshReturn="fetchReturnDetail"
@@ -367,15 +371,27 @@ async function fetchOrderAmountStats() {
   try {
     let url = ''
     let params = { year: selectedYear.value, month: selectedMonth.value }
+    
     if (props.sidebarTab === 'team') {
-      url = '/api/hq/statistics/franchise/order-amount/department'
+      if (props.selectedFranchiseId) {
+        // 부서 담당에서 특정 가맹점 선택 시
+        url = `/api/hq/statistics/franchise/order-amount/department/${props.selectedFranchiseId}`
+        params = {} // year, month 파라미터 제거 (1~12월 전체 조회)
+      } else {
+        // 부서 담당에서 전체 조회 시
+        url = '/api/hq/statistics/franchise/order-amount/department'
+      }
     } else if (props.selectedFranchiseId) {
+      // 직원 담당에서 특정 가맹점 선택 시
       url = `/api/hq/statistics/franchise/order-amount/manager/${props.selectedFranchiseId}`
       params = { year: selectedYear.value, month: selectedMonth.value }
     } else {
+      // 직원 담당에서 전체 조회 시
       url = '/api/hq/statistics/franchise/order-amount/manager'
     }
+    
     const { data } = await api.get(url, { params })
+    
     if (props.selectedFranchiseId) {
       orderAmountChartData.value = data || []
     } else {
@@ -386,7 +402,6 @@ async function fetchOrderAmountStats() {
     }
   } catch (e) {
     orderAmountChartData.value = []
-    console.error('월별 주문금액 통계 조회 실패', e)
   }
 }
 
@@ -394,19 +409,29 @@ async function fetchReturnProductStats() {
   try {
     let url = ''
     let params = { year: selectedYear.value, month: selectedMonth.value }
+    
     if (props.sidebarTab === 'team') {
-      url = '/api/hq/statistics/franchise/return-product/department'
+      if (props.selectedFranchiseId) {
+        // 부서 담당에서 특정 가맹점 선택 시
+        url = `/api/hq/statistics/franchise/return-product/department/${props.selectedFranchiseId}`
+        params = {} // year, month 파라미터 제거 (1~12월 전체 조회)
+      } else {
+        // 부서 담당에서 전체 조회 시
+        url = '/api/hq/statistics/franchise/return-product/department'
+      }
     } else if (props.selectedFranchiseId) {
+      // 직원 담당에서 특정 가맹점 선택 시
       url = `/api/hq/statistics/franchise/return-product/manager/${props.selectedFranchiseId}`
       params = { year: selectedYear.value, month: selectedMonth.value }
     } else {
+      // 직원 담당에서 전체 조회 시
       url = '/api/hq/statistics/franchise/return-product/manager'
     }
+    
     const { data } = await api.get(url, { params })
     returnProductChartData.value = data || []
   } catch (e) {
     returnProductChartData.value = []
-    console.error('월별 자재별 반품량 통계 조회 실패', e)
   }
 }
 
@@ -414,19 +439,29 @@ async function fetchProductOrderStats() {
   try {
     let url = ''
     let params = { year: selectedYear.value, month: selectedMonth.value }
+    
     if (props.sidebarTab === 'team') {
-      url = '/api/hq/statistics/franchise/product-order/department'
+      if (props.selectedFranchiseId) {
+        // 부서 담당에서 특정 가맹점 선택 시
+        url = `/api/hq/statistics/franchise/product-order/department/${props.selectedFranchiseId}`
+        params = {} // year, month 파라미터 제거 (1~12월 전체 조회)
+      } else {
+        // 부서 담당에서 전체 조회 시
+        url = '/api/hq/statistics/franchise/product-order/department'
+      }
     } else if (props.selectedFranchiseId) {
+      // 직원 담당에서 특정 가맹점 선택 시
       url = `/api/hq/statistics/franchise/product-order/manager/${props.selectedFranchiseId}`
       params = { year: selectedYear.value, month: selectedMonth.value }
     } else {
+      // 직원 담당에서 전체 조회 시
       url = '/api/hq/statistics/franchise/product-order/manager'
     }
+    
     const { data } = await api.get(url, { params })
     productOrderChartData.value = data || []
   } catch (e) {
     productOrderChartData.value = []
-    console.error('월별 자재별 주문량 통계 조회 실패', e)
   }
 }
 
@@ -500,11 +535,9 @@ async function fetchOrderDetail() {
   loading.value = true;
   try {
     const res = await api.get(`/api/hq/orders/${orderDetailId.value}`);
-    console.log('order detail api result:', res); // 이 로그로 실제 데이터 확인
     order.value = res.data ? res.data : res;
   } catch (e) {
     order.value = null;
-    console.error('order detail fetch error', e);
   } finally {
     loading.value = false;
   }
@@ -597,7 +630,6 @@ async function fetchDashboardStats() {
       completedOrder: { count: thisMonth, diff: thisMonth - lastMonth }
     };
   } catch (error) {
-    console.error('대시보드 통계 데이터 조회 실패', error)
   }
 }
 

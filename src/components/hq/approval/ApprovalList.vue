@@ -607,7 +607,7 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
+  padding: 12px;
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 8px;
@@ -727,12 +727,12 @@ watch(
 }
 
 .edit-btn {
-  background: #ffc107;
-  color: #212529;
+  background: #ffeebd;
+  color: #5c5c5c;
 }
 
 .edit-btn:hover {
-  background: #e0a800;
+  background: #ffe084;
 }
 
 .detail-btn {

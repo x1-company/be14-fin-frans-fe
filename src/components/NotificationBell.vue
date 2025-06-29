@@ -272,7 +272,7 @@ const formatTime = (dateString) => {
   max-width: 360px;
   height: 100vh;
   z-index: 2000;
-  background: rgba(240, 242, 245, 0.7);
+  /* background: rgba(240, 242, 245, 0.7); */
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -466,7 +466,7 @@ const formatTime = (dateString) => {
   margin: 0;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  /* -webkit-line-clamp: 2; */
   overflow: hidden;
   text-overflow: ellipsis;
 }

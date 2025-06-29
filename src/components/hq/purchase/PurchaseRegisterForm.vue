@@ -25,24 +25,26 @@
           </div>
         </div>
         <table class="info-table">
-          <tr>
-            <td class="label">제목</td>
-            <td><input class="info-input" v-model="purchaseRequest.title" placeholder="제목을 입력하세요" /></td>
-            <td class="label">사유</td>
-            <td><textarea class="info-input" v-model="purchaseRequest.description" placeholder="사유를 입력하세요" rows="1"></textarea></td>
-          </tr>
-          <tr>
-            <td class="label">요청일</td>
-            <td><input class="info-input" v-model="purchaseRequest.requestDate" readonly /></td>
-            <td class="label">납기희망일</td>
-            <td><input class="info-input" type="date" v-model="purchaseRequest.requestedDeliveryDate" /></td>
-          </tr>
-          <tr>
-            <td class="label">담당자</td>
-            <td><input class="info-input" :value="authStore.userName" readonly /></td>
-            <td class="label">담당자 이메일</td>
-            <td><input class="info-input" :value="authStore.userEmail" readonly /></td>
-          </tr>
+          <tbody>
+            <tr>
+              <td class="label">제목</td>
+              <td><input class="info-input" v-model="purchaseRequest.title" placeholder="제목을 입력하세요" /></td>
+              <td class="label">사유</td>
+              <td><textarea class="info-input" v-model="purchaseRequest.description" placeholder="사유를 입력하세요" rows="1"></textarea></td>
+            </tr>
+            <tr>
+              <td class="label">요청일</td>
+              <td><input class="info-input" v-model="purchaseRequest.requestDate" readonly /></td>
+              <td class="label">납기희망일</td>
+              <td><input class="info-input" type="date" v-model="purchaseRequest.requestedDeliveryDate" /></td>
+            </tr>
+            <tr>
+              <td class="label">담당자</td>
+              <td><input class="info-input" :value="authStore.userName" readonly /></td>
+              <td class="label">담당자 이메일</td>
+              <td><input class="info-input" :value="authStore.userEmail" readonly /></td>
+            </tr>
+          </tbody>
         </table>
       </div>
   

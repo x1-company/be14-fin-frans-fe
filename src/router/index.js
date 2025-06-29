@@ -53,8 +53,10 @@ const router = createRouter({
             next("/franchise");
           } else if (authStore.supplierId) {
             next("/supplier");
+          } else if (authStore.userType === 'HQ') {
+            next("/hq/franchise");
           } else {
-            next("/approval"); // 추후 부서에 따라 수정 필요함
+            next(); // 기본 경로로 이동
           }
         } else {
           next();

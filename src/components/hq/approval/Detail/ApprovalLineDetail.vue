@@ -4,8 +4,8 @@
     <div class="content-section">
       <!-- Title -->
       <div class="title-section">
-        <h1 class="main-title">결재선</h1>
-        <h2 class="sub-title">결재 진행 상황</h2>
+        <!-- <h1 class="main-title">결재선</h1> -->
+        <!-- <h2 class="sub-title">결재 진행 상황</h2> -->
       </div>
 
       <!-- Loading State -->
@@ -16,6 +16,7 @@
 
       <!-- Approval Progress Flow (결재자 + 협조자 순서) -->
       <div v-else-if="approvalSequence.length > 0" class="approval-flow">
+        <!-- <h2 class="sub-title">결재 진행 상황</h2> -->
         <div class="flow-container">
           <ApprovalFlowItem
             v-for="(person, index) in approvalSequence"
@@ -91,6 +92,11 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  approvalDetail: {
+    type: Object,
+    required: false,
+    default: null,
+  },
   activeTab: {
     type: String,
     default: "approvalLine",
@@ -114,8 +120,7 @@ const recipients = ref([]);
 
 // 결재 순서 (결재자 + 협조자가 순서대로 진행)
 const approvalSequence = computed(() => {
-  // DB 순서대로 결재자, 협조자만 플로우에 포함
-  return approvalLines.value
+  const sequence = approvalLines.value
     .filter((line) => line.type === "APPROVER" || line.type === "COOPERATOR")
     .map((line) => ({
       id: line.id,
@@ -129,6 +134,23 @@ const approvalSequence = computed(() => {
       readTime: line.checkedAt,
       type: line.type === "APPROVER" ? "approver" : "collaborator",
     }));
+
+  // approvalDetail/document에서 기안자 정보 추출
+  if (props.approvalDetail) {
+    sequence.unshift({
+      id: props.approvalDetail.drafterId,
+      name: props.approvalDetail.drafterName,
+      department: props.approvalDetail.deptName,
+      position: props.approvalDetail.positionName,
+      status: "DRAFTED",
+      processedAt: props.approvalDetail.createdAt,
+      comment: "",
+      commentTime: props.approvalDetail.createdAt,
+      readTime: null,
+      type: "drafter",
+    });
+  }
+  return sequence;
 });
 
 // API에서 결재선 데이터 가져오기
@@ -535,11 +557,8 @@ const formatDateTime = (dateString) => {
   color: #6c757d;
 }
 
-.section-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #212529;
-  margin: 0;
+.section-title, .section-header h3 {
+  font-size: 15px;
 }
 
 .person-list {
@@ -666,5 +685,43 @@ const formatDateTime = (dateString) => {
   .status-badge {
     align-self: flex-start;
   }
+}
+
+.section-container, .detail-section {
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  font-size: 0.95em;
+}
+
+.flow-node-container {
+  gap: 8px;
+}
+
+.flow-node {
+  padding: 18px;
+  width: 110px;
+  height: 110px;
+}
+
+.node-avatar {
+  width: 20px;
+  height: 20px;
+}
+
+.node-label {
+  font-size: 11px;
+}
+
+.node-title {
+  font-size: 11px;
+}
+
+.node-subtitle {
+  font-size: 10px;
+}
+
+.node-department {
+  font-size: 9px;
 }
 </style>

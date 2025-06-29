@@ -250,13 +250,9 @@
                       >
                         {{ formatFileSize(file.size) }}
                       </template>
-                      <template v-else-if="file.url">
-                        <span v-if="file._sizeLoading">...</span>
-                        <span v-else>{{
-                          fetchAndShowFileSize(file, index)
-                        }}</span>
+                      <template v-else>
+                        <span>-</span>
                       </template>
-                      <template v-else>-</template>
                     </div>
                   </div>
                 </div>
@@ -568,33 +564,48 @@ const removeDocument = (docId) => {
   emitFormData();
 };
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
 const uploadFiles = async (files) => {
   try {
+    console.log("[uploadFiles] 업로드 시도 파일:", files);
     const formData = new FormData();
-
     files.forEach((file) => {
       formData.append("files", file);
     });
-
     formData.append("type", "approval");
-
     const response = await api.post("/api/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
-
-    console.log(response.data);
+    console.log("[uploadFiles] 서버 응답:", response);
+    if (!response.data || response.status >= 400) {
+      throw new Error(
+        "서버 응답 오류: " + (response.data?.message || response.status)
+      );
+    }
     return response.data;
   } catch (error) {
-    console.error("파일 업로드 실패:", error);
-    throw new Error("파일 업로드에 실패했습니다.");
+    console.error("파일 업로드 실패:", error, error?.response);
+    toast.error(
+      "파일 업로드에 실패했습니다. " +
+        (error?.response?.data?.message || error.message)
+    );
+    throw new Error(
+      "파일 업로드에 실패했습니다. " +
+        (error?.response?.data?.message || error.message)
+    );
   }
 };
 
 const handleFileSelect = (event) => {
   const files = Array.from(event.target.files);
   files.forEach((file) => {
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("20MB 이하 파일만 업로드할 수 있습니다.");
+      return;
+    }
     formData.value.files.push({
       name: file.name,
       size: file.size,
@@ -1346,19 +1357,10 @@ const handleResubmit = async () => {
 
 // 파일 크기 동적 조회 함수
 const fetchFileSize = async (file, index) => {
+  // S3 CORS 문제 우회: file.size가 없으면 HEAD 요청하지 않음
+  // 그냥 null 또는 '-'로 표시
   if (!file.url || file.size) return;
-  try {
-    const response = await fetch(file.url, { method: "HEAD" });
-    const size = response.headers.get("Content-Length");
-    if (size) {
-      // 반응형으로 할당
-      formData.value.files[index].size = Number(size);
-    } else {
-      formData.value.files[index].size = null;
-    }
-  } catch (e) {
-    formData.value.files[index].size = null;
-  }
+  formData.value.files[index].size = null; // 또는 원하는 표시값
 };
 
 // fetchAndShowFileSize 함수 추가
@@ -1876,31 +1878,24 @@ defineExpose({
 }
 
 .edit-button,
-.register-button {
-  padding: 12px 24px;
+.register-button,
+.delete-button {
+  padding: 8px 16px;
+  font-size: 13px;
   border-radius: 6px;
-  border: none;
-  font-size: 15px;
   font-weight: 600;
+  border: none;
   cursor: pointer;
   transition: all 0.2s;
-}
-
-.edit-button {
-  background: #f3f4f6;
-  color: #374151;
+  width: auto;
+  height: auto;
+  background: none;
 }
 
 .edit-button:disabled {
   background: #e5e7eb;
   color: #9ca3af;
   cursor: not-allowed;
-}
-
-.register-button {
-  background: #4066fa;
-  color: white;
-  border: 1px solid #4066fa;
 }
 
 .register-button:disabled {
@@ -1972,19 +1967,6 @@ defineExpose({
   font-size: 16px;
 }
 
-.delete-button {
-  padding: 12px 24px;
-  border-radius: 6px;
-  border: none;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  background: #ef4444;
-  color: white;
-  border: 1px solid #ef4444;
-  transition: all 0.2s;
-  margin-left: 8px;
-}
 .delete-button:disabled {
   background: #fca5a5;
   color: #f3f4f6;
@@ -2073,5 +2055,20 @@ defineExpose({
 .cancel-button:hover {
   background: #f8f9fa;
   border-color: #adb5bd;
+}
+
+.edit-button {
+  border: 1px solid #4066fa;
+  color: #4066fa;
+}
+
+.register-button {
+  border: 1px solid #22c55e;
+  color: #22c55e;
+}
+
+.delete-button {
+  border: 1px solid #ef4444;
+  color: #ef4444;
 }
 </style>
