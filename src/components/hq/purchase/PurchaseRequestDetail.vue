@@ -58,6 +58,7 @@
             <th>자재 구분</th>
             <th>자재 분류</th>
             <th>자재 속성</th>
+            <th>공급처 명</th>
             <th>비고</th>
           </tr>
         </thead>
@@ -75,6 +76,7 @@
             <td><span class="badge blue">{{ material.productTypeName }}</span></td>
             <td><span class="badge purple">{{ material.productGroupName }}</span></td>
             <td><span class="badge green">{{ material.productAttributeName }}</span></td>
+            <td>{{ material.supplierName || '-' }}</td>
             <td>{{ material.remarks }}</td>
           </tr>
         </tbody>
@@ -143,17 +145,18 @@ async function fetchDetail() {
     };
     
     materials.value = (data.products || []).map(p => ({
-    productId: p.productId || p.id,
-    productCode: p.productCode || p.code || '',
-    productName: p.productName || p.name || '',
-    purchasePrice: p.purchasePrice || 0,
-    quantity: p.quantity || 0,
-    purchaseUnit: p.purchaseUnit || '',
-    productTypeName: p.productTypeName || '',
-    productGroupName: p.productGroupName || '',
-    productAttributeName: p.productAttributeName || '',
-    remarks: p.remarks || ''
-  }));
+      productId: p.productId || p.id,
+      productCode: p.productCode || p.code || '',
+      productName: p.productName || p.name || '',
+      purchasePrice: p.purchasePrice || 0,
+      quantity: p.quantity || 0,
+      purchaseUnit: p.purchaseUnit || '',
+      productTypeName: p.productTypeName || '',
+      productGroupName: p.productGroupName || '',
+      productAttributeName: p.productAttributeName || '',
+      supplierName: p.supplierName || '',
+      remarks: p.remarks || ''
+    }));
 
     // 상위 컴포넌트로 데이터 전달
     emit('data-loaded', {
