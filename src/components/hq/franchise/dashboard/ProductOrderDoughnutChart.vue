@@ -22,15 +22,6 @@
 <script setup>
 import { computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
-import {
-  Chart,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Title
-} from 'chart.js'
-
-Chart.register(ArcElement, Tooltip, Legend, Title)
 
 const props = defineProps({
   chartData: {
