@@ -2,10 +2,8 @@
   <div v-if="isVisible" class="pdf-modal-backdrop" @click.self="closeModal">
     <div class="pdf-modal-content">
       <button class="close-btn" @click="closeModal">×</button>
-      <div style="text-align: right; margin: 16px 24px 0 0">
-        <button class="pdf-download-btn" @click="generatePdf"
-          >PDF 다운로드</button
-        >
+      <div style="text-align: left; margin: 16px 0 0 24px">
+        <!-- 기존 PDF 다운로드 버튼 div 삭제 -->
       </div>
       <div class="approval-document" ref="pdfContent">
         <!-- 문서 헤더 -->
@@ -134,12 +132,15 @@
 
         <!-- 문서 하단 정보 -->
         <div class="document-footer">
-          <p class="footer-text">
+          <!-- <p class="footer-text">
             본 결재확인서는 전자결재시스템에서 생성된 공식 문서입니다.
-          </p>
+          </p> -->
           <p class="generation-info">
             생성일시: {{ formatDateTime(new Date()) }}
           </p>
+          <div style="text-align: center; margin-top: 20px;">
+            <button class="pdf-download-btn" @click="generatePdf">PDF 다운로드</button>
+          </div>
         </div>
       </div>
     </div>
@@ -365,7 +366,7 @@ function getCategoryText(type) {
 }
 
 .status-badge.approved {
-  background: #dcfce7;
+  /* background: #dcfce7; */
   color: #166534;
   border: 1px solid #bbf7d0;
 }
@@ -411,8 +412,8 @@ function getCategoryText(type) {
 .approval-info-section {
   margin-bottom: 40px;
   padding: 20px;
-  background: #f8fffe;
-  border: 1px solid #d1fae5;
+  /* background: #f8fffe; */
+  border: 1px solid #eaeaea;
   border-radius: 8px;
 }
 
@@ -477,7 +478,7 @@ function getCategoryText(type) {
 }
 
 .material-table th {
-  background: #f9fafb;
+  /* background: #f9fafb; */
   padding: 12px 8px;
   text-align: center;
   font-weight: 600;
@@ -491,11 +492,11 @@ function getCategoryText(type) {
 }
 
 .material-table tbody tr:hover {
-  background: #f9fafb;
+  background: none;
 }
 
 .total-row {
-  background: #f0fdf4;
+  background: none;
   font-weight: 600;
 }
 
@@ -522,9 +523,9 @@ function getCategoryText(type) {
 .approval-card {
   flex: 1;
   padding: 20px;
-  border: 1px solid #d1fae5;
+  border: 1px solid #eaeaea;
   border-radius: 8px;
-  background: #f0fdf4;
+  background: none;
   text-align: center;
 }
 
