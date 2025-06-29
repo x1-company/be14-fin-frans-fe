@@ -1,41 +1,40 @@
 <template>
   <div class="product-list-container">
-    <!-- 헤더 섹션 -->
-    <div class="product-list-header">
-      <div class="product-list-title">발주 관리</div>
-      <div class="product-list-controls">
-        <!-- 필터 탭 -->
-        <div class="filter-tabs">
-          <div
-            v-for="(tab, idx) in filterTabs"
-            :key="tab"
-            :class="['filter-tab', { active: idx === activeFilterTab }]"
-            @click="selectFilterTab(idx)"
-          >
-            {{ tab }}
-          </div>
-        </div>
-        <!-- 검색 및 액션 -->
-        <div class="search-group">
-          <select v-model="searchType" class="product-list-select" style="min-width:110px">
-            <option value="title">제목</option>
-            <option value="code">발주번호</option>
-          </select>
-          <input 
-            v-model="searchKeyword" 
-            class="product-list-search" 
-            placeholder="검색어를 입력해주세요" 
-            @keyup.enter="onSearch" 
-          />
-          <button class="product-list-search-btn" @click="onSearch">검색</button>
-          <button class="product-list-register-btn" @click="emit('show-register-view')">
-            <Pencil :size="16" color="white" />
-            <span>발주 등록</span>
-          </button>
+    <!-- 타이틀(맨 위) -->
+    <div class="product-list-title">발주 관리</div>
+    <!-- 탭 + 선 (두 번째) -->
+    <div class="tab-bar-wrapper">
+      <div class="filter-tabs">
+        <div
+          v-for="(tab, idx) in filterTabs"
+          :key="tab"
+          :class="['filter-tab', { active: idx === activeFilterTab } ]"
+          @click="selectFilterTab(idx)"
+        >
+          {{ tab }}
         </div>
       </div>
+      <div class="tab-underline"></div>
     </div>
-
+    <!-- 필터/검색/버튼 (세 번째) -->
+    <div class="product-list-controls">
+      <div class="search-group">
+        <select v-model="searchType" class="product-list-select" style="min-width:110px">
+          <option value="title">제목</option>
+          <option value="code">발주번호</option>
+        </select>
+        <input 
+          v-model="searchKeyword" 
+          class="product-list-search" 
+          placeholder="검색어를 입력해주세요" 
+          @keyup.enter="onSearch" 
+        />
+        <button class="product-list-search-btn" @click="onSearch">검색</button>
+        <button class="product-list-register-btn" @click="emit('show-register-view')">
+          발주 등록
+        </button>
+      </div>
+    </div>
     <!-- 테이블 -->
     <div class="product-list-table-wrapper">
       <table class="product-list-table">
@@ -86,16 +85,16 @@
 
     <!-- 페이지네이션 -->
     <div class="product-list-pagination">
-      <button :disabled="props.page === 1" @click="props.onPageChange(props.page - 1)">&lt;</button>
-      <button 
-        v-for="p in paginationPages" 
-        :key="p" 
-        :class="['page-btn', {active: p === props.page, ellipsis: p === '...'}]" 
+      <button class="page-arrow" :disabled="props.page === 1" @click="props.onPageChange(props.page - 1)">&lt;</button>
+      <span
+        v-for="p in paginationPages"
+        :key="p"
+        :class="['page-btn', {active: p === props.page, ellipsis: p === '...'}]"
         @click="typeof p === 'number' && props.onPageChange(p)"
       >
         {{ p }}
-      </button>
-      <button :disabled="props.page === totalPages" @click="props.onPageChange(props.page + 1)">&gt;</button>
+      </span>
+      <button class="page-arrow" :disabled="props.page === totalPages" @click="props.onPageChange(props.page + 1)">&gt;</button>
     </div>
     
     <!-- 총 개수 표시 -->
@@ -233,28 +232,18 @@ function getStatusText(status) {
   font-family: 'NanumSquareOTF_acR', 'NanumSquareOTF_acB', 'NanumSquareOTF_acEB', 'NanumSquareOTF_acL', 'Apple SD Gothic Neo', Arial, sans-serif !important;
 }
 
-.product-list-header {
+.tab-bar-wrapper {
+  position: relative;
   margin-bottom: 18px;
+  margin-top: 0;
 }
 
-.product-list-title {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #222;
-  margin-bottom: 16px;
-}
-
-.product-list-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-/* 필터 탭 */
 .filter-tabs {
   display: flex;
   gap: 30px;
+  padding-left: 0;
+  background: transparent;
+  z-index: 2;
 }
 
 .filter-tab {
@@ -266,16 +255,41 @@ function getStatusText(status) {
   cursor: pointer;
   transition: color 0.2s;
   border-bottom: 2px solid transparent;
+  background: transparent;
 }
 
 .filter-tab.active {
   color: #4066fa;
   font-weight: 700;
-  border-bottom-color: #4066fa;
+  border-bottom: 2px solid #4066fa;
+  z-index: 3;
 }
 
-.filter-tab:hover {
-  color: #4066fa;
+.tab-underline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: #e5e7eb;
+  z-index: 1;
+}
+
+.product-list-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.product-list-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+  margin-bottom: 18px;
+  margin-top: 0;
 }
 
 /* 검색 그룹 */
@@ -283,6 +297,7 @@ function getStatusText(status) {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
 }
 
 .product-list-select {
@@ -391,6 +406,13 @@ function getStatusText(status) {
   height: 49px;
 }
 
+.product-list-table th:nth-child(2),
+.product-list-table td:nth-child(2),
+.product-list-table th:nth-child(3),
+.product-list-table td:nth-child(3) {
+  text-align: left;
+}
+
 .product-list-table tbody tr:hover {
   background-color: #f8f9fa;
 }
@@ -453,15 +475,12 @@ function getStatusText(status) {
 
 /* 페이지네이션 */
 .product-list-pagination {
-  position: absolute;
-  bottom: 60px;
-  left: 0;
-  right: 0;
   display: flex;
+  gap: 5px;
   align-items: center;
   justify-content: center;
-  gap: 5px;
   margin: 10px 0;
+  position: static;
 }
 
 .page-btn {
@@ -496,7 +515,7 @@ function getStatusText(status) {
   pointer-events: none;
 }
 
-.product-list-pagination button {
+.page-arrow {
   min-width: 28px;
   height: 28px;
   border-radius: 6px;
@@ -512,7 +531,7 @@ function getStatusText(status) {
   transition: background 0.2s, color 0.2s;
 }
 
-.product-list-pagination button[disabled] {
+.page-arrow:disabled {
   background: #e2e4ea;
   color: #bdbdbd;
   cursor: not-allowed;
