@@ -441,7 +441,9 @@ const uploadFile = async (file) => {
 };
 
 const handleCancel = () => {
-  emit("cancel", false);
+  console.log("취소 버튼 클릭됨");
+  console.log("window.location.href로 직접 이동: /approval?tab=전체");
+  window.location.href = "/approval?tab=전체";
 };
 
 // 컴포넌트 마운트 시 초기화
