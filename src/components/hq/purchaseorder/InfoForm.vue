@@ -14,24 +14,25 @@
   
       <!-- 검색 및 필터 -->
       <div class="search-filter-section">
-        <div class="date-filter">
-          <select class="date-select">
-            <option>지난 30일</option>
-            <option>지난 7일</option>
-            <option>지난 3개월</option>
+        <div class="search-type-filter">
+          <select class="search-type-select" v-model="searchType">
+            <option value="title">제목</option>
+            <option value="code">발주번호</option>
           </select>
         </div>
-        
         <div class="actions-container">
           <div class="search-box">
             <input
               type="text"
+              v-model="searchKeyword"
               placeholder="검색어를 입력해주세요"
               class="search-input-main"
+              @keyup.enter="onSearch"
             />
             <span class="search-icon">🔍</span>
           </div>
           <button class="register-btn" @click="emit('show-register-view')">발주 등록</button>
+          <button class="search-btn" @click="onSearch">검색</button>
         </div>
       </div>
   
@@ -50,11 +51,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="pagedOrders.length === 0">
+            <tr v-if="props.orders.length === 0">
               <td colspan="7" class="no-data">발주 내역이 없습니다.</td>
             </tr>
-            <tr v-for="(order, index) in pagedOrders" :key="order.id" @click="emit('show-detail', order.id)" style="cursor:pointer;">
-              <td>{{ (page - 1) * pageSize + index + 1 }}</td>
+            <tr v-for="(order, index) in props.orders" :key="order.id" @click="emit('show-detail', order.id)" style="cursor:pointer;">
+              <td>{{ (props.page - 1) * pageSize + index + 1 }}</td>
               <td class="order-number">{{ order.orderNumber }}</td>
               <td>{{ order.title }}</td>
               <td class="amount">{{ formatCurrency(order.amount) }}원</td>
@@ -72,18 +73,18 @@
   
       <!-- 페이지네이션 -->
       <div class="pagination">
-        <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
+        <button class="page-arrow" :disabled="props.page === 1" @click="props.onPageChange(props.page - 1)">&lt;</button>
         <span
           v-for="p in paginationPages"
           :key="p"
-          :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
-          @click="typeof p === 'number' && (page = p)"
+          :class="['page-btn', {active: p === props.page, ellipsis: p === '...'}]"
+          @click="typeof p === 'number' && props.onPageChange(p)"
         >
           {{ p }}
         </span>
-        <button class="page-arrow" :disabled="page === totalPages" @click="page++">&gt;</button>
+        <button class="page-arrow" :disabled="props.page === totalPages" @click="props.onPageChange(props.page + 1)">&gt;</button>
       </div>
-      <div class="order-form__total">총 {{ totalCount }}개 항목</div>
+      <div class="order-form__total">총 {{ props.totalCount }}개 항목</div>
     </div>
   </template>
   
@@ -106,18 +107,28 @@
     onFilterTabChange: {
       type: Function,
       default: () => {}
+    },
+    page: {
+      type: Number,
+      default: 1
+    },
+    totalCount: {
+      type: Number,
+      default: 0
+    },
+    onPageChange: {
+      type: Function,
+      default: () => {}
     }
   });
   
-  const emit = defineEmits(['show-register-view', 'show-detail']);
+  const emit = defineEmits(['show-register-view', 'show-detail', 'search']);
   
-  const page = ref(1);
   const pageSize = 10;
-  const totalCount = computed(() => props.orders.length);
-  const totalPages = computed(() => Math.ceil(totalCount.value / pageSize) || 1);
+  const totalPages = computed(() => Math.ceil(props.totalCount / pageSize) || 1);
   const paginationPages = computed(() => {
     const pages = [];
-    const current = page.value;
+    const current = props.page;
     const total = totalPages.value;
     if (total <= 7) {
       for (let i = 1; i <= total; i++) pages.push(i);
@@ -140,14 +151,16 @@
     }
     return pages;
   });
-  watch(() => props.orders, () => { page.value = 1; });
-  const pagedOrders = computed(() => {
-    const start = (page.value - 1) * pageSize;
-    return props.orders.slice(start, start + pageSize);
-  });
+  
+  const searchType = ref('title');
+  const searchKeyword = ref('');
   
   function selectFilterTab(index) {
     props.onFilterTabChange(index);
+  }
+  
+  function onSearch() {
+    emit('search', { type: searchType.value, keyword: searchKeyword.value });
   }
   
   function formatCurrency(value) {
@@ -228,10 +241,14 @@
   .actions-container {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 8px;
   }
   
-  .date-select {
+  .search-type-filter {
+    margin-right: 10px;
+  }
+  
+  .search-type-select {
     padding: 8px 12px;
     border: 1px solid #dee2e6;
     border-radius: 6px;
@@ -276,6 +293,25 @@
   }
   
   .register-btn:hover {
+    background-color: #2746b6;
+  }
+  
+  .search-btn {
+    background-color: #4066fa;
+    color: white;
+    border: none;
+    padding: 0 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    height: 28px;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+    margin-left: 0;
+  }
+  
+  .search-btn:hover {
     background-color: #2746b6;
   }
   
