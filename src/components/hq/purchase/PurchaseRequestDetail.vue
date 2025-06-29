@@ -93,6 +93,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/lib/api';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
   id: {
@@ -101,7 +102,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'data-loaded']);
+const emit = defineEmits(['close', 'data-loaded', 'refresh-list']);
 
 const route = useRoute();
 const router = useRouter();
@@ -117,6 +118,8 @@ const requestInfo = ref({
   totalAmount: 0
 });
 const materials = ref([]);
+
+const toast = useToast();
 
 function formatCurrency(value) {
   if (!value) return '0';
@@ -194,9 +197,25 @@ const totalQuantity = computed(() => {
 // }
 
 function deleteRequest() {
-  // TODO: 삭제 기능 구현
   if (confirm('정말로 이 구매 요청을 삭제하시겠습니까?')) {
-    console.log('삭제 기능 구현 예정');
+    api.delete(`/api/hq/purchase/requests/${props.id}`)
+      .then(() => {
+        if (typeof toast === 'function') {
+          toast('구매 요청이 삭제되었습니다.', 'success');
+        } else {
+          alert('구매 요청이 삭제되었습니다.');
+        }
+        emit('refresh-list');
+        emit('close');
+      })
+      .catch(error => {
+        console.error('구매 요청 삭제 실패:', error);
+        if (typeof toast === 'function') {
+          toast('구매 요청 삭제에 실패했습니다.', 'error');
+        } else {
+          alert('구매 요청 삭제에 실패했습니다.');
+        }
+      });
   }
 }
 

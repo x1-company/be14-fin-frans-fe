@@ -10,7 +10,7 @@
       @close="selectedOrderId = null"
       @edit="handleEdit"
       @refresh-list="handleRefreshList"
-    />
+      />
     <PurchaseOrderUpdate
       v-else-if="editOrderData"
       :orderData="editOrderData"
@@ -31,12 +31,12 @@
       @show-detail="handleShowDetail"
       @search="handleSearch"
     />
-  </div>
-</template>
-
-<script setup>
+    </div>
+  </template>
+  
+  <script setup>
 import { ref, computed, watch } from 'vue';
-import InfoForm from './InfoForm.vue';
+  import InfoForm from './InfoForm.vue';
 import PurchaseOrderDetail from './PurchaseOrderDetail.vue';
 import PurchaseOrderUpdate from './PurchaseOrderUpdate.vue';
 import api from '@/lib/api';
@@ -270,12 +270,12 @@ const showRegisterView = () => {
   border-radius: 0 0 16px 16px;
   box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
   padding: 32px;
-}
+  }
 .loading-container,
 .error-container {
   padding: 40px;
   text-align: center;
   color: #888;
-}
-</style>
+  }
+  </style>
   
