@@ -637,6 +637,11 @@ const statsTab = ref(0) // 0: 주문 금액 분석, 1: 자재별 분석
 function selectStatsTab(idx) {
   statsTab.value = idx
 }
+
+// 동향보기 자동 해제: 탭/가맹점/분석탭 변경 시 trendVisible false
+watch([statsTab, activeTabSwitch, () => props.selectedFranchiseId], () => {
+  if (trendVisible.value) trendVisible.value = false;
+});
 </script>
 
 <style scoped>
