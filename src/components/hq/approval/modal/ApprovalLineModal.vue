@@ -236,6 +236,7 @@ import { ref, reactive, watch, onMounted, onUnmounted } from "vue";
 import draggable from "vuedraggable";
 import { debounce } from "lodash";
 import api from "@/lib/api";
+import { useToast } from "@/composables/useToast";
 
 const props = defineProps({
   initialLines: {
@@ -244,6 +245,8 @@ const props = defineProps({
   },
 });
 const emit = defineEmits(["close", "confirm"]);
+
+const toast = useToast();
 
 const activeTab = ref("결재");
 const tabs = ["결재", "협조", "수신", "참조"];
@@ -326,6 +329,8 @@ const addSelectedMembers = () => {
         type: getTypeByTab(activeTab.value),
       };
       targetList.value.push(member);
+    } else {
+      toast.warning("이미 추가된 사용자입니다.");
     }
   });
   selectedSearchUsers.value = [];
