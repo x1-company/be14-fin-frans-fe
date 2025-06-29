@@ -373,6 +373,8 @@ const removeDocument = (docId) => {
   emitFormData();
 };
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
 const uploadFiles = async (files) => {
   try {
     const formData = new FormData();
@@ -400,6 +402,10 @@ const uploadFiles = async (files) => {
 const handleFileSelect = (event) => {
   const files = Array.from(event.target.files);
   files.forEach((file) => {
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("20MB 이하 파일만 업로드할 수 있습니다.");
+      return;
+    }
     formData.value.files.push({
       name: file.name,
       size: file.size,
