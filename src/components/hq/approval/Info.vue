@@ -222,6 +222,8 @@ const handleReorderCancel = () => {
 };
 
 const handleApprovalSubmitted = (approvalData) => {
+  console.log("Info.vue - approval-submitted 이벤트 수신됨!");
+  console.log("Info.vue - 전달받은 데이터:", approvalData);
   emit("approval-submitted", approvalData);
 };
 

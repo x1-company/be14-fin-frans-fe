@@ -420,20 +420,34 @@ const handleRefreshList = () => {
 };
 
 const handleApprovalSubmitted = (approvalData) => {
-  // 결재 요청 성공 시 ApprovalCreateDetail 페이지로 이동
+  // 결재 요청 성공 시 해당 결재의 상세 페이지로 이동
+  console.log("InfoView - approval-submitted 이벤트 수신됨!");
   console.log("결재 제출 완료, 데이터:", approvalData);
   if (approvalData && approvalData.id) {
     console.log(
-      "ApprovalCreateDetail 페이지로 이동 시도:",
-      `/approval/create/${approvalData.id}`
+      "결재 상세 페이지로 이동 시도:",
+      `/approval/${approvalData.id}`
     );
-    router.push(`/approval/create/${approvalData.id}`);
+    router.push(`/approval/${approvalData.id}`);
   } else {
     console.log("결재 ID가 없어서 이동하지 않음");
   }
 };
 
-onMounted(fetchCounts);
+onMounted(() => {
+  fetchCounts();
+
+  // /approval 경로로 직접 접근할 때 기본 탭 설정
+  if (route.path === "/approval" && !route.params.approvalId) {
+    // 쿼리스트링이 없으면 기본값으로 설정
+    if (!route.query.tab) {
+      activeTab.value = "전체";
+      activeMenu.value = "상신-전체";
+      mainTab.value = "상신";
+      currentTabIndex.value = 1;
+    }
+  }
+});
 
 watch(
   () => route.params.approvalId,
@@ -497,6 +511,32 @@ const handleDocumentType = (type) => {
   console.log("InfoView에서 받은 문서 타입:", type);
   // 여기서 문서 타입에 따른 추가 로직을 구현할 수 있습니다
 };
+
+// 쿼리스트링(tab) 변경 감지해서 목록/카운트 즉시 갱신
+watch(
+  () => route.query.tab,
+  (newTab) => {
+    if (newTab) {
+      activeTab.value = newTab;
+      fetchApprovalList();
+      fetchCounts();
+    }
+  },
+  { immediate: true }
+);
+
+// 목록으로 이동 시 등록 모드 해제
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath === "/approval") {
+      isRegistrationMode.value = false;
+      approvalId.value = null;
+      approvalDetail.value = null;
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>

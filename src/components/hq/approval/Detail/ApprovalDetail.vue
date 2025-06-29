@@ -433,10 +433,10 @@ const fetchDocumentContent = async () => {
   }
 };
 
-// 뒤로가기
+// 뒤로가기(목록으로 이동)
 const goBack = () => {
   emit("refresh-list");
-  router.push("/approval");
+  router.push("/approval?tab=전체"); // 항상 결재 목록의 '전체' 탭으로 이동
 };
 
 // 날짜 포맷팅
