@@ -1,147 +1,105 @@
 <template>
-  <div class="app">
-    <NavBar />
-    <div class="main-container">
-      <div class="info-container">
-        <div class="breadcrumb-container">
-          <Breadcrumb :items="['HOME', '구매관리', '구매 상세']" />
+  <div>
+    <div class="action-buttons">
+      <button class="btn print" @click="printRequest">
+        <span class="icon">&#128424;</span> 구매 요청서 출력
+      </button>
+      <button class="btn edit" @click="editRequest">
+        <span class="icon"></span> 수정
+      </button>
+      <button class="btn delete" @click="deleteRequest">
+        <span class="icon"></span> 삭제
+      </button>
+      <button class="btn close" @click="$emit('close')">
+        <span class="icon">&#10005;</span> 닫기
+      </button>
+    </div>
+    <div class="card order-card">
+      <div class="order-title">
+        <span class="order-icon">📝</span>
+        구매 요청 정보
+      </div>
+      <div class="info-box-row">
+        <div class="info-box blue">
+          <span class="label">구매 요청 번호</span>
+          <span class="value">{{ requestInfo.purchaseNumber || '-' }}</span>
         </div>
-        <div class="info-content">
-          <div class="header-banner">
-            <div class="info-group">
-              <InfoHeader
-                title="구매관리"
-                desc="구매 요청 현황을 확인하고 관리할 수 있습니다."
-              />
-              <!-- 상세 테이블 시작 -->
-              <div class="purchase-detail-container">
-                <div class="action-buttons">
-                  <button class="btn-outline" @click="printRequest">구매 요청서 출력</button>
-                  <button class="btn-outline" @click="editRequest">수정</button>
-                  <button class="btn-outline" @click="deleteRequest">삭제</button>
-                  <button class="btn-outline" @click="closeDetail">닫기</button>
-                </div>
-                <!-- 구매 요청 정보 -->
-                <div class="section">
-                  <div class="section-title">구매 요청 정보</div>
-                  <table class="info-table">
-                    <tr>
-                      <th>요청일</th>
-                      <td>{{ requestInfo.requestDate }}</td>
-                      <th>구매번호</th>
-                      <td>{{ requestInfo.purchaseNumber }}</td>
-                    </tr>
-                    <tr>
-                      <th>납기희망일</th>
-                      <td>{{ requestInfo.deliveryDate }}</td>
-                      <th>담당자</th>
-                      <td>{{ requestInfo.manager }}</td>
-                    </tr>
-                    <tr>
-                      <th>담당자 이메일</th>
-                      <td>{{ requestInfo.managerEmail }}</td>
-                      <th></th>
-                      <td></td>
-                    </tr>
-                  </table>
-                </div>
-                <!-- 구매 요청 사유 -->
-                <div class="section">
-                  <div class="section-title">구매 요청 사유</div>
-                  <table class="info-table">
-                    <tr>
-                      <th>제목</th>
-                      <td>{{ requestInfo.title }}</td>
-                    </tr>
-                    <tr>
-                      <th>사유</th>
-                      <td>{{ requestInfo.description }}</td>
-                    </tr>
-                  </table>
-                </div>
-                <!-- 구매 요청 자재 -->
-                <div class="section">
-                  <div class="section-title">구매 요청 자재</div>
-                  <table class="product-table">
-                    <thead>
-                      <tr>
-                        <th style="width: 40px">No.</th>
-                        <th style="width: 120px">자재 번호</th>
-                        <th style="width: 120px">자재명</th>
-                        <th style="width: 100px">구매 단가</th>
-                        <th style="width: 80px">수량</th>
-                        <th style="width: 60px">단위</th>
-                        <th style="width: 100px">자재 구분</th>
-                        <th style="width: 100px">자재 분류</th>
-                        <th style="width: 100px">자재 속성</th>
-                        <th style="width: 150px">비고</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-if="materials.length === 0">
-                        <td colspan="10" class="no-data">등록된 자재가 없습니다.</td>
-                      </tr>
-                      <tr v-for="(material, index) in materials" :key="material.productId || material.id || index">
-                        <td class="text-center">{{ index + 1 }}</td>
-                        <td class="text-center">{{ material.code }}</td>
-                        <td>{{ material.name }}</td>
-                        <td class="text-right">{{ formatCurrency(material.purchasePrice) }}</td>
-                        <td class="text-center">{{ material.quantity }}</td>
-                        <td class="text-center">{{ material.purchaseUnit }}</td>
-                        <td class="text-center">{{ material.productTypeName }}</td>
-                        <td class="text-center">{{ material.productGroupName }}</td>
-                        <td class="text-center">{{ material.productAttributeName }}</td>
-                        <td>{{ material.remarks }}</td>
-                      </tr>
-                      <tr v-if="materials.length > 0">
-                        <td colspan="3" class="text-right"><strong>총 금액</strong></td>
-                        <td class="text-right"><strong>{{ formatCurrency(totalAmount) }}</strong></td>
-                        <td colspan="6"></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <!-- 결재 정보 -->
-                <div class="section">
-                  <div class="section-title">결재 정보</div>
-                  <table class="info-table">
-                    <tr>
-                      <th>결재 코드</th>
-                      <td>{{ approvalInfo.code }}</td>
-                      <th>결재 요청자</th>
-                      <td>{{ approvalInfo.requester }}</td>
-                    </tr>
-                    <tr>
-                      <th>결재 담당자</th>
-                      <td>{{ approvalInfo.approver }}</td>
-                      <th>기안 일시</th>
-                      <td>{{ approvalInfo.requestDate }}</td>
-                    </tr>
-                    <tr>
-                      <th>결재 완료 일시</th>
-                      <td>{{ approvalInfo.approvalDate }}</td>
-                      <th></th>
-                      <td></td>
-                    </tr>
-                  </table>
-                </div>
-              </div>
-              <!-- 상세 테이블 끝 -->
-            </div>
-          </div>
+        <div class="info-box green">
+          <span class="label">총 요청 금액</span>
+          <span class="value">{{ formatCurrency(totalAmount) }}원</span>
         </div>
+      </div>
+      <div class="info-grid-2col">
+        <div class="label">제목</div>
+        <div class="value">{{ requestInfo.title || '-' }}</div>
+        <div class="label">사유</div>
+        <div class="value">{{ requestInfo.description || '-' }}</div>
+        <div class="label">요청일</div>
+        <div class="value">{{ requestInfo.requestDate || '-' }}</div>
+        <div class="label">납기희망일</div>
+        <div class="value">{{ requestInfo.deliveryDate || '-' }}</div>
+        <div class="label">담당자</div>
+        <div class="value">{{ requestInfo.manager || '-' }}</div>
+        <div class="label">담당자 이메일</div>
+        <div class="value">{{ requestInfo.managerEmail || '-' }}</div>
+      </div>
+    </div>
+    <div class="card product-card">
+      <div class="card-title"><span class="icon">📦</span> 자재 정보</div>
+      <table class="product-table">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>자재 번호</th>
+            <th>자재명</th>
+            <th>구매 단가</th>
+            <th>수량</th>
+            <th>단위</th>
+            <th>자재 구분</th>
+            <th>자재 분류</th>
+            <th>자재 속성</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="materials.length === 0">
+            <td colspan="10" class="no-data">등록된 자재가 없습니다.</td>
+          </tr>
+          <tr v-for="(material, index) in materials" :key="material.productId || material.id || index">
+            <td>{{ index + 1 }}</td>
+            <td class="link">{{ material.productCode }}</td>
+            <td>{{ material.productName }}</td>
+            <td>{{ formatCurrency(material.purchasePrice) }}</td>
+            <td>{{ material.quantity }}</td>
+            <td>{{ material.purchaseUnit }}</td>
+            <td><span class="badge blue">{{ material.productTypeName }}</span></td>
+            <td><span class="badge purple">{{ material.productGroupName }}</span></td>
+            <td><span class="badge green">{{ material.productAttributeName }}</span></td>
+            <td>{{ material.remarks }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="summary-box">
+        <div>총 수량: <strong>{{ totalQuantity }}개</strong></div>
+        <div class="total-amount">{{ formatCurrency(totalAmount) }}원</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import NavBar from '@/components/hq/common/NavBar.vue';
-import Breadcrumb from '@/components/hq/common/Breadcrumb.vue';
-import InfoHeader from './InfoHeader.vue';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from '@/lib/api';
+
+const props = defineProps({
+  id: {
+    type: [String, Number],
+    required: true
+  }
+});
+
+const emit = defineEmits(['close', 'data-loaded']);
 
 const route = useRoute();
 const router = useRouter();
@@ -153,45 +111,41 @@ const requestInfo = ref({
   purchaseNumber: '',
   managerEmail: '',
   title: '',
-  description: ''
+  description: '',
+  totalAmount: 0
 });
 const materials = ref([]);
-const approvalInfo = ref({
-  code: '',
-  requester: '',
-  approver: '',
-  requestDate: '',
-  approvalDate: ''
-});
 
 function formatCurrency(value) {
-  if (!value) return '';
+  if (!value) return '0';
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function printRequest() {
   window.print();
 }
-function closeDetail() {
-  router.push('/purchase');
-}
 
 async function fetchDetail() {
-  const id = route.params.id;
-  const { data } = await api.get(`/api/hq/purchase/requests/${id}`);
-  requestInfo.value = {
-    requestDate: data.createdAt?.split('T')[0] || '',
-    deliveryDate: data.requestedDeliveryDate || '',
-    manager: data.userName || '',
-    purchaseNumber: data.code || '',
-    managerEmail: data.userEmail || '',
-    title: data.title || '',
-    description: data.description || ''
-  };
-  materials.value = (data.products || []).map(p => ({
+  try {
+    const id = props.id;
+    const { data } = await api.get(`/api/hq/purchase/requests/${id}`);
+    
+    // 요청 정보 매핑 - API 응답 키 이름에 맞게 수정
+    requestInfo.value = {
+      requestDate: data.createdAt ? data.createdAt.split('T')[0].replace(/-/g, '.') : '',
+      deliveryDate: data.requestedDeliveryDate ? data.requestedDeliveryDate.replace(/-/g, '.') : '',
+      manager: data.userName || '',
+      purchaseNumber: data.code || '',
+      managerEmail: data.userEmail || '',
+      title: data.title || '',
+      description: data.description || '',
+      totalAmount: data.totalAmount || 0
+    };
+    
+    materials.value = (data.products || []).map(p => ({
     productId: p.productId || p.id,
-    code: p.code || p.productCode || '',
-    name: p.name || p.productName || '',
+    productCode: p.productCode || p.code || '',
+    productName: p.productName || p.name || '',
     purchasePrice: p.purchasePrice || 0,
     quantity: p.quantity || 0,
     purchaseUnit: p.purchaseUnit || '',
@@ -200,29 +154,26 @@ async function fetchDetail() {
     productAttributeName: p.productAttributeName || '',
     remarks: p.remarks || ''
   }));
-  if (data.status === '승인' || data.status === 'APPROVED') {
-    try {
-      const approvalRes = await api.get(`/api/hq/approvals/purchase/${id}`);
-      approvalInfo.value = {
-        code: approvalRes.data.code,
-        requester: approvalRes.data.requester,
-        approver: approvalRes.data.approver,
-        requestDate: approvalRes.data.requestDate,
-        approvalDate: approvalRes.data.approvalDate
-      };
-    } catch (e) {
-      approvalInfo.value = {
-        code: '', requester: '', approver: '', requestDate: '', approvalDate: ''
-      };
-    }
-  } else {
-    approvalInfo.value = {
-      code: '', requester: '', approver: '', requestDate: '', approvalDate: ''
-    };
+
+    // 상위 컴포넌트로 데이터 전달
+    emit('data-loaded', {
+      requestInfo: requestInfo.value,
+      materials: materials.value,
+      totalAmount: totalAmount.value,
+      totalQuantity: totalQuantity.value
+    });
+    
+  } catch (error) {
+    console.error('Error fetching purchase request detail:', error);
   }
 }
 
+// totalAmount 계산 - API의 totalAmount 우선 사용, 없으면 계산
 const totalAmount = computed(() => {
+  if (requestInfo.value.totalAmount) {
+    return requestInfo.value.totalAmount;
+  }
+  
   return materials.value.reduce((sum, m) => {
     const price = Number(m.purchasePrice) || 0;
     const quantity = Number(m.quantity) || 0;
@@ -230,133 +181,212 @@ const totalAmount = computed(() => {
   }, 0);
 });
 
+const totalQuantity = computed(() => {
+  return materials.value.reduce((sum, m) => sum + (Number(m.quantity) || 0), 0);
+});
+
 function editRequest() {
   // TODO: 수정 기능 구현
+  console.log('수정 기능 구현 예정');
 }
+
 function deleteRequest() {
   // TODO: 삭제 기능 구현
+  if (confirm('정말로 이 구매 요청을 삭제하시겠습니까?')) {
+    console.log('삭제 기능 구현 예정');
+  }
 }
 
 onMounted(fetchDetail);
+watch(() => props.id, fetchDetail);
 </script>
 
 <style scoped>
-.app {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  min-width: 1200px;
-}
-.main-container {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-.info-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #f8f9fa;
-}
-.breadcrumb-container {
-  padding: 16px 24px 0 24px;
-}
-.info-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 0 24px 0;
-}
-.header-banner {
-  color: white;
-  padding: 32px 24px 0 24px;
-}
-.info-group {
-  background: transparent;
-}
-.purchase-detail-container {
-  background: #f8f9fa;
-  min-height: 100vh;
-  padding: 32px 0;
-}
-.section {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  margin-bottom: 32px;
-  padding: 24px 32px;
-}
-.section-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: #222;
-}
-.info-table, .product-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-  margin-bottom: 0;
-}
-.info-table th, .info-table td,
-.product-table th, .product-table td {
-  border: 1px solid #e5e7eb;
-  padding: 10px 12px;
-  font-size: 0.97rem;
-}
-.info-table th {
-  background: #f8f9fa;
-  color: #444;
-  font-weight: 500;
-  width: 140px;
-}
-.info-table td {
-  background: #fff;
-  color: #333;
-}
-.product-table th {
-  background: #f8f9fa;
-  color: #444;
-  font-weight: 500;
-  text-align: center;
-}
-.product-table td {
-  background: #fff;
-  color: #333;
-  text-align: center;
-}
-.no-data {
-  text-align: center;
-  color: #aaa;
-  padding: 32px 0;
-}
 .action-buttons {
   display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
   justify-content: flex-end;
-  gap: 8px;
-  margin-bottom: 24px;
 }
-.btn-primary, .btn-outline {
-  background: #4066fa;
-  color: #fff;
-  border: none;
+
+.btn {
   padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  min-width: 100px;
-  height: 36px;
-  display: inline-flex;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 5px;
+  background: transparent;
 }
-.btn-outline {
-  background: #4066fa;
-  color: #fff;
-  border: none;
+
+.btn.print {
+  border-color: #e0e0e0;
+  color: #1976d2;
 }
-.btn-primary:hover, .btn-outline:hover {
-  background: #3453c7;
+
+.btn.edit {
+  border-color: #c8e6c9;
+  color: #388e3c;
 }
-</style> 
+
+.btn.delete {
+  border-color: #ffd6d6;
+  color: #d32f2f;
+}
+
+.btn.close {
+  border-color: #e0e0e0;
+  color: #1976d2;
+}
+
+.btn:hover {
+  opacity: 0.8;
+}
+
+.card {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.order-title, .card-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-box-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.info-box {
+  flex: 1;
+  padding: 15px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-box.blue {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+}
+
+.info-box.green {
+  background: #e8f5e8;
+  border: 1px solid #c8e6c9;
+}
+
+.info-box .label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.info-box .value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.info-grid-2col {
+  display: grid;
+  grid-template-columns: 150px 1fr 150px 1fr;
+  row-gap: 12px;
+  column-gap: 16px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.info-grid-2col .label {
+  font-weight: 500;
+  color: #666;
+}
+
+.info-grid-2col .value {
+  color: #333;
+}
+
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+.product-table th,
+.product-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.product-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+.product-table .link {
+  color: #007bff;
+  cursor: pointer;
+}
+
+.product-table .link:hover {
+  text-decoration: underline;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge.blue {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.badge.purple {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.badge.green {
+  background: #e8f5e8;
+  color: #388e3c;
+}
+
+.summary-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.total-amount {
+  font-size: 18px;
+  font-weight: 600;
+  color: #28a745;
+}
+
+.no-data {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+</style>

@@ -36,7 +36,7 @@ const activeTab = ref(0);
   background: #f8f9fa;
 }
 .breadcrumb-container {
-  padding: 16px 24px 0 24px;
+  padding: 16px 24px 16px 24px;
 }
 .info-content {
   flex: 1;
@@ -44,8 +44,8 @@ const activeTab = ref(0);
   padding: 0 0 24px 0;
 }
 .header-banner {
-  color: white;
-  padding: 32px 24px 0 24px;
+  /* color: white; */
+  padding: 10px 24px 0 24px;
 }
 .info-group {
   background: transparent;
