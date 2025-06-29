@@ -53,6 +53,7 @@
         @approval-submitted="handleApprovalSubmitted"
         @close-detail="$router.push('/approval')"
         @counts-refresh="handleCountsRefresh"
+        @document-type="handleDocumentType"
       />
     </div>
   </div>
@@ -88,15 +89,18 @@ const router = useRouter();
 const approvalId = ref(route.params.approvalId);
 const approvalDetail = ref(null);
 
+// 현재 문서 타입 저장
+const currentDocumentType = ref("ORDER");
+
 // 쿼리스트링(tab)으로 진입 시 결재중/결재완료 탭 자동 활성화
-if (route.query.tab === '결재중') {
-  activeTab.value = '결재중';
-  activeMenu.value = '결재중';
+if (route.query.tab === "결재중") {
+  activeTab.value = "결재중";
+  activeMenu.value = "결재중";
   currentTabIndex.value = 1;
 }
-if (route.query.tab === '결재완료') {
-  activeTab.value = '결재완료';
-  activeMenu.value = '결재완료';
+if (route.query.tab === "결재완료") {
+  activeTab.value = "결재완료";
+  activeMenu.value = "결재완료";
   currentTabIndex.value = 1;
 }
 
@@ -285,19 +289,19 @@ const approvalCounts = ref({
 const fetchCounts = async () => {
   const endpoints = {
     전체: "/api/hq/approvals/list/submitted/all",
-    임시저장: "/api/hq/approvals/list/submitted/draft",
-    결재중: "/api/hq/approvals/list/submitted/in-progress",
-    결재완료: "/api/hq/approvals/list/submitted/approved",
-    결재반려: "/api/hq/approvals/list/submitted/rejected",
+    임시저장: "/api/hq/approvals/list/submitted?status=DRAFT",
+    결재중: "/api/hq/approvals/list/submitted?status=IN_PROGRESS",
+    결재완료: "/api/hq/approvals/list/submitted?status=APPROVED",
+    결재반려: "/api/hq/approvals/list/submitted?status=REJECTED",
     //수신
-    결재대기: "/api/hq/approvals/list/received/pending",
-    결재예정: "/api/hq/approvals/list/received/upcoming",
-    내결재승인: "/api/hq/approvals/list/received/my-completed/approved",
-    내결재반려: "/api/hq/approvals/list/received/my-completed/rejected",
-    협조대기: "/api/hq/approvals/list/cooperate/pending",
-    협조예정: "/api/hq/approvals/list/cooperate/upcoming",
-    내협조승인: "/api/hq/approvals/list/cooperate/approved",
-    내협조반려: "/api/hq/approvals/list/cooperate/rejected",
+    결재대기: "/api/hq/approvals/list/received?status=WAITING",
+    결재예정: "/api/hq/approvals/list/received?status=EXPECTED",
+    내결재승인: "/api/hq/approvals/list/received/my-completed?status=APPROVED",
+    내결재반려: "/api/hq/approvals/list/received/my-completed?status=REJECTED",
+    협조대기: "/api/hq/approvals/list/cooperate?status=WAITING",
+    협조예정: "/api/hq/approvals/list/cooperate?status=EXPECTED",
+    내협조승인: "/api/hq/approvals/list/cooperate?status=APPROVED",
+    내협조반려: "/api/hq/approvals/list/cooperate?status=REJECTED",
     참조문서: "/api/hq/approvals/list/references",
     수신문서: "/api/hq/approvals/list/notifications",
   };
@@ -321,26 +325,28 @@ const fetchApprovalList = async () => {
   const apiGroups = {
     상신: {
       "상신-전체": "/api/hq/approvals/list/submitted/all",
-      임시저장: "/api/hq/approvals/list/submitted/draft",
-      결재중: "/api/hq/approvals/list/submitted/in-progress",
-      결재완료: "/api/hq/approvals/list/submitted/approved",
-      결재반려: "/api/hq/approvals/list/submitted/rejected",
+      임시저장: "/api/hq/approvals/list/submitted?status=DRAFT",
+      결재중: "/api/hq/approvals/list/submitted?status=IN_PROGRESS",
+      결재완료: "/api/hq/approvals/list/submitted?status=APPROVED",
+      결재반려: "/api/hq/approvals/list/submitted?status=REJECTED",
     },
     수신: {
       "수신-전체": "/api/hq/approvals/list/received/all",
       "결재-전체": "/api/hq/approvals/list/received/approval/all",
-      결재대기: "/api/hq/approvals/list/received/pending",
-      결재예정: "/api/hq/approvals/list/received/upcoming",
+      결재대기: "/api/hq/approvals/list/received?status=WAITING",
+      결재예정: "/api/hq/approvals/list/received?status=EXPECTED",
       결재중: "/api/hq/approvals/list/received/in-progress",
       결재완료: "/api/hq/approvals/list/received/approved",
       결재반려: "/api/hq/approvals/list/received/rejected",
-      "내 결재 승인": "/api/hq/approvals/list/received/my-completed/approved",
-      "내 결재 반려": "/api/hq/approvals/list/received/my-completed/rejected",
+      "내 결재 승인":
+        "/api/hq/approvals/list/received/my-completed?status=APPROVED",
+      "내 결재 반려":
+        "/api/hq/approvals/list/received/my-completed?status=REJECTED",
       "협조-전체": "/api/hq/approvals/list/cooperate/all",
-      협조대기: "/api/hq/approvals/list/cooperate/pending",
-      협조예정: "/api/hq/approvals/list/cooperate/upcoming",
-      "내 협조 승인": "/api/hq/approvals/list/cooperate/approved",
-      "내 협조 반려": "/api/hq/approvals/list/cooperate/rejected",
+      협조대기: "/api/hq/approvals/list/cooperate?status=WAITING",
+      협조예정: "/api/hq/approvals/list/cooperate?status=EXPECTED",
+      "내 협조 승인": "/api/hq/approvals/list/cooperate?status=APPROVED",
+      "내 협조 반려": "/api/hq/approvals/list/cooperate?status=REJECTED",
       참조문서: "/api/hq/approvals/list/references",
       수신문서: "/api/hq/approvals/list/notifications",
     },
@@ -414,20 +420,34 @@ const handleRefreshList = () => {
 };
 
 const handleApprovalSubmitted = (approvalData) => {
-  // 결재 요청 성공 시 ApprovalCreateDetail 페이지로 이동
+  // 결재 요청 성공 시 해당 결재의 상세 페이지로 이동
+  console.log("InfoView - approval-submitted 이벤트 수신됨!");
   console.log("결재 제출 완료, 데이터:", approvalData);
   if (approvalData && approvalData.id) {
     console.log(
-      "ApprovalCreateDetail 페이지로 이동 시도:",
-      `/approval/create/${approvalData.id}`
+      "결재 상세 페이지로 이동 시도:",
+      `/approval/${approvalData.id}`
     );
-    router.push(`/approval/create/${approvalData.id}`);
+    router.push(`/approval/${approvalData.id}`);
   } else {
     console.log("결재 ID가 없어서 이동하지 않음");
   }
 };
 
-onMounted(fetchCounts);
+onMounted(() => {
+  fetchCounts();
+
+  // /approval 경로로 직접 접근할 때 기본 탭 설정
+  if (route.path === "/approval" && !route.params.approvalId) {
+    // 쿼리스트링이 없으면 기본값으로 설정
+    if (!route.query.tab) {
+      activeTab.value = "전체";
+      activeMenu.value = "상신-전체";
+      mainTab.value = "상신";
+      currentTabIndex.value = 1;
+    }
+  }
+});
 
 watch(
   () => route.params.approvalId,
@@ -481,6 +501,39 @@ watch(
   [mainTab, activeMenu, activeTab],
   async ([currentMainTab, menu, tab]) => {
     fetchApprovalList();
+  },
+  { immediate: true }
+);
+
+// 문서 타입 핸들러
+const handleDocumentType = (type) => {
+  currentDocumentType.value = type;
+  console.log("InfoView에서 받은 문서 타입:", type);
+  // 여기서 문서 타입에 따른 추가 로직을 구현할 수 있습니다
+};
+
+// 쿼리스트링(tab) 변경 감지해서 목록/카운트 즉시 갱신
+watch(
+  () => route.query.tab,
+  (newTab) => {
+    if (newTab) {
+      activeTab.value = newTab;
+      fetchApprovalList();
+      fetchCounts();
+    }
+  },
+  { immediate: true }
+);
+
+// 목록으로 이동 시 등록 모드 해제
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath === "/approval") {
+      isRegistrationMode.value = false;
+      approvalId.value = null;
+      approvalDetail.value = null;
+    }
   },
   { immediate: true }
 );
