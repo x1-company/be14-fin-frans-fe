@@ -353,11 +353,11 @@
   }
   .col-no        { flex-basis: 7%; }
   .col-code      { flex-basis: 20%; color: #222; overflow: visible; text-overflow: unset; white-space: nowrap; }
-  .col-name      { flex-basis: 25%; text-align: center; font-weight: 500; }
+  .col-name      { flex-basis: 18%; text-align: center; font-weight: 500; }
   .col-status    { flex-basis: 15%; }
-  .col-date      { flex-basis: 15%; }
+  .col-date      { flex-basis: 10%; }
   .col-amount    { flex-basis: 15%; text-align: right; font-weight: 500; }
-  .col-franchise { flex-basis: 20%; }
+  .col-franchise { flex-basis: 15%; }
   .empty-message {
     text-align: center;
     color: #6c757d;
