@@ -262,17 +262,17 @@ watch(statsTab, () => {
 
 /* 통계 섹션 스타일 */
 .stats-graph-section {
-  padding: 24px;
+  padding: 0;
   background: #fff;
-  border-radius: 8px;
-  margin-bottom: 24px;
+  border-radius: 6px;
+  margin-bottom: 14px;
 }
 
 .stats-graph-card {
   background: #fff;
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 16px 0 rgba(64, 102, 250, 0.06);
+  padding: 0;
+  border-radius: 6px;
+  box-shadow: 0 1px 8px 0 rgba(64, 102, 250, 0.04);
 }
 
 .trend-btn {
@@ -282,7 +282,7 @@ watch(statsTab, () => {
   border-radius: 16px;
   padding: 6px 18px;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 13px;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -304,8 +304,8 @@ watch(statsTab, () => {
 
 .stats-tab-btn {
   flex: 1;
-  padding: 18px 0;
-  font-size: 1.15rem;
+  padding: 10px 0 10px 0;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #888;
   background: none;
@@ -358,14 +358,14 @@ watch(statsTab, () => {
 
 .doughnut-title {
   margin: 0 0 2px 0;
-  font-size: 1.15rem;
+  font-size: 0.98rem;
   font-weight: 700;
   text-align: left;
 }
 
 .doughnut-desc {
   color: #888;
-  font-size: 15px;
+  font-size: 13px;
   margin-bottom: 8px;
   display: block;
   text-align: left;
@@ -375,7 +375,7 @@ watch(statsTab, () => {
   padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid #d0d0d0;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 /* 반응형 디자인 */
