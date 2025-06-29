@@ -60,38 +60,33 @@ const colorPalette = [
 ]
 
 const doughnutData = computed(() => {
-  // 데이터를 수량 기준으로 정렬
-  const sortedData = filteredData.value
-    .map(item => ({
-      label: item.productName || item.productId,
-      value: item.orderQuantity
-    }))
-    .sort((a, b) => b.value - a.value)
-
-  // 상위 10개와 나머지 분리
-  const top10 = sortedData.slice(0, 10)
-  const others = sortedData.slice(10)
-  
-  let labels = top10.map(item => item.label)
-  let data = top10.map(item => item.value)
-  
-  // 나머지가 있으면 "기타"로 묶기
+  // productName별로 합산
+  const map = {};
+  filteredData.value.forEach(item => {
+    const key = item.productName || item.productId;
+    if (!map[key]) map[key] = 0;
+    map[key] += item.orderQuantity || 0;
+  });
+  // 정렬 및 상위 10개 + 기타
+  const sorted = Object.entries(map)
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value);
+  const top10 = sorted.slice(0, 10);
+  const others = sorted.slice(10);
+  let labels = top10.map(item => item.label);
+  let data = top10.map(item => item.value);
   if (others.length > 0) {
-    const othersSum = others.reduce((sum, item) => sum + item.value, 0)
-    labels.push('기타')
-    data.push(othersSum)
+    labels.push('기타');
+    data.push(others.reduce((sum, item) => sum + item.value, 0));
   }
-
   return {
     labels,
-    datasets: [
-      {
-        data,
-        backgroundColor: colorPalette.slice(0, labels.length),
-        borderWidth: 2
-      }
-    ]
-  }
+    datasets: [{
+      data,
+      backgroundColor: colorPalette.slice(0, labels.length),
+      borderWidth: 2
+    }]
+  };
 })
 
 const doughnutOptions = {

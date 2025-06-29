@@ -1,45 +1,48 @@
 <template>
-  <div class="dashboard-card-list">
-    <div class="dashboard-card in-progress-order" @click="goToApproval">
-      <div class="card-header">
-        <span>진행중인 주문 결재 요청</span>
-        <span class="card-icon">🛒</span>
+  <div>
+    <div class="dashboard-card-list">
+      <div class="dashboard-card in-progress-order" @click="goToApproval">
+        <div class="card-header">
+          <span>진행중인 주문 결재 요청</span>
+          <span class="card-icon">🛒</span>
+        </div>
+        <div class="card-main">
+          <span class="card-value">{{ inProgressOrder.count }}</span>
+        </div>
       </div>
-      <div class="card-main">
-        <span class="card-value">{{ inProgressOrder.count }}</span>
+      <div class="dashboard-card in-progress-approval" @click="goToApproval">
+        <div class="card-header">
+          <span>진행중인 반품 결재 요청</span>
+          <span class="card-icon">📦</span>
+        </div>
+        <div class="card-main">
+          <span class="card-value">{{ inProgressApproval.count }}</span>
+        </div>
       </div>
-    </div>
-    <div class="dashboard-card in-progress-approval" @click="goToApproval">
-      <div class="card-header">
-        <span>진행중인 반품 결재 요청</span>
-        <span class="card-icon">📦</span>
-      </div>
-      <div class="card-main">
-        <span class="card-value">{{ inProgressApproval.count }}</span>
-      </div>
-    </div>
-    <div class="dashboard-card completed-order" @click="goToApprovalCompleted">
-      <div class="card-header">
-        <span>완료된 주문 결재 요청</span>
-        <span class="card-icon">📈</span>
-      </div>
-      <div class="card-main">
-        <span class="card-value">{{ completedOrder.count }}</span>
-        <span v-if="typeof completedOrder.diff === 'number'" class="card-diff"
-          :class="{
-            up: completedOrder.diff > 0,
-            down: completedOrder.diff < 0,
-            zero: completedOrder.diff === 0
-          }"
-        >
-          {{ completedOrder.diff > 0 ? '+' : '' }}{{ completedOrder.diff }}
-        </span>
+      <div class="dashboard-card completed-order" @click="goToApprovalCompleted">
+        <div class="card-header">
+          <span>완료된 주문 결재 요청</span>
+          <span class="card-icon">📈</span>
+        </div>
+        <div class="card-main">
+          <span class="card-value">{{ completedOrder.count }}</span>
+          <span v-if="typeof completedOrder.diff === 'number'" class="card-diff"
+            :class="{
+              up: completedOrder.diff > 0,
+              down: completedOrder.diff < 0,
+              zero: completedOrder.diff === 0
+            }"
+          >
+            {{ completedOrder.diff > 0 ? '+' : '' }}{{ completedOrder.diff }}
+          </span>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 const props = defineProps({
   inProgressOrder: {
@@ -53,7 +56,11 @@ const props = defineProps({
   completedOrder: {
     type: Object,
     default: () => ({ count: 0, diff: 0 })
-  }
+  },
+  sidebarTab: { type: String, default: 'mine' },
+  orderAmountChartData: { type: Array, default: () => [] },
+  productOrderChartData: { type: Array, default: () => [] },
+  returnProductChartData: { type: Array, default: () => [] }
 })
 const router = useRouter()
 function goToApproval() {
@@ -62,6 +69,8 @@ function goToApproval() {
 function goToApprovalCompleted() {
   router.push({ path: '/approval', query: { tab: '결재완료' } })
 }
+const now = new Date()
+const selectedMonth = ref(now.getMonth() + 1)
 </script>
 
 <style scoped>
@@ -133,6 +142,25 @@ function goToApprovalCompleted() {
 .card-footer {
   font-size: 0.95rem;
   color: #888;
+}
+.month-selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 12px 0;
+}
+.month-select {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid #d0d7e2;
+  font-size: 1rem;
+  background: #f8fafd;
+  color: #222;
+  outline: none;
+  transition: border 0.18s;
+}
+.month-select:focus {
+  border: 1.5px solid #3366FF;
 }
 </style>
   
