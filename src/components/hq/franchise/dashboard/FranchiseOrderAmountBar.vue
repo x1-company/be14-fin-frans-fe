@@ -156,9 +156,7 @@ const barOptions = {
     },
     x: {
       ticks: {
-        autoSkip: false,
-        maxRotation: 45,
-        minRotation: 20
+        display: false
       },
       grid: { display: false }
     }
