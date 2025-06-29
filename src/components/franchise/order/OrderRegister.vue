@@ -19,14 +19,14 @@
                         class="search-input" />
                     <button @click="searchProducts" class="search-btn">검색</button>
                 </div> -->
-                <button @click="isMaterialModalVisible = true" class="search-btn">자재 검색</button>
             </div>
             <div class="right-actions">
                 <!-- <button class="recent-order-btn" @click="loadRecentOrder">
                     📋 최근 주문 불러오기
                 </button> -->
+                <button @click="isMaterialModalVisible = true" class="search-btn">🔍 &nbsp;&nbsp;자재 검색</button>
                 <button class="recent-order-btn" @click="loadOrderTemplate">
-                    📄 주문 템플릿 불러오기
+                    📄&nbsp;&nbsp; 주문 템플릿 불러오기
                 </button>
             </div>
         </div>
@@ -43,15 +43,15 @@
                     <div class="col col-no">No.</div>
                     <div class="col col-code">자재 번호</div>
                     <div class="col col-name">자재명</div>
-                    <div class="col col-price">구매 단가</div>
+                    <div class="col col-price">판매 단가</div>
                     <div class="col col-quantity">수량</div>
                     <div class="col col-unit">단위</div>
-                    <div class="col col-spec">규격</div>
+                    <!-- <div class="col col-spec">규격</div> -->
                     <div class="col col-group">자재 분류</div>
                     <div class="col col-type">자재 구분</div>
                     <div class="col col-attr">자재 속성</div>
                     <div class="col col-amount">금액</div>
-                    <div class="col col-supplier">협력 업체</div>
+                    <div class="col col-supplier">공급처</div>
                     <div class="col col-delete">삭제</div>
                 </div>
                 <div class="product-table-body">
@@ -68,7 +68,7 @@
                                 class="quantity-input" />
                         </div>
                         <div class="col col-unit">{{ item.unit }}</div>
-                        <div class="col col-spec">{{ item.spec }}</div>
+                        <!-- <div class="col col-spec">{{ item.spec }}</div> -->
                         <div class="col col-group"><span :class="getTagClass('group')">{{ getProductGroupName(item.productGroupId) }}</span></div>
                         <div class="col col-type"><span :class="getTagClass('type')">{{ getProductTypeName(item.productTypeId) }}</span></div>
                         <div class="col col-attr"><span :class="getTagClass('attr')">{{ getProductAttributeName(item.productAttributeId) }}</span></div>
@@ -201,7 +201,7 @@ const addToOrderList = (product) => {
         const orderItem = {
             ...product,
             quantity: product.quantity || 1,
-            totalAmount: product.sale_price
+            totalAmount: product.sale_price * (product.quantity || 1)
         }
         orderList.value.push(orderItem)
     }
@@ -459,19 +459,23 @@ const confirmSubmitOrder = async () => {
 }
 
 .search-btn {
-    background: #4066fa;
-    color: white;
-    border: none;
-    padding: 8px 20px;
+    padding: 7px 13px;
     border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    font-size: 13px;
     font-weight: 600;
-    transition: background-color 0.2s;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #1976d2;
+    border-color: #bbdefb;
 }
 
 .search-btn:hover {
-    background: #3453c7;
+    background: #f5faff;
 }
 
 .search-results {
@@ -554,8 +558,8 @@ const confirmSubmitOrder = async () => {
 }
 
 .total-amount {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: #4066fa;
 }
 
@@ -604,19 +608,19 @@ const confirmSubmitOrder = async () => {
     white-space: nowrap;
 }
 
-.col-no       { flex-basis: 4%; }
-.col-code     { flex-basis: 8%; font-family: monospace; color: #6c757d; }
-.col-name     { flex-basis: 12%; text-align: left; font-weight: 500; }
-.col-price    { flex-basis: 8%; text-align: right; }
-.col-quantity { flex-basis: 8%; }
-.col-unit     { flex-basis: 5%; }
-.col-spec     { flex-basis: 8%; }
-.col-group    { flex-basis: 8%; }
-.col-type     { flex-basis: 8%; }
-.col-attr     { flex-basis: 8%; }
-.col-amount   { flex-basis: 8%; text-align: right; font-weight: 500; }
-.col-supplier { flex-basis: 8%; }
-.col-delete   { flex-basis: 4%; }
+.col-no       { flex-basis: 4%; text-align: left;}
+.col-code     { flex-basis: 8%; }
+.col-name     { flex-basis: 15%; }
+.col-price    { flex-basis: 8%; text-align: center;}
+.col-quantity { flex-basis: 9%; text-align: center;}
+.col-unit     { flex-basis: 9%; text-align: center;}
+/* .col-spec     { flex-basis: 8%; } */
+.col-group    { flex-basis: 9%; text-align: center;}
+.col-type     { flex-basis: 9%; text-align: center;}
+.col-attr     { flex-basis: 9%; text-align: center;}
+.col-amount   { flex-basis: 10%; font-weight: 500; }
+.col-supplier { flex-basis: 10%; }
+.col-delete   { flex-basis: 6%; }
 
 .product-tag {
     display: inline-block;

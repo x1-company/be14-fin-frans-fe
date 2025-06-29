@@ -20,7 +20,7 @@ const activeTab = ref(0);
             title="구매관리"
             desc="구매 요청 현황을 확인하고 관리할 수 있습니다."
           />
-          <InfoForm :activeTab="activeTab" @change-tab="activeTab = $event" />
+          <InfoForm />
         </div>
       </div>
     </div>
@@ -36,7 +36,7 @@ const activeTab = ref(0);
   background: #f8f9fa;
 }
 .breadcrumb-container {
-  padding: 16px 24px 0 24px;
+  padding: 16px 24px 16px 24px;
 }
 .info-content {
   flex: 1;
@@ -44,8 +44,8 @@ const activeTab = ref(0);
   padding: 0 0 24px 0;
 }
 .header-banner {
-  color: white;
-  padding: 32px 24px 0 24px;
+  /* color: white; */
+  padding: 10px 24px 0 24px;
 }
 .info-group {
   background: transparent;

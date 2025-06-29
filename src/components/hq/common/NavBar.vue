@@ -5,11 +5,9 @@
     </div>
     <div class="navbar__right">
       <ul class="navbar__menu">
-        <li :class="{ active: activeMenu === '대시보드' }" @click="selectMenuItem('대시보드')">대시보드</li>
         <li :class="{ active: activeMenu === '가맹점관리' }" @click="navigateToHqFranchise">가맹점관리</li>
         <li :class="{ active: activeMenu === '공급처관리' }" @click="navigateToSupplier">공급처관리</li>
         <li :class="{ active: activeMenu === '구매관리' }" @click="navigateToPurchase">구매관리</li>
-        <li :class="{ active: activeMenu === '창고관리' }" @click="navigateToWarehouse">창고관리</li>
         <li :class="{ active: activeMenu === '결재관리' }" @click="navigateToApproval">결재관리</li>
       </ul>
       <div class="notification-wrapper" ref="notificationWrapper">
@@ -51,21 +49,13 @@ const notificationWrapper = ref(null);
 
 const activeMenu = computed(() => {
   const path = route.path;
-  if (path === '/') return '대시보드';
   if (path.startsWith('/hq/franchise')) return '가맹점관리';
   if (path.startsWith('/hq-supplier')) return '공급처관리';
   if (path.startsWith('/purchase')) return '구매관리';
-  if (path.startsWith('/warehouse')) return '창고관리';
   if (path.startsWith('/approval')) return '결재관리';
   return '';
 });
 
-const selectMenuItem = (itemText) => {
-  if (itemText === '대시보드') {
-    router.push('/');
-  }
-  emit("update-breadcrumb", ["HOME", itemText]);
-};
 
 const navigateToWarehouse = () => {
   router.push("/warehouse");
@@ -122,8 +112,8 @@ onUnmounted(() => {
   background: #4066fa;
   color: #fff;
   padding: 0 15px;
-  height: 38px;
-  font-family: "NanumSquareOTF", sans-serif;
+  height: 42px;
+  /* font-family: "NanumSquareOTF", sans-serif; */
 }
 
 .navbar__right {
@@ -143,19 +133,19 @@ onUnmounted(() => {
 }
 .navbar__menu li {
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.98rem;
+  font-weight: 600;
   color: #b2c5ff;
   padding: 0 12px;
   /* transition: color 0.2s; */
 }
 .navbar__menu li:hover {
   color: #fff;
-  font-weight: 1000;
+  font-weight: 750;
 }
 .navbar__menu li.active {
   color: #fff;
-  font-weight: bold;
+  font-weight: 750;
 }
 .notification-icon {
   width: 23px;

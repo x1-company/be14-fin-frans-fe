@@ -106,7 +106,7 @@ function selectAll(event) {
 
 function addProducts() {
   emit('add-products', selectedProducts.value);
-  close();
+  emit('close');
 }
 
 function close() {

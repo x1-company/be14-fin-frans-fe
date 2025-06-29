@@ -250,13 +250,9 @@
                       >
                         {{ formatFileSize(file.size) }}
                       </template>
-                      <template v-else-if="file.url">
-                        <span v-if="file._sizeLoading">...</span>
-                        <span v-else>{{
-                          fetchAndShowFileSize(file, index)
-                        }}</span>
+                      <template v-else>
+                        <span>-</span>
                       </template>
-                      <template v-else>-</template>
                     </div>
                   </div>
                 </div>
@@ -282,7 +278,7 @@
                 재기안
               </button>
             </template>
-            <!-- 일반 수정 모드일 때는 수정/등록 버튼 표시 -->
+            <!-- 일반 수정 모드일 때는 수정/등록/삭제 버튼 표시 -->
             <template v-else>
               <button
                 class="edit-button"
@@ -297,6 +293,13 @@
                 :disabled="isSubmitting"
               >
                 등록
+              </button>
+              <button
+                class="delete-button"
+                @click="showDeleteModal = true"
+                :disabled="isSubmitting"
+              >
+                삭제
               </button>
             </template>
           </div>
@@ -327,6 +330,32 @@
       @close="showTemplateModal = false"
       @select-template="handleSelectTemplate"
     />
+
+    <!-- 삭제 확인 모달 -->
+    <div v-if="showDeleteModal" class="modal-overlay" style="z-index: 3000">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>임시저장 결재 삭제</h3>
+          <button class="close-button" @click="showDeleteModal = false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>정말로 이 임시저장 결재를 삭제하시겠습니까?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-button" @click="showDeleteModal = false"
+            >취소</button
+          >
+          <button class="confirm-delete-button" @click="confirmDelete"
+            >삭제</button
+          >
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -382,6 +411,7 @@ const showOrderListModal = ref(false);
 const showApprovalLineModal = ref(false);
 const showTemplateModal = ref(false);
 const isSubmitting = ref(false);
+const showDeleteModal = ref(false);
 
 // 파일 입력을 위한 ref 추가
 const fileInput = ref(null);
@@ -534,33 +564,48 @@ const removeDocument = (docId) => {
   emitFormData();
 };
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
 const uploadFiles = async (files) => {
   try {
+    console.log("[uploadFiles] 업로드 시도 파일:", files);
     const formData = new FormData();
-
     files.forEach((file) => {
       formData.append("files", file);
     });
-
     formData.append("type", "approval");
-
     const response = await api.post("/api/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
-
-    console.log(response.data);
+    console.log("[uploadFiles] 서버 응답:", response);
+    if (!response.data || response.status >= 400) {
+      throw new Error(
+        "서버 응답 오류: " + (response.data?.message || response.status)
+      );
+    }
     return response.data;
   } catch (error) {
-    console.error("파일 업로드 실패:", error);
-    throw new Error("파일 업로드에 실패했습니다.");
+    console.error("파일 업로드 실패:", error, error?.response);
+    toast.error(
+      "파일 업로드에 실패했습니다. " +
+        (error?.response?.data?.message || error.message)
+    );
+    throw new Error(
+      "파일 업로드에 실패했습니다. " +
+        (error?.response?.data?.message || error.message)
+    );
   }
 };
 
 const handleFileSelect = (event) => {
   const files = Array.from(event.target.files);
   files.forEach((file) => {
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("20MB 이하 파일만 업로드할 수 있습니다.");
+      return;
+    }
     formData.value.files.push({
       name: file.name,
       size: file.size,
@@ -900,12 +945,16 @@ const handleEdit = async () => {
       requestData
     );
 
-    if (response.status === 200 || response.status === 201) {
+    if (
+      (response.status === 200 ||
+        response.status === 201 ||
+        response.status === 204) &&
+      response.data &&
+      response.data.success
+    ) {
       toast.success("임시저장이 완료되었습니다.");
       emit("approval-submitted", response.data);
-      router.push("/approval").then(() => {
-        window.location.reload();
-      });
+      router.push("/approval?tab=전체");
     }
   } catch (error) {
     console.error("임시저장 실패:", error);
@@ -1007,7 +1056,13 @@ const handleRegister = async () => {
       requestData
     );
 
-    if (response.status === 200 || response.status === 201) {
+    if (
+      (response.status === 200 ||
+        response.status === 201 ||
+        response.status === 204) &&
+      response.data &&
+      response.data.success
+    ) {
       const message = props.isEditMode
         ? "결재가 수정되었습니다."
         : "결재가 등록되었습니다.";
@@ -1281,12 +1336,16 @@ const handleResubmit = async () => {
       requestData
     );
 
-    if (response.status === 200 || response.status === 201) {
+    if (
+      (response.status === 200 ||
+        response.status === 201 ||
+        response.status === 204) &&
+      response.data &&
+      response.data.success
+    ) {
       toast.success("재기안이 완료되었습니다.");
       emit("approval-submitted", response.data);
-      router.push("/approval").then(() => {
-        window.location.reload();
-      });
+      router.push("/approval?tab=전체");
     }
   } catch (error) {
     console.error("재기안 실패:", error);
@@ -1298,19 +1357,10 @@ const handleResubmit = async () => {
 
 // 파일 크기 동적 조회 함수
 const fetchFileSize = async (file, index) => {
+  // S3 CORS 문제 우회: file.size가 없으면 HEAD 요청하지 않음
+  // 그냥 null 또는 '-'로 표시
   if (!file.url || file.size) return;
-  try {
-    const response = await fetch(file.url, { method: "HEAD" });
-    const size = response.headers.get("Content-Length");
-    if (size) {
-      // 반응형으로 할당
-      formData.value.files[index].size = Number(size);
-    } else {
-      formData.value.files[index].size = null;
-    }
-  } catch (e) {
-    formData.value.files[index].size = null;
-  }
+  formData.value.files[index].size = null; // 또는 원하는 표시값
 };
 
 // fetchAndShowFileSize 함수 추가
@@ -1322,6 +1372,59 @@ const fetchAndShowFileSize = (file, index) => {
     });
   }
   return "...";
+};
+
+// 삭제 핸들러 함수 추가
+const handleDelete = async () => {
+  console.log("[ApprovalEdit] handleDelete 호출됨");
+  if (isSubmitting.value) return;
+  if (!props.approvalId) {
+    toast.error("삭제할 결재 ID가 없습니다.");
+    return;
+  }
+  try {
+    isSubmitting.value = true;
+    const response = await api.delete(
+      `/api/hq/approvals/drafts/${props.approvalId}`
+    );
+    console.log("[ApprovalEdit] api.delete 응답:", response);
+
+    if (
+      (response.status === 200 ||
+        response.status === 201 ||
+        response.status === 204) &&
+      response.data &&
+      response.data.success
+    ) {
+      toast.success(response.data.message || "임시저장 결재가 삭제되었습니다.");
+      console.log("[ApprovalEdit] emit refresh-list, approval-submitted");
+      emit("refresh-list");
+      emit("approval-submitted", response.data);
+      showDeleteModal.value = false;
+      // 삭제 성공 시 '전체' 탭으로 이동
+      console.log("[ApprovalEdit] 삭제 성공, 전체 탭으로 이동 시도");
+      router.push("/approval?tab=전체").then(() => {
+        console.log("[ApprovalEdit] router.push 완료");
+      });
+    } else {
+      console.log("[ApprovalEdit] 삭제 실패 응답:", response);
+      toast.error(
+        response.data?.message || "삭제에 실패했습니다. 다시 시도해주세요."
+      );
+      showDeleteModal.value = false;
+    }
+  } catch (error) {
+    console.error("[ApprovalEdit] 삭제 실패 (catch):", error);
+    toast.error("삭제에 실패했습니다. 다시 시도해주세요.");
+    showDeleteModal.value = false;
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const confirmDelete = async () => {
+  console.log("[ApprovalEdit] confirmDelete 호출됨");
+  await handleDelete();
 };
 
 defineExpose({
@@ -1533,7 +1636,6 @@ defineExpose({
   color: #ef4444;
   cursor: pointer;
   font-size: 16px;
-  padding: 4px;
 }
 
 .approve-button {
@@ -1870,5 +1972,108 @@ defineExpose({
   color: #ef4444;
   cursor: pointer;
   font-size: 16px;
+}
+
+.delete-button {
+  padding: 12px 24px;
+  border-radius: 6px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #ef4444;
+  color: white;
+  border: 1px solid #ef4444;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+.delete-button:disabled {
+  background: #fca5a5;
+  color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+/* 삭제 확인 모달 */
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e9ecef;
+}
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+}
+.close-button {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.close-button:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+.close-button svg {
+  width: 20px;
+  height: 20px;
+}
+.modal-body {
+  padding: 24px;
+}
+.modal-body p {
+  margin: 0 0 16px 0;
+  color: #495057;
+  font-size: 16px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e9ecef;
+}
+.confirm-delete-button {
+  padding: 8px 16px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.confirm-delete-button:hover:not(:disabled) {
+  background: #c82333;
+}
+.cancel-button {
+  padding: 8px 16px;
+  border: 1px solid #dee2e6;
+  background: white;
+  color: #495057;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+.cancel-button:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
 }
 </style>

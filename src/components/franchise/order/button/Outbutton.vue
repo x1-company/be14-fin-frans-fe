@@ -1,6 +1,6 @@
 <template>
     <!-- <div class="order-actions"> -->
-        <button class="btn close" @click="handleClose"><span class="icon">&#10005;</span> 닫기</button>
+        <button class="btn close" @click="handleClose">목록으로</button>
     <!-- </div> -->
   </template>
 
@@ -35,8 +35,19 @@ function handleClose() {
     border-color: #bbdefb;
     margin-top: -20px;
 }
-.btn.print,
-.btn.close {
+.btn.close{
+  background: #f8f9fa;
+  color: #212529;
+  border: 1px solid #dee2e6;
+  padding: 6px 13px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn.print {
   color: #1976d2;
   border-color: #bbdefb;
 }

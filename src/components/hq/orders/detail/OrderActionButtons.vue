@@ -46,7 +46,11 @@
         @click="showEditDeliveryModal = true"
         >수정</button>
 
-        <button class="btn print" @click="showPrintModal = true">
+        <button
+        v-if="['APPROVED', 'DELIVERING', 'DELIVERED'].includes(order?.status)"
+        class="btn print"
+        @click="showPrintModal = true"
+        >
             <span class="icon">&#128424;</span> 주문서 출력
         </button>
 

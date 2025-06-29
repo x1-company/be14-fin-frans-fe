@@ -9,6 +9,7 @@
       @select-menu="handleSelectMenu"
       @document-view="handleDocumentView"
       @edit-document="handleEditDocument"
+      @refresh-list="handleRefreshList"
     />
 
     <!-- 수신 관련 메뉴일 때 ReceptionList 표시 -->
@@ -75,7 +76,15 @@ const handleSelectMenu = (menuValue) => {
 const handleEditDocument = (document) => {
   emit("edit-document", document);
 };
-const emit = defineEmits(["tab-change", "select-menu", "edit-document"]);
+const handleRefreshList = () => {
+  emit("refresh-list");
+};
+const emit = defineEmits([
+  "tab-change",
+  "select-menu",
+  "edit-document",
+  "refresh-list",
+]);
 
 const props = defineProps({
   approvalList: {

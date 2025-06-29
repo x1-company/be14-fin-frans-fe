@@ -75,9 +75,11 @@ import OrderApprovalForm from "./OrderApprovalForm.vue";
 import { useToast } from "@/composables/useToast";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
 
 const showToast = useToast();
 const authStore = useAuthStore();
+const router = useRouter();
 
 const emit = defineEmits([
   "submit",
@@ -382,15 +384,14 @@ const processAndSubmit = async (isRequest) => {
 
       if (isRequest && response.data?.data?.id) {
         // 결재 요청 성공 시 생성된 결재 ID를 전달
-        console.log("결재 상세 페이지로 이동:", response.data.data.id);
         emit("approval-submitted", response.data.data);
-
-        // 목록 새로고침 이벤트 발생
         emit("refresh-list");
       } else {
         // 임시저장이거나 ID가 없는 경우 기존 동작
         console.log("임시저장 또는 ID 없음, 등록 모드 종료");
         emit("draft-saved");
+        // 임시저장 성공 시 /approval 경로로 이동
+        router.push("/approval");
       }
     } else {
       throw new Error(

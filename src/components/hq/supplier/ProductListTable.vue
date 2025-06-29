@@ -1,4 +1,4 @@
-<template>
+ㅣ<template>
   <div class="product-list-container">
     <div class="product-list-header">
       <div class="product-list-title">자재 목록</div>
@@ -31,8 +31,8 @@
           </select>
           <input v-model="search" class="product-list-search" :disabled="searchType==='all'" placeholder="검색어를 입력해주세요" @keyup.enter="fetchList" />
           <button class="product-list-search-btn" @click="fetchList">검색</button>
+          <button class="product-list-reset-btn" @click="resetFilters">초기화</button>
           <button class="product-list-register-btn" @click="goToRegister">
-            <Pencil :size="16" color="white" />
             <span>등록</span>
           </button>
         </div>
@@ -58,52 +58,51 @@
         <tbody>
           <tr v-for="(item, idx) in pagedList" :key="item.id">
             <td>{{ (page - 1) * pageSize + idx + 1 }}</td>
-            <td>
-              <router-link
-                :to="`/warehouse/product/${item.id}`"
-                class="product-link"
-                >{{ item.code }}</router-link
-              >
-            </td>
+            <td><span class="product-code">{{ item.code }}</span></td>
             <td>{{ item.name }}</td>
             <td>{{ item.spec }}</td>
             <td>{{ item.purchaseUnit }}</td>
             <td>{{ item.unit }}</td>
-            <td>{{ groupLabel(item.productGroupId) }}</td>
-            <td>{{ typeLabel(item.productTypeId) }}</td>
-            <td>{{ attrLabel(item.productAttributeId) }}</td>
+            <td><span class="badge blue">{{ groupLabel(item.productGroupId) }}</span></td>
+            <td><span class="badge purple">{{ typeLabel(item.productTypeId) }}</span></td>
+            <td><span class="badge green">{{ attrLabel(item.productAttributeId) }}</span></td>
             <td>{{ item.supplierName }}</td>
             <td>{{ item.isActive ? 'Y' : 'N' }}</td>
           </tr>
           <tr v-if="list.length === 0">
-            <td colspan="11" class="no-data">데이터가 없습니다.</td>
+            <td colspan="11" class="no-data">자재 내역이 없습니다.</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div class="product-list-pagination">
-      <button :disabled="page===1" @click="page--">&lt;</button>
-      <button v-for="p in totalPages" :key="p" :class="['page-btn', {active: p===page}]" @click="goPage(p)">{{ p }}</button>
-      <button :disabled="page===totalPages" @click="page++">&gt;</button>
+    <div class="product-list-bottom">
+      <div class="pagination">
+        <button class="page-arrow" :disabled="page===1" @click="page--">&lt;</button>
+        <span
+          v-for="p in paginationPages"
+          :key="p"
+          :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
+          @click="typeof p === 'number' && goPage(p)"
+        >
+          {{ p }}
+        </span>
+        <button class="page-arrow" :disabled="page===totalPages" @click="page++">&gt;</button>
+      </div>
+      <div class="order-form__total">총 {{ total }}개 항목</div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { Pencil } from 'lucide-vue-next';
 import api from '@/lib/api';
-
 const props = defineProps({
   supplierId: {
     type: [String, Number],
     default: null,
   },
 });
-
-
-const router = useRouter();
+const emit = defineEmits(['show-register']);
 const page = ref(1);
 const pageSize = 10;
 const total = ref(0);
@@ -113,10 +112,7 @@ const filterType = ref('');
 const filterGroup = ref('');
 const filterAttr = ref('');
 const filterActive = ref('');
-const searchType = ref('all'); // 'all', 'name', 'code', 'supplier'
-const emit = defineEmits(['show-register']);
-
-// === ENUM 매핑 테이블 ===
+const searchType = ref('all');
 const PRODUCT_GROUP_MAP = { 1: '상온', 2: '냉장', 3: '냉동', 4: '기타' };
 const PRODUCT_TYPE_MAP = {
   1: '원재료',
@@ -132,11 +128,9 @@ const PRODUCT_ATTRIBUTE_MAP = {
   2: '비신선식품',
   3: '비식품',
 };
-
 const typeOptions = Object.entries(PRODUCT_TYPE_MAP).map(([value, label]) => ({ value: Number(value), label }));
 const groupOptions = Object.entries(PRODUCT_GROUP_MAP).map(([value, label]) => ({ value: Number(value), label }));
 const attrOptions = Object.entries(PRODUCT_ATTRIBUTE_MAP).map(([value, label]) => ({ value: Number(value), label }));
-
 function typeLabel(val) {
   return PRODUCT_TYPE_MAP[val] || val;
 }
@@ -146,22 +140,51 @@ function groupLabel(val) {
 function attrLabel(val) {
   return PRODUCT_ATTRIBUTE_MAP[val] || val;
 }
-
 const pagedList = computed(() => {
   return list.value.slice((page.value - 1) * pageSize, page.value * pageSize);
 });
-
 const totalPages = computed(() => Math.ceil(total.value / pageSize) || 1);
-
+const paginationPages = computed(() => {
+  const pages = [];
+  const current = page.value;
+  const totalP = totalPages.value;
+  if (totalP <= 7) {
+    for (let i = 1; i <= totalP; i++) pages.push(i);
+  } else {
+    if (current <= 4) {
+      for (let i = 1; i <= 5; i++) pages.push(i);
+      pages.push('...');
+      pages.push(totalP);
+    } else if (current >= totalP - 3) {
+      pages.push(1);
+      pages.push('...');
+      for (let i = totalP - 4; i <= totalP; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      pages.push('...');
+      for (let i = current - 1; i <= current + 1; i++) pages.push(i);
+      pages.push('...');
+      pages.push(totalP);
+    }
+  }
+  return pages;
+});
 function goPage(p) {
-  if (p < 1 || p > totalPages.value) return;
+  if (typeof p !== 'number' || p < 1 || p > totalPages.value) return;
   page.value = p;
 }
-
 function goToRegister() {
   emit('show-register');
 }
-
+function resetFilters() {
+  filterType.value = '';
+  filterGroup.value = '';
+  filterAttr.value = '';
+  filterActive.value = '';
+  searchType.value = 'all';
+  search.value = '';
+  fetchList();
+}
 async function fetchList() {
   const params = {};
   if (props.supplierId) params.supplierId = props.supplierId;
@@ -169,7 +192,6 @@ async function fetchList() {
   if (filterGroup.value) params.productGroupId = Number(filterGroup.value);
   if (filterAttr.value) params.productAttributeId = Number(filterAttr.value);
   if (filterActive.value) params.isActive = filterActive.value;
-  // 전체
   if (searchType.value === 'all') {
     try {
       const { data } = await api.get('/api/hq/products/list', { params });
@@ -182,7 +204,6 @@ async function fetchList() {
     }
     return;
   }
-  // 검색 타입별 API
   if (!search.value) {
     list.value = [];
     total.value = 0;
@@ -208,31 +229,27 @@ async function fetchList() {
     total.value = 0;
   }
 }
-
 onMounted(fetchList);
 watch([
   () => props.supplierId,
   filterType, filterGroup, filterAttr, filterActive
 ], fetchList);
-
 </script>
 
 <style scoped>
 .product-list-container {
-  position: relative;
-  min-height: 800px;
   background: #fff;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 16px 16px;
   box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
-  padding: 40px 100px 32px 100px;
-  margin-top: 0;
-  font-family: 'NanumSquareOTF_acR', 'NanumSquareOTF_acB', 'NanumSquareOTF_acEB', 'NanumSquareOTF_acL', 'Apple SD Gothic Neo', Arial, sans-serif !important;
+  padding: 50px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 .product-list-header {
   margin-bottom: 18px;
 }
 .product-list-title {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: bold;
   color: #222;
   margin-bottom: 16px;
@@ -241,92 +258,113 @@ watch([
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .filter-group,
 .search-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  flex-wrap: wrap;
 }
 .product-list-select {
-  height: 32px;
-  border: 1px solid #d1d5db;
+  height: 35px;
+  border: 1px solid #e9ecef;
   border-radius: 6px;
-  padding: 0 12px;
-  font-size: 1rem;
+  padding: 0 10px;
+  font-size: 0.9rem;
   background: #f8f9fa;
   color: #222;
 }
 .product-list-search {
-  height: 32px;
-  border: 1px solid #d1d5db;
+  height: 35px;
+  border: 1px solid #e9ecef;
   border-radius: 6px;
-  padding: 0 12px;
-  font-size: 1rem;
+  padding: 0 10px;
+  font-size: 0.9rem;
   background: #fff;
   color: #222;
   width: 180px;
 }
 .product-list-search-btn {
-  height: 32px;
+  height: 28px;
   background: #4066fa;
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 0 18px;
-  font-size: 1rem;
+  padding: 0 12px;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   margin-left: 2px;
   transition: background 0.2s;
 }
 .product-list-search-btn:hover {
-  background: #3453c7;
+  background: #2746b6;
+}
+.product-list-reset-btn {
+  height: 28px;
+  background: #e9ecef;
+  color: #4066fa;
+  border: none;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 2px;
+  transition: background 0.2s, color 0.2s;
+}
+.product-list-reset-btn:hover {
+  background: #d0d7e6;
+  color: #3453c7;
 }
 .product-list-register-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 32px;
+  height: 28px;
   background: #4066fa;
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 0 18px;
-  font-size: 1rem;
+  padding: 0 12px;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   margin-left: 8px;
   transition: background 0.2s;
 }
 .product-list-register-btn:hover {
-  background: #3453c7;
+  background: #2746b6;
 }
 .product-list-table-wrapper {
   margin-top: 8px;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #eef0f4;
   background: #fff;
+  width: 100%;
 }
 .product-list-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
-  font-size: 1rem;
+  font-size: 14px;
   background: #fff;
+  table-layout: auto;
 }
 .product-list-table thead {
-  background: #f4f6fa;
+  background: #f8f9fa;
   font-weight: bold;
 }
 .product-list-table th, .product-list-table td {
   padding: 12px 16px;
   text-align: center;
   vertical-align: middle;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 1rem;
+  border-bottom: 1px solid #f1f3f4;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -338,61 +376,118 @@ watch([
   text-align: left;
 }
 .product-list-table th {
-  background-color: #f9fafb;
-  color: #374151;
+  background-color: #f8f9fa;
+  color: #495057;
   font-weight: 600;
+  text-align: center;
 }
 .product-list-table td {
-  color: #374151;
-  height: 49px;
+  color: #212529;
+  height: 44px;
 }
 .product-list-table tbody tr:last-child td {
   border-bottom: none;
 }
-.product-link {
-  color: #4066fa;
-  text-decoration: none;
-  cursor: pointer;
-  transition: text-decoration 0.2s;
-}
-.product-link:hover {
-  text-decoration: underline;
-}
 .no-data {
   text-align: center;
-  padding: 48px 0;
-  color: #6b7280;
+  padding: 40px;
+  color: #6c757d;
+  font-style: italic;
 }
-.product-list-pagination {
-  position: absolute;
-  bottom: 32px;
-  left: 0;
-  right: 0;
+.product-list-bottom {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 18px;
+  position: relative;
+}
+.pagination {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+}
+.order-form__total {
+  color: #888;
+  font-size: 0.92rem;
+  text-align: right;
+  min-width: 120px;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 .page-btn {
-  background: #fff;
-  border: 1px solid #d1d5db;
-  color: #4066fa;
+  min-width: 28px;
+  height: 28px;
   border-radius: 6px;
-  padding: 4px 12px;
-  font-size: 1rem;
-  margin: 0 2px;
+  border: 1px solid #e2e4ea;
+  background: #fff;
+  color: #222;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border 0.2s, color 0.2s;
+  user-select: none;
+}
+.page-btn.active {
+  border: 2px solid #6c47ff;
+  color: #6c47ff;
+  font-weight: 700;
+  background: #f8f6ff;
+}
+.page-btn.ellipsis {
+  cursor: default;
+  color: #bdbdbd;
+  border: none;
+  background: transparent;
+  pointer-events: none;
+}
+.page-arrow {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e4ea;
+  background: #f5f6fa;
+  color: #bdbdbd;
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
-.page-btn.active, .page-btn:hover {
-  background: #4066fa;
-  color: #fff;
-  border-color: #4066fa;
-}
-.product-list-pagination button[disabled] {
-  opacity: 0.4;
+.page-arrow:disabled {
+  background: #e2e4ea;
+  color: #bdbdbd;
   cursor: not-allowed;
 }
-.product-list-header, .product-list-title, .product-list-controls, .product-list-select, .product-list-search, .product-list-search-btn, .product-list-register-btn, .product-list-table, .product-list-table th, .product-list-table td, .page-btn {
-  font-family: 'NanumSquareOTF_acR', 'NanumSquareOTF_acB', 'NanumSquareOTF_acEB', 'NanumSquareOTF_acL', 'Apple SD Gothic Neo', Arial, sans-serif !important;
+.badge {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: inline-block;
+}
+.badge.blue {
+  background: #e0f0ff;
+  color: #2563eb;
+}
+.badge.purple {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+.badge.green {
+  background: #e6f9ed;
+  color: #16a34a;
+}
+.product-code {
+  color: #4066fa !important;
+  font-weight: 500;
 }
 </style> 

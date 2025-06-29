@@ -7,7 +7,7 @@
     >
       주문 취소
     </button>
-      <button class="btn print" @click="handlePrint"><span class="icon">&#128424;</span> 주문서 출력</button>
+      <!-- <button class="btn print" @click="handlePrint"><span class="icon">&#128424;</span> 주문서 출력</button> -->
       <button class="btn close" @click="handleClose"><span class="icon">&#10005;</span> 닫기</button>
       <div v-if="showCancelModal" class="modal-overlay">
         <div class="modal">
@@ -57,10 +57,10 @@ function handleClose() {
   router.replace({ path: '/franchise', query: { tab: '주문관리' } });
 }
 
-function handlePrint() {
-// 주문서 출력 기능은 아직 구현되지 않았습니다.
-toast.error('주문서 출력 기능은 준비 중입니다.');
-}
+// function handlePrint() {
+// // 주문서 출력 기능은 아직 구현되지 않았습니다.
+// toast.error('주문서 출력 기능은 준비 중입니다.');
+// }
 
 function openCancelModal() {
 showCancelModal.value = true;

@@ -373,6 +373,8 @@ const removeDocument = (docId) => {
   emitFormData();
 };
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
 const uploadFiles = async (files) => {
   try {
     const formData = new FormData();
@@ -400,6 +402,10 @@ const uploadFiles = async (files) => {
 const handleFileSelect = (event) => {
   const files = Array.from(event.target.files);
   files.forEach((file) => {
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("20MB 이하 파일만 업로드할 수 있습니다.");
+      return;
+    }
     formData.value.files.push({
       name: file.name,
       size: file.size,
@@ -805,8 +811,12 @@ const handleSubmit = async () => {
       // 목록 새로고침 이벤트 발생
       emit("refresh-list");
 
-      // 결재 상세 페이지로 이동
-      router.push(`/approval/${response.data.approvalId || response.data.id}`);
+      // 결재 등록 성공 시 직접 상세 페이지로 이동
+      console.log(
+        "OrderApprovalForm - 상세 페이지로 직접 이동 시도:",
+        `/approval/${response.data.id}`
+      );
+      router.push(`/approval/${response.data.id}`);
     }
   } catch (error) {
     console.error("결재 등록 실패:", error);

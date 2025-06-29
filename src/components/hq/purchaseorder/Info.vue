@@ -5,9 +5,17 @@
       데이터를 불러오는 데 실패했습니다.
     </div>
     <PurchaseOrderDetail
-      v-if="selectedOrderId"
+      v-if="selectedOrderId && !editOrderData"
       :orderId="selectedOrderId"
       @close="selectedOrderId = null"
+      @edit="handleEdit"
+    />
+    <PurchaseOrderUpdate
+      v-else-if="editOrderData"
+      :orderData="editOrderData"
+      :supplier="editOrderData.supplier"
+      @update-complete="handleUpdateComplete"
+      @cancel-update="handleCancelUpdate"
     />
     <InfoForm
       v-else
@@ -25,6 +33,7 @@
 import { ref, computed, watch } from 'vue';
 import InfoForm from './InfoForm.vue';
 import PurchaseOrderDetail from './PurchaseOrderDetail.vue';
+import PurchaseOrderUpdate from './PurchaseOrderUpdate.vue';
 import api from '@/lib/api';
 
 const props = defineProps({
@@ -49,9 +58,27 @@ const filterTabs = [
 ];
 
 const selectedOrderId = ref(null);
+const editOrderData = ref(null);
 
 function handleShowDetail(orderId) {
   selectedOrderId.value = orderId;
+  editOrderData.value = null;
+}
+
+function handleEdit(orderData) {
+  editOrderData.value = orderData;
+  selectedOrderId.value = null;
+}
+
+function handleUpdateComplete() {
+  editOrderData.value = null;
+  selectedOrderId.value = null;
+  fetchOrders(props.supplier.id); // 수정 후 목록 갱신
+}
+
+function handleCancelUpdate() {
+  editOrderData.value = null;
+  selectedOrderId.value = null;
 }
 
 async function fetchOrders(supplierId) {
@@ -94,6 +121,7 @@ watch(
     }
     activeFilterTab.value = 0;
     selectedOrderId.value = null;
+    editOrderData.value = null;
   },
   { immediate: true }
 );
@@ -133,6 +161,10 @@ const showRegisterView = () => {
 <style scoped>
 .purchase-order-content {
   width: 100%;
+  background: #fff;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
+  padding: 32px;
 }
 .loading-container,
 .error-container {

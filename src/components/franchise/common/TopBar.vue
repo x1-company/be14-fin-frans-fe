@@ -57,8 +57,8 @@ onUnmounted(() => {
   background: #4066fa;
   color: #fff;
   padding: 0 15px;
-  height: 38px;
-  font-family: "NanumSquareOTF", sans-serif;
+  height: 42px;
+  /* font-family: "NanumSquareOTF", sans-serif; */
 }
 
 .navbar__logo {
@@ -96,8 +96,8 @@ onUnmounted(() => {
 
 .navbar__menu li {
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.98rem;
+  font-weight: 700;
   color: #ffffff;
   padding: 0 12px;
   /* transition: color 0.2s; */

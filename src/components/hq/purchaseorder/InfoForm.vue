@@ -50,11 +50,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="orders.length === 0">
+            <tr v-if="pagedOrders.length === 0">
               <td colspan="7" class="no-data">발주 내역이 없습니다.</td>
             </tr>
-            <tr v-for="(order, index) in filteredOrders" :key="order.id" @click="emit('show-detail', order.id)" style="cursor:pointer;">
-              <td>{{ index + 1 }}</td>
+            <tr v-for="(order, index) in pagedOrders" :key="order.id" @click="emit('show-detail', order.id)" style="cursor:pointer;">
+              <td>{{ (page - 1) * pageSize + index + 1 }}</td>
               <td class="order-number">{{ order.orderNumber }}</td>
               <td>{{ order.title }}</td>
               <td class="amount">{{ formatCurrency(order.amount) }}원</td>
@@ -72,19 +72,23 @@
   
       <!-- 페이지네이션 -->
       <div class="pagination">
-        <button class="page-btn" disabled>‹</button>
-        <button class="page-btn active">1</button>
-        <button class="page-btn">2</button>
-        <span class="page-dots">...</span>
-        <button class="page-btn">9</button>
-        <button class="page-btn">10</button>
-        <button class="page-btn">›</button>
+        <button class="page-arrow" :disabled="page === 1" @click="page--">&lt;</button>
+        <span
+          v-for="p in paginationPages"
+          :key="p"
+          :class="['page-btn', {active: p === page, ellipsis: p === '...'}]"
+          @click="typeof p === 'number' && (page = p)"
+        >
+          {{ p }}
+        </span>
+        <button class="page-arrow" :disabled="page === totalPages" @click="page++">&gt;</button>
       </div>
+      <div class="order-form__total">총 {{ totalCount }}개 항목</div>
     </div>
   </template>
   
   <script setup>
-  import { computed } from 'vue';
+  import { computed, ref, watch } from 'vue';
   
   const props = defineProps({
     orders: {
@@ -107,9 +111,39 @@
   
   const emit = defineEmits(['show-register-view', 'show-detail']);
   
-  const filteredOrders = computed(() => {
-    // 필터 로직 구현 (필요시)
-    return props.orders;
+  const page = ref(1);
+  const pageSize = 10;
+  const totalCount = computed(() => props.orders.length);
+  const totalPages = computed(() => Math.ceil(totalCount.value / pageSize) || 1);
+  const paginationPages = computed(() => {
+    const pages = [];
+    const current = page.value;
+    const total = totalPages.value;
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      if (current <= 4) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+        pages.push('...');
+        pages.push(total);
+      } else if (current >= total - 3) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = total - 4; i <= total; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        for (let i = current - 1; i <= current + 1; i++) pages.push(i);
+        pages.push('...');
+        pages.push(total);
+      }
+    }
+    return pages;
+  });
+  watch(() => props.orders, () => { page.value = 1; });
+  const pagedOrders = computed(() => {
+    const start = (page.value - 1) * pageSize;
+    return props.orders.slice(start, start + pageSize);
   });
   
   function selectFilterTab(index) {
@@ -151,38 +185,44 @@
   
   <style scoped>
   .content-section {
-    background: white;
-    padding: 40px 32px;
-    border-radius: 0 0 12px 12px;
+    background: #fff;
+    border-radius: 0 0 16px 16px;
     box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
+    padding: 32px;
   }
   
   .filter-tabs {
     display: flex;
-    gap: 24px;
-    margin-bottom: 24px;
-    border-bottom: 1px solid #e9ecef;
+    gap: 50px;
+    border-bottom: 1.5px solid #e9ecef;
+    margin-top: -30px;
+    margin-bottom: 10px;
+    padding-left: 10px;
   }
   
   .filter-tab {
-    padding: 12px 0;
-    color: #6c757d;
-    cursor: pointer;
+    position: relative;
+    font-size: 0.9rem;
+    color: #888;
     font-weight: 500;
+    padding: 4px 0 7px 0;
+    cursor: pointer;
+    transition: color 0.2s;
     border-bottom: 2px solid transparent;
-    transition: all 0.2s;
   }
   
   .filter-tab.active {
-    color: #5468ff;
-    border-bottom-color: #5468ff;
+    color: #4066fa;
+    border-bottom-color: #4066fa;
+    font-weight: 700;
   }
   
   .search-filter-section {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 10px;
+    gap: 10px;
   }
   
   .actions-container {
@@ -200,7 +240,7 @@
   
   .search-box {
     position: relative;
-    width: 300px;
+    width: 180px;
   }
   
   .search-input-main {
@@ -208,8 +248,9 @@
     padding: 8px 40px 8px 12px;
     border: 1px solid #dee2e6;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 0.9rem;
     box-sizing: border-box;
+    height: 35px;
   }
   
   .search-icon {
@@ -224,24 +265,25 @@
     background-color: #4066fa;
     color: white;
     border: none;
-    padding: 8px 20px;
+    padding: 0 12px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 0.85rem;
     font-weight: 500;
-    white-space: nowrap; /* Prevent text wrapping */
+    height: 28px;
+    white-space: nowrap;
     transition: background-color 0.2s;
   }
   
   .register-btn:hover {
-    background-color: #3453c7;
+    background-color: #2746b6;
   }
   
   .table-container {
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
+    border: 1px solid #eef0f4;
+    border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 24px;
+    margin-bottom: 10px;
   }
   
   .order-table {
@@ -253,9 +295,10 @@
   .order-table th,
   .order-table td {
     padding: 12px 16px;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid #f1f3f4;
     color: #212529;
+    font-size: 14px;
   }
   
   .order-table th {
@@ -274,7 +317,7 @@
   }
   
   .order-number {
-    color: #5468ff;
+    color: #4066fa !important;
     font-weight: 500;
   }
   
@@ -291,28 +334,28 @@
   }
   
   .status-approved {
-    background: #d4edda;
-    color: #155724;
+    background: #e6f9ed;
+    color: #16a34a;
   }
   
   .status-pending {
-    background: #fff3cd;
-    color: #856404;
+    background: #fffcc4;
+    color: #d97706;
   }
   
   .status-completed {
-    background: #cce5ff;
-    color: #004085;
+    background: #e0f0ff;
+    color: #2563eb;
   }
   
   .status-rejected {
-    background: #f8d7da;
-    color: #721c24;
+    background: #ffebeb;
+    color: #ff2222;
   }
   
   .status-cancel {
-    background: #e0e0e0;
-    color: #888;
+    background: #ededed;
+    color: #6b7280;
   }
   
   .no-data {
@@ -324,40 +367,71 @@
   
   .pagination {
     display: flex;
-    justify-content: center;
-    gap: 8px;
+    gap: 5px;
     align-items: center;
+    justify-content: center;
+    margin: 10px 0;
   }
   
   .page-btn {
-    padding: 8px 12px;
-    border: 1px solid #dee2e6;
-    background: white;
-    color: #495057;
-    border-radius: 4px;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #e2e4ea;
+    background: #fff;
+    color: #222;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s;
-  }
-  
-  .page-btn:hover:not(:disabled) {
-    background: #f8f9fa;
+    transition: border 0.2s, color 0.2s;
+    user-select: none;
   }
   
   .page-btn.active {
-    background: #5468ff;
-    color: white;
-    border-color: #5468ff;
+    border: 2px solid #6c47ff;
+    color: #6c47ff;
+    font-weight: 700;
+    background: #f8f6ff;
   }
   
-  .page-btn:disabled {
-    opacity: 0.5;
+  .page-btn.ellipsis {
+    cursor: default;
+    color: #bdbdbd;
+    border: none;
+    background: transparent;
+    pointer-events: none;
+  }
+  
+  .page-arrow {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #e2e4ea;
+    background: #f5f6fa;
+    color: #bdbdbd;
+    font-size: 1.05rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .page-arrow:disabled {
+    background: #e2e4ea;
+    color: #bdbdbd;
     cursor: not-allowed;
   }
   
-  .page-dots {
-    color: #6c757d;
-    padding: 0 8px;
+  .order-form__total {
+    text-align: right;
+    color: #888;
+    margin-top: 4px;
+    font-size: 0.92rem;
   }
   </style>
   

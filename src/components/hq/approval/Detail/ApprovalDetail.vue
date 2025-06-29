@@ -257,7 +257,10 @@
 
     <!-- 결재선 탭 내용 -->
     <div v-if="activeTab === 'approvalLine'" class="detail-content">
-      <ApprovalLineDetail :approval-id="document.approvalId" />
+      <ApprovalLineDetail
+        :approval-id="document.approvalId"
+        :approval-detail="document"
+      />
     </div>
 
     <!-- 결재 액션 버튼들 (현재 사용자 차례일 때만 표시) -->
@@ -433,10 +436,10 @@ const fetchDocumentContent = async () => {
   }
 };
 
-// 뒤로가기
+// 뒤로가기(목록으로 이동)
 const goBack = () => {
   emit("refresh-list");
-  router.push("/approval");
+  router.push("/approval?tab=전체"); // 항상 결재 목록의 '전체' 탭으로 이동
 };
 
 // 날짜 포맷팅
