@@ -1,4 +1,4 @@
-g<template>
+<template>
   <div>
     <Bar
       v-if="chartData && chartData.length"
