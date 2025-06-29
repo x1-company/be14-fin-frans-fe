@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="action-buttons">
-      <button class="btn print" @click="printRequest">
+      <!-- <button class="btn print" @click="printRequest">
         <span class="icon">&#128424;</span> 구매 요청서 출력
-      </button>
-      <button class="btn edit" @click="editRequest">
+      </button> -->
+      <!-- <button class="btn edit" @click="editRequest">
         <span class="icon"></span> 수정
-      </button>
+      </button> -->
       <button class="btn delete" @click="deleteRequest">
         <span class="icon"></span> 삭제
       </button>
@@ -123,9 +123,9 @@ function formatCurrency(value) {
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-function printRequest() {
-  window.print();
-}
+// function printRequest() {
+//   window.print();
+// }
 
 async function fetchDetail() {
   try {
@@ -188,10 +188,10 @@ const totalQuantity = computed(() => {
   return materials.value.reduce((sum, m) => sum + (Number(m.quantity) || 0), 0);
 });
 
-function editRequest() {
-  // TODO: 수정 기능 구현
-  console.log('수정 기능 구현 예정');
-}
+// function editRequest() {
+//   // TODO: 수정 기능 구현
+//   console.log('수정 기능 구현 예정');
+// }
 
 function deleteRequest() {
   // TODO: 삭제 기능 구현
