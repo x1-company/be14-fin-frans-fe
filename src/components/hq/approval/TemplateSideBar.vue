@@ -368,17 +368,17 @@ defineExpose({
   justify-content: center;
   gap: 6px;
   padding: 8px 12px;
-  background: #667eea;
+  background: #4066fa;
   color: white;
   border: none;
   border-radius: 6px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 .register-button:hover {
-  background: #5a67d8;
+  background: #2746b6;
 }
 
 /* 검색창 스타일 OrderSideBar와 유사하게 */
