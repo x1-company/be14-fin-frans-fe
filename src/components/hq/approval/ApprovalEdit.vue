@@ -934,12 +934,16 @@ const handleEdit = async () => {
       requestData
     );
 
-    if (response.status === 200 || response.status === 201) {
+    if (
+      (response.status === 200 ||
+        response.status === 201 ||
+        response.status === 204) &&
+      response.data &&
+      response.data.success
+    ) {
       toast.success("임시저장이 완료되었습니다.");
       emit("approval-submitted", response.data);
-      router.push("/approval").then(() => {
-        window.location.reload();
-      });
+      router.push("/approval?tab=전체");
     }
   } catch (error) {
     console.error("임시저장 실패:", error);
@@ -1041,7 +1045,13 @@ const handleRegister = async () => {
       requestData
     );
 
-    if (response.status === 200 || response.status === 201) {
+    if (
+      (response.status === 200 ||
+        response.status === 201 ||
+        response.status === 204) &&
+      response.data &&
+      response.data.success
+    ) {
       const message = props.isEditMode
         ? "결재가 수정되었습니다."
         : "결재가 등록되었습니다.";
@@ -1315,12 +1325,16 @@ const handleResubmit = async () => {
       requestData
     );
 
-    if (response.status === 200 || response.status === 201) {
+    if (
+      (response.status === 200 ||
+        response.status === 201 ||
+        response.status === 204) &&
+      response.data &&
+      response.data.success
+    ) {
       toast.success("재기안이 완료되었습니다.");
       emit("approval-submitted", response.data);
-      router.push("/approval").then(() => {
-        window.location.reload();
-      });
+      router.push("/approval?tab=전체");
     }
   } catch (error) {
     console.error("재기안 실패:", error);
@@ -1360,6 +1374,7 @@ const fetchAndShowFileSize = (file, index) => {
 
 // 삭제 핸들러 함수 추가
 const handleDelete = async () => {
+  console.log("[ApprovalEdit] handleDelete 호출됨");
   if (isSubmitting.value) return;
   if (!props.approvalId) {
     toast.error("삭제할 결재 ID가 없습니다.");
@@ -1370,27 +1385,34 @@ const handleDelete = async () => {
     const response = await api.delete(
       `/api/hq/approvals/drafts/${props.approvalId}`
     );
+    console.log("[ApprovalEdit] api.delete 응답:", response);
+
     if (
-      (response.status === 200 || response.status === 204) &&
+      (response.status === 200 ||
+        response.status === 201 ||
+        response.status === 204) &&
       response.data &&
       response.data.success
     ) {
       toast.success(response.data.message || "임시저장 결재가 삭제되었습니다.");
+      console.log("[ApprovalEdit] emit refresh-list, approval-submitted");
       emit("refresh-list");
       emit("approval-submitted", response.data);
       showDeleteModal.value = false;
-      // 삭제 성공 시 /approval 경로로 이동 후 새로고침
-      router.push("/approval").then(() => {
-        window.location.reload();
+      // 삭제 성공 시 '전체' 탭으로 이동
+      console.log("[ApprovalEdit] 삭제 성공, 전체 탭으로 이동 시도");
+      router.push("/approval?tab=전체").then(() => {
+        console.log("[ApprovalEdit] router.push 완료");
       });
     } else {
+      console.log("[ApprovalEdit] 삭제 실패 응답:", response);
       toast.error(
         response.data?.message || "삭제에 실패했습니다. 다시 시도해주세요."
       );
       showDeleteModal.value = false;
     }
   } catch (error) {
-    console.error("삭제 실패:", error);
+    console.error("[ApprovalEdit] 삭제 실패 (catch):", error);
     toast.error("삭제에 실패했습니다. 다시 시도해주세요.");
     showDeleteModal.value = false;
   } finally {
@@ -1399,6 +1421,7 @@ const handleDelete = async () => {
 };
 
 const confirmDelete = async () => {
+  console.log("[ApprovalEdit] confirmDelete 호출됨");
   await handleDelete();
 };
 
