@@ -58,6 +58,8 @@
 <script setup>
 import { ref, watch, computed } from "vue";
 import api from "@/lib/api";
+import { useToast } from '@/composables/useToast';
+const { error, info } = useToast();
 
 const props = defineProps({
   isVisible: Boolean,
@@ -81,10 +83,10 @@ async function fetchProductsBySupplier(id) {
     // It should return a list of products for a given supplier.
     const response = await api.get(`/api/hq/products/list-by-supplier/${id}`);
     products.value = response.data || [];
-  } catch (error) {
-    console.error(`Failed to fetch products for supplier ${id}:`, error);
+  } catch (err) {
+    console.error(`Failed to fetch products for supplier ${id}:`, err);
     products.value = [];
-    alert('공급처의 자재 목록을 불러오는 데 실패했습니다.');
+    error('공급처의 자재 목록을 불러오는 데 실패했습니다.');
   }
 }
 
@@ -134,7 +136,7 @@ function toggleSelection(product) {
 
 function addSelectedProducts() {
   if (selectedProducts.value.length === 0) {
-    alert("추가할 자재를 선택해주세요.");
+    info("추가할 자재를 선택해주세요.");
     return;
   }
   emit("add-products", [...selectedProducts.value]);
