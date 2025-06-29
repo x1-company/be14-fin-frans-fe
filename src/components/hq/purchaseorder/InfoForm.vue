@@ -1,77 +1,90 @@
 <template>
-  <div class="order-form">
-    <!-- 필터 탭 -->
-    <div class="order-form__tabs">
-      <div
-        v-for="(tab, idx) in filterTabs"
-        :key="tab"
-        :class="['order-form__tab', { active: idx === activeFilterTab }]"
-        @click="selectFilterTab(idx)"
-      >
-        {{ tab }}
-        <div v-if="activeFilterTab === idx" class="order-form__tab-indicator"></div>
+  <div class="product-list-container">
+    <!-- 타이틀(맨 위) -->
+    <div class="product-list-title">발주 관리</div>
+    <!-- 탭 + 선 (두 번째) -->
+    <div class="tab-bar-wrapper">
+      <div class="filter-tabs">
+        <div
+          v-for="(tab, idx) in filterTabs"
+          :key="tab"
+          :class="['filter-tab', { active: idx === activeFilterTab } ]"
+          @click="selectFilterTab(idx)"
+        >
+          {{ tab }}
+        </div>
       </div>
+      <div class="tab-underline"></div>
     </div>
-
-    <!-- 검색 및 필터 -->
-    <div class="order-form__header">
-      <div class="order-form__search-group">
-        <select class="search-type-select" v-model="searchType">
+    <!-- 필터/검색/버튼 (세 번째) -->
+    <div class="product-list-controls">
+      <div class="search-group">
+        <select v-model="searchType" class="product-list-select" style="min-width:110px">
           <option value="title">제목</option>
           <option value="code">발주번호</option>
         </select>
-        <input
-          type="text"
-          v-model="searchKeyword"
-          placeholder="검색어를 입력해주세요"
-          @keyup.enter="onSearch"
+        <input 
+          v-model="searchKeyword" 
+          class="product-list-search" 
+          placeholder="검색어를 입력해주세요" 
+          @keyup.enter="onSearch" 
         />
-        <button @click="onSearch">검색</button>
+        <button class="product-list-search-btn" @click="onSearch">검색</button>
+        <button class="product-list-register-btn" @click="emit('show-register-view')">
+          발주 등록
+        </button>
       </div>
-      <button class="register-btn" @click="emit('show-register-view')">발주 등록</button>
     </div>
-
     <!-- 테이블 -->
-    <div class="order-table">
-      <div class="order-table-header">
-        <div class="col col-no">No</div>
-        <div class="col col-code">발주 번호</div>
-        <div class="col col-name">제목</div>
-        <div class="col col-amount">발주 금액</div>
-        <div class="col col-status">발주 상태</div>
-        <div class="col col-date">발주 요청일</div>
-        <div class="col col-delivery">납기 희망일</div>
-      </div>
-      <div class="order-table-body">
-        <div v-if="props.orders.length === 0" class="empty-message">발주 내역이 없습니다.</div>
-        <div 
-          v-for="(order, index) in props.orders" 
-          :key="order.id" 
-          class="order-row"
-          @click="emit('show-detail', order.id)"
-          style="cursor:pointer;"
-        >
-          <div class="col col-no">{{ (props.page - 1) * pageSize + index + 1 }}</div>
-          <div class="col col-code">
-            <a href="#" class="order-link" @click.prevent="emit('show-detail', order.id)">
-              {{ order.orderNumber }}
-            </a>
-          </div>
-          <div class="col col-name">{{ order.title }}</div>
-          <div class="col col-amount">{{ formatCurrency(order.amount) }}원</div>
-          <div class="col col-status">
-            <span :class="['order-status', getStatusClass(order.status)]">
-              {{ getStatusText(order.status) }}
-            </span>
-          </div>
-          <div class="col col-date">{{ formatDate(order.requestDate) }}</div>
-          <div class="col col-delivery">{{ formatDate(order.deliveryDate) }}</div>
-        </div>
-      </div>
+    <div class="product-list-table-wrapper">
+      <table class="product-list-table">
+        <thead>
+          <tr>
+            <th style="width: 6%">No.</th>
+            <th style="width: 16%">발주 번호</th>
+            <th style="width: 20%">제목</th>
+            <th style="width: 14%">발주 금액</th>
+            <th style="width: 12%">발주 상태</th>
+            <th style="width: 16%">발주 요청일</th>
+            <th style="width: 16%">납기 희망일</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="props.orders.length === 0">
+            <td colspan="7" class="no-data">발주 내역이 없습니다.</td>
+          </tr>
+          <tr 
+            v-for="(order, index) in props.orders" 
+            :key="order.id"
+            @click="emit('show-detail', order.id)"
+            style="cursor:pointer;"
+          >
+            <td>{{ (props.page - 1) * pageSize + index + 1 }}</td>
+            <td>
+              <a 
+                href="#" 
+                class="product-link" 
+                @click.prevent="emit('show-detail', order.id)"
+              >
+                {{ order.orderNumber }}
+              </a>
+            </td>
+            <td style="text-align: left;">{{ order.title }}</td>
+            <td style="text-align: right;">{{ formatCurrency(order.amount) }}원</td>
+            <td>
+              <span :class="['status-badge', getStatusClass(order.status)]">
+                {{ getStatusText(order.status) }}
+              </span>
+            </td>
+            <td>{{ formatDate(order.requestDate) }}</td>
+            <td>{{ formatDate(order.deliveryDate) }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- 페이지네이션 -->
-    <div class="order-form__pagination">
+    <div class="product-list-pagination">
       <button class="page-arrow" :disabled="props.page === 1" @click="props.onPageChange(props.page - 1)">&lt;</button>
       <span
         v-for="p in paginationPages"
@@ -83,12 +96,15 @@
       </span>
       <button class="page-arrow" :disabled="props.page === totalPages" @click="props.onPageChange(props.page + 1)">&gt;</button>
     </div>
-    <div class="order-form__total">총 {{ props.totalCount }}개 항목</div>
+    
+    <!-- 총 개수 표시 -->
+    <div class="total-count">총 {{ props.totalCount }}개 항목</div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
+import { Pencil } from 'lucide-vue-next';
 
 const props = defineProps({
   orders: {
@@ -171,233 +187,262 @@ function formatDate(dateString) {
 }
 
 function getStatusClass(status) {
-  // 백엔드 Enum 이름 기준
   switch (status) {
-    case 'APPROVED': return 'status-approved';
-    case 'REQUEST_PENDING': return 'status-waiting';
-    case 'COMPLETED': return 'status-delivered';
-    case 'CANCELED': return 'status-canceled';
-    case 'REJECTED': return 'status-reject';
-    default: return '';
+    case 'DRAFT':
+    case '임시저장':
+      return 'status-draft';
+    case 'APPROVED':
+    case '승인 완료':
+      return 'status-approved';
+    case 'REJECTED':
+    case '반려':
+      return 'status-rejected';
+    case 'REQUEST_PENDING':
+    case '발주 대기':
+      return 'status-pending';
+    case 'CANCELED':
+    case '발주 취소':
+      return 'status-canceled';
+    default:
+      return '';
   }
 }
 
 function getStatusText(status) {
-  // 백엔드 Enum 이름 -> 한글 레이블 변환
   const statusLabels = {
     DRAFT: "임시저장",
     APPROVED: "승인 완료",
-    REJECTED: "반려",
+    REJECTED: "반려", 
     REQUEST_PENDING: "발주 대기",
-    CANCELED: "발주 취소",
-    COMPLETED: "발주 완료",
+    CANCELED: "발주 취소"
   };
   return statusLabels[status] || status;
 }
 </script>
 
 <style scoped>
-.order-form {
-  background: #fff;
-  border-radius: 0 0 16px 16px;
-  box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
-  padding: 32px;
-}
-
-.order-form__tabs {
-  display: flex;
-  gap: 50px;
-  border-bottom: 1.5px solid #e9ecef;
-  margin-top: -30px;
-  margin-bottom: 10px;
-  padding-left: 10px;
-}
-
-.order-form__tab {
+.product-list-container {
   position: relative;
-  font-size: 0.9rem;
+  min-height: 800px;
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
+  padding: 40px 100px 32px 100px;
+  margin-top: 0;
+  font-family: 'NanumSquareOTF_acR', 'NanumSquareOTF_acB', 'NanumSquareOTF_acEB', 'NanumSquareOTF_acL', 'Apple SD Gothic Neo', Arial, sans-serif !important;
+}
+
+.tab-bar-wrapper {
+  position: relative;
+  margin-bottom: 18px;
+  margin-top: 0;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 30px;
+  padding-left: 0;
+  background: transparent;
+  z-index: 2;
+}
+
+.filter-tab {
+  position: relative;
+  font-size: 1rem;
   color: #888;
   font-weight: 500;
-  padding: 4px 0 7px 0;
+  padding: 8px 0;
   cursor: pointer;
   transition: color 0.2s;
+  border-bottom: 2px solid transparent;
+  background: transparent;
 }
 
-.order-form__tab.active {
+.filter-tab.active {
   color: #4066fa;
   font-weight: 700;
+  border-bottom: 2px solid #4066fa;
+  z-index: 3;
 }
 
-.order-form__tab-indicator {
+.tab-underline {
   position: absolute;
   left: 0;
-  bottom: -2px;
-  width: 100%;
+  right: 0;
+  bottom: 0;
   height: 2px;
-  background: #4066fa;
-  border-radius: 2px 2px 0 0;
+  background: #e5e7eb;
+  z-index: 1;
 }
 
-.order-form__header {
+.product-list-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.product-list-controls {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 20px;
+  margin-bottom: 18px;
+  margin-top: 0;
 }
 
-.order-form__search-group {
+/* 검색 그룹 */
+.search-group {
   display: flex;
-  gap: 5px;
   align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
-.order-form__search-group select {
-  height: 35px;
-  border: 1px solid #e9ecef;
+.product-list-select {
+  height: 32px;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
-  padding: 0 7px;
-  font-size: 0.8rem;
+  padding: 0 12px;
+  font-size: 1rem;
+  background: #f8f9fa;
+  color: #222;
+}
+
+.product-list-search {
+  height: 32px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 1rem;
   background: #fff;
-}
-
-.order-form__search-group input {
-  height: 35px;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  padding: 12px 8px;
-  font-size: 0.8rem;
+  color: #222;
   width: 180px;
 }
 
-.order-form__search-group button {
-  height: 35px;
+.product-list-search-btn {
+  height: 32px;
   background: #4066fa;
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 0 12px;
-  font-size: 0.8rem;
+  padding: 0 18px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
+  margin-left: 2px;
   transition: background 0.2s;
 }
 
-.order-form__search-group button:hover {
-  background: #2746b6;
+.product-list-search-btn:hover {
+  background: #3453c7;
 }
 
-.register-btn {
-  background: #4066fa;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
+.product-list-register-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.register-btn:hover {
-  background: #2746b6;
-}
-
-.order-table {
-  border: 1px solid #eef0f4;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.order-table-header, .order-row {
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-}
-
-.order-table-header {
-  background: #f8f9fa;
-  color: #495057;
-  font-size: 13px;
-  font-weight: 500;
-  height: 40px;
-  border-bottom: 1px solid #eef0f4;
-}
-
-.order-table-body {
-  min-height: 40px;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
-}
-
-.order-table-body .order-row {
-  border-bottom: 1px solid #eef0f4;
-}
-
-.order-table-body .order-row:last-child {
-  border-bottom: none;
-}
-
-.order-row {
-  height: 48px;
-  font-size: 14px;
-  background: #fff;
+  gap: 8px;
+  height: 32px;
+  background: #4066fa;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 8px;
   transition: background 0.2s;
 }
 
-.order-row:hover {
-  background: #f8f9fa;
+.product-list-register-btn:hover {
+  background: #3453c7;
 }
 
-.col {
+/* 테이블 */
+.product-list-table-wrapper {
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.product-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 1rem;
+  background: #fff;
+}
+
+.product-list-table thead {
+  background: #f4f6fa;
+  font-weight: bold;
+}
+
+.product-list-table th, 
+.product-list-table td {
+  padding: 12px 16px;
   text-align: center;
-  padding: 0 8px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 1rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.col-no        { flex-basis: 7%; }
-.col-code      { flex-basis: 18%; color: #222; overflow: visible; text-overflow: unset; white-space: nowrap; }
-.col-name      { flex-basis: 20%; text-align: center; }
-.col-amount    { flex-basis: 15%; text-align: right; }
-.col-status    { flex-basis: 15%; }
-.col-date      { flex-basis: 12%; }
-.col-delivery  { flex-basis: 13%; }
-
-.empty-message {
-  text-align: center;
-  color: #6c757d;
-  font-style: italic;
-  padding: 40px;
+.product-list-table th {
+  background-color: #f9fafb;
+  color: #374151;
+  font-weight: 600;
 }
 
-.order-link {
+.product-list-table td {
+  color: #374151;
+  height: 49px;
+}
+
+.product-list-table th:nth-child(2),
+.product-list-table td:nth-child(2),
+.product-list-table th:nth-child(3),
+.product-list-table td:nth-child(3) {
+  text-align: left;
+}
+
+.product-list-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.product-list-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.product-link {
   color: #4066fa;
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
-  font-size: 0.95rem;
+  transition: text-decoration 0.2s;
 }
 
-.order-status {
+.product-link:hover {
+  text-decoration: underline;
+}
+
+/* 상태 배지 */
+.status-badge {
   display: inline-block;
-  padding: 3px 12px;
+  padding: 4px 12px;
   border-radius: 16px;
   font-size: 12px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
-.status-reject {
-  color: #ff2222;
-  background: #ffebeb;
-}
-
-.status-waiting {
+.status-pending {
   background: #fffcc4;
   color: #d97706;
 }
@@ -407,22 +452,35 @@ function getStatusText(status) {
   color: #6b7280;
 }
 
+.status-rejected {
+  background: #ffebeb;
+  color: #ff2222;
+}
+
 .status-approved {
   background: #e6f9ed;
   color: #16a34a;
 }
 
-.status-delivered {
-  background: #e0f0ff;
-  color: #2563eb;
+.status-draft {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
-.order-form__pagination {
+.no-data {
+  text-align: center;
+  padding: 48px 0;
+  color: #6b7280;
+}
+
+/* 페이지네이션 */
+.product-list-pagination {
   display: flex;
   gap: 5px;
   align-items: center;
   justify-content: center;
   margin: 10px 0;
+  position: static;
 }
 
 .page-btn {
@@ -479,10 +537,27 @@ function getStatusText(status) {
   cursor: not-allowed;
 }
 
-.order-form__total {
-  text-align: right;
+/* 총 개수 */
+.total-count {
+  position: absolute;
+  bottom: 32px;
+  right: 100px;
   color: #888;
-  margin-top: 4px;
   font-size: 0.92rem;
+}
+
+/* 폰트 패밀리 적용 */
+.product-list-header, 
+.product-list-title, 
+.product-list-controls, 
+.product-list-select, 
+.product-list-search, 
+.product-list-search-btn, 
+.product-list-register-btn, 
+.product-list-table, 
+.product-list-table th, 
+.product-list-table td, 
+.page-btn {
+  font-family: 'NanumSquareOTF_acR', 'NanumSquareOTF_acB', 'NanumSquareOTF_acEB', 'NanumSquareOTF_acL', 'Apple SD Gothic Neo', Arial, sans-serif !important;
 }
 </style>
