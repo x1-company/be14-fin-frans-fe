@@ -164,7 +164,7 @@ const props = defineProps({
 
 const emit = defineEmits(['cancel-register', 'registration-complete']);
 const authStore = useAuthStore();
-const { toast } = useToast();
+const { success, error, warning, info } = useToast();
 const router = useRouter();
 
 const isRequestListModalVisible = ref(false);
@@ -226,8 +226,8 @@ function handleAddProducts(selectedProducts) {
         remarks: newProduct.remarks || '',
       });
     } else {
-      if (typeof toast === 'function') {
-        toast(`${newProduct.productName} 은/는 이미 추가된 자재입니다.`, 'info');
+      if (typeof info === 'function') {
+        info(`${newProduct.productName} 은/는 이미 추가된 자재입니다.`);
       } else {
         alert('자재가 이미 추가되었습니다.');
       }
@@ -273,27 +273,15 @@ function handleLoadDraft(draft) {
 
 async function registerOrder() {
   if (!orderInfo.value.title) {
-    if (typeof toast === 'function') {
-      toast('발주 제목을 입력해주세요.', 'warning');
-    } else {
-      alert('발주 제목을 입력해주세요.');
-    }
+    warning('발주 제목을 입력해주세요.');
     return;
   }
   if (!orderInfo.value.deliveryDate) {
-    if (typeof toast === 'function') {
-      toast('납기희망일을 선택해주세요.', 'warning');
-    } else {
-      alert('납기희망일을 선택해주세요.');
-    }
+    warning('납기희망일을 선택해주세요.');
     return;
   }
   if (materials.value.length === 0) {
-    if (typeof toast === 'function') {
-      toast('자재를 하나 이상 추가해주세요.', 'warning');
-    } else {
-      alert('자재를 하나 이상 추가해주세요.');
-    }
+    warning('자재를 하나 이상 추가해주세요.');
     return;
   }
 
@@ -313,21 +301,13 @@ async function registerOrder() {
     console.log('임시저장 정식등록 payload', JSON.stringify(updatePayload, null, 2));
     try {
       await api.put(`/api/hq/purchaseorder/${currentDraftId.value}/request`, updatePayload);
-      if (typeof toast === 'function') {
-        toast('임시저장 발주가 정식 등록되었습니다.', 'success');
-      } else {
-        alert('임시저장 발주가 정식 등록되었습니다.');
-      }
+      success('임시저장 발주가 정식 등록되었습니다.');
       setTimeout(() => {
         emit('cancel-register');
       });
-    } catch (error) {
-      console.error('Error registering purchase order:', error);
-      if (typeof toast === 'function') {
-        toast(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`, 'error');
-      } else {
-        alert(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`);
-      }
+    } catch (err) {
+      console.error('Error registering purchase order:', err);
+      error(`발주 등록에 실패했습니다: ${err.response?.data?.message || err.message}`);
     }
     return;
   }
@@ -348,47 +328,27 @@ async function registerOrder() {
 
   try {
     await api.post('/api/hq/purchaseorder/request', payload);
-    if (typeof toast === 'function') {
-      toast('발주가 성공적으로 등록되었습니다.', 'success');
-    } else {
-      alert('발주가 성공적으로 등록되었습니다.');
-    }
+    success('발주가 성공적으로 등록되었습니다.');
     setTimeout(() => {
       emit('cancel-register');
     });
-  } catch (error) {
-    console.error('Error registering purchase order:', error);
-    if (typeof toast === 'function') {
-      toast(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`, 'error');
-    } else {
-      alert(`발주 등록에 실패했습니다: ${error.response?.data?.message || error.message}`);
-    }
+  } catch (err) {
+    console.error('Error registering purchase order:', err);
+    error(`발주 등록에 실패했습니다: ${err.response?.data?.message || err.message}`);
   }
 }
 
 async function saveDraft() {
   if (!orderInfo.value.title) {
-    if (typeof toast === 'function') {
-      toast('발주 제목을 입력해주세요.', 'warning');
-    } else {
-      alert('발주 제목을 입력해주세요.');
-    }
+    warning('발주 제목을 입력해주세요.');
     return;
   }
   if (!orderInfo.value.deliveryDate) {
-    if (typeof toast === 'function') {
-      toast('납기희망일을 선택해주세요.', 'warning');
-    } else {
-      alert('납기희망일을 선택해주세요.');
-    }
+    warning('납기희망일을 선택해주세요.');
     return;
   }
   if (materials.value.length === 0) {
-    if (typeof toast === 'function') {
-      toast('자재를 하나 이상 추가해주세요.', 'warning');
-    } else {
-      alert('자재를 하나 이상 추가해주세요.');
-    }
+    warning('자재를 하나 이상 추가해주세요.');
     return;
   }
 
@@ -406,21 +366,13 @@ async function saveDraft() {
   };
   try {
     await api.post('/api/hq/purchaseorder/draft', payload);
-    if (typeof toast === 'function') {
-      toast('임시저장 되었습니다.', 'success');
-    } else {
-      alert('임시저장 되었습니다.');
-    }
+    success('임시저장 되었습니다.');
     setTimeout(() => {
       emit('cancel-register');
     },);
-  } catch (error) {
-    console.error('Error saving draft:', error);
-    if (typeof toast === 'function') {
-      toast(`임시저장에 실패했습니다: ${error.response?.data?.message || error.message}`, 'error');
-    } else {
-      alert(`임시저장에 실패했습니다: ${error.response?.data?.message || error.message}`);
-    }
+  } catch (err) {
+    console.error('Error saving draft:', err);
+    error(`임시저장에 실패했습니다: ${err.response?.data?.message || err.message}`);
   }
 }
 
@@ -431,16 +383,12 @@ function formatCurrency(value) {
 
 function deleteMaterials() {
   if (selectedMaterials.value.length === 0) {
-    if (typeof toast === 'function') {
-      toast('삭제할 자재를 선택해주세요.', 'info');
-    }
+    info('삭제할 자재를 선택해주세요.');
     return;
   }
   materials.value = materials.value.filter(m => !selectedMaterials.value.includes(m.productId));
   selectedMaterials.value = [];
-  if (typeof toast === 'function') {
-    toast('선택한 자재가 삭제되었습니다.', 'success');
-  }
+  success('선택한 자재가 삭제되었습니다.');
 }
 
 function cancel() {

@@ -137,7 +137,7 @@ import { useToast } from '@/composables/useToast'
 
 const props = defineProps({ orderId: Number })
 const emit = defineEmits(['close', 'edit'])
-const { toast } = useToast()
+const { success, error } = useToast()
 
 const detail = ref({
   products: [],
@@ -184,19 +184,11 @@ async function cancelOrder() {
     await api.put(`/api/hq/purchaseorder/${props.orderId}/cancel`)
     detail.value.status = 'CANCELED'
     detail.value.statusLabel = getStatusText('CANCELED')
-    if (typeof toast === 'function') {
-      toast('발주가 취소되었습니다.', 'success')
-    } else {
-      alert('발주가 취소되었습니다.')
-    }
+    success('발주가 취소되었습니다.')
     emit('close')
     emit('refresh-list')
   } catch (e) {
-    if (typeof toast === 'function') {
-      toast('발주 취소에 실패했습니다.', 'error')
-    } else {
-      alert('발주 취소에 실패했습니다.')
-    }
+    error('발주 취소에 실패했습니다.')
   }
 }
 </script>
