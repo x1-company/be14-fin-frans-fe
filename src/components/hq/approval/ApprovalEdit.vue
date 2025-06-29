@@ -282,7 +282,7 @@
                 재기안
               </button>
             </template>
-            <!-- 일반 수정 모드일 때는 수정/등록 버튼 표시 -->
+            <!-- 일반 수정 모드일 때는 수정/등록/삭제 버튼 표시 -->
             <template v-else>
               <button
                 class="edit-button"
@@ -297,6 +297,13 @@
                 :disabled="isSubmitting"
               >
                 등록
+              </button>
+              <button
+                class="delete-button"
+                @click="showDeleteModal = true"
+                :disabled="isSubmitting"
+              >
+                삭제
               </button>
             </template>
           </div>
@@ -327,6 +334,32 @@
       @close="showTemplateModal = false"
       @select-template="handleSelectTemplate"
     />
+
+    <!-- 삭제 확인 모달 -->
+    <div v-if="showDeleteModal" class="modal-overlay" style="z-index: 3000">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>임시저장 결재 삭제</h3>
+          <button class="close-button" @click="showDeleteModal = false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>정말로 이 임시저장 결재를 삭제하시겠습니까?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-button" @click="showDeleteModal = false"
+            >취소</button
+          >
+          <button class="confirm-delete-button" @click="confirmDelete"
+            >삭제</button
+          >
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -382,6 +415,7 @@ const showOrderListModal = ref(false);
 const showApprovalLineModal = ref(false);
 const showTemplateModal = ref(false);
 const isSubmitting = ref(false);
+const showDeleteModal = ref(false);
 
 // 파일 입력을 위한 ref 추가
 const fileInput = ref(null);
@@ -1324,6 +1358,50 @@ const fetchAndShowFileSize = (file, index) => {
   return "...";
 };
 
+// 삭제 핸들러 함수 추가
+const handleDelete = async () => {
+  if (isSubmitting.value) return;
+  if (!props.approvalId) {
+    toast.error("삭제할 결재 ID가 없습니다.");
+    return;
+  }
+  try {
+    isSubmitting.value = true;
+    const response = await api.delete(
+      `/api/hq/approvals/drafts/${props.approvalId}`
+    );
+    if (
+      (response.status === 200 || response.status === 204) &&
+      response.data &&
+      response.data.success
+    ) {
+      toast.success(response.data.message || "임시저장 결재가 삭제되었습니다.");
+      emit("refresh-list");
+      emit("approval-submitted", response.data);
+      showDeleteModal.value = false;
+      // 삭제 성공 시 /approval 경로로 이동 후 새로고침
+      router.push("/approval").then(() => {
+        window.location.reload();
+      });
+    } else {
+      toast.error(
+        response.data?.message || "삭제에 실패했습니다. 다시 시도해주세요."
+      );
+      showDeleteModal.value = false;
+    }
+  } catch (error) {
+    console.error("삭제 실패:", error);
+    toast.error("삭제에 실패했습니다. 다시 시도해주세요.");
+    showDeleteModal.value = false;
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const confirmDelete = async () => {
+  await handleDelete();
+};
+
 defineExpose({
   initializeForm,
   updateFormData,
@@ -1533,7 +1611,6 @@ defineExpose({
   color: #ef4444;
   cursor: pointer;
   font-size: 16px;
-  padding: 4px;
 }
 
 .approve-button {
@@ -1870,5 +1947,108 @@ defineExpose({
   color: #ef4444;
   cursor: pointer;
   font-size: 16px;
+}
+
+.delete-button {
+  padding: 12px 24px;
+  border-radius: 6px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #ef4444;
+  color: white;
+  border: 1px solid #ef4444;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+.delete-button:disabled {
+  background: #fca5a5;
+  color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+/* 삭제 확인 모달 */
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e9ecef;
+}
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+}
+.close-button {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.close-button:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+.close-button svg {
+  width: 20px;
+  height: 20px;
+}
+.modal-body {
+  padding: 24px;
+}
+.modal-body p {
+  margin: 0 0 16px 0;
+  color: #495057;
+  font-size: 16px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e9ecef;
+}
+.confirm-delete-button {
+  padding: 8px 16px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.confirm-delete-button:hover:not(:disabled) {
+  background: #c82333;
+}
+.cancel-button {
+  padding: 8px 16px;
+  border: 1px solid #dee2e6;
+  background: white;
+  color: #495057;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+.cancel-button:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
 }
 </style>

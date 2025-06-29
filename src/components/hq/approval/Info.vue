@@ -22,6 +22,7 @@
             :type="editApprovalType"
             :initialData="editApprovalDoc"
             @close="handleCloseEdit"
+            @refresh-list="$emit('refresh-list')"
           />
 
           <!-- 결재 상세 -->
