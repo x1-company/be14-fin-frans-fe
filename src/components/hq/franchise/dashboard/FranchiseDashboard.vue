@@ -26,14 +26,8 @@
         </div>
         <div class="card-main">
           <span class="card-value">{{ completedOrder.count }}</span>
-          <span v-if="typeof completedOrder.diff === 'number'" class="card-diff"
-            :class="{
-              up: completedOrder.diff > 0,
-              down: completedOrder.diff < 0,
-              zero: completedOrder.diff === 0
-            }"
-          >
-            {{ completedOrder.diff > 0 ? '+' : '' }}{{ completedOrder.diff }}
+          <span v-if="typeof completedOrder.diff === 'number' && completedOrder.diff < 0" class="card-diff down">
+            {{ completedOrder.diff }}
           </span>
         </div>
       </div>
@@ -130,9 +124,6 @@ const selectedMonth = ref(now.getMonth() + 1)
   font-size: 0.7rem;
   font-weight: 500;
   margin-left: 8px;
-}
-.card-diff.up {
-  color: #3cb371;
 }
 .card-diff.down {
   color: #e74c3c;
