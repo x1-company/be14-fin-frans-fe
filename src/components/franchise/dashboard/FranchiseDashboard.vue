@@ -162,6 +162,11 @@ watch(selectedMonth, () => {
   fetchProductOrderStats()
   fetchReturnProductStats()
 })
+
+// 동향보기 자동 해제: 탭 변경 시 trendVisible false
+watch(statsTab, () => {
+  if (trendVisible.value) trendVisible.value = false;
+});
 </script>
 
 <style scoped>
