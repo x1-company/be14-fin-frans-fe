@@ -2,9 +2,13 @@
   <div class="info-form">
     <div class="info-section">
       <PurchaseRequestDetail
-        v-if="selectedRequestId"
+        v-if="selectedRequestId && !isRegisterMode"
         :id="selectedRequestId"
         @close="selectedRequestId = null"
+      />
+      <PurchaseRegisterForm
+        v-else-if="isRegisterMode"
+        @close="handleRegisterClose"
       />
       <template v-else>
         <div class="info-section__header purchase-header">
@@ -86,6 +90,7 @@ import api from '@/lib/api';
 import { Search as SearchIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router';
 import PurchaseRequestDetail from './PurchaseRequestDetail.vue';
+import PurchaseRegisterForm from './PurchaseRegisterForm.vue';
 
 const tabLabels = [
   '전체'
@@ -101,6 +106,7 @@ const currentPage = ref(1);
 const totalPages = ref(1);
 const router = useRouter();
 const selectedRequestId = ref(null);
+const isRegisterMode = ref(false);
 
 const totalCount = computed(() => purchaseList.value.length ? purchaseList.value.length + (totalPages.value - 1) * 10 : 0);
 
@@ -182,6 +188,8 @@ async function fetchData() {
   }
 }
 
+
+
 function changePage(page) {
   if (page > 0 && page <= totalPages.value) {
     currentPage.value = page;
@@ -195,7 +203,16 @@ function handleSearch() {
 }
 
 function goToRegister() {
-  router.push('/purchase/register');
+  isRegisterMode.value = true;
+}
+
+function handleRegisterClose(id) {
+  isRegisterMode.value = false;
+  if (id) {
+    selectedRequestId.value = id;
+  } else {
+    selectedRequestId.value = null;
+  }
 }
 
 function goToDetail(id) {
@@ -218,7 +235,7 @@ onMounted(fetchData);
   background: #fff;
   border-radius: 0 0 12px 12px;
   box-shadow: 0 2px 8px 0 rgba(64, 102, 250, 0.03);
-  padding: 40px 32px;
+  padding: 10px 32px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -227,7 +244,6 @@ onMounted(fetchData);
 .info-section {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   padding: 24px 32px;
   margin-bottom: 0;
 }
@@ -243,6 +259,7 @@ onMounted(fetchData);
 }
 
 .purchase-title {
+  font-size: 17px;
   color: #333;
   font-weight: 600;
 }
