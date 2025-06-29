@@ -5,15 +5,15 @@
       :key="chartKey"
       :data="doughnutData"
       :options="doughnutOptions"
-      style="width: 320px; height: 320px; display: block;"
+      style="width: 220px; height: 220px; display: block;"
     />
     <div v-else style="text-align:center; color:#888; padding:32px 0;">
       데이터가 없습니다.
     </div>
-    <div v-if="filteredData.length" class="custom-legend" style="margin-top: 18px; display: flex; flex-wrap: wrap; gap: 18px 32px; justify-content: center;">
-      <div v-for="(label, idx) in doughnutData.labels" :key="idx" style="display: flex; align-items: center; min-width: 120px;">
-        <span :style="{display:'inline-block', width:'18px', height:'18px', background: doughnutData.datasets[0].backgroundColor[idx], marginRight:'8px', borderRadius:'4px'}"></span>
-        <span>{{ label }}</span>
+    <div v-if="filteredData.length" class="custom-legend" style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 12px 20px; justify-content: center;">
+      <div v-for="(label, idx) in doughnutData.labels" :key="idx" style="display: flex; align-items: center; min-width: 84px;">
+        <span :style="{display:'inline-block', width:'13px', height:'13px', background: doughnutData.datasets[0].backgroundColor[idx], marginRight:'6px', borderRadius:'3px'}"></span>
+        <span style="min-width: 84px;">{{ label }}</span>
       </div>
     </div>
   </div>
@@ -47,7 +47,16 @@ const filteredData = computed(() =>
 )
 
 const colorPalette = [
-  '#3366FF', '#FFB800', '#FF5C5C', '#00C49A', '#888888', '#FF7F50', '#8A2BE2', '#FF69B4', '#00BFFF', '#FFD700', '#32CD32', '#FF6347'
+  '#3867F4', // 진한 파랑
+  '#FF8855', // 연한 주황
+  '#EAF0FA', // 아주 연한 회색/블루
+  '#A259F7', // 보라
+  '#FFC145', // 머스타드/노랑
+  '#F7B2B7', // 연핑크 (보조)
+  '#B5EAD7', // 민트 (보조)
+  '#B2C7DA', // 연블루그레이 (보조)
+  '#F6EAC2', // 연노랑 (보조)
+  '#C3C8E6'  // 연보라 (보조)
 ]
 
 const doughnutData = computed(() => {
@@ -110,4 +119,10 @@ const doughnutOptions = {
 const chartKey = computed(() =>
   `${props.selectedFranchiseId}-${props.month}`
 )
-</script> 
+</script>
+
+<style scoped>
+.custom-legend {
+  font-size: 12px;
+}
+</style> 

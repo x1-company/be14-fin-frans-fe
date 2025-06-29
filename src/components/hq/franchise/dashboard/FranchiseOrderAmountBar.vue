@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Bar v-if="chartData && chartData.length" :data="barData" :options="barOptions" />
+    <Bar v-if="chartData && chartData.length" :data="barData" :options="barOptions" style="max-width: 900px; height: 280px; margin: 0 auto" />
     <div v-else style="text-align:center; color:#888; padding:32px 0;">데이터가 없습니다.</div>
   </div>
 </template>
@@ -23,8 +23,17 @@ const props = defineProps({
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
-const PASTEL_COLORS = [
-'#3366FF', '#FFB800', '#FF5C5C', '#00C49A', '#888888', '#FF7F50', '#8A2BE2', '#FF69B4', '#00BFFF', '#FFD700', '#32CD32', '#FF6347'
+const colorPalette = [
+  '#3867F4', // 진한 파랑
+  '#FF8855', // 연한 주황
+  '#EAF0FA', // 아주 연한 회색/블루
+  '#A259F7', // 보라
+  '#FFC145', // 머스타드/노랑
+  '#F7B2B7', // 연핑크 (보조)
+  '#B5EAD7', // 민트 (보조)
+  '#B2C7DA', // 연블루그레이 (보조)
+  '#F6EAC2', // 연노랑 (보조)
+  '#C3C8E6'  // 연보라 (보조)
 ];
 
 const formatYAxis = value => {
@@ -92,9 +101,9 @@ const barData = computed(() => {
     data: isMonthly ? MONTHS.map(m => monthMap[m] ?? null) : props.chartData.map(item => item.orderAmount),
     backgroundColor: props.trendVisible
       ? (isMonthly
-        ? PASTEL_COLORS.map(c => pastelToAlpha(c, 0.15))
-        : PASTEL_COLORS.slice(0, props.chartData.length).map(c => pastelToAlpha(c, 0.15)))
-      : (isMonthly ? PASTEL_COLORS : PASTEL_COLORS.slice(0, props.chartData.length)),
+        ? colorPalette.map(c => pastelToAlpha(c, 0.15))
+        : colorPalette.slice(0, props.chartData.length).map(c => pastelToAlpha(c, 0.15)))
+      : (isMonthly ? colorPalette : colorPalette.slice(0, props.chartData.length)),
     borderRadius: 6,
     type: 'bar',
     order: 1
@@ -155,4 +164,10 @@ const barOptions = {
     }
   }
 }
-</script> 
+</script>
+
+<style scoped>
+.chartjs-render-monitor {
+  font-size: 12px !important;
+}
+</style> 

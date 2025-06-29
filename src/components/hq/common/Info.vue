@@ -45,12 +45,13 @@
 
             <div class="stats-graph-card">
               <template v-if="statsTab === 0">
-                <div style="display:flex;align-items:center;gap:12px;">
-                  <h3 style="margin:0;">월별 주문 금액 총액</h3>
+                <div style="text-align:center; margin-bottom: 12px;">
+                  <h3 style="margin:0; display:inline-block; font-weight:700; font-size:1.15rem;">월별 주문 금액 총액</h3>
                   <button
                     v-if="props.selectedFranchiseId"
                     @click="toggleTrend"
                     :class="['trend-btn', { active: trendVisible }]"
+                    style="margin-left: 10px; vertical-align: middle;"
                   >
                     {{ trendVisible ? '동향 닫기' : '동향 보기' }}
                   </button>
@@ -750,9 +751,13 @@ watch([statsTab, activeTabSwitch, () => props.selectedFranchiseId], () => {
 
 .stats-graph-card {
     background: #fff;
-    padding: 24px;
-    border-radius: 8px;
-    box-shadow: 0 2px 16px 0 rgba(64, 102, 250, 0.06);
+    padding: 0;
+    border-radius: 6px;
+    box-shadow: 0 1px 8px 0 rgba(64, 102, 250, 0.04);
+}
+
+.stats-graph-card h3 {
+    font-size: 1rem !important;
 }
 
 .trend-btn {
@@ -762,7 +767,7 @@ watch([statsTab, activeTabSwitch, () => props.selectedFranchiseId], () => {
   border-radius: 16px;
   padding: 6px 18px;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 13px;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -782,8 +787,8 @@ watch([statsTab, activeTabSwitch, () => props.selectedFranchiseId], () => {
 }
 .stats-tab-btn {
   flex: 1;
-  padding: 18px 0;
-  font-size: 1.15rem;
+  padding: 10px 0 10px 0;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #888;
   background: none;
@@ -835,13 +840,13 @@ watch([statsTab, activeTabSwitch, () => props.selectedFranchiseId], () => {
 }
 .doughnut-title {
   margin: 0 0 2px 0;
-  font-size: 1.15rem;
+  font-size: 0.98rem;
   font-weight: 700;
   text-align: left;
 }
 .doughnut-desc {
   color: #888;
-  font-size: 15px;
+  font-size: 13px;
   margin-bottom: 8px;
   display: block;
   text-align: left;
@@ -850,7 +855,7 @@ watch([statsTab, activeTabSwitch, () => props.selectedFranchiseId], () => {
   padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid #d0d0d0;
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .review-action-bar {

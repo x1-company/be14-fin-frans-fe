@@ -4,7 +4,7 @@
       v-if="chartData && chartData.length"
       :data="barData"
       :options="barOptions"
-      style="max-width: 600px; height: 300px; margin: 0 auto"
+      style="max-width: 900px; height: 280px; margin: 0 auto"
     />
     <div v-else style="text-align:center; color:#888; padding:32px 0;">
       데이터가 없습니다.
@@ -75,7 +75,16 @@ const barData = computed(() => {
 })
 
 const colorPalette = [
-  '#3366FF', '#FFB800', '#FF5C5C', '#00C49A', '#888888', '#FF7F50', '#8A2BE2', '#FF69B4', '#00BFFF', '#FFD700', '#32CD32', '#FF6347'
+  '#3867F4', // 진한 파랑
+  '#FF8855', // 연한 주황
+  '#EAF0FA', // 아주 연한 회색/블루
+  '#A259F7', // 보라
+  '#FFC145', // 머스타드/노랑
+  '#F7B2B7', // 연핑크 (보조)
+  '#B5EAD7', // 민트 (보조)
+  '#B2C7DA', // 연블루그레이 (보조)
+  '#F6EAC2', // 연노랑 (보조)
+  '#C3C8E6'  // 연보라 (보조)
 ]
 
 const barOptions = {
