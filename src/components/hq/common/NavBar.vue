@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar">
-    <div class="navbar__logo">
-      <img src="@/assets/FRANS_bar_logo.png" alt="FRANS Logo" style="height: 28px;" />
+    <div class="navbar__logo" @click="handleLogoClick" style="cursor:pointer; position:relative; z-index:10; display:flex; align-items:center;">
+      <img src="@/assets/FRANS_bar_logo.png" alt="FRANS Logo" style="height: 28px; vertical-align: middle; pointer-events:auto;" />
     </div>
     <div class="navbar__right">
       <ul class="navbar__menu">
@@ -92,6 +92,23 @@ const handleClickOutside = (event) => {
     !notificationWrapper.value.contains(event.target)
   ) {
     isNotificationBellOpen.value = false;
+  }
+};
+
+const handleLogoClick = () => {
+  if (auth.userType === 'HQ') {
+    router.push({ path: '/hq/franchise'});
+  } else if (auth.userType === 'SUPPLIER') {
+    router.push('/supplier');
+  } else if (auth.userType === 'FRANCHISE') {
+    router.push('/franchise');
+  } else if (auth.franchiseId) {
+    router.push('/franchise');
+  } else if (auth.supplierId) {
+    router.push('/supplier');
+  } else {
+    // 기본값: HQ 직원이면 /hq/franchise, 그 외에는 /franchise
+    router.push({ path: '/hq/franchise'});
   }
 };
 

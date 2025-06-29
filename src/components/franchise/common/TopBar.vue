@@ -1,6 +1,6 @@
 <template>
     <nav class="navbar">
-        <div class="navbar__logo">
+        <div class="navbar__logo" @click="goHome" style="cursor:pointer;">
         <img src="@/assets/FRANS_bar_logo.png" alt="FRANS Logo" style="height: 28px;" />
         </div>
         <div class="navbar__right">
@@ -24,8 +24,10 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth'
 import UserInfo from './UserInfo.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
+import { useRouter } from 'vue-router'
 
 const auth = useAuthStore();
+const router = useRouter()
 
 const isNotificationBellOpen = ref(false);
 const notificationWrapper = ref(null);
@@ -39,6 +41,10 @@ const handleClickOutside = (event) => {
         isNotificationBellOpen.value = false;
     }
 };
+
+function goHome() {
+  router.push('/franchise')
+}
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
@@ -101,6 +107,10 @@ onUnmounted(() => {
   color: #ffffff;
   padding: 0 12px;
   /* transition: color 0.2s; */
+}
+
+.navbar__menu li:hover {
+  color: #e6eaff;
 }
 
 .notification-icon {
