@@ -26,14 +26,8 @@
         </div>
         <div class="card-main">
           <span class="card-value">{{ completedOrder.count }}</span>
-          <span v-if="typeof completedOrder.diff === 'number'" class="card-diff"
-            :class="{
-              up: completedOrder.diff > 0,
-              down: completedOrder.diff < 0,
-              zero: completedOrder.diff === 0
-            }"
-          >
-            {{ completedOrder.diff > 0 ? '+' : '' }}{{ completedOrder.diff }}
+          <span v-if="typeof completedOrder.diff === 'number' && completedOrder.diff < 0" class="card-diff down">
+            {{ completedOrder.diff }}
           </span>
         </div>
       </div>
@@ -76,19 +70,20 @@ const selectedMonth = ref(now.getMonth() + 1)
 <style scoped>
 .dashboard-card-list {
   display: flex;
-  gap: 24px;
-  margin: 32px 0;
+  gap: 7px;
+  margin: 7px 0;
+  padding: 0 18px;
 }
 .dashboard-card {
   flex: 1;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 16px 0 rgba(64, 102, 250, 0.06);
-  padding: 24px 32px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  min-width: 220px;
-  min-height: 120px;
+  min-width: 100px;
+  min-height: 48px;
   justify-content: space-between;
   cursor: pointer;
   transition: transform 0.18s, box-shadow 0.18s;
@@ -101,21 +96,21 @@ const selectedMonth = ref(now.getMonth() + 1)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #444;
 }
 .card-icon {
-  font-size: 1.5rem;
+  font-size: 0.95rem;
 }
 .card-main {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  margin: 16px 0 8px 0;
+  gap: 7px;
+  margin: 4px 0 2px 0;
 }
 .card-value {
-  font-size: 2.2rem;
+  font-size: 1rem;
   font-weight: bold;
   color: #3cb371;
 }
@@ -126,34 +121,32 @@ const selectedMonth = ref(now.getMonth() + 1)
   color: #a259e6;
 }
 .card-diff {
-  font-size: 1.1rem;
+  font-size: 0.7rem;
   font-weight: 500;
   margin-left: 8px;
-}
-.card-diff.up {
-  color: #3cb371;
 }
 .card-diff.down {
   color: #e74c3c;
 }
 .card-diff.zero {
   color: #888;
+  display: none;
 }
 .card-footer {
-  font-size: 0.95rem;
+  font-size: 0.6rem;
   color: #888;
 }
 .month-selector-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 24px 0 12px 0;
+  margin: 16px 0 8px 0;
 }
 .month-select {
-  padding: 6px 16px;
+  padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid #d0d7e2;
-  font-size: 1rem;
+  font-size: 0.9rem;
   background: #f8fafd;
   color: #222;
   outline: none;

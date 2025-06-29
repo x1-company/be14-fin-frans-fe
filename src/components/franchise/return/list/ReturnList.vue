@@ -366,13 +366,13 @@ const formatproductSummary = (text) => {
 .return-table tr:last-child td {
   border-bottom: none;
 }
-.col-no        { width: 7%; }
-.col-code      { width: 20%; color: #222; }
-.col-name      { width: 25%; font-weight: 500; }
-.col-status    { width: 15%; }
-.col-date      { width: 15%; }
-.col-amount    { width: 15%; text-align: right; font-weight: 500; }
-.col-franchise { width: 20%; }
+  .col-no        { flex-basis: 7%; }
+  .col-code      { flex-basis: 20%; color: #222; overflow: visible; text-overflow: unset; white-space: nowrap; }
+  .col-name      { flex-basis: 18%; text-align: center; font-weight: 500; }
+  .col-status    { flex-basis: 15%; }
+  .col-date      { flex-basis: 10%; }
+  .col-amount    { flex-basis: 15%; text-align: right; font-weight: 500; }
+  .col-franchise { flex-basis: 15%; }
 .empty-message {
   text-align: center;
   color: #6c757d;
