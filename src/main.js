@@ -7,6 +7,9 @@ import { createPinia } from "pinia";
 import notificationService from "./lib/notificationService";
 import { useAuthStore } from "./stores/auth";
 import { useNotificationStore } from "./stores/notification";
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 const app = createApp(App);
 const pinia = createPinia();

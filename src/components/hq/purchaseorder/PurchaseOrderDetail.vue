@@ -3,9 +3,9 @@
     <!-- Header with action buttons -->
     <div class="header-actions">
       <button class="btn btn-primary">발주서 출력</button>
-      <button class="btn btn-secondary" @click="editOrder">수정</button>
-      <button class="btn btn-secondary">취소</button>
-      <button class="btn btn-secondary" @click="$emit('close')">닫기</button>
+      <button class="btn btn-primary" @click="editOrder">수정</button>
+      <button class="btn btn-primary" @click="cancelOrder">취소</button>
+      <button class="btn btn-primary" @click="$emit('close')">닫기</button>
     </div>
 
     <!-- 발주 정보 Section -->
@@ -133,9 +133,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/lib/api'
+import { useToast } from '@/composables/useToast'
 
 const props = defineProps({ orderId: Number })
 const emit = defineEmits(['close', 'edit'])
+const { toast } = useToast()
 
 const detail = ref({
   products: [],
@@ -176,6 +178,27 @@ function getStatusText(status) {
 function editOrder() {
   emit('edit', detail.value)
 }
+
+async function cancelOrder() {
+  try {
+    await api.put(`/api/hq/purchaseorder/${props.orderId}/cancel`)
+    detail.value.status = 'CANCELED'
+    detail.value.statusLabel = getStatusText('CANCELED')
+    if (typeof toast === 'function') {
+      toast('발주가 취소되었습니다.', 'success')
+    } else {
+      alert('발주가 취소되었습니다.')
+    }
+    emit('close')
+    emit('refresh-list')
+  } catch (e) {
+    if (typeof toast === 'function') {
+      toast('발주 취소에 실패했습니다.', 'error')
+    } else {
+      alert('발주 취소에 실패했습니다.')
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -201,18 +224,12 @@ function editOrder() {
   transition: all 0.2s;
 }
 .btn-primary {
-  background-color: #4f46e5;
-  color: white;
+  background-color: #5468ff;
+  color: #fff;
+  border: 1px solid #5468ff;
 }
 .btn-primary:hover {
-  background-color: #4338ca;
-}
-.btn-secondary {
-  background-color: #6b7280;
-  color: white;
-}
-.btn-secondary:hover {
-  background-color: #4b5563;
+  opacity: 0.9;
 }
 .section {
   background: white;
