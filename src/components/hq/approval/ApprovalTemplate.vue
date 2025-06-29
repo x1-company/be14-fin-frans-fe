@@ -39,8 +39,8 @@
       <!-- 헤더 -->
       <div class="template-header">
         <div class="template-info">
-          <h2 class="template-title">결재선 구성</h2>
-          <p class="template-name">{{ selectedTemplate.name }}</p>
+          <!-- <h2 class="template-title">결재선 구성</h2> -->
+          <!-- <p class="template-name">{{ selectedTemplate.name }}</p> -->
         </div>
         <div class="template-actions">
           <button @click="handleEdit" class="action-btn edit-btn">
@@ -793,7 +793,7 @@ const toggleReorderMode = async () => {
   align-items: center;
   padding: 32px 40px;
   background: white;
-  border-bottom: 1px solid #e9ecef;
+  /* border-bottom: 1px solid #e9ecef; */
 }
 
 .template-info h2 {
@@ -819,9 +819,9 @@ const toggleReorderMode = async () => {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  border: 1px solid #dee2e6;
+  border: 1px solid #bbdefb;
   background: white;
-  color: #495057;
+  color: #1976d2;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
@@ -831,13 +831,18 @@ const toggleReorderMode = async () => {
 
 .action-btn:hover {
   background: #f8f9fa;
-  border-color: #adb5bd;
+  /* border-color: #adb5bd; */
+}
+
+.delete-btn {
+  border: 1px solid #ffcdd2;
+  color: #d32f2f;
+  background: white;
 }
 
 .delete-btn:hover {
-  background: #dc3545;
-  border-color: #dc3545;
-  color: white;
+  background: #fff4f5;
+  /* color: #b71c1c; */
 }
 
 .reorder-btn.active {
@@ -857,25 +862,25 @@ const toggleReorderMode = async () => {
   justify-content: center;
   flex-wrap: wrap;
   gap: 20px;
-  margin-bottom: 40px;
-  margin-top: 20px;
+  /* margin-bottom: 40px;
+  margin-top: 20px; */
 }
 
 .flow-node-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .flow-node {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  padding: 18px;
   border-radius: 50%;
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   text-align: center;
   color: white;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
@@ -909,8 +914,8 @@ const toggleReorderMode = async () => {
 }
 
 .node-avatar {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   display: flex;
@@ -921,7 +926,7 @@ const toggleReorderMode = async () => {
 }
 
 .node-label {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: bold;
 }
 
@@ -932,20 +937,20 @@ const toggleReorderMode = async () => {
 }
 
 .node-title {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
   color: white;
   margin-bottom: 2px;
 }
 
 .node-subtitle {
-  font-size: 12px;
+  font-size: 10px;
   color: white;
   opacity: 1;
 }
 
 .node-department {
-  font-size: 11px;
+  font-size: 9px;
   color: white;
   opacity: 1;
 }
@@ -989,25 +994,26 @@ const toggleReorderMode = async () => {
 .section-header h3 {
   margin: 0 0 32px 0;
   color: #212529;
-  font-size: 22px;
+  font-size: 15px;
   font-weight: 700;
 }
 
 .detail-section {
   background: #f8f9fa;
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
   border: 1px solid #e9ecef;
+  font-size: 0.9em;
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 18px;
+  gap: 8px;
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .section-icon {
@@ -1035,12 +1041,13 @@ const toggleReorderMode = async () => {
 .member-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
+  gap: 8px;
+  padding: 10px;
   background: white;
-  border-radius: 12px;
+  border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-size: 0.9em;
 }
 
 .member-item:hover {
@@ -1061,14 +1068,14 @@ const toggleReorderMode = async () => {
 }
 
 .member-avatar {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: bold;
 }
 
@@ -1077,7 +1084,7 @@ const toggleReorderMode = async () => {
 }
 
 .member-name {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
   color: #212529;
   margin-bottom: 4px;

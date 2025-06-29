@@ -116,9 +116,9 @@
               @click="clearAllLines" 
               class="clear-all-button"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <!-- <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"></path>
-              </svg>
+              </svg> -->
               전체 삭제
             </button>
           </div>
@@ -881,7 +881,7 @@ const handleOverlayClick = () => {
 }
 
 .remove-button:hover {
-  background: rgba(220, 53, 69, 0.2);
+  /* background: rgba(220, 53, 69, 0.2); */
   border-color: #dc3545;
 }
 
@@ -959,18 +959,18 @@ const handleOverlayClick = () => {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: #dc3545;
-  color: white;
-  border: none;
+  border: 1px solid hsl(356, 79%, 66%);
+  color: #e6293d;
   border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  background: none;
+  /* transition: background-color 0.2s; */
 }
 
-.clear-all-button:hover {
+/* .clear-all-button:hover {
   background: #c82333;
-}
+} */
 
 /* 스크롤바 스타일링 */
 .modal-body::-webkit-scrollbar,

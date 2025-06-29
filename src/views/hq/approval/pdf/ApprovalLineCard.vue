@@ -51,9 +51,9 @@ function formatDate(dateString) {
   min-width: 160px;
   max-width: 180px;
   padding: 12px 8px;
-  border: 1px solid #d1fae5;
+  border: 1px solid #eaeaea;
   border-radius: 8px;
-  background: #f0fdf4;
+  background: none;
   text-align: center;
   font-size: 13px;
 }

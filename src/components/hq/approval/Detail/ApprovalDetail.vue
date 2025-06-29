@@ -230,14 +230,7 @@
               :key="file.fileId || file.id"
               class="attachment-item"
             >
-              <div class="file-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path
-                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                  />
-                  <polyline points="14,2 14,8 20,8" />
-                </svg>
-              </div>
+              <div class="file-icon">📄</div>
               <div class="file-info">
                 <span class="file-name">{{ file.fileName || file.name }}</span>
               </div>
@@ -684,7 +677,7 @@ const handleResubmitSuccess = () => {
 }
 
 .tab-item.active {
-  color: #8b5cf6;
+  color: #3453c7;
   font-weight: 700;
   padding-right: 32px;
 }
@@ -697,13 +690,13 @@ const handleResubmitSuccess = () => {
   right: 20px;
   bottom: -1.5px;
   height: 3px;
-  background: #8b5cf6;
+  background: #3453c7;
   border-radius: 2px 2px 0 0;
   z-index: 2;
 }
 
 .tab-item:hover {
-  color: #8b5cf6;
+  color: #3453c7;
 }
 
 .header-actions {
@@ -1043,19 +1036,20 @@ const handleResubmitSuccess = () => {
 }
 
 .file-icon {
-  width: 32px;
-  height: 32px;
-  background: #4066fa;
+  width: 48px;
+  height: 48px;
+  /* background: #4066fa; */
   color: white;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 20px;
 }
 
 .file-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 30px;
+  height: 30px;
 }
 
 .file-info {

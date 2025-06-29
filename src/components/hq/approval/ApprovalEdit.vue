@@ -1878,31 +1878,24 @@ defineExpose({
 }
 
 .edit-button,
-.register-button {
-  padding: 12px 24px;
+.register-button,
+.delete-button {
+  padding: 8px 16px;
+  font-size: 13px;
   border-radius: 6px;
-  border: none;
-  font-size: 15px;
   font-weight: 600;
+  border: none;
   cursor: pointer;
   transition: all 0.2s;
-}
-
-.edit-button {
-  background: #f3f4f6;
-  color: #374151;
+  width: auto;
+  height: auto;
+  background: none;
 }
 
 .edit-button:disabled {
   background: #e5e7eb;
   color: #9ca3af;
   cursor: not-allowed;
-}
-
-.register-button {
-  background: #4066fa;
-  color: white;
-  border: 1px solid #4066fa;
 }
 
 .register-button:disabled {
@@ -1974,19 +1967,6 @@ defineExpose({
   font-size: 16px;
 }
 
-.delete-button {
-  padding: 12px 24px;
-  border-radius: 6px;
-  border: none;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  background: #ef4444;
-  color: white;
-  border: 1px solid #ef4444;
-  transition: all 0.2s;
-  margin-left: 8px;
-}
 .delete-button:disabled {
   background: #fca5a5;
   color: #f3f4f6;
@@ -2075,5 +2055,20 @@ defineExpose({
 .cancel-button:hover {
   background: #f8f9fa;
   border-color: #adb5bd;
+}
+
+.edit-button {
+  border: 1px solid #4066fa;
+  color: #4066fa;
+}
+
+.register-button {
+  border: 1px solid #22c55e;
+  color: #22c55e;
+}
+
+.delete-button {
+  border: 1px solid #ef4444;
+  color: #ef4444;
 }
 </style>
