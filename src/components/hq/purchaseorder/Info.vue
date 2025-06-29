@@ -9,6 +9,7 @@
       :orderId="selectedOrderId"
       @close="selectedOrderId = null"
       @edit="handleEdit"
+      @refresh-list="handleRefreshList"
     />
     <PurchaseOrderUpdate
       v-else-if="editOrderData"
@@ -23,8 +24,12 @@
       :filterTabs="filterTabs"
       :activeFilterTab="activeFilterTab"
       :onFilterTabChange="handleFilterTabChange"
+      :page="page"
+      :totalCount="totalCount"
+      :onPageChange="handlePageChange"
       @show-register-view="showRegisterView"
       @show-detail="handleShowDetail"
+      @search="handleSearch"
     />
   </div>
 </template>
@@ -59,6 +64,9 @@ const filterTabs = [
 
 const selectedOrderId = ref(null);
 const editOrderData = ref(null);
+const page = ref(1);
+const pageSize = 10;
+const totalCount = ref(0);
 
 function handleShowDetail(orderId) {
   selectedOrderId.value = orderId;
@@ -73,7 +81,7 @@ function handleEdit(orderData) {
 function handleUpdateComplete() {
   editOrderData.value = null;
   selectedOrderId.value = null;
-  fetchOrders(props.supplier.id); // 수정 후 목록 갱신
+  fetchOrders(props.supplier.id, page.value); // 수정 후 목록 갱신
 }
 
 function handleCancelUpdate() {
@@ -81,16 +89,63 @@ function handleCancelUpdate() {
   selectedOrderId.value = null;
 }
 
-async function fetchOrders(supplierId) {
+function handleRefreshList() {
+  fetchOrders(props.supplier.id, page.value);
+}
+
+function handleSearch({ type, keyword }) {
+  page.value = 1;
+  activeFilterTab.value = 0;
+  if (!keyword) {
+    fetchOrders(props.supplier.id, 1);
+    return;
+  }
+  loading.value = true;
+  error.value = null;
+  let url = '';
+  let params = { page: 0, size: pageSize };
+  if (type === 'title') {
+    url = '/api/hq/purchaseorder/title';
+    params.title = keyword;
+  } else if (type === 'code') {
+    url = '/api/hq/purchaseorder/code';
+    params.code = keyword;
+  }
+  api.get(url, { params })
+    .then(response => {
+      const rawOrders = response.data.content || response.data || [];
+      orders.value = rawOrders.map(dto => ({
+        id: dto.id,
+        orderNumber: dto.code,
+        title: dto.title,
+        amount: dto.totalAmount,
+        status: dto.status,
+        requestDate: dto.createdAt ? dto.createdAt.split('T')[0] : '-',
+        deliveryDate: dto.requestedDeliveryDate || '-',
+      }));
+      totalCount.value = response.data.totalElements || 0;
+    })
+    .catch(e => {
+      error.value = e;
+      orders.value = [];
+      totalCount.value = 0;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+}
+
+async function fetchOrders(supplierId, pageNum = 1) {
   if (!supplierId) {
     orders.value = [];
+    totalCount.value = 0;
     return;
   }
   loading.value = true;
   error.value = null;
   try {
     const response = await api.get('/api/hq/purchaseorder', {
-      params: { supplierId, page: 0, size: 10 }
+      params: { supplierId, page: pageNum - 1, size: pageSize }
     });
     const rawOrders = response.data.content || response.data || [];
     orders.value = rawOrders.map(dto => ({
@@ -102,10 +157,39 @@ async function fetchOrders(supplierId) {
       requestDate: dto.createdAt ? dto.createdAt.split('T')[0] : '-',
       deliveryDate: dto.requestedDeliveryDate || '-',
     }));
+    totalCount.value = response.data.totalElements || 0;
   } catch (e) {
     console.error(`[API ERROR] Purchase orders fetch failed for supplier ${supplierId}:`, e.response || e);
     error.value = e;
     orders.value = [];
+    totalCount.value = 0;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function fetchOrdersByStatus(status, pageNum = 1) {
+  loading.value = true;
+  error.value = null;
+  try {
+    const response = await api.get('/api/hq/purchaseorder/status', {
+      params: { status, supplierId: props.supplier.id, page: pageNum - 1, size: pageSize }
+    });
+    const rawOrders = response.data.content || response.data || [];
+    orders.value = rawOrders.map(dto => ({
+      id: dto.id,
+      orderNumber: dto.code,
+      title: dto.title,
+      amount: dto.totalAmount,
+      status: dto.status,
+      requestDate: dto.createdAt ? dto.createdAt.split('T')[0] : '-',
+      deliveryDate: dto.requestedDeliveryDate || '-',
+    }));
+    totalCount.value = response.data.totalElements || 0;
+  } catch (e) {
+    error.value = e;
+    orders.value = [];
+    totalCount.value = 0;
   } finally {
     loading.value = false;
   }
@@ -115,9 +199,11 @@ watch(
   () => props.supplier,
   (newSupplier) => {
     if (newSupplier && newSupplier.id) {
-      fetchOrders(newSupplier.id);
+      page.value = 1;
+      fetchOrders(newSupplier.id, 1);
     } else {
       orders.value = [];
+      totalCount.value = 0;
     }
     activeFilterTab.value = 0;
     selectedOrderId.value = null;
@@ -127,30 +213,49 @@ watch(
 );
 
 const filteredOrders = computed(() => {
-  // 백엔드 PurchaseOrderStatus Enum 이름과 일치해야 합니다.
-  const statusMap = {
-    inProgress: ['REQUEST_PENDING'], 
-    completed: ['APPROVED'], // '완료된 발주'는 APPROVED
-    canceled: ['CANCELED'],
-    rejected: ['REJECTED']
-  };
-
   switch (activeFilterTab.value) {
     case 1: // 진행중
-      return orders.value.filter(o => statusMap.inProgress.includes(o.status));
+      return orders.value;
     case 2: // 완료
-      return orders.value.filter(o => statusMap.completed.includes(o.status));
+      return orders.value;
     case 3: // 취소
-      return orders.value.filter(o => statusMap.canceled.includes(o.status));
+      return orders.value;
     case 4: // 반려
-      return orders.value.filter(o => statusMap.rejected.includes(o.status));
-    default: // 전체
+      return orders.value;
+    default:
       return orders.value;
   }
 });
 
 function handleFilterTabChange(index) {
   activeFilterTab.value = index;
+  page.value = 1;
+  if (index === 1) {
+    fetchOrdersByStatus('REQUEST_PENDING', 1);
+  } else if (index === 2) {
+    fetchOrdersByStatus('APPROVED', 1);
+  } else if (index === 3) {
+    fetchOrdersByStatus('CANCELED', 1);
+  } else if (index === 4) {
+    fetchOrdersByStatus('REJECTED', 1);
+  } else {
+    fetchOrders(props.supplier.id, 1);
+  }
+}
+
+function handlePageChange(newPage) {
+  page.value = newPage;
+  if (activeFilterTab.value === 1) {
+    fetchOrdersByStatus('REQUEST_PENDING', newPage);
+  } else if (activeFilterTab.value === 2) {
+    fetchOrdersByStatus('APPROVED', newPage);
+  } else if (activeFilterTab.value === 3) {
+    fetchOrdersByStatus('CANCELED', newPage);
+  } else if (activeFilterTab.value === 4) {
+    fetchOrdersByStatus('REJECTED', newPage);
+  } else {
+    fetchOrders(props.supplier.id, newPage);
+  }
 }
 
 const showRegisterView = () => {

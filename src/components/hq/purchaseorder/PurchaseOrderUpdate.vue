@@ -285,7 +285,6 @@ function formatCurrency(value) {
 
 function cancel() {
   emit('cancel-update');
-  router.back();
 }
 
 async function submitEdit() {
@@ -308,7 +307,6 @@ async function submitEdit() {
     await api.put(`/api/hq/purchaseorder/${orderInfo.value.id}`, payload);
     success('수정이 완료되었습니다.');
     emit('update-complete');
-    router.back();
   } catch (e) {
     console.error('수정 오류:', e);
     error('수정에 실패했습니다.');
