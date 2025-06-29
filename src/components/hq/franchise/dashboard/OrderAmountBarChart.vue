@@ -22,10 +22,12 @@ import {
   LinearScale,
   Tooltip,
   Legend,
-  Title
+  Title,
+  PointElement,
+  LineElement
 } from 'chart.js'
 
-Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, Title)
+Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend, Title, PointElement, LineElement)
 
 const props = defineProps({
   chartData: {
