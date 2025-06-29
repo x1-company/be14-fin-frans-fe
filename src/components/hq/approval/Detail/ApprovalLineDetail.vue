@@ -91,6 +91,11 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  approvalDetail: {
+    type: Object,
+    required: false,
+    default: null,
+  },
   activeTab: {
     type: String,
     default: "approvalLine",
@@ -114,8 +119,7 @@ const recipients = ref([]);
 
 // 결재 순서 (결재자 + 협조자가 순서대로 진행)
 const approvalSequence = computed(() => {
-  // DB 순서대로 결재자, 협조자만 플로우에 포함
-  return approvalLines.value
+  const sequence = approvalLines.value
     .filter((line) => line.type === "APPROVER" || line.type === "COOPERATOR")
     .map((line) => ({
       id: line.id,
@@ -129,6 +133,23 @@ const approvalSequence = computed(() => {
       readTime: line.checkedAt,
       type: line.type === "APPROVER" ? "approver" : "collaborator",
     }));
+
+  // approvalDetail/document에서 기안자 정보 추출
+  if (props.approvalDetail) {
+    sequence.unshift({
+      id: props.approvalDetail.drafterId,
+      name: props.approvalDetail.drafterName,
+      department: props.approvalDetail.deptName,
+      position: props.approvalDetail.positionName,
+      status: "DRAFTED",
+      processedAt: props.approvalDetail.createdAt,
+      comment: "",
+      commentTime: props.approvalDetail.createdAt,
+      readTime: null,
+      type: "drafter",
+    });
+  }
+  return sequence;
 });
 
 // API에서 결재선 데이터 가져오기

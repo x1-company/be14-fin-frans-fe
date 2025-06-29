@@ -3,10 +3,16 @@
     <div class="person-type-label">{{ typeLabel }}</div>
     <div class="status-icon" :class="statusClass">
       <img
-        v-if="statusIconSrc"
+        v-if="statusIconSrc && person.type !== 'drafter'"
         :src="statusIconSrc"
         alt="status icon"
         class="status-img"
+      />
+      <img
+        v-else-if="person.type === 'drafter'"
+        :src="drafterIconSrc"
+        alt="drafter icon"
+        class="drafter-img"
       />
     </div>
     <div class="status-label">{{ statusLabel }}</div>
@@ -32,6 +38,7 @@ import reviewCompletedImg from "@/assets/REVIEW_COMPLETED.png";
 import reviewCancelImg from "@/assets/REVIEW_CANCEL.png";
 import rejectedImg from "@/assets/REJECTED.png";
 import expectedImg from "@/assets/EXPECTED.png";
+import drafterIcon from "@/assets/drafter.png";
 
 const props = defineProps({
   person: Object,
@@ -44,12 +51,17 @@ const props = defineProps({
 const statusClass = computed(() => {
   return props.person.status;
 });
+
 const statusIconSrc = computed(() => {
   if (props.person.status === "WAITING") return reviewingImg;
   if (props.person.status === "EXPECTED") return expectedImg;
   if (props.person.status === "APPROVED") return reviewCompletedImg;
   if (props.person.status === "REJECTED") return reviewCancelImg;
   return rejectedImg;
+});
+
+const drafterIconSrc = computed(() => {
+  return drafterIcon;
 });
 
 // Find the first WAITING in the flow
@@ -60,6 +72,7 @@ const isCurrentTurn = computed(() => {
 });
 
 const statusLabel = computed(() => {
+  if (props.person.type === "drafter") return "기안";
   if (isCurrentTurn.value && props.person.status === "WAITING")
     return "검토 중";
   if (props.person.status === "APPROVED") return "검토 완료";
@@ -68,16 +81,21 @@ const statusLabel = computed(() => {
   if (props.person.status === "EXPECTED") return "예정";
   return "";
 });
+
 const typeLabel = computed(() => {
+  if (props.person.type === "drafter") return "기안자";
   if (props.person.type === "approver") return "결재자";
   if (props.person.type === "collaborator") return "협조자";
   return "";
 });
+
 const iconComponent = computed(() => {
+  if (props.person.type === "drafter") return "DrafterIcon";
   if (props.person.type === "approver") return "AppIcon";
   if (props.person.type === "collaborator") return "CollabIcon";
   return "UserIcon";
 });
+
 const formatDateTime = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -126,10 +144,10 @@ export default {
   display: inline-block;
   text-align: center;
   background: v-bind(
-    'props.person.type === "approver" ? "#e3f0ff" : props.person.type === "collaborator" ? "#e8f5e9" : "#f1f3f5"'
+    'props.person.type === "drafter" ? "#f0f0f0" : props.person.type === "approver" ? "#e3f0ff" : props.person.type === "collaborator" ? "#e8f5e9" : "#f1f3f5"'
   );
   color: v-bind(
-    'props.person.type === "approver" ? "#1976d2" : props.person.type === "collaborator" ? "#2e7d32" : "#6c757d"'
+    'props.person.type === "drafter" ? "#495057" : props.person.type === "approver" ? "#1976d2" : props.person.type === "collaborator" ? "#2e7d32" : "#6c757d"'
   );
 }
 .type-icon {
@@ -163,9 +181,18 @@ export default {
 .status-icon.REJECTED {
   background: #dc3545;
 }
+.status-icon.DRAFTED {
+  background: #6c757d;
+}
 .status-img {
   width: 30px;
   height: 30px;
+  object-fit: contain;
+  display: block;
+}
+.drafter-img {
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   display: block;
 }
