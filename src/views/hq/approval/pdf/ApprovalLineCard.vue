@@ -13,17 +13,39 @@
     <div class="approver-position"
       >{{ person.positionName }} / {{ person.departmentName }}</div
     >
-    <div class="approval-status-text">{{ getStatusText(person.status) }}</div>
+    <div
+      class="approval-status-text"
+      :class="{
+        rejected: person.status === 'REJECTED',
+        approved: person.status === 'APPROVED',
+        black:
+          person.status === 'DRAFTED' ||
+          person.status === 'EXPECTED' ||
+          person.status === 'WAITING',
+      }"
+      >{{ getStatusText(person.status) }}</div
+    >
     <div class="signature-area">
       <img
-        v-if="person.signUrl"
+        v-if="
+          (person.status === 'APPROVED' || person.status === 'REJECTED') &&
+          person.signUrl
+        "
         :src="person.signUrl"
         alt="서명"
         class="signature-img"
       />
-      <div v-else class="signature-placeholder">서명</div>
+      <!-- 결재를 아직 안한 사람은 서명/placeholder 모두 숨김 -->
     </div>
-    <div class="approval-date">{{ formatDate(person.processedAt) }}</div>
+    <div class="approval-date">
+      {{
+        person.status === "REJECTED"
+          ? "반려일자: "
+          : person.status === "APPROVED"
+          ? "승인일자: "
+          : ""
+      }}{{ formatDate(person.processedAt) }}
+    </div>
     <div class="approval-comment">{{ person.opinion }}</div>
   </div>
 </template>
@@ -74,11 +96,17 @@ function formatDate(dateString) {
   color: #666;
   margin-bottom: 4px;
 }
-.approval-status-text {
-  font-size: 12px;
+.approval-status-text.rejected {
+  color: #ef4444;
+  font-weight: 500;
+}
+.approval-status-text.approved {
   color: #059669;
   font-weight: 500;
-  margin-bottom: 8px;
+}
+.approval-status-text.black {
+  color: #222;
+  font-weight: 500;
 }
 .signature-area {
   height: 40px;

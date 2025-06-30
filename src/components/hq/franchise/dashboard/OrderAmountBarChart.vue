@@ -114,11 +114,7 @@ const barOptions = {
     },
     x: {
       ticks: {
-        align: 'center',
-        crossAlign: 'center',
-        autoSkip: false,
-        maxRotation: 0,
-        minRotation: 0
+        display: false
       }
     }
   }
