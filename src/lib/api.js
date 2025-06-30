@@ -78,7 +78,8 @@ api.interceptors.response.use(
     if (error.response?.status >= 500) {
       toast.error(message)
     } else if (error.response?.status >= 400) {
-      toast.warning(message)
+      if (message != "로그아웃된 토큰입니다.") toast.warning(message)
+      else toast.success("로그아웃 되었습니다.")
     } else {
       toast.error(message)
     }
