@@ -10,6 +10,7 @@
       <PurchaseRegisterForm
         v-else-if="isRegisterMode"
         @close="handleRegisterClose"
+        @refresh-list="fetchData"
       />
       <template v-else>
         <div class="info-section__header purchase-header">
@@ -238,15 +239,9 @@ function goToRegister() {
   isRegisterMode.value = true;
 }
 
-async function handleRegisterClose(id) {
+function handleRegisterClose() {
   isRegisterMode.value = false;
-  if (id) {
-    await fetchData();
-    await nextTick();
-    selectedRequestId.value = id;
-  } else {
-    selectedRequestId.value = null;
-  }
+  selectedRequestId.value = null;
 }
 
 function goToDetail(id) {
