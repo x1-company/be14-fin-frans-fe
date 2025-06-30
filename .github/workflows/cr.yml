@@ -67,5 +67,6 @@ jobs:
         application_name: frans-fe
         environment_name: Frans-fe-env
         version_label: github-action-${{ github.sha }}
+        use_existing_version_if_available: true
         region: ap-northeast-2
         deployment_package: deploy/deploy.zip
