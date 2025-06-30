@@ -216,9 +216,9 @@ async function cancelOrder() {
   transition: all 0.2s;
 }
 .btn-primary {
-  background-color: #5468ff;
-  color: #fff;
-  border: 1px solid #5468ff;
+  background-color: transparent !important;
+  color: #1976d2 !important;
+  border: 1.5px solid #bbdefb !important;
 }
 .btn-primary:hover {
   opacity: 0.9;
