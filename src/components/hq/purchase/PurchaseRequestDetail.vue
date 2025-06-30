@@ -14,6 +14,16 @@
         <span class="icon">&#10005;</span> 닫기
       </button>
     </div>
+    <!-- 삭제 확인 커스텀 모달 -->
+    <div v-if="showConfirmModal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-title">정말로 이 구매 요청을 삭제하시겠습니까?</div>
+        <div class="modal-actions">
+          <button class="btn cancel" @click="cancelDelete">취소</button>
+          <button class="btn delete" @click="confirmDelete">삭제</button>
+        </div>
+      </div>
+    </div>
     <div class="card order-card">
       <div class="order-title">
         <span class="order-icon">📝</span>
@@ -121,6 +131,9 @@ const materials = ref([]);
 
 const toast = useToast();
 
+// 삭제 confirm 모달 상태
+const showConfirmModal = ref(false);
+
 function formatCurrency(value) {
   if (!value) return '0';
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -197,26 +210,25 @@ const totalQuantity = computed(() => {
 // }
 
 function deleteRequest() {
-  if (confirm('정말로 이 구매 요청을 삭제하시겠습니까?')) {
-    api.delete(`/api/hq/purchase/requests/${props.id}`)
-      .then(() => {
-        if (typeof toast === 'function') {
-          toast('구매 요청이 삭제되었습니다.', 'success');
-        } else {
-          alert('구매 요청이 삭제되었습니다.');
-        }
-        emit('refresh-list');
-        emit('close');
-      })
-      .catch(error => {
-        console.error('구매 요청 삭제 실패:', error);
-        if (typeof toast === 'function') {
-          toast('구매 요청 삭제에 실패했습니다.', 'error');
-        } else {
-          alert('구매 요청 삭제에 실패했습니다.');
-        }
-      });
+  showConfirmModal.value = true;
+}
+
+async function confirmDelete() {
+  try {
+    await api.delete(`/api/hq/purchase/requests/${props.id}`);
+    toast.success('구매 요청이 삭제되었습니다.');
+    emit('refresh-list');
+    emit('close');
+  } catch (error) {
+    console.error('구매 요청 삭제 실패:', error);
+    toast.error('구매 요청 삭제에 실패했습니다.');
+  } finally {
+    showConfirmModal.value = false;
   }
+}
+
+function cancelDelete() {
+  showConfirmModal.value = false;
 }
 
 onMounted(fetchDetail);
@@ -410,5 +422,44 @@ watch(() => props.id, fetchDetail);
   text-align: center;
   color: #6c757d;
   font-style: italic;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 28px 24px 28px;
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.08);
+  min-width: 320px;
+  max-width: 90vw;
+  text-align: center;
+}
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+.modal-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+.btn.cancel {
+  background: #f5f6fa;
+  color: #888;
+  border: 1px solid #e0e0e0;
+}
+.btn.delete {
+  background: #ffd6d6;
+  color: #d32f2f;
+  border: 1px solid #ffd6d6;
 }
 </style>
