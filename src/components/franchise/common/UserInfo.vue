@@ -22,6 +22,26 @@
 
         <!-- 내 정보 모달 -->
         <MyInfo :isVisible="isMyInfoModalVisible" @close="closeMyInfoModal" />
+
+        <!-- 로그아웃 확인 모달 -->
+        <div v-if="isLogoutModalVisible" class="modal-overlay" @click="closeLogoutModal">
+            <div class="modal-container" @click.stop>
+                <div class="modal-header">
+                    <h3 class="modal-title">로그아웃</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-message">정말로 로그아웃 하시겠습니까?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" @click="closeLogoutModal">
+                        취소
+                    </button>
+                    <button class="btn-confirm" @click="confirmLogout">
+                        로그아웃
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -50,6 +70,7 @@ const auth = useAuthStore();
 const isDropdownOpen = ref(false);
 const dropdownRef = ref(null);
 const isMyInfoModalVisible = ref(false);
+const isLogoutModalVisible = ref(false);
 
 const toggleDropdown = () => {
     isDropdownOpen.value = !isDropdownOpen.value;
@@ -57,26 +78,29 @@ const toggleDropdown = () => {
 
 const handleMenuClick = (menuItem) => {
     isDropdownOpen.value = false;
-
     switch (menuItem) {
         case "마이 페이지":
             isMyInfoModalVisible.value = true;
             break;
         case "로그아웃":
-            // 로그아웃 처리
-            handleLogout();
+            isLogoutModalVisible.value = true;
             break;
     }
 };
 
-const handleLogout = async () => {
-    if (confirm("로그아웃 하시겠습니까?")) {
-        // 로그아웃 로직
+const closeLogoutModal = () => {
+    isLogoutModalVisible.value = false;
+};
+
+const confirmLogout = async () => {
+    try {
         await api.post("/api/auth/logout");
         await auth.clearAccessToken();
-
-        // 로그인 페이지로 리다이렉트
         router.push("/login");
+    } catch (error) {
+        console.error("로그아웃 실패:", error);
+    } finally {
+        isLogoutModalVisible.value = false;
     }
 };
 
@@ -88,7 +112,7 @@ const handleClickOutside = (event) => {
 };
 
 const closeMyInfoModal = () => {
-  isMyInfoModalVisible.value = false;
+    isMyInfoModalVisible.value = false;
 }
 
 onMounted(() => {
@@ -183,5 +207,113 @@ onUnmounted(() => {
   color: #6c757d;
   background: #e6f0ff;
   border-radius: 50%;
+}
+
+/* 로그아웃 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+}
+
+.modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-message {
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal-footer {
+  padding: 16px 24px 20px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.btn-confirm {
+  padding: 8px 16px;
+  border: none;
+  background: #dc2626;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-confirm:hover {
+  background: #b91c1c;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 </style>
