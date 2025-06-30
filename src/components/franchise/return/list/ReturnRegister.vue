@@ -327,7 +327,7 @@ const selectOrder = async (order) => {
 const fetchOrderProducts = async (orderId) => {
   isLoading.value = true;
   try {
-    const response = await api.get(`/api/franchise/return/1/regist/orders/${orderId}`);
+    const response = await api.get(`/api/franchise/return/${auth.franchiseId}/regist/orders/${orderId}`);
     orderProducts.value = response.data;
   } catch (error) {
     console.error('주문 상품 조회 실패:', error);
