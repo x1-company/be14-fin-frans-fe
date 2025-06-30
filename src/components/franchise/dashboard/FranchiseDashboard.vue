@@ -81,7 +81,7 @@ const dashboardCardData = ref({
 })
 
 // 통계 데이터
-const selectedMonth = ref(new Date().getMonth() + 1)
+const selectedMonth = ref(new Date().getMonth())
 const statsTab = ref(0)
 const trendVisible = ref(false)
 const orderAmountChartData = ref([])
