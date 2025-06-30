@@ -5,6 +5,7 @@
         v-if="selectedRequestId && !isRegisterMode"
         :id="selectedRequestId"
         @close="selectedRequestId = null"
+        @refresh-list="fetchData"
       />
       <PurchaseRegisterForm
         v-else-if="isRegisterMode"
@@ -15,7 +16,16 @@
           <span class="purchase-title">구매 요청 목록</span>
           <button class="register-btn" @click="goToRegister">등록</button>
         </div>
-        
+        <div class="purchase-tabs">
+          <span
+            v-for="(label, idx) in tabLabels"
+            :key="label"
+            :class="['purchase-tab', {active: activeTab === idx}]"
+            @click="changeTab(idx)"
+          >
+            {{ label }}
+          </span>
+        </div>
         <div class="purchase-filters">
           <div class="filter-group">
             <div class="filter-select-wrapper">
@@ -38,7 +48,6 @@
             </div>
           </div>
         </div>
-  
         <div class="purchase-table-wrapper">
           <table class="purchase-table">
             <thead>
@@ -49,6 +58,7 @@
                 <th>담당자</th>
                 <th>구매 요청일</th>
                 <th>납기 희망일</th>
+                <th>상태</th>
               </tr>
             </thead>
             <tbody>
@@ -61,11 +71,13 @@
                 <td>{{ row.manager }}</td>
                 <td>{{ row.requestDate }}</td>
                 <td>{{ row.dueDate }}</td>
+                <td>
+                  <span :class="['status-badge', row.status]">{{ statusLabel(row.status) }}</span>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <!-- Pagination -->
         <div class="pagination">
           <button class="page-arrow" :disabled="currentPage === 1" @click="changePage(currentPage - 1)">&lt;</button>
           <span
@@ -85,7 +97,7 @@
 </template>
   
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, nextTick } from 'vue';
 import api from '@/lib/api';
 import { Search as SearchIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router';
@@ -93,8 +105,24 @@ import PurchaseRequestDetail from './PurchaseRequestDetail.vue';
 import PurchaseRegisterForm from './PurchaseRegisterForm.vue';
 
 const tabLabels = [
-  '전체'
+  '전체', '진행중', '완료', '취소', '반려'
 ];
+const statusMap = {
+  0: null, // 전체
+  1: 'PROGRESS',
+  2: 'COMPLETED',
+  3: 'CANCELED',
+  4: 'REJECTED',
+};
+const statusLabel = (status) => {
+  switch (status) {
+    case 'PROGRESS': return '진행중';
+    case 'COMPLETED': return '완료';
+    case 'CANCELED': return '취소';
+    case 'REJECTED': return '반려';
+    default: return '전체';
+  }
+};
 const activeTab = ref(0);
 const dateFilter = ref('30');
 const searchType = ref('title');
@@ -104,11 +132,10 @@ const loading = ref(true);
 const error = ref(null);
 const currentPage = ref(1);
 const totalPages = ref(1);
+const totalCount = ref(0);
 const router = useRouter();
 const selectedRequestId = ref(null);
 const isRegisterMode = ref(false);
-
-const totalCount = computed(() => purchaseList.value.length ? purchaseList.value.length + (totalPages.value - 1) * 10 : 0);
 
 // 페이지네이션 버튼 배열 생성
 const paginationPages = computed(() => {
@@ -151,7 +178,8 @@ async function fetchData() {
     let response;
     const params = {
       page: currentPage.value - 1,
-      size: 10
+      size: 10,
+      days: dateFilter.value
     };
     let url;
     if (searchQuery.value) {
@@ -162,11 +190,15 @@ async function fetchData() {
         params.code = searchQuery.value;
         url = '/api/hq/purchase/requests/search/code';
       }
+      if (activeTab.value !== 0) {
+        params.status = statusMap[activeTab.value];
+      }
     } else {
       if (activeTab.value === 0) {
         url = '/api/hq/purchase/requests';
       } else {
         url = '/api/hq/purchase/requests/status';
+        params.status = statusMap[activeTab.value];
       }
     }
     response = await api.get(url, { params });
@@ -178,8 +210,10 @@ async function fetchData() {
       manager: item.userName,
       requestDate: item.createdAt.split('T')[0].replace(/-/g, '.'),
       dueDate: item.requestedDeliveryDate.replace(/-/g, '.'),
+      status: item.status
     }));
     totalPages.value = data.totalPages;
+    totalCount.value = data.totalElements;
   } catch (err) {
     error.value = '데이터를 불러오는 중 오류가 발생했습니다.';
     console.error("Error during fetchData:", err);
@@ -187,8 +221,6 @@ async function fetchData() {
     loading.value = false;
   }
 }
-
-
 
 function changePage(page) {
   if (page > 0 && page <= totalPages.value) {
@@ -206,9 +238,11 @@ function goToRegister() {
   isRegisterMode.value = true;
 }
 
-function handleRegisterClose(id) {
+async function handleRegisterClose(id) {
   isRegisterMode.value = false;
   if (id) {
+    await fetchData();
+    await nextTick();
     selectedRequestId.value = id;
   } else {
     selectedRequestId.value = null;
@@ -278,6 +312,30 @@ onMounted(fetchData);
 
 .register-btn:hover {
   background-color: #2746b6;
+}
+
+.purchase-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.purchase-tab {
+  padding: 7px 22px;
+  border-radius: 6px 6px 0 0;
+  background: #f5f6fa;
+  color: #888;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #e2e4ea;
+  border-bottom: none;
+  transition: background 0.2s, color 0.2s;
+}
+.purchase-tab.active {
+  background: #fff;
+  color: #4066fa;
+  font-weight: 700;
+  border-bottom: 2px solid #fff;
 }
 
 .purchase-filters {
@@ -475,5 +533,33 @@ onMounted(fetchData);
   color: #888;
   margin-top: 4px;
   font-size: 0.92rem;
+}
+
+.status-badge {
+  display: inline-block;
+  min-width: 48px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  background: #f0f0f0;
+  color: #888;
+}
+.status-badge.PROGRESS {
+  background: #eaf1ff;
+  color: #4066fa;
+}
+.status-badge.COMPLETED {
+  background: #e6f7e6;
+  color: #1bbf4c;
+}
+.status-badge.CANCELED {
+  background: #ffeaea;
+  color: #ff4d4f;
+}
+.status-badge.REJECTED {
+  background: #fff3e6;
+  color: #faad14;
 }
 </style>
