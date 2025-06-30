@@ -476,17 +476,15 @@ function cancel() {
   gap: 4px;
 }
 .btn-primary {
-  background-color: #5468ff;
-  color: white;
-  border-color: #5468ff;
+  color: #1976d2;
+  border-color: #bbdefb;
 }
 .btn:hover {
   opacity: 0.9;
 }
 .btn-danger {
-  background-color: #ef4444;
-  color: white;
-  border-color: #ef4444;
+  color: #ef4444;
+  border-color: #ffd5d5;
 }
 .info-section {
   background: white;
