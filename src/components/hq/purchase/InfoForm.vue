@@ -17,26 +17,8 @@
           <span class="purchase-title">구매 요청 목록</span>
           <button class="register-btn" @click="goToRegister">등록</button>
         </div>
-        <div class="purchase-tabs">
-          <span
-            v-for="(label, idx) in tabLabels"
-            :key="label"
-            :class="['purchase-tab', {active: activeTab === idx}]"
-            @click="changeTab(idx)"
-          >
-            {{ label }}
-          </span>
-        </div>
         <div class="purchase-filters">
           <div class="filter-group">
-            <div class="filter-select-wrapper">
-              <CalendarIcon class="filter-icon" />
-              <select v-model="dateFilter" class="filter-select">
-                <option value="30">지난 30일</option>
-                <option value="7">지난 7일</option>
-                <option value="90">지난 90일</option>
-              </select>
-            </div>
           </div>
           <div class="search-group">
             <select v-model="searchType" class="search-type-select">
@@ -59,7 +41,6 @@
                 <th>담당자</th>
                 <th>구매 요청일</th>
                 <th>납기 희망일</th>
-                <th>상태</th>
               </tr>
             </thead>
             <tbody>
@@ -72,9 +53,6 @@
                 <td>{{ row.manager }}</td>
                 <td>{{ row.requestDate }}</td>
                 <td>{{ row.dueDate }}</td>
-                <td>
-                  <span :class="['status-badge', row.status]">{{ statusLabel(row.status) }}</span>
-                </td>
               </tr>
             </tbody>
           </table>
@@ -100,32 +78,11 @@
 <script setup>
 import { ref, onMounted, watch, computed, nextTick } from 'vue';
 import api from '@/lib/api';
-import { Search as SearchIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
+import { Search as SearchIcon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router';
 import PurchaseRequestDetail from './PurchaseRequestDetail.vue';
 import PurchaseRegisterForm from './PurchaseRegisterForm.vue';
 
-const tabLabels = [
-  '전체', '진행중', '완료', '취소', '반려'
-];
-const statusMap = {
-  0: null, // 전체
-  1: 'PROGRESS',
-  2: 'COMPLETED',
-  3: 'CANCELED',
-  4: 'REJECTED',
-};
-const statusLabel = (status) => {
-  switch (status) {
-    case 'PROGRESS': return '진행중';
-    case 'COMPLETED': return '완료';
-    case 'CANCELED': return '취소';
-    case 'REJECTED': return '반려';
-    default: return '전체';
-  }
-};
-const activeTab = ref(0);
-const dateFilter = ref('30');
 const searchType = ref('title');
 const searchQuery = ref('');
 const purchaseList = ref([]);
@@ -138,7 +95,6 @@ const router = useRouter();
 const selectedRequestId = ref(null);
 const isRegisterMode = ref(false);
 
-// 페이지네이션 버튼 배열 생성
 const paginationPages = computed(() => {
   const pages = [];
   const total = totalPages.value;
@@ -165,13 +121,6 @@ const paginationPages = computed(() => {
   return pages;
 });
 
-function changeTab(idx) {
-  activeTab.value = idx;
-  currentPage.value = 1;
-  searchQuery.value = '';
-  fetchData();
-}
-
 async function fetchData() {
   loading.value = true;
   error.value = null;
@@ -179,8 +128,7 @@ async function fetchData() {
     let response;
     const params = {
       page: currentPage.value - 1,
-      size: 10,
-      days: dateFilter.value
+      size: 10
     };
     let url;
     if (searchQuery.value) {
@@ -191,16 +139,8 @@ async function fetchData() {
         params.code = searchQuery.value;
         url = '/api/hq/purchase/requests/search/code';
       }
-      if (activeTab.value !== 0) {
-        params.status = statusMap[activeTab.value];
-      }
     } else {
-      if (activeTab.value === 0) {
-        url = '/api/hq/purchase/requests';
-      } else {
-        url = '/api/hq/purchase/requests/status';
-        params.status = statusMap[activeTab.value];
-      }
+      url = '/api/hq/purchase/requests';
     }
     response = await api.get(url, { params });
     const { data } = response;
@@ -210,8 +150,7 @@ async function fetchData() {
       title: item.title,
       manager: item.userName,
       requestDate: item.createdAt.split('T')[0].replace(/-/g, '.'),
-      dueDate: item.requestedDeliveryDate.replace(/-/g, '.'),
-      status: item.status
+      dueDate: item.requestedDeliveryDate.replace(/-/g, '.')
     }));
     totalPages.value = data.totalPages;
     totalCount.value = data.totalElements;
@@ -248,13 +187,7 @@ function goToDetail(id) {
   selectedRequestId.value = id;
 }
 
-watch(() => activeTab.value, () => {
-  currentPage.value = 1;
-  searchQuery.value = '';
-  fetchData();
-});
-
-watch([dateFilter, searchType], fetchData);
+watch([searchType], fetchData);
 
 onMounted(fetchData);
 </script>
@@ -309,30 +242,6 @@ onMounted(fetchData);
   background-color: #2746b6;
 }
 
-.purchase-tabs {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.purchase-tab {
-  padding: 7px 22px;
-  border-radius: 6px 6px 0 0;
-  background: #f5f6fa;
-  color: #888;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid #e2e4ea;
-  border-bottom: none;
-  transition: background 0.2s, color 0.2s;
-}
-.purchase-tab.active {
-  background: #fff;
-  color: #4066fa;
-  font-weight: 700;
-  border-bottom: 2px solid #fff;
-}
-
 .purchase-filters {
   display: flex;
   justify-content: space-between;
@@ -345,35 +254,6 @@ onMounted(fetchData);
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.filter-select-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.filter-icon {
-  position: absolute;
-  left: 12px;
-  color: #888;
-  width: 18px;
-  height: 18px;
-}
-
-.filter-select {
-  padding: 10px 36px 10px 38px !important;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #fff;
-  font-size: 0.9rem;
-  color: #555;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center !important;
 }
 
 .search-group {
@@ -528,33 +408,5 @@ onMounted(fetchData);
   color: #888;
   margin-top: 4px;
   font-size: 0.92rem;
-}
-
-.status-badge {
-  display: inline-block;
-  min-width: 48px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-align: center;
-  background: #f0f0f0;
-  color: #888;
-}
-.status-badge.PROGRESS {
-  background: #eaf1ff;
-  color: #4066fa;
-}
-.status-badge.COMPLETED {
-  background: #e6f7e6;
-  color: #1bbf4c;
-}
-.status-badge.CANCELED {
-  background: #ffeaea;
-  color: #ff4d4f;
-}
-.status-badge.REJECTED {
-  background: #fff3e6;
-  color: #faad14;
 }
 </style>
