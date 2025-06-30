@@ -5,27 +5,20 @@
         v-if="selectedRequestId && !isRegisterMode"
         :id="selectedRequestId"
         @close="selectedRequestId = null"
+        @refresh-list="fetchData"
       />
       <PurchaseRegisterForm
         v-else-if="isRegisterMode"
         @close="handleRegisterClose"
+        @refresh-list="fetchData"
       />
       <template v-else>
         <div class="info-section__header purchase-header">
           <span class="purchase-title">구매 요청 목록</span>
           <button class="register-btn" @click="goToRegister">등록</button>
         </div>
-        
         <div class="purchase-filters">
           <div class="filter-group">
-            <div class="filter-select-wrapper">
-              <CalendarIcon class="filter-icon" />
-              <select v-model="dateFilter" class="filter-select">
-                <option value="30">지난 30일</option>
-                <option value="7">지난 7일</option>
-                <option value="90">지난 90일</option>
-              </select>
-            </div>
           </div>
           <div class="search-group">
             <select v-model="searchType" class="search-type-select">
@@ -38,7 +31,6 @@
             </div>
           </div>
         </div>
-  
         <div class="purchase-table-wrapper">
           <table class="purchase-table">
             <thead>
@@ -65,7 +57,6 @@
             </tbody>
           </table>
         </div>
-        <!-- Pagination -->
         <div class="pagination">
           <button class="page-arrow" :disabled="currentPage === 1" @click="changePage(currentPage - 1)">&lt;</button>
           <span
@@ -85,18 +76,13 @@
 </template>
   
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, nextTick } from 'vue';
 import api from '@/lib/api';
-import { Search as SearchIcon, Calendar as CalendarIcon } from 'lucide-vue-next'
+import { Search as SearchIcon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router';
 import PurchaseRequestDetail from './PurchaseRequestDetail.vue';
 import PurchaseRegisterForm from './PurchaseRegisterForm.vue';
 
-const tabLabels = [
-  '전체'
-];
-const activeTab = ref(0);
-const dateFilter = ref('30');
 const searchType = ref('title');
 const searchQuery = ref('');
 const purchaseList = ref([]);
@@ -104,13 +90,11 @@ const loading = ref(true);
 const error = ref(null);
 const currentPage = ref(1);
 const totalPages = ref(1);
+const totalCount = ref(0);
 const router = useRouter();
 const selectedRequestId = ref(null);
 const isRegisterMode = ref(false);
 
-const totalCount = computed(() => purchaseList.value.length ? purchaseList.value.length + (totalPages.value - 1) * 10 : 0);
-
-// 페이지네이션 버튼 배열 생성
 const paginationPages = computed(() => {
   const pages = [];
   const total = totalPages.value;
@@ -137,13 +121,6 @@ const paginationPages = computed(() => {
   return pages;
 });
 
-function changeTab(idx) {
-  activeTab.value = idx;
-  currentPage.value = 1;
-  searchQuery.value = '';
-  fetchData();
-}
-
 async function fetchData() {
   loading.value = true;
   error.value = null;
@@ -163,11 +140,7 @@ async function fetchData() {
         url = '/api/hq/purchase/requests/search/code';
       }
     } else {
-      if (activeTab.value === 0) {
-        url = '/api/hq/purchase/requests';
-      } else {
-        url = '/api/hq/purchase/requests/status';
-      }
+      url = '/api/hq/purchase/requests';
     }
     response = await api.get(url, { params });
     const { data } = response;
@@ -177,9 +150,10 @@ async function fetchData() {
       title: item.title,
       manager: item.userName,
       requestDate: item.createdAt.split('T')[0].replace(/-/g, '.'),
-      dueDate: item.requestedDeliveryDate.replace(/-/g, '.'),
+      dueDate: item.requestedDeliveryDate.replace(/-/g, '.')
     }));
     totalPages.value = data.totalPages;
+    totalCount.value = data.totalElements;
   } catch (err) {
     error.value = '데이터를 불러오는 중 오류가 발생했습니다.';
     console.error("Error during fetchData:", err);
@@ -187,8 +161,6 @@ async function fetchData() {
     loading.value = false;
   }
 }
-
-
 
 function changePage(page) {
   if (page > 0 && page <= totalPages.value) {
@@ -206,26 +178,16 @@ function goToRegister() {
   isRegisterMode.value = true;
 }
 
-function handleRegisterClose(id) {
+function handleRegisterClose() {
   isRegisterMode.value = false;
-  if (id) {
-    selectedRequestId.value = id;
-  } else {
-    selectedRequestId.value = null;
-  }
+  selectedRequestId.value = null;
 }
 
 function goToDetail(id) {
   selectedRequestId.value = id;
 }
 
-watch(() => activeTab.value, () => {
-  currentPage.value = 1;
-  searchQuery.value = '';
-  fetchData();
-});
-
-watch([dateFilter, searchType], fetchData);
+watch([searchType], fetchData);
 
 onMounted(fetchData);
 </script>
@@ -292,35 +254,6 @@ onMounted(fetchData);
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.filter-select-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.filter-icon {
-  position: absolute;
-  left: 12px;
-  color: #888;
-  width: 18px;
-  height: 18px;
-}
-
-.filter-select {
-  padding: 10px 36px 10px 38px !important;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #fff;
-  font-size: 0.9rem;
-  color: #555;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center !important;
 }
 
 .search-group {

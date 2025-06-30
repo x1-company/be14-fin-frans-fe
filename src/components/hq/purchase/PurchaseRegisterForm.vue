@@ -123,7 +123,7 @@
   import { PRODUCT_TYPE_MAP, PRODUCT_GROUP_MAP, PRODUCT_ATTRIBUTE_MAP } from '@/enums/hqEnums';
   import { useToast } from "@/composables/useToast";
 
-  const emit = defineEmits(['close']);
+  const emit = defineEmits(['close', 'refresh-list']);
   
   const toast = useToast();
   
@@ -311,9 +311,10 @@
     try {
       const res = await api.post('/api/hq/purchase/requests', payload);
       toast.success(isRequested ? '구매 요청이 등록되었습니다.' : '내용이 임시저장되었습니다.');
-      // 등록 성공 시 emit('close', id)로 InfoForm에 알림
-      if (isRequested && res.data && res.data.id) {
-        emit('close', res.data.id);
+      // 등록 성공 시 삭제와 동일한 방식으로 목록 새로고침 후 닫기
+      if (isRequested) {
+        emit('refresh-list');
+        emit('close');
       } else {
         emit('close');
       }
