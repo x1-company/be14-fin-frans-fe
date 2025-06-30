@@ -62,7 +62,10 @@ const handleLogin = async () => {
         router.replace('/franchise')
       } else if (result.userType === 'SUPPLIER') {
         router.replace('/supplier')
-      } else {
+      } else if (result.userType === 'ADMIN') {
+        router.replace('/hrm')
+      } 
+      else {
         // 기타 기본 경로
       }
 
