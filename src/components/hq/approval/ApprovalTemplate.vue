@@ -655,19 +655,12 @@ const toggleReorderMode = async () => {
     // 완료 버튼을 눌렀을 때
     if (props.reorderChanges && props.reorderChanges.length > 0) {
       try {
-        // 각 변경사항에 대해 API 호출
-        for (const change of props.reorderChanges) {
-          const newSequence = change.newIndex;
-          console.log(
-            `API 호출: 템플릿 ${change.templateId}의 순서를 ${newSequence}로 변경`
-          );
+        const selectedTemplateId = props.selectedTemplate.id;
+        const newSeq = props.reorderChanges[0].newIndex;
 
-          await api.patch(
-            `/api/hq/approvals/templates/${change.templateId}/seq/${newSequence}`
-          );
-        }
-
-        console.log("모든 순서 변경 API 호출 완료");
+        await api.patch(
+          `/api/hq/approvals/templates/${selectedTemplateId}/seq/${newSeq}`
+        )
         toast.success("순서 변경이 완료되었습니다.");
 
         // 완료 이벤트 emit

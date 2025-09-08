@@ -226,37 +226,37 @@ const handleReorderComplete = async () => {
     return;
   }
 
-  try {
-    // 모든 순서 변경을 API로 전송
-    for (const change of reorderChanges.value) {
-      await api.patch(
-        `/api/hq/approvals/templates/${change.templateId}/seq/${
-          change.newIndex + 1
-        }`
-      );
-      console.log(
-        `템플릿 ${change.templateId} 순서를 ${change.newIndex + 1}로 변경`
-      );
-    }
+  // try {
+  //   // 모든 순서 변경을 API로 전송
+  //   for (const change of reorderChanges.value) {
+  //     await api.patch(
+  //       `/api/hq/approvals/templates/${change.templateId}/seq/${
+  //         change.newIndex + 1
+  //       }`
+  //     );
+  //     console.log(
+  //       `템플릿 ${change.templateId} 순서를 ${change.newIndex + 1}로 변경`
+  //     );
+  //   }
 
-    console.log("모든 순서 변경 완료");
+  //   console.log("모든 순서 변경 완료");
 
-    // 사이드바 새로고침
-    if (templateSidebarRef.value) {
-      await templateSidebarRef.value.completeReorder();
-    }
+  //   // 사이드바 새로고침
+  //   if (templateSidebarRef.value) {
+  //     await templateSidebarRef.value.completeReorder();
+  //   }
 
-    // 변경 정보 초기화
-    reorderChanges.value = [];
-  } catch (error) {
-    console.error("순서 변경 실패:", error);
-    toast.error("순서 변경에 실패했습니다.");
+  //   // 변경 정보 초기화
+  //   reorderChanges.value = [];
+  // } catch (error) {
+  //   console.error("순서 변경 실패:", error);
+  //   toast.error("순서 변경에 실패했습니다.");
 
-    // 실패 시 사이드바 롤백
-    if (templateSidebarRef.value) {
-      templateSidebarRef.value.cancelReorder();
-    }
-  }
+  //   // 실패 시 사이드바 롤백
+  //   if (templateSidebarRef.value) {
+  //     templateSidebarRef.value.cancelReorder();
+  //   }
+  // }
 };
 
 // 순서 변경 취소 처리
